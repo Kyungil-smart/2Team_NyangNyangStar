@@ -1,40 +1,42 @@
+using Core.Managers;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class VolumeSetting : MonoBehaviour
+namespace Audio
 {
-    [SerializeField] private Button _bgmVolumeButton;
-    [SerializeField] private Button _sfxVolumeButton;
-    
-    private void OnEnable()
+    public class VolumeSetting : MonoBehaviour
     {
-        _bgmVolumeButton.onClick.AddListener(BgmVolumeSetting);
-        _sfxVolumeButton.onClick.AddListener(SfxVolumeSetting);
-    }
+        [Space(8)] [Header("오디오 설정 버튼")]
+        [SerializeField] private Button _bgmButton;
+        [SerializeField] private Button _sfxButton;
+        
+        private void OnEnable()
+        {
+            if(_bgmButton != null)
+                _bgmButton.onClick.AddListener(BgmVolumeSetting);
+            if(_sfxButton != null)
+                _sfxButton.onClick.AddListener(SfxVolumeSetting);
+        }
 
-    private void Start()
-        => VolumeInit();
+        private void OnDisable()
+        {
+            if (_bgmButton != null)
+                _bgmButton.onClick.RemoveListener(BgmVolumeSetting);
+            
+            if (_sfxButton != null)
+                _sfxButton.onClick.RemoveListener(SfxVolumeSetting);
+        }
 
-    private void OnDisable()
-    {
-        _bgmVolumeButton.onClick.RemoveListener(BgmVolumeSetting);
-        _sfxVolumeButton.onClick.RemoveListener(SfxVolumeSetting);
-    }
+        public void BgmVolumeSetting()
+        {
+            GameManager.AudioManager.SetBGMState();
+            DebugTool.Log($"BGM 볼륨 변경 : {GameManager.AudioManager.BgmOnOff}", DebugType.UI, this);
+        }
 
-    public void BgmVolumeSetting()
-    {
-        GameManager.Audio.SetBGMState();
-        DebugTool.Log($"BGM 볼륨 변경 : {GameManager.Audio.BgmOnOff}", DebugType.UI, this);
-    }
-
-    public void SfxVolumeSetting()
-    {
-        GameManager.Audio.SetSFXState();
-        DebugTool.Log($"SFX 볼륨 변경 : {GameManager.Audio.SfxOnOff}", DebugType.UI, this);
-    }
-
-    private void VolumeInit()
-    {
-        // TODO : PlayerPrefs에서 오디오 상태를 로드하여 게임시작시 버튼의 초기상태 변경
+        public void SfxVolumeSetting()
+        {
+            GameManager.AudioManager.SetSFXState();
+            DebugTool.Log($"SFX 볼륨 변경 : {GameManager.AudioManager.SfxOnOff}", DebugType.UI, this);
+        }
     }
 }
