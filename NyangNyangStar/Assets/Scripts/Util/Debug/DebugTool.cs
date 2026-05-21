@@ -160,18 +160,18 @@ public static class DebugTool
         return type switch
         {
             DebugType.Game => "#B388FF",
-            DebugType.Character => "#FFD166",
+            /*DebugType.Character => "#FFD166",
             DebugType.Zombie => "#FF3B30",
             DebugType.Spawner => "#00C2FF",
             DebugType.Wave => "#FF7A00",
-            DebugType.Node => "#A3FF12",
+            DebugType.Node => "#A3FF12",*/
             DebugType.Network => "#00E676",
             DebugType.UI => "#FF4FD8",
             DebugType.Data => "#00D1B2",
             DebugType.Audio => "#4F6BFF",
             DebugType.Missing => "#FFFF00",
-            DebugType.CombatNet => "#FF6B35",   // 전투 라인 네트워크 (B)
-            DebugType.EconomyNet => "#00B894",  // 자원·성장 라인 네트워크 (F)
+            // DebugType.CombatNet => "#FF6B35",   // 전투 라인 네트워크 (B)
+            // DebugType.EconomyNet => "#00B894",  // 자원·성장 라인 네트워크 (F)
             _ => "#D0D0D0"
         };
     }
@@ -183,17 +183,12 @@ public static class DebugTool
 public enum DebugType
 {
     Game,
-    Data,
-    Network,
-    Character,
-    Zombie,
-    Wave,
-    Spawner,
-    Node,
-    UI,
     Audio,
+    Data,
+    UI,
+    Network,
     Missing,
     Default,
-    CombatNet,    // 전투 라인 네트워크 로그 (B 소유 NetworkBehaviour 들)
-    EconomyNet,   // 자원·성장 라인 네트워크 로그 (F 소유 NetworkBehaviour 들)
+    // CombatNet,    // 전투 라인 네트워크 로그 (B 소유 NetworkBehaviour 들)
+    // EconomyNet,   // 자원·성장 라인 네트워크 로그 (F 소유 NetworkBehaviour 들)
 }
