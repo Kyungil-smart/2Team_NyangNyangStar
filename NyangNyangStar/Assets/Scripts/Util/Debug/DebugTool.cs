@@ -160,11 +160,11 @@ public static class DebugTool
         return type switch
         {
             DebugType.Game => "#B388FF",
-            /*DebugType.Character => "#FFD166",
-            DebugType.Zombie => "#FF3B30",
-            DebugType.Spawner => "#00C2FF",
-            DebugType.Wave => "#FF7A00",
-            DebugType.Node => "#A3FF12",*/
+            DebugType.Addressable => "#FFD166",
+            // DebugType.Zombie => "#FF3B30",
+            // DebugType.Spawner => "#00C2FF",
+            // DebugType.Wave => "#FF7A00",
+            // DebugType.Node => "#A3FF12",
             DebugType.Network => "#00E676",
             DebugType.UI => "#FF4FD8",
             DebugType.Data => "#00D1B2",
@@ -186,6 +186,7 @@ public enum DebugType
     Audio,
     Data,
     UI,
+    Addressable,
     Network,
     Missing,
     Default,
