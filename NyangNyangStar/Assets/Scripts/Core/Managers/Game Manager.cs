@@ -1,64 +1,54 @@
 using UnityEngine;
 
+/*
+@Managers (GameObject, DontDestroyOnLoad)
+└── Managers.cs  ← 단일 진입점 싱글톤
+
+서브 매니저들 (Plain C# Class, ISubManager)
+├── AddressableManager
+├── AudioManager
+├── DataManager
+└── UIManager
+*/
+
 public class GameManager : MonoBehaviour
 {
     private static GameManager _instance;
+    public static GameManager Instance { get { Init(); return _instance; } }
+
+    private AudioManager _audio = new AudioManager();
+    private GameSceneManager _gameSceneManager = new GameSceneManager();
     
-    [Header("매니저 프리팹")]
-    [SerializeField] private AudioManager _audioManager;
-    [SerializeField] private SceneChangeController _sceneChangeController;
-    
-    private void Awake()
+    // TODO UI, SceneChangeManger, DataManager 추가
+
+    public static AudioManager Audio => Instance._audio;
+    public static GameSceneManager Scene => Instance._gameSceneManager;
+
+    private static void Init()
     {
-        if (_instance != null && _instance != this)
-        {
-            Destroy(this.gameObject);
-            return;
-        }
+        if (_instance != null) return;
 
-        _instance = this;
-        DontDestroyOnLoad(gameObject);
-
-        Init();
-    }
-
-    private void Init()
-    {
-        GenerateManager<GameSceneManager>();
-        GenerateManager(_audioManager);
-        GenerateManager(_sceneChangeController);
-    }
-
-    private void Start()
-    {
-        DebugTool.Log("게임 시작", DebugType.Game, this);
-        SceneChangeController.Instance.SetActivateImage(false);
-    }
-
-    private void GenerateManager<T>() where T : Component
-    {
-        if (FindAnyObjectByType<T>() != null)
-        {
-            DebugTool.Warning($"{typeof(T).Name} 을 로드하지 못했습니다.", DebugType.Game, this);
-            return;
-        }
+        GameObject go = new GameObject("@GameManager");
         
-        var go = new GameObject(typeof(T).Name);
-        go.AddComponent<T>();
-        DontDestroyOnLoad(go);
-    }
-    
-    private void GenerateManager<T>(T managerPrefab) where T : Component
-    {
-        if (FindAnyObjectByType<T>() != null)
+        if (go == null)
         {
-            DebugTool.Warning($"{typeof(T).Name} 프리팹을 로드하지 못했습니다.", DebugType.Game, this);
-            return;
-        }
-        
-        T manager = Instantiate(managerPrefab);
-        manager.gameObject.name = typeof(T).Name;
-        DontDestroyOnLoad(manager.gameObject);
+            go = new GameObject("@GameManager");
+            go.AddComponent<GameManager>();
+
+            _instance = go.GetComponent<GameManager>();
+            DontDestroyOnLoad(go.gameObject);
+
+            // Data.Init();
+            Scene.Init();
+            Audio.Init();
+            // UI.Init();
+        }    
+    }
+
+    public static void clear()
+    {
+        Audio.Clear();
+        Scene.Clear();
     }
 }
 
