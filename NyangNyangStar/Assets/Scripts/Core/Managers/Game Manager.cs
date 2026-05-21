@@ -11,44 +11,62 @@ using UnityEngine;
 └── UIManager
 */
 
-public class GameManager : MonoBehaviour
+namespace Core.Managers
 {
-    private static GameManager _instance;
-    public static GameManager Instance { get { Init(); return _instance; } }
-
-    private AudioManager _audio = new AudioManager();
-    private GameSceneManager _gameSceneManager = new GameSceneManager();
-    
-    // TODO UI, SceneChangeManger, DataManager 추가
-
-    public static AudioManager Audio => Instance._audio;
-    public static GameSceneManager Scene => Instance._gameSceneManager;
-
-    private static void Init()
+    public class GameManager : MonoBehaviour
     {
-        if (_instance != null) return;
-
-        GameObject go = new GameObject("@GameManager");
-        
-        if (go == null)
+        private static GameManager _instance;
+        public static GameManager Instance 
         {
-            go = new GameObject("@GameManager");
-            go.AddComponent<GameManager>();
+            get
+            {
+                Init(); 
+                return _instance;
+            } 
+        }
 
-            _instance = go.GetComponent<GameManager>();
-            DontDestroyOnLoad(go.gameObject);
+        private AudioManager _audioManager = new AudioManager();
+        private GameSceneManager _gameSceneManager = new GameSceneManager();
+        private AddressableManager _addressableManager = new AddressableManager();
+    
+        // TODO UI, SceneChangeManger, DataManager 추가
 
-            // Data.Init();
-            Scene.Init();
-            Audio.Init();
-            // UI.Init();
-        }    
-    }
+        public static AudioManager AudioManager => Instance._audioManager;
+        public static GameSceneManager Scene => Instance._gameSceneManager;
+        public static AddressableManager Addressable => Instance._addressableManager;
+    
 
-    public static void clear()
-    {
-        Audio.Clear();
-        Scene.Clear();
+        private static void Init()
+        {
+            if (_instance != null) return;
+
+            GameObject go = GameObject.Find("@GameManager");
+        
+            if (go == null)
+            {
+                go = new GameObject("@GameManager");
+                go.AddComponent<GameManager>();
+
+                _instance = go.GetComponent<GameManager>();
+                DontDestroyOnLoad(go.gameObject);
+
+                // Data.Init();
+                Addressable.Init();
+                Scene.Init();
+                AudioManager.Init();
+                // UI.Init();
+            }    
+            DebugTool.Log("모든 매니저 초기화 완료 ", DebugType.Game);
+        }
+
+        public static void Clear()
+        {
+            _instance._audioManager.Clear();
+            _instance._gameSceneManager.Clear();
+            _instance._addressableManager.Clear();
+            
+            DebugTool.Log("모든 매니저 제거 완료 ", DebugType.Game);
+        }
     }
 }
 
