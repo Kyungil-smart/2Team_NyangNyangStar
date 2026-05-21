@@ -1,25 +1,14 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-public class GameSceneManager : MonoBehaviour
+public class GameSceneManager : ISubManager
 {
-    public static GameSceneManager Instance {get; private set;}
-
-    private void Awake()
-    {
-        if (Instance != null && Instance != this)
-        {
-            Destroy(this.gameObject);
-            return;
-        }
-        Instance = this;
-        DontDestroyOnLoad(gameObject);
-    }
+    private GameObject _root;
     
     // 게임 씬 이동
-    public void ChangeScene(int index)
+    public void ChangeScene(SceneIndex index)
     {
-        SceneManager.LoadScene(index);
+        SceneManager.LoadScene((int)index);
     }
 
     public void LoadNextStage()
@@ -48,8 +37,23 @@ public class GameSceneManager : MonoBehaviour
 
     public void GameQuit()
         => Application.Quit();
-}
-public enum SceneIndex
-{
-    TitleScene,
+    
+    public void Init()
+    {
+        _root = GameObject.Find("@Scene");
+
+        if (_root == null)
+        {
+            _root = new GameObject { name = "@Scene" };
+            Object.DontDestroyOnLoad(_root);
+        }
+    }
+
+    public void Clear()
+    {
+        if (_root == null)
+            return;
+        
+        Object.Destroy(_root);
+    }
 }
