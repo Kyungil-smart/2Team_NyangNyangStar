@@ -84,7 +84,7 @@ public class SceneChangeController : MonoBehaviour
         }
         
         if(nextScene)
-            GameSceneManager.Instance.LoadNextStage();
+            GameManager.Scene.LoadNextStage();
     }
 
     public void SetActivateImage(bool value)
