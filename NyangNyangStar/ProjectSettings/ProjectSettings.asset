@@ -163,6 +163,7 @@ PlayerSettings:
   androidSupportedAspectRatio: 1
   androidMaxAspectRatio: 2.1
   applicationIdentifier:
+    Android: com.CompnayColoabo_2Team.NyangNyangStar
     Standalone: com.CompnayColoabo-2Team.NyangNyangStar
   buildNumber:
     Standalone: 0
