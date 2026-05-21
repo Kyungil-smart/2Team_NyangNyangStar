@@ -1,124 +1,163 @@
+using Services.Scriptable_Object;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Audio;
 using Object = UnityEngine.Object;
 
-/// <summary>
-/// 오디오 전체 관리
-/// 오디오 믹서를 통해 볼륨 설정
-/// </summary>
-public class AudioManager : ISubManager
+namespace Core.Managers
 {
-    private AudioSource[] _audioSources = new AudioSource[(int)AudioType.MaxCount];
-    private Dictionary<string, AudioClip> _audioClips = new();
-    
-    [Space(10)][Header("오디오 믹서")]
-    private AudioMixer _audioMixer;
-    
-    [Space(10)][Header("오디오 그룹")]
-    private AudioMixerGroup _masterGroup;
-    private AudioMixerGroup _bgmGroup;
-    private AudioMixerGroup _sfxGroup;
-    
-    public AudioMixerGroup MasterGroup => _masterGroup;
-    public AudioMixerGroup BgmGroup => _bgmGroup;
-    public AudioMixerGroup SfxGroup => _sfxGroup;
-    
-    /// <summary>
-    /// 믹서에서 볼륨 조절을 위한 키
-    /// </summary>
-    private const string MasterStateKey = "Master";
-    private const string BGMStateKey = "BGM";
-    private const string SfxStateKey = "SFX";
-
-    [Space(5)][Header("Audio On/Off 여부")]
-    private bool _bgmOnOff = true;
-    public  bool BgmOnOff => _bgmOnOff;
-    private bool _sfxOnOff;
-    public bool SfxOnOff => _sfxOnOff;
-
-    private const int DefaultVolume = 1;
-    
-    public int MasterState => PlayerPrefs.GetInt(MasterStateKey, DefaultVolume);
-    public int BGMState => PlayerPrefs.GetInt(BGMStateKey, DefaultVolume);
-    public int SfxState => PlayerPrefs.GetInt(SfxStateKey, DefaultVolume);
-    
-    /// <summary>
-    /// 볼륨 조절
-    /// </summary>
-    public void SetBGMState()
-    { 
-        _bgmOnOff = !_bgmOnOff;
-        float volume = _bgmOnOff ? 0 : 80f;
-        int state = _bgmOnOff ? 1 : 0;
-        
-        SetMixerVolume(BGMStateKey, volume);
-        
-        PlayerPrefs.SetInt(BGMStateKey, state);
-    }
-
-    /// <summary>
-    /// SFX 볼륨 조절 
-    /// </summary>
-    public void SetSFXState()
+    public class AudioManager : ISubManager
     {
-        _sfxOnOff = !_sfxOnOff;
-        float volume = _sfxOnOff ? 0f : 80f;
-        int state = _sfxOnOff ? 1 : 0;
+        private AudioSource[] _audioSources = new AudioSource[(int)AudioType.MaxCount];
+        private Dictionary<string, AudioClip> _audioClips = new();
+
+        private const string AudioSettingPath = "Settings/AudioMixerSettings";
         
-        SetMixerVolume(SfxStateKey, volume);
-        PlayerPrefs.SetInt(SfxStateKey, state);
-    }
+        private AudioMixerSettingSo _audioSettings;
+        private AudioMixer _audioMixer;
 
-    private void SetMixerVolume(string parameter, float value)
-    {
-        bool result = _audioMixer.SetFloat(parameter, value);
+        private AudioMixerGroup _masterGroup;
+        private AudioMixerGroup _bgmGroup;
+        private AudioMixerGroup _sfxGroup;
+    
+        private const int DefaultState = 1;
         
-        if(!result)
-            DebugTool.Log($"{parameter} Audio mixer를 찾을 수 없습니다.", DebugType.Game);
-    }
+        private const float VolumeOn = 0f;
+        private const float VolumeOff = -80f;
+        
+        private bool _bgmOnOff = true;
+        public bool BgmOnOff => _bgmOnOff;
+        private bool _sfxOnOff = true;
+        public bool SfxOnOff => _sfxOnOff;
+        
+        // 오디오 믹서 볼륨 조절 키
+        private const string MasterStateKey = "Master";
+        private const string BGMStateKey = "BGM";
+        private const string SfxStateKey = "SFX";
 
-    /// <summary>
-    /// 게임 시작시 저장된 볼륨 값 초기화
-    /// </summary>
-    private void VolumeInit()
-    {
-        SetMixerVolume(MasterStateKey, MasterState);
-        SetMixerVolume(BGMStateKey, BGMState);
-        SetMixerVolume(SfxStateKey, SfxState);
-    }
+        private int MasterState => PlayerPrefs.GetInt(MasterStateKey, DefaultState);
+        private int BGMState => PlayerPrefs.GetInt(BGMStateKey, DefaultState);
+        private int SfxState => PlayerPrefs.GetInt(SfxStateKey, DefaultState);
 
-    public void Init()
-    {
-        GameObject root = GameObject.Find("@Audio");
-        if (root == null)
+        public void Init()
         {
-            root = new GameObject("@Audio");
-            Object.DontDestroyOnLoad(root);
-            
-            string[] soundNames = Enum.GetNames(typeof(AudioType));
-            for (int i = 0; i < soundNames.Length - 1; i++)
+            LoadAudioSettings();
+            CreateAudioRoot();
+            ApplyMixerGroup();
+            VolumeInit();
+        }
+        
+        private void LoadAudioSettings()
+        {
+            _audioSettings = Resources.Load<AudioMixerSettingSo>(AudioSettingPath);
+
+            if (_audioSettings == null)
             {
-                GameObject go = new() { name = soundNames[i] };
-                _audioSources[i] = go.AddComponent<AudioSource>();
-                go.transform.parent = root.transform;
+                DebugTool.Log($"AudioMixerSettingsSO 를 찾을 수 없습니다. 경로 : Resources/{AudioSettingPath}", DebugType.Missing);
+                return;
             }
 
-            _audioSources[(int)AudioType.BGM].loop = true;
+            _audioMixer = _audioSettings.AudioMixer;
+            _masterGroup = _audioSettings.MasterGroup;
+            _bgmGroup = _audioSettings.BgmGroup;
+            _sfxGroup = _audioSettings.SfxGroup;
         }
         
-        VolumeInit();
-    }
-
-    public void Clear()
-    {
-        foreach (AudioSource source in _audioSources)
+        public void CreateAudioRoot()
         {
-            source.Stop();
-            source.clip = null;
+            GameObject root = GameObject.Find("@Audio");
+            if (root == null)
+            {
+                root = new GameObject("@Audio");
+                Object.DontDestroyOnLoad(root);
+            
+                string[] soundNames = Enum.GetNames(typeof(AudioType));
+                for (int i = 0; i < soundNames.Length - 1; i++)
+                {
+                    GameObject go = new() { name = soundNames[i] };
+                    _audioSources[i] = go.AddComponent<AudioSource>();
+                    go.transform.parent = root.transform;
+                    
+                    _audioSources[i].loop = true;
+                    _audioSources[i].playOnAwake = false;
+                }
+                _audioSources[(int)AudioType.BGM].loop = true;
+            }
+            DebugTool.Log("오디오 매니저 초기화 완료 ", DebugType.Game);
+        }
+
+        private void ApplyMixerGroup()
+        {
+            if(_audioSources[(int)AudioType.BGM] != null)
+                _audioSources[(int)AudioType.BGM].outputAudioMixerGroup = _bgmGroup;
+            
+            if(_audioSources[(int)AudioType.SFX] != null)
+                _audioSources[(int)AudioType.SFX].outputAudioMixerGroup = _sfxGroup;
+        }
+
+        public void SetBGMState()
+        { 
+            _bgmOnOff = !_bgmOnOff;
+            
+            float volume = _bgmOnOff ? VolumeOn : VolumeOff;
+            int state = _bgmOnOff ? 1 : 0;
+        
+            SetMixerVolume(BGMStateKey, volume);
+            
+            PlayerPrefs.SetInt(BGMStateKey, state);
+            PlayerPrefs.Save();
         }
         
-        _audioClips.Clear();
+        public void SetSFXState()
+        {
+            _sfxOnOff = !_sfxOnOff;
+            
+            float volume = _sfxOnOff ? VolumeOn : VolumeOff;
+            int state = _sfxOnOff ? 1 : 0;
+        
+            SetMixerVolume(SfxStateKey, volume);
+            
+            PlayerPrefs.SetInt(SfxStateKey, state);
+            PlayerPrefs.Save();
+        }
+
+        private void SetMixerVolume(string parameter, float value)
+        {
+            if (_audioMixer == null)
+            {
+                DebugTool.Warning("AudioMixer가 할당되지 않았습니다.", DebugType.Missing);
+                return;
+            }
+            bool result = _audioMixer.SetFloat(parameter, value);
+            
+            if(!result)
+                DebugTool.Warning($"{parameter} Parameter 를 찾을 수 없습니다.", DebugType.Missing);
+        }
+
+        public void Clear()
+        {
+            foreach (AudioSource source in _audioSources)
+            {
+                if (source == null) continue;
+                
+                source.Stop();
+                source.clip = null;
+            }
+        
+            _audioClips.Clear();
+            
+            DebugTool.Log("오디오 매니저 제거 완료 ", DebugType.Game);
+        }
+
+        private void VolumeInit()
+        {
+            _bgmOnOff = BGMState == 1;
+            _sfxOnOff = SfxState == 1;
+            
+            SetMixerVolume(MasterStateKey, MasterState == 1 ? VolumeOn : VolumeOff);
+            SetMixerVolume(BGMStateKey, MasterState == 1 ? VolumeOn : VolumeOff);
+            SetMixerVolume(SfxStateKey, SfxState == 1 ? VolumeOn : VolumeOff);
+        }
     }
 }
