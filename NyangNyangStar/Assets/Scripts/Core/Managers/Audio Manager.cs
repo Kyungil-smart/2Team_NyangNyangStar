@@ -79,7 +79,7 @@ namespace Core.Managers
                     _audioSources[i] = go.AddComponent<AudioSource>();
                     go.transform.parent = root.transform;
                     
-                    _audioSources[i].loop = true;
+                    _audioSources[i].loop = false;
                     _audioSources[i].playOnAwake = false;
                 }
                 _audioSources[(int)AudioType.BGM].loop = true;
