@@ -29,14 +29,14 @@ namespace Audio
 
         public void BgmVolumeSetting()
         {
-            GameManager.AudioManager.SetBGMState();
-            DebugTool.Log($"BGM 볼륨 변경 : {GameManager.AudioManager.BgmOnOff}", DebugType.UI, this);
+            GameManager.Audio.SetBGMState();
+            DebugTool.Log($"BGM 볼륨 변경 : {GameManager.Audio.BgmOnOff}", DebugType.UI, this);
         }
 
         public void SfxVolumeSetting()
         {
-            GameManager.AudioManager.SetSFXState();
-            DebugTool.Log($"SFX 볼륨 변경 : {GameManager.AudioManager.SfxOnOff}", DebugType.UI, this);
+            GameManager.Audio.SetSFXState();
+            DebugTool.Log($"SFX 볼륨 변경 : {GameManager.Audio.SfxOnOff}", DebugType.UI, this);
         }
     }
 }
