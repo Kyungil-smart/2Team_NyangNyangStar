@@ -28,12 +28,14 @@ namespace Core.Managers
         private AudioManager _audioManager = new AudioManager();
         private GameSceneManager _gameSceneManager = new GameSceneManager();
         private AddressableManager _addressableManager = new AddressableManager();
+        private UiManager _uiManager = new UiManager();
     
-        // TODO UI, SceneChangeManger, DataManager 추가
+        // TODO : DataManager 추가
 
-        public static AudioManager AudioManager => Instance._audioManager;
+        public static AudioManager Audio => Instance._audioManager;
         public static GameSceneManager Scene => Instance._gameSceneManager;
         public static AddressableManager Addressable => Instance._addressableManager;
+        public static UiManager UI => Instance._uiManager;
     
 
         private static void Init()
@@ -53,14 +55,15 @@ namespace Core.Managers
                 // Data.Init();
                 Addressable.Init();
                 Scene.Init();
-                AudioManager.Init();
-                // UI.Init();
+                Audio.Init();
+                UI.Init();
             }    
             DebugTool.Log("모든 매니저 초기화 완료 ", DebugType.Game);
         }
 
         public static void Clear()
         {
+            _instance._uiManager.Clear();
             _instance._audioManager.Clear();
             _instance._gameSceneManager.Clear();
             _instance._addressableManager.Clear();
