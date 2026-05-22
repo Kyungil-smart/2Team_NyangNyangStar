@@ -1,39 +1,16 @@
 ﻿using Services.AddressableKey;
-using Services.Scriptable_Object;
+using System;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
+using Object = UnityEngine.Object;
 
 namespace Core.Managers
 {
     public class AddressableManager : ISubManager
     {
         private GameObject _root;
-
-        public bool TryLoadPrefab(string key)
-        {
-            if (!KeyContainer.GetAddressableKey(key))
-                return false;
-            
-            GameObject prefab = null;
-            Addressables.InstantiateAsync(key).Completed += handle =>
-            {
-                // 로드 및 생성 성공
-                if (handle.Status == AsyncOperationStatus.Succeeded)
-                {
-                    // EventSystem 가져오기
-                    prefab = handle.Result;
-
-                    Object.DontDestroyOnLoad(prefab);
-                }
-                else
-                {
-                    DebugTool.Log($"{key} 로드 실패", DebugType.Missing);
-                }
-            };
-
-            return true;
-        }
+        public GameObject Root => _root;
         
         public void Init()
         {
@@ -48,6 +25,33 @@ namespace Core.Managers
             }
 
             DebugTool.Log("어드레서블 매니저 초기화 완료", DebugType.Game);
+        }
+
+        public bool TryLoadPrefab(string key, Action<GameObject> onLoaded,  Action<string> onFailed = null,  bool dontDestroy = false)
+        {
+            if (!KeyContainer.GetAddressableKey(key))
+            {
+                onFailed?.Invoke(null);
+                return false;
+            }
+            
+            Addressables.InstantiateAsync(key, _root.transform).Completed += handle =>
+            {
+                if (handle.Status == AsyncOperationStatus.Succeeded)
+                {
+                    GameObject go = handle.Result;
+                    onLoaded?.Invoke(go);
+                    
+                    if(dontDestroy)
+                        Object.DontDestroyOnLoad(go);
+                    return;
+                }
+                
+                DebugTool.Log($"{key} 로드 실패", DebugType.Missing);
+                onFailed?.Invoke(key);
+            };
+
+            return true;
         }
 
         public void Clear()
