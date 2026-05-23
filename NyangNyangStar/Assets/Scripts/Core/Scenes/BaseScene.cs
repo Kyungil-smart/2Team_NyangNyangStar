@@ -13,8 +13,10 @@ public class BaseScene : MonoBehaviour
 
         if (obj == null)
         {
-            if(!GameManager.Addressable.TryLoadPrefab(KeyContainer.EventSystem))
-                DebugTool.Warning("Failed to find EventSystem", DebugType.Missing);
+            GameManager.Addressable.TryLoadPrefab(KeyContainer.EventSystem,
+                onloaded => { },
+                onFailed => { }
+            );
         }
     }
 }
