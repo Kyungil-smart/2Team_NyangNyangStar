@@ -25,10 +25,10 @@ namespace Core.Managers
             } 
         }
 
-        private AudioManager _audioManager = new AudioManager();
-        private GameSceneManager _gameSceneManager = new GameSceneManager();
-        private AddressableManager _addressableManager = new AddressableManager();
-        private UiManager _uiManager = new UiManager();
+        private AudioManager _audioManager = new();
+        private GameSceneManager _gameSceneManager = new();
+        private AddressableManager _addressableManager = new();
+        private UiManager _uiManager = new();
     
         // TODO : DataManager 추가
 
