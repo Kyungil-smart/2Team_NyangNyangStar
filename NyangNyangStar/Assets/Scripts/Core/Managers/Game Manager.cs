@@ -43,30 +43,41 @@ namespace Core.Managers
             if (_instance != null) return;
 
             GameObject go = GameObject.Find("@GameManager");
-        
+
             if (go == null)
-            {
                 go = new GameObject("@GameManager");
-                go.AddComponent<GameManager>();
 
-                _instance = go.GetComponent<GameManager>();
-                DontDestroyOnLoad(go.gameObject);
+            _instance = go.GetComponent<GameManager>();
 
-                // Data.Init();
-                Addressable.Init();
-                Scene.Init();
-                Audio.Init();
-                UI.Init();
-            }    
+            if(_instance == null)
+                _instance = go.AddComponent<GameManager>();
+            
+            DontDestroyOnLoad(go.gameObject);
+            
+            DebugTool.Log("게임 매니저 초기화 시작", DebugType.Game);
+
+            // Data.Init();
+            _instance._addressableManager.Init();
+            _instance._gameSceneManager.Init();
+            _instance._audioManager.Init();
+            _instance._uiManager.Init();
+            
             DebugTool.Log("모든 매니저 초기화 완료 ", DebugType.Game);
         }
 
         public static void Clear()
         {
-            _instance._uiManager.Clear();
-            _instance._audioManager.Clear();
-            _instance._gameSceneManager.Clear();
-            _instance._addressableManager.Clear();
+            if (_instance == null)
+                return;
+            
+            if(_instance._uiManager != null)
+                _instance._uiManager.Clear();
+            if(_instance._audioManager != null)
+                _instance._audioManager.Clear();
+            if(_instance._gameSceneManager != null)
+                _instance._gameSceneManager.Clear();
+            if(_instance._addressableManager != null)
+                _instance._addressableManager.Clear();
             
             DebugTool.Log("모든 매니저 제거 완료 ", DebugType.Game);
         }
