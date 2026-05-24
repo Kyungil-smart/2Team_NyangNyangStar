@@ -1,8 +1,10 @@
 ﻿using Services.AddressableKey;
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
+using UnityEngine.ResourceManagement.ResourceLocations;
 using Object = UnityEngine.Object;
 
 namespace Core.Managers
@@ -26,47 +28,74 @@ namespace Core.Managers
             DebugTool.Log("어드레서블 매니저 초기화 완료", DebugType.Game);
         }
 
-        public bool TryLoadPrefab(string key, Action<GameObject> onLoaded,  Action<string> onFailed = null,  bool dontDestroy = false)
+        public void LoadPrefab(string key, Action<GameObject> onLoaded,  Action<string> onFailed = null,  bool dontDestroy = false)
         {
-            if (!KeyContainer.GetAddressableKey(key))
+            
+            if (!KeyContainer.IsContainsKey(key))
             {
                 onFailed?.Invoke(key);
-                DebugTool.Warning($"{key} : Addressable Key를 찾을 수 없습니다.", DebugType.Game);
-                return false;
+                return;
             }
             
-            Addressables.InstantiateAsync(key, _root.transform).Completed += handle =>
+            AsyncOperationHandle<IList<IResourceLocation>> locationHandle = 
+                Addressables.LoadResourceLocationsAsync(key, typeof(GameObject));
+
+            locationHandle.Completed += locationResult =>
             {
-                if (handle.Status == AsyncOperationStatus.Succeeded)
+                // 3. Location 검사 실패 또는 결과 없음
+                if (locationResult.Status != AsyncOperationStatus.Succeeded ||
+                    locationResult.Result == null ||
+                    locationResult.Result.Count == 0)
                 {
-                    GameObject go = handle.Result;
-                    
-                    if(dontDestroy)
-                        Object.DontDestroyOnLoad(go);
-                    
-                    DebugTool.Log($"{go.name} 로드 성공", DebugType.Game);
-                    onLoaded?.Invoke(go);
-                    
+                    DebugTool.Warning($"{key} : Addressables Catalog에 존재하지 않는 키입니다.", DebugType.Missing);
+
+                    Addressables.Release(locationResult);
+
+                    onFailed?.Invoke(key);
                     return;
                 }
-                
-                DebugTool.Log($"{key} 로드 실패", DebugType.Missing);
-                onFailed?.Invoke(key);
-            };
 
-            return true;
+                // Location 조회용 handle은 여기서 해제
+                Addressables.Release(locationResult);
+
+                Addressables.InstantiateAsync(key, _root.transform).Completed += handle =>
+                {
+                    if (handle.Status == AsyncOperationStatus.Succeeded)
+                    {
+                        GameObject go = handle.Result;
+
+                        KeyContainer.AddPrefab(key, go);
+
+                        if (dontDestroy)
+                            Object.DontDestroyOnLoad(go);
+
+                        DebugTool.Log($"{go.name} 로드 성공", DebugType.Game);
+                        onLoaded?.Invoke(go);
+
+                        return;
+                    }
+
+                    DebugTool.Log($"{key} 로드 실패", DebugType.Missing);
+                    onFailed?.Invoke(key);
+                };
+            };
         }
 
         // TODO : 어드레서블 해제 메서드
-        public bool TryReleasePrefab(string key, Action<GameObject> onReleased, Action<string> onFailed = null)
+        public bool TryReleasePrefab(string key, GameObject prefab)
         {
-            if (!KeyContainer.GetAddressableKey(key))
-                {
-                    onFailed?.Invoke(key);
-                    DebugTool.Warning($"{key} : Addressable Key를 찾을 수 없습니다.", DebugType.Game);
-                    return false;
-                }
+            if(!KeyContainer.IsContainsKey(key))
+                return false;
+            
+            if (!KeyContainer.IsPrefabActive(key, prefab))
+                return false;
 
+            bool result = Addressables.ReleaseInstance(prefab);
+
+            if (!result)
+                return false;
+            
+            KeyContainer.RemovePrefab(key, prefab);
             return true;
         }
 
