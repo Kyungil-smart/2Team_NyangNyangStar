@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Services.AddressableKey;
+using System;
 using System.Collections.Generic;
 using UI;
 using UnityEngine;
@@ -77,6 +78,36 @@ namespace Core.Managers
                 });
         }
 
+        public void ShowPopupUI<T>(string name = null, Action<T> onLoaded = null) where T : UIPopup
+        {
+            if (string.IsNullOrEmpty(name))
+                name = typeof(T).Name;
+
+            GameManager.Addressable.TryLoadPrefab(name,
+                uiPrefab =>
+                {
+                    T popup = uiPrefab.GetComponent<T>();
+
+                    if (popup == null)
+                        popup = uiPrefab.AddComponent<T>();
+
+                    _popupStack.Push(popup);
+
+                    uiPrefab.transform.SetParent(_root.transform);
+                    
+                    SetCanvas(uiPrefab);
+                    popup.Init();
+
+                    DebugTool.Log($"{popup.name} : 팝업 UI 생성", DebugType.UI);
+
+                    onLoaded?.Invoke(popup);
+                },
+                failedKey =>
+                {
+                    DebugTool.Warning($"{failedKey} : 팝업 UI 로드 실패", DebugType.Missing);
+                });
+        }
+
         public void ClosePopupUI(UIPopup popup)
         {
             if (_popupStack.Count == 0)
@@ -84,7 +115,7 @@ namespace Core.Managers
 
             if (_popupStack.Peek() != popup)
             {
-                //GameManager.Addressable.TryReleasePrefab();
+                GameManager.Addressable.TryReleasePrefab(KeyContainer.PopupUI, popup.gameObject);
                 _order--;
                 return;
             }
@@ -98,7 +129,7 @@ namespace Core.Managers
                 return;
 
             UIPopup popup = _popupStack.Pop();
-            //GameManager.Addressable.TryReleasePrefab(popup.gameObject);
+            GameManager.Addressable.TryReleasePrefab(KeyContainer.PopupUI, popup.gameObject);
             _order--;
             DebugTool.Log($"{popup.name} : 팝업 창 닫힘 / 순서 : {_order}", DebugType.UI);
         }
