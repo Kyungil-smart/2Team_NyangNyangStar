@@ -13,7 +13,7 @@ public class BaseScene : MonoBehaviour
 
         if (obj == null)
         {
-            GameManager.Addressable.TryLoadPrefab(KeyContainer.EventSystem,
+            GameManager.Addressable.LoadPrefab(KeyContainer.EventSystem,
                 onloaded => { },
                 onFailed => { }
             );
