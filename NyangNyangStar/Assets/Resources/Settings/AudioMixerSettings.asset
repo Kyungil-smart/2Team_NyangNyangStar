@@ -16,5 +16,3 @@ MonoBehaviour:
   masterGroup: {fileID: 24300002, guid: 039987f68766c434a91cd5e54d9b8e20, type: 2}
   bgmGroup: {fileID: 5799343855359010819, guid: 039987f68766c434a91cd5e54d9b8e20, type: 2}
   sfxGroup: {fileID: 978756160917520057, guid: 039987f68766c434a91cd5e54d9b8e20, type: 2}
-  _bgmOnOff: 1
-  _sfxOnOff: 1
