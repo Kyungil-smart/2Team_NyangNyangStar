@@ -14,7 +14,7 @@ namespace Core.Managers
         private AudioSource[] _audioSources = new AudioSource[(int)AudioType.MaxCount];
         private Dictionary<string, AudioClip> _audioClips = new();
 
-        private const string AudioSettingPath = "Assets/Audio/BGM";
+        private const string AudioSettingPath = "Settings/AudioMixerSettings";
 
         private AudioMixerSettingSo _audioSettings;
         private AudioMixer _audioMixer;
