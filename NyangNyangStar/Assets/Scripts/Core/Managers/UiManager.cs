@@ -1,7 +1,7 @@
-﻿using Services.AddressableKey;
+﻿using UI;
+using Services.AddressableKey;
 using System;
 using System.Collections.Generic;
-using UI;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
@@ -47,12 +47,12 @@ namespace Core.Managers
                 canvas.sortingOrder = 0;
         }
 
-        public bool ShowSceneUI<T>(string name = null, Action<T> onLoaded = null) where T : UIScene
+        public void ShowSceneUI<T>(string name = null, Action<T> onLoaded = null) where T : UIScene
         {
             if (string.IsNullOrEmpty(name))
                 name = typeof(T).Name;
 
-            return GameManager.Addressable.TryLoadPrefab(name,
+            GameManager.Addressable.LoadPrefab(name,
                 uiPrefab =>
                 {
                     T uiScene = uiPrefab.GetComponent<T>();
@@ -83,7 +83,7 @@ namespace Core.Managers
             if (string.IsNullOrEmpty(name))
                 name = typeof(T).Name;
 
-            GameManager.Addressable.TryLoadPrefab(name,
+            GameManager.Addressable.LoadPrefab(name,
                 uiPrefab =>
                 {
                     T popup = uiPrefab.GetComponent<T>();
