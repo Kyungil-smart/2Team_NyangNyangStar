@@ -15,7 +15,7 @@ namespace Core.Managers
         
         public void Init()
         {
-            KeyContainer.InitKeyDict();
+            KeyContainer.InitKeys();
             
             _root = GameObject.Find("@Addressable");
             
@@ -31,7 +31,7 @@ namespace Core.Managers
         public void LoadPrefab(string key, Action<GameObject> onLoaded,  Action<string> onFailed = null,  bool dontDestroy = false)
         {
             
-            if (!KeyContainer.IsContainsKey(key))
+            if (!KeyContainer.IsPrefabKey(key))
             {
                 onFailed?.Invoke(key);
                 return;
@@ -54,11 +54,14 @@ namespace Core.Managers
                     onFailed?.Invoke(key);
                     return;
                 }
-
+            
                 // Location 조회용 handle은 여기서 해제
                 Addressables.Release(locationResult);
 
-                Addressables.InstantiateAsync(key, _root.transform).Completed += handle =>
+                AsyncOperationHandle<GameObject> prefabHandle = 
+                    Addressables.InstantiateAsync(key);
+                
+                prefabHandle.Completed += handle =>
                 {
                     if (handle.Status == AsyncOperationStatus.Succeeded)
                     {
@@ -81,10 +84,85 @@ namespace Core.Managers
             };
         }
 
-        // TODO : 어드레서블 해제 메서드
+        public void LoadAudioClip(string key, 
+            Action<AudioClip, AsyncOperationHandle<AudioClip>> onLoaded,
+            Action<string> onFailed = null)
+        {
+            if (!KeyContainer.IsAudioKey(key))
+            {
+                onFailed?.Invoke(key);
+                return;
+            }
+
+            AsyncOperationHandle<AudioClip> clipHandle = 
+                Addressables.LoadAssetAsync<AudioClip>(key);
+
+            clipHandle.Completed += handle =>
+            {
+                // 3. Location 검사 실패 또는 결과 없음
+                if (handle.Status == AsyncOperationStatus.Succeeded)
+                {
+                    AudioClip clip = handle.Result;
+
+                    if (clip == null)
+                    {
+                        DebugTool.Warning($"{key} : AudioClip이 null 입니다", DebugType.Addressable);
+                        Addressables.Release(handle);
+                        onFailed?.Invoke(key);
+                        return;
+                    }
+
+                    DebugTool.Log($"{key} : AudioClip 로드 성공", DebugType.Addressable);
+                    onLoaded?.Invoke(clip, handle);
+                    return;
+                }
+                DebugTool.Warning($"{key} : AudioClip 로드 실패", DebugType.Addressable);
+                Addressables.Release(handle);
+                onFailed?.Invoke(key);
+            };
+        }
+        
+        public void LoadSprite(string key,
+            Action<Sprite, AsyncOperationHandle<Sprite>> onLoaded,
+            Action<string> onFailed = null)
+        {
+            if (!KeyContainer.IsSpriteKey(key))
+            {
+                onFailed?.Invoke(key);
+                return;
+            }
+
+            AsyncOperationHandle<Sprite> spriteHandle = 
+                Addressables.LoadAssetAsync<Sprite>(key);
+
+            spriteHandle.Completed += handle =>
+            {
+                // 3. Location 검사 실패 또는 결과 없음
+                if (handle.Status == AsyncOperationStatus.Succeeded)
+                {
+                    Sprite sprite = handle.Result;
+
+                    if (sprite == null)
+                    {
+                        DebugTool.Warning($"{key} : Sprite 가 null 입니다", DebugType.Addressable);
+                        Addressables.Release(handle);
+                        onFailed?.Invoke(key);
+                        return;
+                    }
+
+                    DebugTool.Log($"{key} : Sprite 로드 성공", DebugType.Addressable);
+                    onLoaded?.Invoke(sprite, handle);
+                    return;
+                }
+                DebugTool.Warning($"{key} : Sprite 로드 실패", DebugType.Addressable);
+                Addressables.Release(handle);
+                onFailed?.Invoke(key);
+            };
+        }
+        
         public bool TryReleasePrefab(string key, GameObject prefab)
         {
-            if(!KeyContainer.IsContainsKey(key))
+            if(!KeyContainer.IsPrefabKey(key))
                 return false;
             
             if (!KeyContainer.IsPrefabActive(key, prefab))
