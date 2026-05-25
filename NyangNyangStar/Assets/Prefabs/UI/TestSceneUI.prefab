@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 5612533499668243611}
   - component: {fileID: 3704872382048386137}
   m_Layer: 0
-  m_Name: UITestScene
+  m_Name: TestSceneUI
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
