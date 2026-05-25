@@ -1,4 +1,4 @@
-﻿public partial interface ISubManager
+﻿public interface ISubManager
 {
     public void Init();
     public void Clear();
