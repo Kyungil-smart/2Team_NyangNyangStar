@@ -3,6 +3,7 @@ using Services.AddressableKey;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 using Object = UnityEngine.Object;
 
 namespace Core.Managers
@@ -37,6 +38,14 @@ namespace Core.Managers
             
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
             canvas.overrideSorting = sort;
+            
+            CanvasScaler canvasScaler = canvas.GetComponent<CanvasScaler>();
+            if(canvasScaler == null)
+                canvasScaler = go.AddComponent<CanvasScaler>();
+            
+            canvasScaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            canvasScaler.referenceResolution = new Vector2(1080, 1920);
+            canvasScaler.matchWidthOrHeight = 0.5f;
 
             if (sort)
             {
@@ -65,6 +74,7 @@ namespace Core.Managers
                     uiPrefab.transform.SetParent(_root.transform, false);
 
                     SetCanvas(uiPrefab, sort: false);
+                    
 
                     uiScene.Init();
 
@@ -93,10 +103,11 @@ namespace Core.Managers
 
                     _popupStack.Push(popup);
 
-                    uiPrefab.transform.SetParent(_root.transform);
+                    uiPrefab.transform.SetParent(_root.transform, false);
                     
                     SetCanvas(uiPrefab);
                     popup.Init();
+                    popup.SetAddressableKey(name);
 
                     DebugTool.Log($"{popup.name} : 팝업 UI 생성", DebugType.UI);
 
@@ -115,8 +126,7 @@ namespace Core.Managers
 
             if (_popupStack.Peek() != popup)
             {
-                GameManager.Addressable.TryReleasePrefab(KeyContainer.PopupUI, popup.gameObject);
-                _order--;
+                DebugTool.Warning("최상단 팝업이 아니므로 닫을 수 업습니다.", DebugType.UI);
                 return;
             }
             
@@ -128,8 +138,17 @@ namespace Core.Managers
             if (_popupStack.Count == 0)
                 return;
 
-            UIPopup popup = _popupStack.Pop();
-            GameManager.Addressable.TryReleasePrefab(KeyContainer.PopupUI, popup.gameObject);
+            UIPopup popup = _popupStack.Peek();
+            string key = popup.AddressableKey;
+
+            if (!GameManager.Addressable.TryReleasePrefab(key, popup.gameObject))
+            {
+                DebugTool.Warning($"{key} : 해당 UI를 닫을 수 없습니다.", DebugType.UI);
+                return;
+            }
+            
+            _popupStack.Pop();
+            
             _order--;
             DebugTool.Log($"{popup.name} : 팝업 창 닫힘 / 순서 : {_order}", DebugType.UI);
         }
