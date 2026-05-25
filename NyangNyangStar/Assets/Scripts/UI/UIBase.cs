@@ -18,7 +18,7 @@ namespace UI
             string[] names = Enum.GetNames(type);
             
             Object[] objects = new Object[names.Length];
-            _objects.Add(typeof(T), objects);
+            _objects[typeof(T)] = objects;
 
             for (int i = 0; i < names.Length; i++)
             {
