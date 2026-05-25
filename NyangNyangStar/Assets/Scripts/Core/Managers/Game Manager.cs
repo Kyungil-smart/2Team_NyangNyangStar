@@ -58,8 +58,8 @@ namespace Core.Managers
 
             // Data.Init();
             _instance._addressableManager.Init();
-            _instance._gameSceneManager.Init();
             _instance._audioManager.Init();
+            _instance._gameSceneManager.Init();
             _instance._uiManager.Init();
             
             DebugTool.Log("모든 매니저 초기화 완료 ", DebugType.Game);
