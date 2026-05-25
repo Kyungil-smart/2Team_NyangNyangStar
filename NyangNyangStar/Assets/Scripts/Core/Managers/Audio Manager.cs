@@ -1,6 +1,5 @@
 using Services.Scriptable_Object;
 using System;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Audio;
@@ -12,20 +11,18 @@ namespace Core.Managers
     public class AudioManager : ISubManager
     {
         private AudioSource[] _audioSources = new AudioSource[(int)AudioType.MaxCount];
-        private Dictionary<string, AudioClip> _audioClips = new();
 
         private const string AudioSettingPath = "Settings/AudioMixerSettings";
 
         private AudioMixerSettingSo _audioSettings;
         private AudioMixer _audioMixer;
 
-        private AudioMixerGroup _masterGroup;
         private AudioMixerGroup _bgmGroup;
         private AudioMixerGroup _sfxGroup;
 
         private const int DefaultState = 1;
 
-        private const float VolumeOn = 0f;
+        private const float VolumeOn = -10f;
         private const float VolumeOff = -80f;
 
         private bool _bgmOnOff = true;
@@ -41,6 +38,16 @@ namespace Core.Managers
         private int MasterState => PlayerPrefs.GetInt(MasterStateKey, DefaultState);
         private int BGMState => PlayerPrefs.GetInt(BGMStateKey, DefaultState);
         private int SfxState => PlayerPrefs.GetInt(SfxStateKey, DefaultState);
+        
+        // 현재 재생 중인 BGM
+        private string _currentBgmKey;
+        // 현재 로딩 중인 BGM
+        private string _loadingBgmKey;
+        // 다른 BGM 요청이 들어왔는지 확인
+        private string _requestedBgmKey;
+        // 나중에 Release 하기 위해 저장해두는 BGM 핸들
+        private AsyncOperationHandle<AudioClip> _bgmHandle;
+        private bool _isBgmLoaded;
 
         public void Init()
         {
@@ -50,144 +57,93 @@ namespace Core.Managers
             VolumeInit();
         }
 
-        // 현재 재생 중인 BGM
-        private string _currentBgmKey;
-
-        // 현재 로딩 중인 BGM
-        private string _loadingBgmKey;
-
-        // 다른 BGM 요청이 들어왔는지 확인
-        private string _requestedBgmKey;
-
-        // 나중에 Release 하기 위해 저장해두는 BGM 핸들
-        private AsyncOperationHandle<AudioClip> _bgmHandle;
-
-        // 현재 BGM이 Addressables로 로드되어 있는지 확인하는 값
-        private bool _isBgmLoaded;
-
         public void PlayBgm(string bgmKey)
         {
             if (string.IsNullOrEmpty(bgmKey))
             {
-                DebugTool.Error("BGM Key가 비어 있습니다.", DebugType.Addressable);
+                DebugTool.Warning("BGM Key가 비어 있습니다.", DebugType.Audio);
                 return;
             }
 
-            // BGM 전용 AudioSource 가져오기
             AudioSource bgmSource = _audioSources[(int)AudioType.BGM];
 
-            // AudioSource가 없으면 재생 불가
             if (bgmSource == null)
             {
-                DebugTool.Log("BGM AudioSource가 없습니다.", DebugType.Missing);
-                return;
-            }
-
-            // 마지막으로 요청한 BGM Key 저장
-            _requestedBgmKey = bgmKey;
-
-            // 이미 같은 BGM이 재생 중이면 다시 Load 하지 않음
-            if (_currentBgmKey == bgmKey && _isBgmLoaded)
-            {
-                DebugTool.Log($"같은 BGM 유지: {bgmKey}", DebugType.Addressable);
-                return;
-            }
-
-            // 이미 같은 BGM을 로딩 중이면 중복 요청 방지
-            if (_loadingBgmKey == bgmKey)
-            {
-                DebugTool.Log($"이미 BGM 로딩 중: {bgmKey}", DebugType.Addressable);
-            }
-
-            _loadingBgmKey = bgmKey;
-
-            // Addressables로 AudioClip 비동기 로드
-            Addressables.LoadAssetAsync<AudioClip>(bgmKey).Completed += handle =>
-            {
-                OnBgmLoaded(handle, bgmKey);
-            };
-        }
-
-        private void OnBgmLoaded(AsyncOperationHandle<AudioClip> handle, string loadedKey)
-        {
-            // 로딩이 끝났으므로 로딩 중인 Key 초기화
-            _loadingBgmKey = null;
-
-            // 로드 실패 시 handle 정리 후 종료
-            if (handle.Status != AsyncOperationStatus.Succeeded)
-            {
-                DebugTool.Log($"BGM 로드 실패: {loadedKey}", DebugType.Addressable);
-                Addressables.Release(handle);
-                return;
-            }
-
-            // 로딩 도중 다른 BGM 요청이 들어온 경우
-            // 지금 로드된 BGM은 더 이상 필요 없으므로 Release
-            if (_requestedBgmKey != loadedKey)
-            {
-                DebugTool.Log($"다른 BGM 요청으로 로드 취소 처리: {loadedKey}", DebugType.Addressable);
-                Addressables.Release(handle);
-                return;
-            }
-
-            // BGM 전용 AudioSource 가져오기
-            AudioSource bgmSource = _audioSources[(int)AudioType.BGM];
-
-            // AudioSource가 없으면 방금 로드한 handle을 Release 해야 함
-            if (bgmSource == null)
-            {
-                Addressables.Release(handle);
                 DebugTool.Warning("BGM AudioSource가 없습니다.", DebugType.Missing);
                 return;
             }
 
-            // 새 BGM이 정상적으로 로드된 뒤 기존 BGM 정리
-            // 순서 중요: 새 BGM Load 성공 후 기존 BGM Release, 이후 새 BGM 재생
-            ReleaseCurrentBGM();
+            _requestedBgmKey = bgmKey;
 
-            // 새 BGM handle 저장
-            // 나중에 다른 BGM으로 바뀔 때 Release 하기 위해 필요
-            _bgmHandle = handle;
+            if (_currentBgmKey == bgmKey && _isBgmLoaded)
+            {
+                DebugTool.Log($"같은 BGM 유지: {bgmKey}", DebugType.Audio);
+                return;
+            }
 
-            // 현재 BGM이 로드되었다고 표시
-            _isBgmLoaded = true;
+            if (_loadingBgmKey == bgmKey)
+            {
+                DebugTool.Log($"이미 BGM 로딩 중: {bgmKey}", DebugType.Audio);
+                return;
+            }
 
-            // 현재 재생 중인 BGM Key 저장
-            _currentBgmKey = loadedKey;
+            _loadingBgmKey = bgmKey;
 
-            // AudioSource에 AudioClip 연결 후 재생
-            bgmSource.Stop();
-            bgmSource.clip = handle.Result;
-            bgmSource.loop = true;
-            bgmSource.Play();
+            GameManager.Addressable.LoadAudioClip(
+                bgmKey,
+                (clip, handle) =>
+                {
+                    _loadingBgmKey = null;
 
-            DebugTool.Log($"BGM 재생 성공: {loadedKey}", DebugType.Addressable);
+                    if (_requestedBgmKey != bgmKey)
+                    {
+                        DebugTool.Log($"다른 BGM 요청으로 로드 취소 처리: {bgmKey}", DebugType.Addressable);
+                        Addressables.Release(handle);
+                        return;
+                    }
+
+                    ReleaseCurrentBGM();
+
+                    _bgmHandle = handle;
+                    _isBgmLoaded = true;
+                    _currentBgmKey = bgmKey;
+
+                    bgmSource.Stop();
+                    bgmSource.clip = clip;
+                    bgmSource.loop = true;
+
+                    ApplyAudioState();
+
+                    bgmSource.Play();
+
+                    DebugTool.Log($"BGM 재생 시작: {bgmKey}", DebugType.Audio);
+                },
+                failedKey =>
+                {
+                    _loadingBgmKey = null;
+
+                    if (_requestedBgmKey == failedKey)
+                        _requestedBgmKey = null;
+
+                    DebugTool.Warning($"{failedKey} : BGM 로드 실패", DebugType.Audio);
+                });
         }
 
         private void ReleaseCurrentBGM()
         {
-            // BGM 전용 AudioSource 가져오기
             AudioSource bgmSource = _audioSources[(int)AudioType.BGM];
 
-            // 현재 재생 중인 BGM 정지
-            // clip 참조 제거
             if (bgmSource != null)
             {
                 bgmSource.Stop();
                 bgmSource.clip = null;
             }
 
-            // Addressables로 로드한 BGM이 없으면 Release 할 필요 없음
             if (!_isBgmLoaded)
-            {
                 return;
-            }
 
-            // 현재 BGM Addressables Handle Release
-            // 호출하지 않으면 Addressables 참조가 계속 남음
             Addressables.Release(_bgmHandle);
 
-            // BGM 상태 초기화
             _bgmHandle = default;
             _isBgmLoaded = false;
             _currentBgmKey = null;
@@ -203,6 +159,8 @@ namespace Core.Managers
             // 요청 중인 BGM 정보 초기화
             _requestedBgmKey = null;
             _loadingBgmKey = null;
+            
+            DebugTool.Log("BGM 정지", DebugType.Audio);
         }
 
         private void LoadAudioSettings()
@@ -217,7 +175,6 @@ namespace Core.Managers
             }
 
             _audioMixer = _audioSettings.AudioMixer;
-            _masterGroup = _audioSettings.MasterGroup;
             _bgmGroup = _audioSettings.BgmGroup;
             _sfxGroup = _audioSettings.SfxGroup;
         }
@@ -233,11 +190,39 @@ namespace Core.Managers
                 string[] soundNames = Enum.GetNames(typeof(AudioType));
                 for (int i = 0; i < soundNames.Length - 1; i++)
                 {
-                    GameObject go = new() { name = soundNames[i] };
-                    _audioSources[i] = go.AddComponent<AudioSource>();
+                    GameObject go = new(soundNames[i]);
                     go.transform.parent = root.transform;
+                    
+                    AudioSource source = go.AddComponent<AudioSource>();
+                    source.loop = false;
+                    source.playOnAwake = false;
 
-                    _audioSources[i].loop = false;
+                    _audioSources[i] = source;
+                }
+                _audioSources[(int)AudioType.BGM].loop = true;
+            }
+            else
+            {
+                string[] soundNames = Enum.GetNames(typeof(AudioType));
+
+                for (int i = 0; i < soundNames.Length - 1; i++)
+                {
+                    Transform child = root.transform.Find(soundNames[i]);
+
+                    if (child == null)
+                    {
+                        GameObject go = new(soundNames[i]);
+                        go.transform.parent = root.transform;
+                        _audioSources[i] = go.AddComponent<AudioSource>();
+                    }
+                    else
+                    {
+                        _audioSources[i] = child.GetComponent<AudioSource>();
+
+                        if (_audioSources[i] == null)
+                            _audioSources[i] = child.gameObject.AddComponent<AudioSource>();
+                    }
+
                     _audioSources[i].playOnAwake = false;
                 }
 
@@ -250,36 +235,48 @@ namespace Core.Managers
         private void ApplyMixerGroup()
         {
             if (_audioSources[(int)AudioType.BGM] != null)
+            {
                 _audioSources[(int)AudioType.BGM].outputAudioMixerGroup = _bgmGroup;
+                DebugTool.Log($"BGM OutputGroup = {_audioSources[(int)AudioType.BGM].outputAudioMixerGroup?.name}", DebugType.Audio);
+            }
+            else
+            {
+                DebugTool.Warning("BGM AudioSource가 없습니다.", DebugType.Missing);
+            }
 
             if (_audioSources[(int)AudioType.SFX] != null)
+            {
                 _audioSources[(int)AudioType.SFX].outputAudioMixerGroup = _sfxGroup;
+                DebugTool.Log($"SFX OutputGroup = {_audioSources[(int)AudioType.SFX].outputAudioMixerGroup?.name}", DebugType.Audio);
+            }
+            else
+            {
+                DebugTool.Warning("SFX AudioSource가 없습니다.", DebugType.Missing);
+            }
         }
 
         public void SetBGMState()
         {
             _bgmOnOff = !_bgmOnOff;
-
-            float volume = _bgmOnOff ? VolumeOn : VolumeOff;
+            
             int state = _bgmOnOff ? 1 : 0;
-
-            SetMixerVolume(BGMStateKey, volume);
 
             PlayerPrefs.SetInt(BGMStateKey, state);
             PlayerPrefs.Save();
+            
+            ApplyAudioState();
         }
 
         public void SetSFXState()
         {
             _sfxOnOff = !_sfxOnOff;
-
-            float volume = _sfxOnOff ? VolumeOn : VolumeOff;
+            
             int state = _sfxOnOff ? 1 : 0;
-
-            SetMixerVolume(SfxStateKey, volume);
 
             PlayerPrefs.SetInt(SfxStateKey, state);
             PlayerPrefs.Save();
+            
+            ApplyAudioState();
         }
 
         private void SetMixerVolume(string parameter, float value)
@@ -306,9 +303,7 @@ namespace Core.Managers
                 source.clip = null;
             }
 
-            // 현재 Addressables로 로드한 BGM 정리
-
-            _audioClips.Clear();
+            Addressables.Release(_bgmHandle);
 
             DebugTool.Log("오디오 매니저 제거 완료", DebugType.Game);
         }
@@ -317,10 +312,17 @@ namespace Core.Managers
         {
             _bgmOnOff = BGMState == 1;
             _sfxOnOff = SfxState == 1;
-
+            
+            DebugTool.Log($"BGM = {_bgmOnOff}, SFX = {_sfxOnOff}", DebugType.Audio);
+            
+            ApplyAudioState();
+        }
+        
+        public void ApplyAudioState()
+        {
             SetMixerVolume(MasterStateKey, MasterState == 1 ? VolumeOn : VolumeOff);
-            SetMixerVolume(BGMStateKey, MasterState == 1 ? VolumeOn : VolumeOff);
-            SetMixerVolume(SfxStateKey, SfxState == 1 ? VolumeOn : VolumeOff);
+            SetMixerVolume(BGMStateKey, _bgmOnOff ? VolumeOn : VolumeOff);
+            SetMixerVolume(SfxStateKey, _sfxOnOff ? VolumeOn : VolumeOff);
         }
     }
 }
