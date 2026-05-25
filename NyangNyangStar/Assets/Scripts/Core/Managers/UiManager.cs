@@ -126,7 +126,7 @@ namespace Core.Managers
 
             if (_popupStack.Peek() != popup)
             {
-                DebugTool.Warning("최상단 팝업이 아니므로 닫을 수 업습니다.", DebugType.UI);
+                DebugTool.Warning("최상단 팝업이 아니므로 닫을 수 없습니다.", DebugType.UI);
                 return;
             }
             
