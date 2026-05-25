@@ -99,12 +99,14 @@ AudioMixerSnapshotController:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: napshott
+  m_Name: snapshot
   m_AudioMixer: {fileID: 24100000}
   m_SnapshotID: 47e7a8356ac10294190e46c6dc4e6905
   m_FloatValues:
-    2b5781111cc209e45806a97468375034: 0
+    2b5781111cc209e45806a97468375034: -14
+    389d8c5119890ef48b4cf58b31b6dd81: -14
     078bc7773566dc74c859fd1a9256a732: -50
+    e003620dbdbfa9e41a16b771bf8829e3: -14
   m_TransitionOverrides: {}
 --- !u!243 &978756160917520057
 AudioMixerGroupController:
