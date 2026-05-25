@@ -1,5 +1,4 @@
 ﻿using UI;
-using Services.AddressableKey;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,8 +10,8 @@ namespace Core.Managers
 {
     public class UiManager: ISubManager
     {
-        private const int popupStartorder = 10;
-        private int _order = popupStartorder;
+        private const int PopupStartorder = 10;
+        private int _order = PopupStartorder;
         
         private Stack<UIPopup> _popupStack = new();
         
@@ -221,10 +220,10 @@ namespace Core.Managers
                     continue;
 
                 int orderIndex = popups.Length - 1 - i;
-                canvas.sortingOrder = popupStartorder + orderIndex;
+                canvas.sortingOrder = PopupStartorder + orderIndex;
             }
             
-            _order = popupStartorder + _popupStack.Count;
+            _order = PopupStartorder + _popupStack.Count;
         }
 
         public void Clear()

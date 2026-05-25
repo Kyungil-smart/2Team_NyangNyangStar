@@ -26,9 +26,12 @@ namespace Services.AddressableKey
             public const string BGM03 = "BGM/BGM 03.mp3";
         }
 
-        public static class Image
+        public static class Sprite
         {
-            
+            public const string Title = "Sprites/Backgrounds/Title.png";
+            public const string Home = "Sprites/Backgrounds/Home.png";
+            public const string CatCafe = "Sprites/Backgrounds/CatCafe.png";
+            public const string School = "Sprites/Backgrounds/School.png";
         }
 
         public static bool IsPrefabKey(string key)
@@ -118,6 +121,11 @@ namespace Services.AddressableKey
         private static void ImagesInit()
         {
             sprites.Clear();
+            
+            sprites.Add(Sprite.Title);
+            sprites.Add(Sprite.Home);
+            sprites.Add(Sprite.CatCafe);
+            sprites.Add(Sprite.School);
         }
 
         private static void PrintKeys()
