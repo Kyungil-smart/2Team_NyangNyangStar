@@ -2,6 +2,7 @@
 using Services.AddressableKey;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 using Object = UnityEngine.Object;
@@ -10,12 +11,14 @@ namespace Core.Managers
 {
     public class UiManager: ISubManager
     {
-        private int _order = 10;
+        private const int popupStartorder = 10;
+        private int _order = popupStartorder;
+        
         private Stack<UIPopup> _popupStack = new();
+        
         private UIScene _uiScene;
         
         private GameObject _root;
-        public GameObject Root => _root;
         
         public void Init()
         {
@@ -109,7 +112,7 @@ namespace Core.Managers
                     popup.Init();
                     popup.SetAddressableKey(name);
 
-                    DebugTool.Log($"{popup.name} : 팝업 UI 생성", DebugType.UI);
+                    DebugTool.Log($"{popup.name} : 팝업 창 열림 / 현재 팝업 수 : {_popupStack.Count}", DebugType.UI);
 
                     onLoaded?.Invoke(popup);
                 },
@@ -119,40 +122,110 @@ namespace Core.Managers
                 });
         }
 
-        public void ClosePopupUI(UIPopup popup)
+        public bool ClosePopupUI()
         {
             if (_popupStack.Count == 0)
-                return;
-
-            if (_popupStack.Peek() != popup)
-            {
-                DebugTool.Warning("최상단 팝업이 아니므로 닫을 수 없습니다.", DebugType.UI);
-                return;
-            }
+                return false;
             
-            ClosePopupUI();
+            return ClosePopupUI(_popupStack.Peek());
         }
 
-        public void ClosePopupUI()
+        public bool ClosePopupUI(string key)
         {
+            if (string.IsNullOrEmpty(key))
+                return false;
+
             if (_popupStack.Count == 0)
-                return;
+                return false;
+            
+            List<UIPopup> popups = new(_popupStack);
 
-            UIPopup popup = _popupStack.Peek();
+            UIPopup targetPopup = null;
+
+            foreach (UIPopup popup in popups)
+            {
+                if (popup == null)
+                    continue;
+
+                if (popup.AddressableKey == key)
+                {
+                    targetPopup = popup;
+                    break;
+                }
+            }
+            if(targetPopup == null)
+            {
+                DebugTool.Warning($"{key} : 팝업 스택에 존재하지 않습니다.", DebugType.UI);
+                return false;
+            }
+
+            return ClosePopupUI(targetPopup);
+        }
+
+        public bool ClosePopupUI(UIPopup popup)
+        {
+            if (popup == null)
+                return false;
+            
+            if (_popupStack.Count == 0)
+                return false;
+
+            List<UIPopup> popups = _popupStack.ToList();
+            
+            int index = popups.FindIndex(target => ReferenceEquals(target, popup));
+
+            if (index < 0)
+            {
+                DebugTool.Warning($"{popup.name} : 팝업 스택에 존재하지 않습니다.", DebugType.UI);
+                return false;
+            }
+
             string key = popup.AddressableKey;
+            string popupName = popup.name;
+            GameObject popupObject = popup.gameObject;
 
-            if (!GameManager.Addressable.TryReleasePrefab(key, popup.gameObject))
+            if (!GameManager.Addressable.TryReleasePrefab(key, popupObject))
             {
                 DebugTool.Warning($"{key} : 해당 UI를 닫을 수 없습니다.", DebugType.UI);
-                return;
+                return false;
             }
             
-            _popupStack.Pop();
+            popups.RemoveAt(index);
+            _popupStack.Clear();
+
+            for (int i = popups.Count - 1; i >= 0; i--)
+            {
+                if(popups[i] != null)
+                    _popupStack.Push(popups[i]);
+            }
             
-            _order--;
-            DebugTool.Log($"{popup.name} : 팝업 창 닫힘 / 순서 : {_order}", DebugType.UI);
+            RefreshPopupSortingOrder();
+            DebugTool.Log($"{popupName} : 팝업 창 닫힘 / 현재 팝업 수 : {_popupStack.Count}", DebugType.UI);
+            return true;
         }
-    
+
+        private void RefreshPopupSortingOrder()
+        {
+            UIPopup[] popups = _popupStack.ToArray();
+
+            for (int i = popups.Length - 1; i >= 0; i--)
+            {
+                UIPopup popup = popups[i];
+
+                if (popup == null)
+                    continue;
+                
+                Canvas canvas = popup.GetComponentInParent<Canvas>();
+
+                if (canvas == null)
+                    continue;
+
+                int orderIndex = popups.Length - 1 - i;
+                canvas.sortingOrder = popupStartorder + orderIndex;
+            }
+            
+            _order = popupStartorder + _popupStack.Count;
+        }
 
         public void Clear()
         {
