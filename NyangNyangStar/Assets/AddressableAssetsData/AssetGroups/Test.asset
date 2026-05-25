@@ -17,8 +17,23 @@ MonoBehaviour:
     m_SerializedData: []
   m_GUID: e975e63b9bc2f8b49b88b5a1e3eddb5a
   m_SerializeEntries:
+  - m_GUID: 2b398541e9755b941a2769383c852c6a
+    m_Address: VolumePopupUI
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b765d3a56ef0ce54696d4320eea85e2e
+    m_Address: BGMPopupUI
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: cd9c9d9253516544a94ddb7794e30911
     m_Address: EventSystem
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: cec34d7e83c1a6d459c6e5eaeb612bd4
+    m_Address: TestScene
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
