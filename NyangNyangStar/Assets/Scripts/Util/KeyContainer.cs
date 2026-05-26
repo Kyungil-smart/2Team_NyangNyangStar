@@ -93,7 +93,16 @@ namespace Services.AddressableKey
         {
             PrefabKeyDictInit();
             AudioClipsInit();
-            ImagesInit();
+            SpritesInit();
+            
+            PrintKeys();
+        }
+
+        public static void ClearKeys()
+        {
+            prefabKeyDict.Clear();
+            audioClips.Clear();
+            sprites.Clear();
             
             PrintKeys();
         }
@@ -118,7 +127,7 @@ namespace Services.AddressableKey
             audioClips.Add(Audio.BGM03);
         }
 
-        private static void ImagesInit()
+        private static void SpritesInit()
         {
             sprites.Clear();
             
@@ -139,6 +148,10 @@ namespace Services.AddressableKey
 
             log.AppendLine("[Audio]");
             foreach (string key in audioClips)
+                log.AppendLine(key);
+            
+            log.AppendLine("[Sprite]");
+            foreach (string key in sprites)
                 log.AppendLine(key);
 
             DebugTool.Log(log.ToString(), DebugType.Addressable);
