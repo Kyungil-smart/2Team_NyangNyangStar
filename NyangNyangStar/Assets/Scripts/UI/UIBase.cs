@@ -9,7 +9,7 @@ namespace UI
 {
     public abstract class UIBase : MonoBehaviour
     {
-        protected Dictionary<Type, Object[]> _objects = new Dictionary<Type, Object[]>();
+        protected Dictionary<Type, Object[]> _objects = new();
 
         public abstract void Init();
 
@@ -34,7 +34,7 @@ namespace UI
 
         protected T Get<T>(int index) where T : Object
         {
-            if (_objects.TryGetValue(typeof(T), out Object[] objects) == false)
+            if (!_objects.TryGetValue(typeof(T), out Object[] objects))
             {
                 DebugTool.Warning($"{typeof(T).Name} 타입이 바인딩되지 않았습니다.",  DebugType.Game);
                 return null;
