@@ -63,7 +63,7 @@ namespace Core.Managers
         
             Object.Destroy(_root);
             
-            DebugTool.Log("게임 씬 매니저 삭제 완료 ", DebugType.Game);
+            DebugTool.Log("게임 씬 매니저 제거 완료 ", DebugType.Game);
         }
     }
 }
