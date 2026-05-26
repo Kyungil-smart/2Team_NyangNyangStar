@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 /*
@@ -36,7 +37,11 @@ namespace Core.Managers
         public static GameSceneManager Scene => Instance._gameSceneManager;
         public static AddressableManager Addressable => Instance._addressableManager;
         public static UiManager UI => Instance._uiManager;
-    
+
+        private void OnDestroy()
+        {
+            Clear();
+        }
 
         private static void Init()
         {
