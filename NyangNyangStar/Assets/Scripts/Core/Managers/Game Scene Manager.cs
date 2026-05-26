@@ -1,55 +1,69 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-public class GameSceneManager : MonoBehaviour
+namespace Core.Managers
 {
-    public static GameSceneManager Instance {get; private set;}
-
-    private void Awake()
+    public class GameSceneManager : ISubManager
     {
-        if (Instance != null && Instance != this)
+        private GameObject _root;
+    
+        // 게임 씬 이동
+        public void ChangeScene(SceneIndex index)
         {
-            Destroy(this.gameObject);
-            return;
+            SceneManager.LoadScene((int)index);
         }
-        Instance = this;
-        DontDestroyOnLoad(gameObject);
-    }
+
+        public void LoadNextStage()
+        {
+            Time.timeScale = 1f;
+            SceneManager.LoadScene(CurrentSceneIndex() + 1);
+        }
+
+        // 씬 재시작
+        public void ReloadScene()
+        {
+            SceneManager.LoadScene(CurrentSceneIndex());
+        }
+
+        public int CurrentSceneIndex()
+        {
+            DebugTool.Log($"{SceneManager.GetActiveScene().buildIndex}", DebugType.Game);
+            return SceneManager.GetActiveScene().buildIndex;
+        }
     
-    // 게임 씬 이동
-    public void ChangeScene(int index)
-    {
-        SceneManager.LoadScene(index);
-    }
+        // 타이틀 씬 이동
+        public void LoadTitle()
+        {
+            SceneManager.LoadScene((int)SceneIndex.TitleScene);
+        }
 
-    public void LoadNextStage()
-    {
-        Time.timeScale = 1f;
-        SceneManager.LoadScene(CurrentSceneIndex() + 1);
-    }
+        public void GameQuit()
+        {
+            GameManager.Clear();
+            Application.Quit();
+        }
 
-    // 씬 재시작
-    public void ReloadScene()
-    {
-        SceneManager.LoadScene(CurrentSceneIndex());
-    }
 
-    public int CurrentSceneIndex()
-    {
-        DebugTool.Log($"{SceneManager.GetActiveScene().buildIndex}", DebugType.Game);
-        return SceneManager.GetActiveScene().buildIndex;
-    }
-    
-    // 타이틀 씬 이동
-    public void LoadTitle()
-    {
-        SceneManager.LoadScene((int)SceneIndex.TitleScene);
-    }
+        public void Init()
+        {
+            _root = GameObject.Find("@Scene");
 
-    public void GameQuit()
-        => Application.Quit();
-}
-public enum SceneIndex
-{
-    TitleScene,
+            if (_root == null)
+            {
+                _root = new GameObject { name = "@Scene" };
+                Object.DontDestroyOnLoad(_root);
+            }
+            DebugTool.Log("게임 씬 매니저 초기화 완료 ", DebugType.Game);
+        }
+
+        public void Clear()
+        {
+            if (_root == null)
+                return;
+        
+            Object.Destroy(_root);
+            
+            DebugTool.Log("게임 씬 매니저 제거 완료 ", DebugType.Game);
+        }
+    }
 }

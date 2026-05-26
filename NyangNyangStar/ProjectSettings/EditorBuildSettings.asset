@@ -8,5 +8,14 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/SampleScene.unity
     guid: 8c9cfa26abfee488c85f1582747f6a02
+  - enabled: 1
+    path: Assets/Test/Scene/A Scene.unity
+    guid: 02030d28bebf84844b38c72ae213789e
+  - enabled: 1
+    path: Assets/Test/Scene/B Scene 1.unity
+    guid: 635ce0a3d8600a9459247c124aa02c28
+  - enabled: 1
+    path: Assets/Test/Scene/C Scene 2.unity
+    guid: e7b036e0423902045a8185336220c0bb
   m_configObjects:
     com.unity.addressableassets: {fileID: 11400000, guid: f75e1c63977a60446ab838512e6e1bed, type: 2}

@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.CompilerServices;
+using System.Text;
 using UnityEngine;
 using Debug = UnityEngine.Debug;
 using Object = UnityEngine.Object;
@@ -136,8 +137,25 @@ public static class DebugTool
         string source = $"{sourceName}.{safeMemberName} : {Mathf.Max(1, lineNumber)}";
         string levelText = level == DebugLogLevel.Log ? string.Empty : $"/{level}";
 
-        return $"<color={color}>[{type}{levelText}] {text}</color>\n" +
-               $"<color=#DAA520>출처 : [{source}]</color>";
+        string normalizedText = text.Replace("\r\n", "\n");
+        string[] lines = normalizedText.Split('\n');
+
+        StringBuilder builder = new();
+
+        builder.Append($"<color={color}>[{type}{levelText}]</color> ");
+
+        for (int i = 0; i < lines.Length; i++)
+        {
+            if (i > 0)
+                builder.AppendLine();
+
+            builder.Append($"<color={color}>{lines[i]}</color>");
+        }
+
+        builder.AppendLine();
+        builder.Append($"<color=#DAA520>출처 : [{source}]</color>");
+
+        return builder.ToString();
     }
 
     private static string GetSourceName(Object context, string filePath)
@@ -160,11 +178,11 @@ public static class DebugTool
         return type switch
         {
             DebugType.Game => "#B388FF",
-            /*DebugType.Character => "#FFD166",
-            DebugType.Zombie => "#FF3B30",
-            DebugType.Spawner => "#00C2FF",
-            DebugType.Wave => "#FF7A00",
-            DebugType.Node => "#A3FF12",*/
+            DebugType.Addressable => "#FFD166",
+            // DebugType.Zombie => "#FF3B30",
+            // DebugType.Spawner => "#00C2FF",
+            // DebugType.Wave => "#FF7A00",
+            // DebugType.Node => "#A3FF12",
             DebugType.Network => "#00E676",
             DebugType.UI => "#FF4FD8",
             DebugType.Data => "#00D1B2",
@@ -186,6 +204,7 @@ public enum DebugType
     Audio,
     Data,
     UI,
+    Addressable,
     Network,
     Missing,
     Default,
