@@ -177,6 +177,12 @@ namespace Core.Managers
             return true;
         }
 
+        public void Release<T>(AsyncOperationHandle<T> _handle) where T : class
+        {
+            Addressables.Release(_handle);
+            DebugTool.Log($"{typeof(T).Name} 해제 완료", DebugType.Addressable);
+        }
+
         public void Clear()
         {
             if (_root == null) return;
@@ -184,6 +190,7 @@ namespace Core.Managers
             Object.Destroy(_root);
             _root = null;
             
+            KeyContainer.ClearKeys();
             DebugTool.Log("어드레서블 매니저 제거 완료", DebugType.Game);
         }
     }
