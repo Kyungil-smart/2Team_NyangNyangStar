@@ -1,4 +1,6 @@
 using Services.AddressableKey;
+using System;
+using System.Collections.Generic;
 using UI;
 using UnityEngine;
 using UnityEngine.UI;
@@ -22,7 +24,6 @@ public class BackgroundSelect : UIBase
     {
         _backgroundController?.Dispose();
     }
-
     public override void Init()
     {
         if(_backgroundImage == null)
