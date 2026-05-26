@@ -1,15 +1,14 @@
 ﻿using Core.Managers;
 using Services.AddressableKey;
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using UI;
 
 public class BGMSelect : UIBase
 {
-    [SerializeField] private Button titleButton;
-    [SerializeField] private Button bgm01Button;
-    [SerializeField] private Button bgm02Button;
-    [SerializeField] private Button bgm03Button;
+    [SerializeField] private List<Button> _buttons = new(); 
     
     [SerializeField] private BackgroundSelect _backgroundSelect;
 
@@ -18,52 +17,52 @@ public class BGMSelect : UIBase
 
     private void OnEnable()
     {
-        titleButton.onClick.AddListener(GotoTitle);
-        bgm01Button.onClick.AddListener(GotoHome);
-        bgm02Button.onClick.AddListener(GotoCatCafe);
-        bgm03Button.onClick.AddListener(GotoSchool);
-        }
+        _buttons[(int)BGMSelectButtons.TitleButton].onClick.AddListener(GotoTitle);
+        _buttons[(int)BGMSelectButtons.BGM01Button].onClick.AddListener(GotoHome);
+        _buttons[(int)BGMSelectButtons.BGM02Button].onClick.AddListener(GotoCatCafe);
+        _buttons[(int)BGMSelectButtons.BGM03Button].onClick.AddListener(GotoSchool);
+    }
 
     private void OnDisable()
     {
-        titleButton.onClick.RemoveAllListeners();
-        bgm01Button.onClick.RemoveAllListeners();
-        bgm02Button.onClick.RemoveAllListeners();
-        bgm03Button.onClick.RemoveAllListeners();
+        foreach (var button in _buttons)
+            button.onClick.RemoveAllListeners();
     }
 
     private void GotoTitle()
     {
         GameManager.Audio.PlayBgm(KeyContainer.Audio.TitleBGM);
-        _backgroundSelect.ChangeSprite(KeyContainer.Sprite.Title);
+        _backgroundSelect.BackgroundController.ChangeSprite(KeyContainer.Sprite.Title);
     }
 
     private void GotoHome()
     {
         GameManager.Audio.PlayBgm(KeyContainer.Audio.BGM01);
-        _backgroundSelect.ChangeSprite(KeyContainer.Sprite.Home);
+        _backgroundSelect.BackgroundController.ChangeSprite(KeyContainer.Sprite.Home);
     }
 
     private void GotoCatCafe()
     {
         GameManager.Audio.PlayBgm(KeyContainer.Audio.BGM02);
-        _backgroundSelect.ChangeSprite(KeyContainer.Sprite.CatCafe);
+        _backgroundSelect.BackgroundController.ChangeSprite(KeyContainer.Sprite.CatCafe);
     }
 
     private void GotoSchool()
     {
         GameManager.Audio.PlayBgm(KeyContainer.Audio.BGM03);
-        _backgroundSelect.ChangeSprite(KeyContainer.Sprite.School);
+        _backgroundSelect.BackgroundController.ChangeSprite(KeyContainer.Sprite.School);
     }
 
     public override void Init()
     {
         Bind<Button>(typeof(BGMSelectButtons));
+        
+        _buttons.Clear();
+        
+        int buttonCount = Enum.GetValues(typeof(BGMSelectButtons)).Length;
 
-        titleButton = Get<Button>((int)BGMSelectButtons.TitleButton);
-        bgm01Button = Get<Button>((int)BGMSelectButtons.BGM01Button);
-        bgm02Button = Get<Button>((int)BGMSelectButtons.BGM02Button);
-        bgm03Button = Get<Button>((int)BGMSelectButtons.BGM03Button);
+        for (int i = 0; i < buttonCount; i++)
+            _buttons.Add(Get<Button>(i));
         
         _backgroundSelect = FindObjectOfType<BackgroundSelect>();
     }
@@ -73,6 +72,6 @@ public class BGMSelect : UIBase
         TitleButton,
         BGM01Button,
         BGM02Button,
-        BGM03Button
+        BGM03Button,
     }
 }
