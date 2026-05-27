@@ -1,64 +1,91 @@
+using System;
 using UnityEngine;
 
-public class GameManager : MonoBehaviour
+/*
+@Managers (GameObject, DontDestroyOnLoad)
+└── Managers.cs  ← 단일 진입점 싱글톤
+
+서브 매니저들 (Plain C# Class, ISubManager)
+├── AddressableManager
+├── AudioManager
+├── DataManager
+└── UIManager
+*/
+
+namespace Core.Managers
 {
-    private static GameManager _instance;
-    
-    [Header("매니저 프리팹")]
-    [SerializeField] private AudioManager _audioManager;
-    [SerializeField] private SceneChangeController _sceneChangeController;
-    
-    private void Awake()
+    public class GameManager : MonoBehaviour
     {
-        if (_instance != null && _instance != this)
+        private static GameManager _instance;
+        public static GameManager Instance 
         {
-            Destroy(this.gameObject);
-            return;
+            get
+            {
+                Init(); 
+                return _instance;
+            } 
         }
 
-        _instance = this;
-        DontDestroyOnLoad(gameObject);
-
-        Init();
-    }
-
-    private void Init()
-    {
-        GenerateManager<GameSceneManager>();
-        GenerateManager(_audioManager);
-        GenerateManager(_sceneChangeController);
-    }
-
-    private void Start()
-    {
-        DebugTool.Log("게임 시작", DebugType.Game, this);
-        SceneChangeController.Instance.SetActivateImage(false);
-    }
-
-    private void GenerateManager<T>() where T : Component
-    {
-        if (FindAnyObjectByType<T>() != null)
-        {
-            DebugTool.Warning($"{typeof(T).Name} 을 로드하지 못했습니다.", DebugType.Game, this);
-            return;
-        }
-        
-        var go = new GameObject(typeof(T).Name);
-        go.AddComponent<T>();
-        DontDestroyOnLoad(go);
-    }
+        private AudioManager _audioManager = new();
+        private GameSceneManager _gameSceneManager = new();
+        private AddressableManager _addressableManager = new();
+        private UiManager _uiManager = new();
     
-    private void GenerateManager<T>(T managerPrefab) where T : Component
-    {
-        if (FindAnyObjectByType<T>() != null)
+        // TODO : DataManager 추가
+
+        public static AudioManager Audio => Instance._audioManager;
+        public static GameSceneManager Scene => Instance._gameSceneManager;
+        public static AddressableManager Addressable => Instance._addressableManager;
+        public static UiManager UI => Instance._uiManager;
+
+        private void OnDestroy()
         {
-            DebugTool.Warning($"{typeof(T).Name} 프리팹을 로드하지 못했습니다.", DebugType.Game, this);
-            return;
+            Clear();
         }
-        
-        T manager = Instantiate(managerPrefab);
-        manager.gameObject.name = typeof(T).Name;
-        DontDestroyOnLoad(manager.gameObject);
+
+        private static void Init()
+        {
+            if (_instance != null) return;
+
+            GameObject go = GameObject.Find("@GameManager");
+
+            if (go == null)
+                go = new GameObject("@GameManager");
+
+            _instance = go.GetComponent<GameManager>();
+
+            if(_instance == null)
+                _instance = go.AddComponent<GameManager>();
+            
+            DontDestroyOnLoad(go.gameObject);
+            
+            DebugTool.Log("게임 매니저 초기화 시작", DebugType.Game);
+
+            // Data.Init();
+            _instance._addressableManager.Init();
+            _instance._audioManager.Init();
+            _instance._gameSceneManager.Init();
+            _instance._uiManager.Init();
+            
+            DebugTool.Log("모든 매니저 초기화 완료 ", DebugType.Game);
+        }
+
+        public static void Clear()
+        {
+            if (_instance == null)
+                return;
+            
+            if(_instance._uiManager != null)
+                _instance._uiManager.Clear();
+            if(_instance._audioManager != null)
+                _instance._audioManager.Clear();
+            if(_instance._gameSceneManager != null)
+                _instance._gameSceneManager.Clear();
+            if(_instance._addressableManager != null)
+                _instance._addressableManager.Clear();
+            
+            DebugTool.Log("모든 매니저 제거 완료 ", DebugType.Game);
+        }
     }
 }
 
