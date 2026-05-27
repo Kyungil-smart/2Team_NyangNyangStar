@@ -10,21 +10,16 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
-  m_Name: Arts
+  m_Name: Local Bundle
   m_EditorClassIdentifier: 
-  m_GroupName: Arts
+  m_GroupName: Local Asset
   m_Data:
     m_SerializedData: []
-  m_GUID: 2f4f4c975fd7e824784e5b5aaa828efb
-  m_SerializeEntries:
-  - m_GUID: 26877e448ad13d240b2c6f9302382721
-    m_Address: Sprites
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
+  m_GUID: 95371cd6e3baf5047991559103deccf3
+  m_SerializeEntries: []
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: 567802e293b80b747b23153796443c26, type: 2}
   m_SchemaSet:
     m_Schemas:
-    - {fileID: 11400000, guid: e41a1e638be0c9045bf399d9352db665, type: 2}
-    - {fileID: 11400000, guid: 37bdfb4f31c47df4d84f6418c21ff90c, type: 2}
+    - {fileID: 11400000, guid: 0230145403550e34c93aa18966181457, type: 2}
+    - {fileID: 11400000, guid: 53c8ec141b270094e9f4be9f0401c253, type: 2}

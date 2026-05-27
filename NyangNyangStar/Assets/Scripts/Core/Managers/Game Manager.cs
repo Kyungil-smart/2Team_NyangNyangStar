@@ -6,6 +6,7 @@ using UnityEngine;
 └── Managers.cs  ← 단일 진입점 싱글톤
 
 서브 매니저들 (Plain C# Class, ISubManager)
+├── DataManager
 ├── AddressableManager
 ├── AudioManager
 ├── DataManager
@@ -26,16 +27,18 @@ namespace Core.Managers
             } 
         }
 
+        private DataManager _dataManager = new();
+        private AddressableManager _addressableManager = new();
         private AudioManager _audioManager = new();
         private GameSceneManager _gameSceneManager = new();
-        private AddressableManager _addressableManager = new();
         private UiManager _uiManager = new();
     
         // TODO : DataManager 추가
 
-        public static AudioManager Audio => Instance._audioManager;
-        public static GameSceneManager Scene => Instance._gameSceneManager;
+        public static DataManager Data => Instance._dataManager;
         public static AddressableManager Addressable => Instance._addressableManager;
+        public static GameSceneManager Scene => Instance._gameSceneManager;
+        public static AudioManager Audio => Instance._audioManager;
         public static UiManager UI => Instance._uiManager;
 
         private void OnDestroy()
@@ -61,7 +64,7 @@ namespace Core.Managers
             
             DebugTool.Log("게임 매니저 초기화 시작", DebugType.Game);
 
-            // Data.Init();
+            _instance._dataManager.Init();
             _instance._addressableManager.Init();
             _instance._audioManager.Init();
             _instance._gameSceneManager.Init();
