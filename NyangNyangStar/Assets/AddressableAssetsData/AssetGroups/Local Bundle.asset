@@ -10,9 +10,9 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
-  m_Name: Packed Assets
+  m_Name: Local Bundle
   m_EditorClassIdentifier: 
-  m_GroupName: Packed Assets
+  m_GroupName: Local Asset
   m_Data:
     m_SerializedData: []
   m_GUID: 95371cd6e3baf5047991559103deccf3
