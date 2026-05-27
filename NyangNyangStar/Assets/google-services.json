@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "189520402634",
+    "project_id": "firestoretest-d8104",
+    "storage_bucket": "firestoretest-d8104.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:189520402634:android:c6ec07fde7e2792ba6fc33",
+        "android_client_info": {
+          "package_name": "com.CompnayColoabo_2Team.NyangNyangStar"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD5xCWGjmWGeSpt3s40JicULu2Dkgod0uQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
