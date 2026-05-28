@@ -18,19 +18,19 @@ MonoBehaviour:
   m_GUID: fb376d8bbe39b3b4eabc5b77d21e6435
   m_SerializeEntries:
   - m_GUID: 00832cfe9376dea4e93f22b99d663bab
-    m_Address: "\uD578\uB4DC\uD3F0"
+    m_Address: NYS_Frame
     m_ReadOnly: 0
     m_SerializedLabels:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 0184347cb8f8af848a2b7d7ac38d06df
-    m_Address: FeedImage_Post_5
+    m_Address: NYS_FeedImage_Player_03
     m_ReadOnly: 0
     m_SerializedLabels:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 060e1514ae43cda419f68f1c5dfb5365
-    m_Address: FeedImage_Post_7
+    m_Address: NYS_FeedImage_Player_04
     m_ReadOnly: 0
     m_SerializedLabels:
     - Sprite
@@ -42,211 +42,211 @@ MonoBehaviour:
     - UI
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 117608bd51b57db4490315b7f64f5c3c
-    m_Address: User_1_Profile
+    m_Address: NYS_Profile_User_01
     m_ReadOnly: 0
     m_SerializedLabels:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 13c47e03330e04d4fad9937362dad4f5
-    m_Address: FeedImage_Post_16
+    m_Address: NYS_FeedImage_NPC_09
     m_ReadOnly: 0
     m_SerializedLabels:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 1b0a3eb66decfe64386b896aefbde359
-    m_Address: FeedImage_Post_29
+    m_Address: NYS_FeedImage_NPC_12
     m_ReadOnly: 0
     m_SerializedLabels:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 2524b28d904fddb46ae25c9eeb377501
-    m_Address: "\uACF5\uC720_\uC544\uC774\uCF58"
+    m_Address: NYS_Btn_Share
     m_ReadOnly: 0
     m_SerializedLabels:
     - UI
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 274f427f46871984180db9172f5ada51
-    m_Address: FeedImage_Post_22
+    m_Address: NYS_FeedImage_Player_13
     m_ReadOnly: 0
     m_SerializedLabels:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 28101e3109b7cca46b5584f56430439d
-    m_Address: "\uD578\uB4DC\uD3F0_\uB0B4\uBD80"
+    m_Address: NYS_Content
     m_ReadOnly: 0
     m_SerializedLabels:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 2b512f39a0dd4f34f876a297e7028211
-    m_Address: FeedImage_Post_14
+    m_Address: NYS_FeedImage_Player_07
     m_ReadOnly: 0
     m_SerializedLabels:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 2d23565866364ec4692cf9724f55f558
-    m_Address: "\uD504\uB85C\uBE4C_\uBC84\uD2BC"
+    m_Address: NYS_Btn_Profile
     m_ReadOnly: 0
     m_SerializedLabels:
     - UI
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 2ed7ecadbb40a41419ad9fedc355765e
-    m_Address: "\uB098\uAC00\uAE30"
+    m_Address: NYS_Btn_Close
     m_ReadOnly: 0
     m_SerializedLabels:
     - UI
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 3722567c163497a448ac0d929c0c51b5
-    m_Address: "\uD648_\uBC84\uD2BC"
+    m_Address: NYS_Btn_Home
     m_ReadOnly: 0
     m_SerializedLabels:
     - UI
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 3a6b66e481a67574c8a98e597a8f1285
-    m_Address: FeedImage_Post_1
+    m_Address: NYS_FeedImage_NPC_02
     m_ReadOnly: 0
     m_SerializedLabels:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 43168cd2c15ce484196c9e8baeccb45e
-    m_Address: DM_Box_Me
+    m_Address: NYS_DM_Box_Me
     m_ReadOnly: 0
     m_SerializedLabels:
     - UI
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 48df5bc04e1166d498fc84de0aa3bdac
-    m_Address: FeedImage_Post_32
+    m_Address: NYS_FeedImage_NPC_13
     m_ReadOnly: 0
     m_SerializedLabels:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 490055df5c168cc4b8df15d088c27696
-    m_Address: "\uD504\uB85C\uD544_\uD654\uBA74_\uBC30\uC9C0"
+    m_Address: NYS_ProfileBadge
     m_ReadOnly: 0
     m_SerializedLabels:
     - UI
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 4bf7ab601d11a44409579541927c3cbb
-    m_Address: FeedImage_Post_2
+    m_Address: NYS_FeedImage_Player_01
     m_ReadOnly: 0
     m_SerializedLabels:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 519c2880731b08440bb830c68385d4b6
-    m_Address: "\uC0C1\uB2E8\uBC14_ \uB514\uC5E0\uBC84\uD2BC"
+    m_Address: NYS_Btn_DM
     m_ReadOnly: 0
     m_SerializedLabels:
     - UI
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 5acf270dbdb86b040a599a00a62bcae1
-    m_Address: UploadPost_DropDown_Icon
+    m_Address: NYS_Btn_DropDown
     m_ReadOnly: 0
     m_SerializedLabels:
     - UI
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 5adaf728ac9e49e4aa80d53a9f96ce59
-    m_Address: "\uD558\uD2B8_\uC544\uC774\uCF58"
+    m_Address: NYS_Btn_Heart_Empty
     m_ReadOnly: 0
     m_SerializedLabels:
     - UI
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 5fd8a06ad359fe3418aeb4e8d01cf819
-    m_Address: FeedImage_Post_3
+    m_Address: NYS_FeedImage_Player_02
     m_ReadOnly: 0
     m_SerializedLabels:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 69cde50a660303249a06f78ce6e5a731
-    m_Address: "\uD53C\uB4DC_\uBC84\uD2BC"
+    m_Address: NYS_Btn_Feed
     m_ReadOnly: 0
     m_SerializedLabels:
     - UI
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 6a2d2114ea9fd2e4392829a84bd14609
-    m_Address: FeedImage_Post_13
+    m_Address: NYS_FeedImage_Player_06
     m_ReadOnly: 0
     m_SerializedLabels:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 6aee4d77872667a4ba20208463dbf41f
-    m_Address: NYS_BackBtn
+    m_Address: NYS_Btn_Back
     m_ReadOnly: 0
     m_SerializedLabels:
     - UI
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 6d88cd39a46b16f45bf64f411dad4f92
-    m_Address: "\uD558\uB2E8_\uAD6C\uBD84\uC120"
+    m_Address: NYS_Divider
     m_ReadOnly: 0
     m_SerializedLabels:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 6ead66395fc399e4598c9be1e31546da
-    m_Address: FeedImage_Post_15
+    m_Address: NYS_FeedImage_Player_08
     m_ReadOnly: 0
     m_SerializedLabels:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 6f251542fc967374196fe8b846aadaff
-    m_Address: "\uC0C1\uB2E8\uBC14"
+    m_Address: NYS_TopBar
     m_ReadOnly: 0
     m_SerializedLabels:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 70913930bb80c904c8cae89755cd3d46
-    m_Address: FeedImage_Post_6
+    m_Address: NYS_FeedImage_NPC_04
     m_ReadOnly: 0
     m_SerializedLabels:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 728d88aa2c5d68e4582d13aa22c645fc
-    m_Address: DM_Box_Opponent
+    m_Address: NYS_DM_Box_Opponent
     m_ReadOnly: 0
     m_SerializedLabels:
     - UI
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 7609a5f3eefe77442959fff0c211047a
-    m_Address: "\uC774\uB984_\uB0E5\uB0E5\uC2A4\uD0C0"
+    m_Address: NYS_TitleLogo
     m_ReadOnly: 0
     m_SerializedLabels:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 792389f840742df48b851695e61eb270
-    m_Address: FeedImage_Post_12
+    m_Address: NYS_FeedImage_Player_05
     m_ReadOnly: 0
     m_SerializedLabels:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 7fe41979818800b4b8bd602410eefb68
-    m_Address: "\uD3F4\uB354_\uC544\uC774\uCF58"
+    m_Address: NYS_Folder
     m_ReadOnly: 0
     m_SerializedLabels:
     - UI
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 87a2e504013a1934cbddae97d0ab7ab1
-    m_Address: FeedImage_Post_17
+    m_Address: NYS_FeedImage_Player_09
     m_ReadOnly: 0
     m_SerializedLabels:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 8e5e830680bfed6418516bf0abd0dcd1
-    m_Address: FeedImage_Post_20
+    m_Address: NYS_FeedImage_Player_11
     m_ReadOnly: 0
     m_SerializedLabels:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 8ecc162d4f2ddc145aedc38c82d7bb83
-    m_Address: "\uD574\uC2DC\uD0DC\uD06C_\uBC84\uD2BC"
+    m_Address: NYS_Btn_Hashtag
     m_ReadOnly: 0
     m_SerializedLabels:
     - UI
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 92487daef3a749a44b504e077d353d15
-    m_Address: FeedImage_Post_21
+    m_Address: NYS_FeedImage_Player_12
     m_ReadOnly: 0
     m_SerializedLabels:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 9779014e3b707724ab9cf5b431132374
-    m_Address: FeedImage_Post_0
+    m_Address: NYS_FeedImage_NPC_01
     m_ReadOnly: 0
     m_SerializedLabels:
     - Sprite
@@ -258,19 +258,19 @@ MonoBehaviour:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: a74b5f5de1d1d62438ecabf4b6f11db8
-    m_Address: "\uAC8C\uC2DC\uAE00_\uCD94\uAC00_\uBC84\uD2BC"
+    m_Address: NYS_Btn_AddPost
     m_ReadOnly: 0
     m_SerializedLabels:
     - UI
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: afebba492d51eb34cbb6e080566d470b
-    m_Address: FeedImage_Post_18
+    m_Address: NYS_FeedImage_Player_10
     m_ReadOnly: 0
     m_SerializedLabels:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: bd53bad9e9fe7a84aa8ed25b58bd0249
-    m_Address: FeedImage_Post_4
+    m_Address: NYS_FeedImage_NPC_03
     m_ReadOnly: 0
     m_SerializedLabels:
     - Sprite
@@ -282,79 +282,79 @@ MonoBehaviour:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: c932054449768e8479fe7f6ae00adad8
-    m_Address: FeedImage_Post_11
+    m_Address: NYS_FeedImage_NPC_08
     m_ReadOnly: 0
     m_SerializedLabels:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: c99623ad61b340b468a9f7f1eb6a624c
-    m_Address: FeedImage_Post_10
+    m_Address: NYS_FeedImage_NPC_07
     m_ReadOnly: 0
     m_SerializedLabels:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: ca8dbda709658e6489ac299e4665e23e
-    m_Address: FeedImage_Post_24
+    m_Address: NYS_FeedImage_NPC_11
     m_ReadOnly: 0
     m_SerializedLabels:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: ca94ec9476f9a4c41b6882a490974925
-    m_Address: "\uD53C\uB4DC_\uD14C\uB450\uB9AC"
+    m_Address: NYS_FeedFrame
     m_ReadOnly: 0
     m_SerializedLabels:
     - UI
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: da0ae305fa9330d448dbd9808a7c466f
-    m_Address: "\uB098\uAC00\uAE30_\uBC84\uD2BC"
+    m_Address: NYS_Btn_Exit
     m_ReadOnly: 0
     m_SerializedLabels:
     - UI
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: dc3c78d4c35c7374a91b36659c1ab532
-    m_Address: "\uC774\uBBF8_\uAC8C\uC2DC\uD55C_\uAC8C\uC2DC\uBB3C_\uC544\uC774\uCF58"
+    m_Address: NYS_UploadPost_Check
     m_ReadOnly: 0
     m_SerializedLabels:
     - UI
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: e54976ce31b68564ab0e35b5af37f65c
-    m_Address: FeedImage_Post_9
+    m_Address: NYS_FeedImage_NPC_06
     m_ReadOnly: 0
     m_SerializedLabels:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: ef6806227e4952d40afed38b5cb6109a
-    m_Address: FeedImage_Post_19
+    m_Address: NYS_FeedImage_NPC_10
     m_ReadOnly: 0
     m_SerializedLabels:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: f0aa6192fbeb2a042ba44b9229c626e8
-    m_Address: "\uC54C\uB9BC_\uBC84\uD2BC"
+    m_Address: NYS_Btn_Notification
     m_ReadOnly: 0
     m_SerializedLabels:
     - UI
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: f809d782224d0a5449821ad49495fdf0
-    m_Address: "\uD558\uD2B8_\uC544\uC774\uCF58_\uCC44\uC6CC\uC9D0"
+    m_Address: NYS_Btn_Heart_Filled
     m_ReadOnly: 0
     m_SerializedLabels:
     - UI
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: fbf7e6b716507364ab60f0a38e91f6de
-    m_Address: FeedImage_Post_30
+    m_Address: NYS_FeedImage_Player_14
     m_ReadOnly: 0
     m_SerializedLabels:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: feb8023f849c62747b1849fbd3d2865c
-    m_Address: UploadPost_DropDown_Panel
+    m_Address: NYS_Panel_DropDown
     m_ReadOnly: 0
     m_SerializedLabels:
     - UI
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: ffe5610e5b4267d42b704dabc7b010e5
-    m_Address: FeedImage_Post_8
+    m_Address: NYS_FeedImage_NPC_05
     m_ReadOnly: 0
     m_SerializedLabels:
     - Sprite
