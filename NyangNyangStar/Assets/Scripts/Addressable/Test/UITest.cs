@@ -1,4 +1,4 @@
-﻿using Core.Managers;
+using Core.Managers;
 using Services.AddressableKey;
 using UI;
 using UnityEngine;
@@ -10,7 +10,8 @@ public class UITest : MonoBehaviour
     
     private void Start()
     {
-        GameManager.UI.ShowSceneUI<UIScene>(KeyContainer.Prefabs.TestUI);
+        //GameManager.UI.ShowSceneUI<UIScene>(KeyContainer.Prefabs.TestUI);
+        GameManager.UI.ShowSceneUI<UIScene>(KeyContainer.Prefabs.MainUI);
         GameManager.Audio.PlayBgm(KeyContainer.Audio.TitleBGM);
     }
 
