@@ -1,47 +1,22 @@
-﻿using UnityEngine;
+﻿using System;
+using Data.Parsing;
+using Data.LibrarySystem;
+using Data.ScriptableObjects;
+using System.Collections.Generic;
+using System.Linq;
+using UnityEngine;
 
 namespace Data.Loader
 {
     public class SheetLoader : MonoBehaviour
     {
-
-        //[Header("Player Class")]
-        //public SheetData _classSheet;
-        //[SerializeField] private List<PlayerClassDataSO> _classDataList;
-        //private Dictionary<int, PlayerClassDataSO> _classDataDictionary = new();
-
-        //[Header("Zombie Stat")]
-        //public SheetData _zombieStatSheet;
-        //[SerializeField] private List<ZombieStatSO> _zombieStatDataList;
-        //private Dictionary<int, ZombieStatSO> _zombieStatDataDictionary = new();
-
-        //[Header("Wave Info")]
-        //public SheetData _waveInfoSheet;
-        //[SerializeField] private List<WaveInfoSO> _waveInfoDataList;
-        //private Dictionary<int, WaveInfoSO> _waveInfoDataDictionary = new();
-        //[SerializeField] private WaveInfoTableSO _waveInfoTable;
-
-        //[Header("Wave Spawn Table")]
-        //public SheetData _waveSpawnSheet;
-        //[SerializeField] private WaveSpawnTableSO _waveSpawnTable;
-
-        //[Header("Player Upgrade")]
-        //public SheetData _playerUpgradeSheet;
-        //[SerializeField] private PlayerUpgradeTableSO _playerUpgradeTable;
-
-        //[Header("Team Upgrade")]
-        //public SheetData _teamUpgradeSheet;
-        //[SerializeField] private TeamUpgradeTableSO _teamUpgradeTable;
+        [Header("Key Container")]
+        public List<SheetData> keyContainers;
+        [SerializeField] private List<KeyContainerSo> keyLists = new(); 
+        private Dictionary<int, KeyContainerSo> _keyContainerDict = new();
 
         [SerializeField] private int _pendingSheetCount;
-        public int PendingSHeetCount => _pendingSheetCount;
-
-        private void Awake()
-        {
-            //_classDataDictionary = InitDict(_classDataList);
-            //_zombieStatDataDictionary = InitDict(_zombieStatDataList);
-            //_waveInfoDataDictionary = InitDict(_waveInfoDataList);
-        }
+        public int PendingSheetCount => _pendingSheetCount;
 
         public void DataLoad()
         {
@@ -53,51 +28,11 @@ namespace Data.Loader
                 return;
             }
 
-            //LoadSheetData(_classSheet, _classDataList, _classDataDictionary, onComplete: () =>
-            //{
-            //    LocalDataAccess.Instance.Game.RegisterClasses(_classDataDictionary);
-            //    OnSheetCompleted();
-            //});
-
-            //LoadSheetData(_zombieStatSheet, _zombieStatDataList, _zombieStatDataDictionary, onComplete: () =>
-            //{
-            //    LocalDataAccess.Instance.Game.RegisterZombieStats(_zombieStatDataDictionary);
-            //    OnSheetCompleted();
-            //});
-
-            //LoadSheetData(_waveInfoSheet, _waveInfoDataList, _waveInfoDataDictionary, onComplete: () =>
-            //{
-            //    if (_waveInfoTable != null)
-            //    {
-            //        _waveInfoTable.Build(_waveInfoDataList);
-            //        LocalDataAccess.Instance.Game.RegisterWaveInfoTable(_waveInfoTable);
-            //    }
-            //    else
-            //    {
-            //        DebugTool.Error(
-            //            "[DataManager] _waveInfoTable이 인스펙터에 미할당",
-            //            DebugType.Data, this);
-            //    }
-            //    OnSheetCompleted();
-            //});
-
-            //LoadWaveSpawnTable(_waveSpawnSheet, _waveSpawnTable, onComplete: () =>
-            //{
-            //    LocalDataAccess.Instance.Game.RegisterWaveSpawnTable(_waveSpawnTable);
-            //    OnSheetCompleted();
-            //});
-
-            //LoadPlayerUpgradeTable(_playerUpgradeSheet, _playerUpgradeTable, onComplete: () =>
-            //{
-            //    LocalDataAccess.Instance.Game.RegisterPlayerUpgradeTable(_playerUpgradeTable);
-            //    OnSheetCompleted();
-            //});
-
-            //LoadTeamUpgradeTable(_teamUpgradeSheet, _teamUpgradeTable, onComplete: () =>
-            //{
-            //    LocalDataAccess.Instance.Game.RegisterTeamUpgradeTable(_teamUpgradeTable);
-            //    OnSheetCompleted();
-            //});
+            LoadKeyContainerData(keyContainers, keyLists, _keyContainerDict, onComplete: () =>
+            {
+                LocalDataAccess.Instance.Game.RegisterKeyContainers(_keyContainerDict);
+                OnSheetCompleted();
+            });
         }
 
         private void OnSheetCompleted()
@@ -113,7 +48,6 @@ namespace Data.Loader
             }
         }
 
-
         private Dictionary<int, T> InitDict<T>(List<T> list)
             where T : ScriptableObject, ISheetParsable
         {
@@ -127,7 +61,6 @@ namespace Data.Loader
 
             return list.ToDictionary(x => x.Id);
         }
-
 
         private void LoadSheetData<T>(
             SheetData sheet,
@@ -151,7 +84,8 @@ namespace Data.Loader
                 for (int i = headerRowCount; i < lines.Length; i++)
                 {
                     string line = lines[i].Trim();
-                    if (string.IsNullOrEmpty(line)) continue;
+                    if (string.IsNullOrEmpty(line)) 
+                        continue;
 
                     string[] cols = line.Split(split);
 
@@ -189,100 +123,144 @@ namespace Data.Loader
             }));
         }
 
+        private void LoadKeyContainerData(
+            List<SheetData> sheets,
+            List<KeyContainerSo> keyContainerList,
+            Dictionary<int, KeyContainerSo> dict,
+            int headerRowCount = 1,
+            Action onComplete = null)
+        {
+            if (sheets == null || sheets.Count == 0)
+            {
+                DebugTool.Warning(
+                    "[KeyContainer] 로드할 SheetData 리스트가 비어있음",
+                    DebugType.Data,
+                    this);
 
-        //private void LoadWaveSpawnTable(
-        //    SheetData sheet,
-        //    WaveSpawnTableSO table,
-        //    int headerRowCount = 1,
-        //    Action onComplete = null)
-        //{
-        //    if (table == null)
-        //    {
-        //        DebugTool.Error(
-        //            "[DataManager] _waveSpawnTable이 인스펙터에 미할당",
-        //            DebugType.Data, this);
-        //        onComplete?.Invoke();
-        //        return;
-        //    }
+                onComplete?.Invoke();
+                return;
+            }
 
-        //    StartCoroutine(sheet.Load((split, lines) =>
-        //    {
-        //        if (lines == null)
-        //        {
-        //            DebugTool.Error(
-        //                "[DataManager] WaveSpawn 시트 로드 실패 - lines가 null",
-        //                DebugType.Data, this);
-        //            onComplete?.Invoke();
-        //            return;
-        //        }
+            if (keyContainerList == null || keyContainerList.Count == 0)
+            {
+                DebugTool.Error(
+                    "[KeyContainer] KeyContainerSo 리스트가 비어있음",
+                    DebugType.Data,
+                    this);
 
-        //        table.LoadFromSheet(split, lines, headerRowCount);
-        //        onComplete?.Invoke();
-        //    }));
-        //}
+                onComplete?.Invoke();
+                return;
+            }
 
+            if (sheets.Count != keyContainerList.Count)
+            {
+                DebugTool.Error(
+                    $"[KeyContainer] SheetData 수와 KeyContainerSo 수가 다름 / SheetData: {sheets.Count}, SO: {keyContainerList.Count}",
+                    DebugType.Data,
+                    this);
 
-        //private void LoadPlayerUpgradeTable(
-        //    SheetData sheet,
-        //    PlayerUpgradeTableSO table,
-        //    int headerRowCount = 1,
-        //    Action onComplete = null)
-        //{
-        //    if (table == null)
-        //    {
-        //        DebugTool.Error(
-        //            "[DataManager] _playerUpgradeTable이 인스펙터에 미할당",
-        //            DebugType.Data, this);
-        //        onComplete?.Invoke();
-        //        return;
-        //    }
+                onComplete?.Invoke();
+                return;
+            }
 
-        //    StartCoroutine(sheet.Load((split, lines) =>
-        //    {
-        //        if (lines == null)
-        //        {
-        //            DebugTool.Error(
-        //                "[DataManager] PlayerUpgrade 시트 로드 실패 - lines가 null",
-        //                DebugType.Data, this);
-        //            onComplete?.Invoke();
-        //            return;
-        //        }
+            dict.Clear();
 
-        //        table.LoadFromSheet(split, lines, headerRowCount);
-        //        onComplete?.Invoke();
-        //    }));
-        //}
+            int completedCount = 0;
 
+            for (int i = 0; i < sheets.Count; i++)
+            {
+                int orderIndex = i;
 
-        //private void LoadTeamUpgradeTable(
-        //    SheetData sheet,
-        //    TeamUpgradeTableSO table,
-        //    int headerRowCount = 1,
-        //    Action onComplete = null)
-        //{
-        //    if (table == null)
-        //    {
-        //        DebugTool.Error(
-        //            "[DataManager] _teamUpgradeTable이 인스펙터에 미할당",
-        //            DebugType.Data, this);
-        //        onComplete?.Invoke();
-        //        return;
-        //    }
+                SheetData sheet = sheets[orderIndex];
+                KeyContainerSo keyContainer = keyContainerList[orderIndex];
 
-        //    StartCoroutine(sheet.Load((split, lines) =>
-        //    {
-        //        if (lines == null)
-        //        {
-        //            DebugTool.Error(
-        //                "[DataManager] TeamUpgrade 시트 로드 실패 - lines가 null",
-        //                DebugType.Data, this);
-        //            onComplete?.Invoke();
-        //            return;
-        //        }
+                keyContainer.ClearData();
 
-        //        table.LoadFromSheet(split, lines, headerRowCount);
-        //        onComplete?.Invoke();
-        //    }));
-        //} 
+               dict[orderIndex] = keyContainer;
+
+                StartCoroutine(sheet.Load((split, lines) =>
+                {
+                    if (lines == null)
+                    {
+                        DebugTool.Error(
+                            $"[KeyContainer] {orderIndex}번 시트 로드 실패 - lines가 null",
+                            DebugType.Data,
+                            this);
+
+                        CompleteOne();
+                        return;
+                    }
+
+                    for (int row = headerRowCount; row < lines.Length; row++)
+                    {
+                        string line = lines[row].Trim();
+
+                        if (string.IsNullOrEmpty(line))
+                            continue;
+
+                        string[] cols = line.Split(split);
+
+                        if (cols.Length < 2)
+                        {
+                            DebugTool.Warning(
+                                $"[KeyContainer] {orderIndex}번 시트 {row}번째 줄 컬럼 부족: {line}",
+                                DebugType.Data,
+                                this);
+
+                            continue;
+                        }
+
+                        string key = cols[0].Trim();
+                        string fileName = cols[1].Trim();
+
+                        keyContainer.AddData(key, fileName);
+                    }
+
+                    DebugTool.Log(
+                        $"[KeyContainer] {orderIndex}번 시트 로드 완료 / 총 {keyContainer.Key.Count}건",
+                        DebugType.Data,
+                        this);
+
+                    CompleteOne();
+                }));
+            }
+
+            void CompleteOne()
+            {
+                completedCount++;
+
+                if (completedCount >= sheets.Count)
+                {
+                    DebugTool.Log(
+                        $"[KeyContainer] 모든 KeyContainer 시트 로드 완료 ({completedCount}/{sheets.Count})",
+                        DebugType.Data,
+                        this);
+
+                    onComplete?.Invoke();
+                }
+            }
+        }
+        
+        public void ClearDatas()
+        {
+            StopAllCoroutines();
+
+            _pendingSheetCount = 0;
+
+            foreach (KeyContainerSo keyContainer in keyLists)
+            {
+                if (keyContainer == null)
+                    continue;
+
+                keyContainer.ClearData();
+            }
+
+            _keyContainerDict.Clear();
+
+            DebugTool.Log(
+                "[SheetLoader] 캐싱된 시트 데이터 제거 완료",
+                DebugType.Data,
+                this);
+        }
     }
 }
