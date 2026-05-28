@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Audio;
 using UnityEngine.ResourceManagement.AsyncOperations;
+using AudioType = Services.Enums.AudioType;
 using Object = UnityEngine.Object;
 
 namespace Core.Managers
@@ -303,7 +304,8 @@ namespace Core.Managers
                 source.clip = null;
             }
 
-            Addressables.Release(_bgmHandle);
+            if(_bgmHandle.IsValid())
+                GameManager.Addressable.Release(_bgmHandle);
 
             DebugTool.Log("오디오 매니저 제거 완료", DebugType.Game);
         }

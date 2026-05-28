@@ -2,7 +2,7 @@
 using System.Text;
 using UnityEngine;
 
-namespace Services.AddressableKey
+namespace Util
 {
     public static class KeyContainer
     {
@@ -16,6 +16,7 @@ namespace Services.AddressableKey
             public const string TestUI = "TestScene";
             public const string VolumePopupUI = "VolumePopupUI";
             public const string BGMPopupUI = "BGMPopupUI";
+            public const string SheetLoader = "SheetLoader";
         }
 
         public static class Audio
@@ -115,6 +116,7 @@ namespace Services.AddressableKey
             prefabKeyDict.Add(Prefabs.TestUI, new List<GameObject>());
             prefabKeyDict.Add(Prefabs.VolumePopupUI, new List<GameObject>());
             prefabKeyDict.Add(Prefabs.BGMPopupUI, new List<GameObject>());
+            prefabKeyDict.Add(Prefabs.SheetLoader, new List<GameObject>());
         }
 
         private static void AudioClipsInit()

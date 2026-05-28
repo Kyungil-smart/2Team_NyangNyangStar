@@ -1,6 +1,5 @@
 ﻿using Core.Managers;
 using UnityEngine;
-using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
 using UnityEngine.UI;
 
@@ -35,7 +34,7 @@ namespace UI
                 {
                     if (_disposed || currentRequestId != _requestId)
                     {
-                        Addressables.Release(handle);
+                        GameManager.Addressable.Release(handle);
                         return;
                     }
 

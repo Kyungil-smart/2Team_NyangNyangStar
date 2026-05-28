@@ -32,6 +32,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ce89bb6578a7bfc4080d874e815dfb65
+    m_Address: SheetLoader
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: cec34d7e83c1a6d459c6e5eaeb612bd4
     m_Address: TestScene
     m_ReadOnly: 0

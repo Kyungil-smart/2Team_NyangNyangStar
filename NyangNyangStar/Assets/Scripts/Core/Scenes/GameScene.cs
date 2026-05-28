@@ -1,9 +1,13 @@
+using Core.Managers;
 using UnityEngine;
 
 public class GameScene : BaseScene
 {
-    protected override void Init()
+    private void Update()
     {
-        base.Init();
+        if (Input.GetKeyDown(KeyCode.D))
+        {
+            GameManager.Data.LoadSheets();
+        }
     }
 }

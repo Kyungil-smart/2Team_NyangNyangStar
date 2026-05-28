@@ -64,8 +64,8 @@ namespace Core.Managers
             
             DebugTool.Log("게임 매니저 초기화 시작", DebugType.Game);
 
-            _instance._dataManager.Init();
             _instance._addressableManager.Init();
+            _instance._dataManager.Init();
             _instance._audioManager.Init();
             _instance._gameSceneManager.Init();
             _instance._uiManager.Init();
