@@ -13,11 +13,9 @@ namespace Util
         public static class Prefabs
         {
             public const string EventSystem = "EventSystem";
-            public const string TestUI = "TestScene";
-            public const string VolumePopupUI = "VolumePopupUI";
-            public const string BGMPopupUI = "BGMPopupUI";
             public const string SheetLoader = "SheetLoader";
 
+            // 메인 화면 UI 프리팹
             public const string MainUI = "MainUI";
             public const string ShopPopupUI = "ShopPopupUI";
             public const string EventPopupUI = "EventPopupUI";
@@ -29,6 +27,8 @@ namespace Util
             public const string NotebookPopupUI = "NotebookPopupUI";
             public const string RoulettePopupUI = "RoulettePopupUI";
             public const string AffinityPopupUI = "AffinityPopupUI";
+            
+            public const string ScratcherSeasonEventPanel = "ScratcherSeasonEventPanel";
         }
 
         public static bool IsPrefabKey(string key)
@@ -109,9 +109,6 @@ namespace Util
             PrefabKeyDict.Clear();
 
             PrefabKeyDict.Add(Prefabs.EventSystem, new List<GameObject>());
-            PrefabKeyDict.Add(Prefabs.TestUI, new List<GameObject>());
-            PrefabKeyDict.Add(Prefabs.VolumePopupUI, new List<GameObject>());
-            PrefabKeyDict.Add(Prefabs.BGMPopupUI, new List<GameObject>());
             PrefabKeyDict.Add(Prefabs.SheetLoader, new List<GameObject>());
 
             PrefabKeyDict.Add(Prefabs.MainUI, new List<GameObject>());
@@ -125,6 +122,8 @@ namespace Util
             PrefabKeyDict.Add(Prefabs.NotebookPopupUI, new List<GameObject>());
             PrefabKeyDict.Add(Prefabs.RoulettePopupUI, new List<GameObject>());
             PrefabKeyDict.Add(Prefabs.AffinityPopupUI, new List<GameObject>());
+            
+            PrefabKeyDict.Add(Prefabs.ScratcherSeasonEventPanel, new List<GameObject>());
         }
 
         private static void AudioClipsInit()
