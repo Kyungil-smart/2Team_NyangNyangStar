@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
-using System.Text;
 using UnityEngine;
+using Util;
 
-namespace Data.ScriptableObjects.KeyContainer
+namespace Data.ScriptableObjects.KeyContainerSO
 {
     [CreateAssetMenu(fileName = "KeyContainer", menuName = "SO/Addressable/KeyContainer", order = 0)]
     public class KeyContainerSo : ScriptableObject
@@ -12,7 +12,9 @@ namespace Data.ScriptableObjects.KeyContainer
         public List<KeyData> KeyDatas => keyDatas;
 
         public void ClearData()
-            => keyDatas.Clear();
+        {
+            keyDatas.Clear();
+        }
 
         public void AddData(KeyData data)
         {
@@ -20,6 +22,18 @@ namespace Data.ScriptableObjects.KeyContainer
                 return;
 
             keyDatas.Add(data);
+            AddKey(data);
+        }
+
+        private void AddKey(KeyData data)
+        {
+            if (data == null)
+            {
+                DebugTool.Warning("KeyData 가 없습니다.", DebugType.Data);
+                return;
+            }
+
+            KeyContainer.Sprites.Add(data.Key);
         }
     }
 }
