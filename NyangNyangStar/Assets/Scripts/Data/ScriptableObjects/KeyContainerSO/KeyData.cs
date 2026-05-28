@@ -2,7 +2,7 @@
 using System;
 using UnityEngine;
 
-namespace Data.ScriptableObjects.KeyContainer
+namespace Data.ScriptableObjects.KeyContainerSO
 {
     [Serializable]
     public class KeyData
