@@ -12,13 +12,11 @@ namespace Data.Parsing
         [field: SerializeField] public SheetType Type { get; private set; }
         public char SplitSymbol => Type == SheetType.CSV ? ',' : '\t';
 
-        public bool loadComplete;
 
         public SheetData(string url, SheetType type)
         {
             URL = url;
             Type = type;
-            loadComplete = false;
         }
 
         public IEnumerator Load(Action<char, string[]> SuccessCallback)
@@ -48,11 +46,11 @@ namespace Data.Parsing
                 string[] lines = sheetDataText.Split('\n');
 
                 SuccessCallback?.Invoke(SplitSymbol, lines);
-                loadComplete = true;
                 DebugTool.Log($"Successfully loaded sheet data from {exportURL}", DebugType.Data);
             }
         }
     }
+    
     public enum SheetType
     {
         CSV,
