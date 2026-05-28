@@ -7,7 +7,6 @@ namespace Data.LibrarySystem
     {
         public static LocalDataAccess Instance { get; private set; }
 
-
         public GameDataModule Game { get; private set; }
 
         private void Awake()
