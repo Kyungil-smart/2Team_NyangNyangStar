@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
 
@@ -17,6 +17,18 @@ namespace Util
             public const string VolumePopupUI = "VolumePopupUI";
             public const string BGMPopupUI = "BGMPopupUI";
             public const string SheetLoader = "SheetLoader";
+
+            public const string MainUI = "MainUI";
+            public const string ShopPopupUI = "ShopPopupUI";
+            public const string EventPopupUI = "EventPopupUI";
+            public const string DailyCheckInPopupUI = "DailyCheckInPopupUI";
+            public const string MailPopupUI = "MailPopupUI";
+            public const string SettingsPopupUI = "SettingsPopupUI";
+            public const string CollectionPopupUI = "CollectionPopupUI";
+            public const string StoryBookPopupUI = "StoryBookPopupUI";
+            public const string NotebookPopupUI = "NotebookPopupUI";
+            public const string RoulettePopupUI = "RoulettePopupUI";
+            public const string AffinityPopupUI = "AffinityPopupUI";
         }
 
         public static class Audio
@@ -117,6 +129,18 @@ namespace Util
             prefabKeyDict.Add(Prefabs.VolumePopupUI, new List<GameObject>());
             prefabKeyDict.Add(Prefabs.BGMPopupUI, new List<GameObject>());
             prefabKeyDict.Add(Prefabs.SheetLoader, new List<GameObject>());
+
+            prefabKeyDict.Add(Prefabs.MainUI, new List<GameObject>());
+            prefabKeyDict.Add(Prefabs.ShopPopupUI, new List<GameObject>());
+            prefabKeyDict.Add(Prefabs.EventPopupUI, new List<GameObject>());
+            prefabKeyDict.Add(Prefabs.DailyCheckInPopupUI, new List<GameObject>());
+            prefabKeyDict.Add(Prefabs.MailPopupUI, new List<GameObject>());
+            prefabKeyDict.Add(Prefabs.SettingsPopupUI, new List<GameObject>());
+            prefabKeyDict.Add(Prefabs.CollectionPopupUI, new List<GameObject>());
+            prefabKeyDict.Add(Prefabs.StoryBookPopupUI, new List<GameObject>());
+            prefabKeyDict.Add(Prefabs.NotebookPopupUI, new List<GameObject>());
+            prefabKeyDict.Add(Prefabs.RoulettePopupUI, new List<GameObject>());
+            prefabKeyDict.Add(Prefabs.AffinityPopupUI, new List<GameObject>());
         }
 
         private static void AudioClipsInit()
