@@ -303,7 +303,8 @@ namespace Core.Managers
                 source.clip = null;
             }
 
-            Addressables.Release(_bgmHandle);
+            if(_bgmHandle.IsValid())
+                GameManager.Addressable.Release(_bgmHandle);
 
             DebugTool.Log("오디오 매니저 제거 완료", DebugType.Game);
         }
