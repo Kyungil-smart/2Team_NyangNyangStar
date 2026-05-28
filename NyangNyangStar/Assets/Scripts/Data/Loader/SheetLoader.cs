@@ -2,8 +2,11 @@
 using Data.Parsing;
 using Data.LibrarySystem;
 using Data.ScriptableObjects;
+using Data.ScriptableObjects.KeyContainer;
+using Services.Enums;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using UnityEngine;
 
 namespace Data.Loader
@@ -177,7 +180,11 @@ namespace Data.Loader
                 keyContainer.ClearData();
 
                dict[orderIndex] = keyContainer;
+            
+               StringBuilder log = new();
 
+               log.AppendLine($"[KeyContainerSO] {orderIndex} 번 SO 초기화");
+               
                 StartCoroutine(sheet.Load((split, lines) =>
                 {
                     if (lines == null)
@@ -210,16 +217,34 @@ namespace Data.Loader
                             continue;
                         }
 
+                        if (cols.Length > 5)
+                        {
+                            DebugTool.Warning($"컬럼 개수가 {cols.Length} 입니다.\n" +
+                                              $"불필요한 데이터가 있는지 확인 바랍니다.", DebugType.Data);
+                            return;
+                        }
+
                         string key = cols[0].Trim();
                         string fileName = cols[1].Trim();
+                        string usage = cols[2].Trim();
+                        string buildType = cols[3].Trim();
+                        string imageType = cols[4].Trim();
+                        
+                        KeyData data = KeyDataMapping(key, fileName, usage, buildType, imageType);
 
-                        keyContainer.AddData(key, fileName);
+                        log.AppendLine($"{row}번째 : Key = {data.Key} | {data.FileName} | " +
+                                       $"{data.Usage} | {data.BuildType} | " +
+                                       $"{data.ImageType.ToString()}");
+                        
+                        keyContainer.AddData(data);
                     }
 
                     DebugTool.Log(
-                        $"[KeyContainer] {orderIndex}번 시트 로드 완료 / 총 {keyContainer.Key.Count}건",
+                        $"[KeyContainer] {orderIndex}번 시트 로드 완료 / 총 {keyContainer.KeyDatas.Count}건",
                         DebugType.Data,
                         this);
+                
+                    Debug.Log(log.ToString());
 
                     CompleteOne();
                 }));
@@ -237,6 +262,51 @@ namespace Data.Loader
                         this);
 
                     onComplete?.Invoke();
+                }
+            }
+
+            KeyData KeyDataMapping(string key, string fileName, string usage, 
+                string buildtype, string ImageType)
+            {
+                if(string.IsNullOrEmpty(key) ||  string.IsNullOrEmpty(fileName) || 
+                   string.IsNullOrEmpty(usage) || string.IsNullOrEmpty(buildtype) || 
+                   string.IsNullOrEmpty(ImageType))
+                    return null;
+
+                KeyData data = new();
+                
+                data.Key = key;
+                data.FileName = fileName;
+                data.Usage = usage;
+                data.BuildType = convertBuildType(buildtype);
+                data.ImageType = convertImageType(ImageType);
+                
+                return data;
+            }
+
+            BuildType convertBuildType(string buildType)
+            {
+                switch (buildType)
+                {
+                    case "Local" :
+                        return BuildType.Local;
+                    case "Remote" :
+                        return BuildType.Remote;
+                    default :
+                        return BuildType.None;
+                }
+            }
+            
+            ImageType convertImageType(string imageType)
+            {
+                switch (imageType)
+                {
+                    case "Sprite" :
+                        return ImageType.Sprite;
+                    case "UI" :
+                        return ImageType.UI;
+                    default :
+                        return ImageType.None;
                 }
             }
         }
