@@ -76,7 +76,6 @@ namespace Core.Managers
                     uiPrefab.transform.SetParent(_root.transform, false);
 
                     SetCanvas(uiPrefab, sort: false);
-                    
 
                     uiScene.Init();
 
