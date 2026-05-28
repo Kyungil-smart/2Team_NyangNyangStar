@@ -14,8 +14,8 @@ namespace Data.Loader
     public class SheetLoader : MonoBehaviour
     {
         [Header("Key Container")]
-        public List<SheetData> keyContainers;
-        [SerializeField] private List<KeyContainerSo> keyLists = new(); 
+        public List<SheetData> GoogleSheetURL;
+        [SerializeField] private List<KeyContainerSo> keySo = new(); 
         private Dictionary<int, KeyContainerSo> _keyContainerDict = new();
 
         [SerializeField] private int _pendingSheetCount;
@@ -31,7 +31,7 @@ namespace Data.Loader
                 return;
             }
 
-            LoadKeyContainerData(keyContainers, keyLists, _keyContainerDict, onComplete: () =>
+            LoadKeyContainerData(GoogleSheetURL, keySo, _keyContainerDict, onComplete: () =>
             {
                 LocalDataAccess.Instance.Game.RegisterKeyContainers(_keyContainerDict);
                 OnSheetCompleted();
@@ -317,7 +317,7 @@ namespace Data.Loader
 
             _pendingSheetCount = 0;
 
-            foreach (KeyContainerSo keyContainer in keyLists)
+            foreach (KeyContainerSo keyContainer in keySo)
             {
                 if (keyContainer == null)
                     continue;
