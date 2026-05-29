@@ -6,9 +6,7 @@ using Data.ScriptableObjects.KeyContainerSO;
 using Data.ScriptableObjects.ScratchingTimeSO;
 using Services.Enums;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using Unity.VisualScripting;
 using UnityEngine;
 using Util;
 
@@ -54,6 +52,13 @@ namespace Data.Loader
                 
                 KeyContainer.PrintKeys();
             });
+            
+            LoadSheetData(scratchingURL, scratchingSheetLoadSo, 1, () =>
+                {
+                    OnSheetCompleted();
+                    
+                    scratchingSheetLoadSo.PrintDatas();
+                });
         }
 
         private void OnSheetCompleted()
@@ -207,7 +212,7 @@ namespace Data.Loader
                         if (cols.Length > 6)
                         {
                             DebugTool.Warning($"컬럼 개수가 {cols.Length} 입니다.\n" +
-                                              $"불필요한 데이터가 있는지 확인 바랍니다.", DebugType.Data);
+                                              "불필요한 데이터가 있는지 확인 바랍니다.", DebugType.Data);
                             return;
                         }
 
@@ -286,14 +291,14 @@ namespace Data.Loader
                 }
             }
             
-            LabelType ConvertLabelType(string imageType)
+            LabelType ConvertLabelType(string lableType)
             {
-                switch (imageType)
+                switch (lableType)
                 {
                     case "Sprite" :
                         return LabelType.Sprite;
-                    case "UI" :
-                        return LabelType.UI;
+                    case "Audio" :
+                        return LabelType.Audio;
                     default :
                         return LabelType.None;
                 }

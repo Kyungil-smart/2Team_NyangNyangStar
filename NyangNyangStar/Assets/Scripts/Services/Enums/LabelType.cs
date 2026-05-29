@@ -4,7 +4,6 @@
     {
         None,
         Sprite,
-        UI,
         Audio
     }
 }
