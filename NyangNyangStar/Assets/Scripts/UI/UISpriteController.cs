@@ -27,6 +27,12 @@ namespace UI
                 return;
             }
 
+            if (string.IsNullOrWhiteSpace(key))
+            {
+                DebugTool.Warning("Sprite Key가 비어 있습니다.", DebugType.UI);
+                return;
+            }
+
             int currentRequestId = ++_requestId;
 
             GameManager.Addressable.LoadSprite(key,
