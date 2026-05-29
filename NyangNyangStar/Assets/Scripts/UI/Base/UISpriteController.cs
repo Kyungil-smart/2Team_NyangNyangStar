@@ -8,7 +8,9 @@ namespace UI
     public class UISpriteController
     {
         private readonly Image _image;
-
+        private Color _color;
+        private bool _isColorchange;
+        
         private AsyncOperationHandle<Sprite> _handle;
         private int _requestId;
         private bool _disposed;
@@ -48,6 +50,10 @@ namespace UI
 
                     _handle = handle;
                     _image.sprite = loadedSprite;
+                    
+                    if(_isColorchange)
+                        _image.color = _color;
+                    
                     if(nativeSize)
                         _image.SetNativeSize();
                 },
@@ -58,6 +64,12 @@ namespace UI
 
                     DebugTool.Warning($"{failedKey} : Sprite 로드 실패", DebugType.UI);
                 });
+        }
+
+        public void ChangeColor(Color color)
+        {
+            _color = color;
+            _isColorchange = true;
         }
 
         public void ClearSprite()
@@ -84,7 +96,7 @@ namespace UI
             DebugTool.Log("기존 Sprite Release 완료", DebugType.Addressable);
         }
 
-        public void Dispose()
+        private void Dispose()
         {
             _disposed = true;
             ++_requestId;
