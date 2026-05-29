@@ -139,27 +139,25 @@ namespace Util
             return true;
         }
 
-        public static bool IsSpriteKey(string key)
+        public static bool IsSpriteLoadableKey(string key)
         {
-            if (!Sprites.Contains(key))
+            if (string.IsNullOrWhiteSpace(key))
             {
-                DebugTool.Log($"{key} : 존재 하지 않는 Key 입니다.", DebugType.Addressable);
+                DebugTool.Warning("Key 값이 비어 있습니다.", DebugType.Addressable);
                 return false;
             }
 
-            return true;
+            if (Sprites.Contains(key))
+                return true;
+
+            if (UIs.Contains(key))
+                return true;
+
+            DebugTool.Warning($"{key} : Sprite로 로드 가능한 Key가 아닙니다.", DebugType.Addressable);
+            return false;
         }
         
-        public static bool IsUIKey(string key)
-        {
-            if (!UIs.Contains(key))
-            {
-                DebugTool.Log($"{key} : 존재 하지 않는 Key 입니다.", DebugType.Addressable);
-                return false;
-            }
-
-            return true;
-        }public static bool IsAudioKey(string key)
+        public static bool IsAudioKey(string key)
         {
             if (!Audios.Contains(key))
             {
@@ -198,9 +196,8 @@ namespace Util
 
         public static void InitKeys()
         {
+            ClearKeys();
             PrefabKeyDictInit();
-            
-            PrintKeys();
         }
 
         public static void ClearKeys()
@@ -220,8 +217,6 @@ namespace Util
 
         private static void PrefabKeyDictInit()
         {
-            PrefabKeyDict.Clear();
-
             PrefabKeyDict.Add(Prefabs.EventSystem, new List<GameObject>());
             PrefabKeyDict.Add(Prefabs.SheetLoader, new List<GameObject>());
 
@@ -240,7 +235,7 @@ namespace Util
             PrefabKeyDict.Add(Prefabs.ScratcherSeasonEventPanel, new List<GameObject>());
         }
 
-        private static void PrintKeys()
+        public static void PrintKeys()
         {
             StringBuilder log = new();
             log.AppendLine("[어드레서블 키 초기화]");
@@ -248,9 +243,20 @@ namespace Util
             log.AppendLine("[Prefabs]");
             foreach (string key in PrefabKeyDict.Keys)
                 log.AppendLine(key);
-
-            log.AppendLine("[로드 KeyData]");
-            foreach (string key in _keyDataDict.Keys)
+            log.AppendLine();
+            
+            log.AppendLine("[Sprite]");
+            foreach (string key in Sprites)
+                log.AppendLine(key);
+            log.AppendLine();
+            
+            log.AppendLine("[UI]");
+            foreach (string key in UIs)
+                log.AppendLine(key);
+            log.AppendLine();
+            
+            log.AppendLine("[Audio]");
+            foreach (string key in Audios)
                 log.AppendLine(key);
 
             DebugTool.Log(log.ToString(), DebugType.Addressable);
