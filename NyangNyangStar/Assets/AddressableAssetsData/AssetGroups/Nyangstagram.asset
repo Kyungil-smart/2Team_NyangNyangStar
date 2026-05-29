@@ -275,12 +275,6 @@ MonoBehaviour:
     m_SerializedLabels:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: c34858ef94c577e4d863c3872c8e9aa4
-    m_Address: NYS_Profile_ProfileImages
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - Sprite
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: c932054449768e8479fe7f6ae00adad8
     m_Address: NYS_FeedImage_NPC_08
     m_ReadOnly: 0
