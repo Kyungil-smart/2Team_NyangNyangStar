@@ -16,7 +16,6 @@ namespace Util
         private static readonly Dictionary<(AddressableGroupType group, LabelType label), List<string>> _keysByGroupAndLabel = new();
 
         public static readonly HashSet<string> Sprites = new();
-        public static readonly HashSet<string> UIs = new();
         public static readonly HashSet<string> Audios = new();
         
         public static class Prefabs
@@ -69,9 +68,6 @@ namespace Util
                     break;
                 case LabelType.Audio:
                     Audios.Add(data.Key);
-                    break;
-                case LabelType.UI :
-                    UIs.Add(data.Key);
                     break;
                 default :
                     DebugTool.Warning("잘못된 레이블 타입입니다", DebugType.Data);
@@ -150,9 +146,6 @@ namespace Util
             if (Sprites.Contains(key))
                 return true;
 
-            if (UIs.Contains(key))
-                return true;
-
             DebugTool.Warning($"{key} : Sprite로 로드 가능한 Key가 아닙니다.", DebugType.Addressable);
             return false;
         }
@@ -209,7 +202,6 @@ namespace Util
             _keysByGroupAndLabel.Clear();
             
             Sprites.Clear();
-            UIs.Clear();
             Audios.Clear();
             
             PrintKeys();
@@ -247,11 +239,6 @@ namespace Util
             
             log.AppendLine("[Sprite]");
             foreach (string key in Sprites)
-                log.AppendLine(key);
-            log.AppendLine();
-            
-            log.AppendLine("[UI]");
-            foreach (string key in UIs)
                 log.AppendLine(key);
             log.AppendLine();
             
