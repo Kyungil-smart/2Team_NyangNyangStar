@@ -31,7 +31,7 @@ namespace Core.Managers
         public void LoadPrefab(string key, Action<GameObject> onLoaded,  Action<string> onFailed = null,  bool dontDestroy = false)
         {
             
-            if (!KeyContainer.IsPrefabKey(key))
+            if (!KeyContainer.ContainsPrefabsKey(key))
             {
                 onFailed?.Invoke(key);
                 return;
@@ -162,7 +162,7 @@ namespace Core.Managers
         
         public bool TryReleasePrefab(string key, GameObject prefab)
         {
-            if(!KeyContainer.IsPrefabKey(key))
+            if(!KeyContainer.ContainsPrefabsKey(key))
                 return false;
             
             if (!KeyContainer.IsPrefabActive(key, prefab))
