@@ -1,13 +1,13 @@
 ﻿using System;
 using Data.Parsing;
 using Data.LibrarySystem;
-using Data.ScriptableObjects;
 using Data.ScriptableObjects.KeyContainerSO;
 using Services.Enums;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using UnityEngine;
+using Util;
 
 namespace Data.Loader
 {
@@ -34,7 +34,18 @@ namespace Data.Loader
             LoadKeyContainerData(GoogleSheetURL, keySo, _keyContainerDict, onComplete: () =>
             {
                 LocalDataAccess.Instance.Game.RegisterKeyContainers(_keyContainerDict);
+                foreach (KeyContainerSo so in keySo)
+                {
+                    if (so.DataCount <= 0)
+                    {
+                        DebugTool.Warning($"{so.name} : 데이터 입니다.", DebugType.Data);
+                        continue;
+                    }
+                    so.RegisterAll();
+                }
                 OnSheetCompleted();
+                
+                KeyContainer.PrintKeys();
             });
         }
 
@@ -46,9 +57,7 @@ namespace Data.Loader
                 DebugType.Data, this);
 
             if (_pendingSheetCount <= 0)
-            {
                 LocalDataAccess.Instance.Game.MarkReady();
-            }
         }
 
         private Dictionary<int, T> InitDict<T>(List<T> list)
@@ -207,7 +216,7 @@ namespace Data.Loader
 
                         string[] cols = line.Split(split);
 
-                        if (cols.Length < 2)
+                        if (cols.Length < 6)
                         {
                             DebugTool.Warning(
                                 $"[KeyContainer] {orderIndex}번 시트 {row}번째 줄 컬럼 부족: {line}",
@@ -217,7 +226,7 @@ namespace Data.Loader
                             continue;
                         }
 
-                        if (cols.Length > 5)
+                        if (cols.Length > 6)
                         {
                             DebugTool.Warning($"컬럼 개수가 {cols.Length} 입니다.\n" +
                                               $"불필요한 데이터가 있는지 확인 바랍니다.", DebugType.Data);
@@ -227,20 +236,21 @@ namespace Data.Loader
                         string key = cols[0].Trim();
                         string fileName = cols[1].Trim();
                         string usage = cols[2].Trim();
-                        string buildType = cols[3].Trim();
-                        string imageType = cols[4].Trim();
+                        string groupType = cols[3].Trim();
+                        string labelType = cols[4].Trim();
+                        string buildType = cols[5].Trim();
                         
-                        KeyData data = KeyDataMapping(key, fileName, usage, buildType, imageType);
+                        KeyData data = KeyDataMapping(key, fileName, usage, groupType, labelType, buildType);
 
                         log.AppendLine($"{row}번째 : Key = {data.Key} | {data.FileName} | " +
                                        $"{data.Usage} | {data.BuildType} | " +
-                                       $"{data.ImageType.ToString()}");
+                                       $"{data.LabelType.ToString()}");
                         
                         keyContainer.AddData(data);
                     }
 
                     DebugTool.Log(
-                        $"[KeyContainer] {orderIndex}번 시트 로드 완료 / 총 {keyContainer.KeyDatas.Count}건",
+                        $"[KeyContainer] {orderIndex}번 시트 로드 완료 / 총 {keyContainer.DataCount}건",
                         DebugType.Data,
                         this);
                 
@@ -266,25 +276,26 @@ namespace Data.Loader
             }
 
             KeyData KeyDataMapping(string key, string fileName, string usage, 
-                string buildtype, string ImageType)
+                string groupType, string labelType, string buildType)
             {
                 if(string.IsNullOrEmpty(key) ||  string.IsNullOrEmpty(fileName) || 
-                   string.IsNullOrEmpty(usage) || string.IsNullOrEmpty(buildtype) || 
-                   string.IsNullOrEmpty(ImageType))
+                   string.IsNullOrEmpty(usage) || string.IsNullOrEmpty(buildType) || 
+                   string.IsNullOrEmpty(labelType))
                     return null;
 
-                KeyData data = new();
-                
-                data.Key = key;
-                data.FileName = fileName;
-                data.Usage = usage;
-                data.BuildType = convertBuildType(buildtype);
-                data.ImageType = convertImageType(ImageType);
-                
+                KeyData data = new() { 
+                    Key = key, 
+                    FileName = fileName, 
+                    Usage = usage, 
+                    GroupType = ConvertGroupType(groupType),
+                    BuildType = ConvertBuildType(buildType),
+                    LabelType = ConvertLabelType(labelType)
+                };
+
                 return data;
             }
 
-            BuildType convertBuildType(string buildType)
+            BuildType ConvertBuildType(string buildType)
             {
                 switch (buildType)
                 {
@@ -297,16 +308,30 @@ namespace Data.Loader
                 }
             }
             
-            ImageType convertImageType(string imageType)
+            LabelType ConvertLabelType(string imageType)
             {
                 switch (imageType)
                 {
                     case "Sprite" :
-                        return ImageType.Sprite;
+                        return LabelType.Sprite;
                     case "UI" :
-                        return ImageType.UI;
+                        return LabelType.UI;
                     default :
-                        return ImageType.None;
+                        return LabelType.None;
+                }
+            }
+            AddressableGroupType ConvertGroupType(string groupType)
+            {
+                switch (groupType)
+                {
+                    case "Common":
+                        return  AddressableGroupType.Common;
+                    case "Main":
+                        return AddressableGroupType.Main;
+                    case "Nyangstagram":
+                        return AddressableGroupType.Nyangstagram;
+                    default:
+                        return AddressableGroupType.None;
                 }
             }
         }

@@ -9,7 +9,7 @@ namespace Data.ScriptableObjects.KeyContainerSO
     {
         [Header("어드레서블 키")]
         [SerializeField] private List<KeyData> keyDatas = new();
-        public List<KeyData> KeyDatas => keyDatas;
+        public int DataCount => keyDatas.Count;
 
         public void ClearData()
         {
@@ -22,18 +22,20 @@ namespace Data.ScriptableObjects.KeyContainerSO
                 return;
 
             keyDatas.Add(data);
-            AddKey(data);
         }
 
-        private void AddKey(KeyData data)
+        public void RegisterAll()
         {
-            if (data == null)
+            foreach (KeyData data in keyDatas)
             {
-                DebugTool.Warning("KeyData 가 없습니다.", DebugType.Data);
-                return;
-            }
+                if (data == null)
+                {
+                    DebugTool.Warning("KeyData 가 없습니다", DebugType.Data);
+                    continue;
+                }
 
-            KeyContainer.Sprites.Add(data.Key);
+                KeyContainer.Register(data);
+            }
         }
     }
 }

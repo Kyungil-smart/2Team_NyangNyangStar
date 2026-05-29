@@ -1,9 +1,10 @@
 ﻿namespace Services.Enums
 {
-    public enum ImageType : byte
+    public enum LabelType : byte
     {
+        None,
         Sprite,
         UI,
-        None
+        Audio
     }
 }

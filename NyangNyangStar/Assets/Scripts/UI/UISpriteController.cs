@@ -16,7 +16,7 @@ namespace UI
         public UISpriteController(Image image)
             => _image = image;
 
-        public void ChangeSprite(string key)
+        public void ChangeSprite(string key, bool nativeSize = false)
         {
             if (_disposed)
                 return;
@@ -24,6 +24,12 @@ namespace UI
             if (_image == null)
             {
                 DebugTool.Warning("Image가 null 입니다.", DebugType.UI);
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(key))
+            {
+                DebugTool.Warning("Sprite Key가 비어 있습니다.", DebugType.UI);
                 return;
             }
 
@@ -42,6 +48,8 @@ namespace UI
 
                     _handle = handle;
                     _image.sprite = loadedSprite;
+                    if(nativeSize)
+                        _image.SetNativeSize();
                 },
                 failedKey =>
                 {
