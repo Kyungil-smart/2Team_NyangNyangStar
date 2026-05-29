@@ -126,7 +126,7 @@ namespace Core.Managers
             Action<Sprite, AsyncOperationHandle<Sprite>> onLoaded,
             Action<string> onFailed = null)
         {
-            if (!KeyContainer.IsSpriteKey(key))
+            if (!KeyContainer.IsSpriteLoadableKey(key))
             {
                 onFailed?.Invoke(key);
                 return;
@@ -144,17 +144,17 @@ namespace Core.Managers
 
                     if (sprite == null)
                     {
-                        DebugTool.Warning($"{key} : Sprite 가 null 입니다", DebugType.Addressable);
+                        DebugTool.Warning($"{key} : 로드 결과가 null 입니다", DebugType.Addressable);
                         Addressables.Release(handle);
                         onFailed?.Invoke(key);
                         return;
                     }
 
-                    DebugTool.Log($"{key} : Sprite 로드 성공", DebugType.Addressable);
+                    DebugTool.Log($"{key} : 로드 성공", DebugType.Addressable);
                     onLoaded?.Invoke(sprite, handle);
                     return;
                 }
-                DebugTool.Warning($"{key} : Sprite 로드 실패", DebugType.Addressable);
+                DebugTool.Warning($"{key} : Addressable.LoadAssetAsync<Sprite> 실패 / Status: {handle.Status}", DebugType.Addressable);
                 Addressables.Release(handle);
                 onFailed?.Invoke(key);
             };
