@@ -1,13 +1,13 @@
 ﻿using System;
 using Data.Parsing;
 using Data.LibrarySystem;
-using Data.ScriptableObjects;
 using Data.ScriptableObjects.KeyContainerSO;
 using Services.Enums;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using UnityEngine;
+using Util;
 
 namespace Data.Loader
 {
@@ -44,6 +44,8 @@ namespace Data.Loader
                     so.RegisterAll();
                 }
                 OnSheetCompleted();
+                
+                KeyContainer.PrintKeys();
             });
         }
 
@@ -55,9 +57,7 @@ namespace Data.Loader
                 DebugType.Data, this);
 
             if (_pendingSheetCount <= 0)
-            {
                 LocalDataAccess.Instance.Game.MarkReady();
-            }
         }
 
         private Dictionary<int, T> InitDict<T>(List<T> list)
@@ -324,12 +324,12 @@ namespace Data.Loader
             {
                 switch (groupType)
                 {
+                    case "Common":
+                        return  AddressableGroupType.Common;
                     case "Main":
                         return AddressableGroupType.Main;
-
                     case "Nyangstagram":
                         return AddressableGroupType.Nyangstagram;
-
                     default:
                         return AddressableGroupType.None;
                 }
