@@ -13,9 +13,11 @@ namespace Data.ScriptableObjects.KeyContainerSO
         public string FileName { get => fileName; set => fileName = value; }
         [SerializeField] private string usage;
         public string Usage { get => usage; set => usage = value; }
+        [SerializeField] private AddressableGroupType groupType;
+        public AddressableGroupType GroupType { get => groupType; set => groupType = value; }
+        [SerializeField] private LabelType labelType;
+        public LabelType LabelType { get => labelType; set => labelType = value; }
         [SerializeField] private BuildType buildType;
         public BuildType BuildType { get => buildType; set => buildType = value; }
-        [SerializeField] private ImageType imageType;
-        public ImageType ImageType { get => imageType; set => imageType = value; }
     }
 }
