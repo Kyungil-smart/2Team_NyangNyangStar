@@ -39,7 +39,7 @@ namespace Core.Managers
                 _sheetLoader.ClearDatas();
         }
 
-        private void GetSheetLoaderPrefab()
+        public void GetSheetLoaderPrefab()
         {
             GameManager.Addressable.LoadPrefab(KeyContainer.Prefabs.SheetLoader,
                 loadPrefab =>
