@@ -17,8 +17,44 @@ MonoBehaviour:
     m_SerializedData: []
   m_GUID: bc3f2a6743e3cad40ab1fe2bcc50dc1c
   m_SerializeEntries:
+  - m_GUID: 0c23613c3b77d4d429cd8fb6f043b81e
+    m_Address: Btn_Close
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 14eca5e70671f9f47b99e4165aa777a5
+    m_Address: Shape_Circle
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b0f5270f778947544817640edfcad597
+    m_Address: Shape_Rectangle
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d07dffe7c5bc7ac46910ce5d2b861499
+    m_Address: Shape_Rectangle_Outline
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: d23994d0d05b1ca4daa36a9a52b58a0f
     m_Address: Profile_ProfileImages
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ebdcfdfbff020cf48b3109c6ecb42634
+    m_Address: Shape_Square
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f26128ba27976474b92c2a53b14137c0
+    m_Address: Shape_Squircle
     m_ReadOnly: 0
     m_SerializedLabels:
     - Sprite
