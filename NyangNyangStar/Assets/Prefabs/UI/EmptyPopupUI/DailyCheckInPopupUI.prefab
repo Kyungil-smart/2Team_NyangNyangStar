@@ -612,6 +612,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 436191506783f254abe2fc1e68f1b2f5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _panel: {fileID: 2324270352017819478}
+  _popupScale: 0.85
+  _popupScaleDuration: 0.1
   _closeButton: {fileID: 0}
   _background: {fileID: 0}
 --- !u!1 &5546990943507632497

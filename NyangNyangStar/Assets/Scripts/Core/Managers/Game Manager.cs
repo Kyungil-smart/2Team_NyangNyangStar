@@ -46,7 +46,7 @@ namespace Core.Managers
             Clear();
         }
 
-        private static void Init()
+        public static void Init()
         {
             if (_instance != null) return;
 

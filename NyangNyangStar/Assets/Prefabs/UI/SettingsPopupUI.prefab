@@ -124,6 +124,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 43b21f75230c0ae44b167b1fd703f132, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _panel: {fileID: 3631345438488186480}
+  _popupScale: 0.85
+  _popupScaleDuration: 0.1
   _sfxButton: {fileID: 0}
   _bgmButton: {fileID: 0}
   _closeButton: {fileID: 0}
