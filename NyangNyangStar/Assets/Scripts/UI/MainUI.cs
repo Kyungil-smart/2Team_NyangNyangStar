@@ -44,26 +44,17 @@ public class MainUI : UIScene
 
     private void BindButtons()
     {
-        if (_shopButton != null) 
-            _shopButton.onClick.AddListener(() => GameManager.UI.ShowPopupUI<UIPopup>(KeyContainer.Prefabs.ShopPopupUI));
-        if (_eventButton != null)
-            _eventButton.onClick.AddListener(() => GameManager.UI.ShowPopupUI<UIPopup>(KeyContainer.Prefabs.EventPopupUI));
-        if (_dailyCheckInButton != null)
-            _dailyCheckInButton.onClick.AddListener(() => GameManager.UI.ShowPopupUI<UIPopup>(KeyContainer.Prefabs.DailyCheckInPopupUI));
-        if (_mailButton != null)
-            _mailButton.onClick.AddListener(() => GameManager.UI.ShowPopupUI<UIPopup>(KeyContainer.Prefabs.MailPopupUI));
-        if (_settingsButton != null)
-            _settingsButton.onClick.AddListener(() => GameManager.UI.ShowPopupUI<UIPopup>(KeyContainer.Prefabs.SettingsPopupUI));
-        if (_collectionButton != null)
-            _collectionButton.onClick.AddListener(() => GameManager.UI.ShowPopupUI<UIPopup>(KeyContainer.Prefabs.CollectionPopupUI));
-        if (_storyBookButton != null)
-            _storyBookButton.onClick.AddListener(() => GameManager.UI.ShowPopupUI<UIPopup>(KeyContainer.Prefabs.StoryBookPopupUI));
-        if (_notebookButton != null)
-            _notebookButton.onClick.AddListener(() => GameManager.UI.ShowPopupUI<UIPopup>(KeyContainer.Prefabs.NotebookPopupUI));
-        if (_rouletteButton != null)
-            _rouletteButton.onClick.AddListener(() => GameManager.UI.ShowPopupUI<UIPopup>(KeyContainer.Prefabs.RoulettePopupUI));
-        if (_affinityButton != null)
-            _affinityButton.onClick.AddListener(() => GameManager.UI.ShowPopupUI<UIPopup>(KeyContainer.Prefabs.AffinityPopupUI));
+        AddPopupButton(_shopButton, KeyContainer.Prefabs.ShopPopupUI);
+        AddPopupButton(_eventButton, KeyContainer.Prefabs.EventPopupUI);
+        AddPopupButton(_dailyCheckInButton, KeyContainer.Prefabs.DailyCheckInPopupUI);
+        AddPopupButton(_mailButton, KeyContainer.Prefabs.MailPopupUI);
+        AddPopupButton(_settingsButton, KeyContainer.Prefabs.SettingsPopupUI);
+        AddPopupButton(_collectionButton, KeyContainer.Prefabs.CollectionPopupUI);
+        AddPopupButton(_storyBookButton, KeyContainer.Prefabs.StoryBookPopupUI);
+        AddPopupButton(_notebookButton, KeyContainer.Prefabs.NotebookPopupUI);
+        AddPopupButton(_rouletteButton, KeyContainer.Prefabs.RoulettePopupUI);
+        AddPopupButton(_affinityButton, KeyContainer.Prefabs.AffinityPopupUI);
+
         //if (_meowMeowStarButton != null)
         //    _meowMeowStarButton.onClick.AddListener(() => GameManager.UI.ShowPopupUI<UIPopup>(KeyContainer.Prefabs.MeowMeowStarPopupUI));
         //if (_workshopMergeBoardButton != null)
@@ -74,32 +65,41 @@ public class MainUI : UIScene
 
     private void OnDisable()
     {
-        if (_shopButton != null)
-            _shopButton.onClick.RemoveListener(() => GameManager.UI.ShowPopupUI<UIPopup>(KeyContainer.Prefabs.ShopPopupUI));
-        if (_eventButton != null)
-            _eventButton.onClick.RemoveListener(() => GameManager.UI.ShowPopupUI<UIPopup>(KeyContainer.Prefabs.EventPopupUI));
-        if (_dailyCheckInButton != null)
-            _dailyCheckInButton.onClick.RemoveListener(() => GameManager.UI.ShowPopupUI<UIPopup>(KeyContainer.Prefabs.DailyCheckInPopupUI));
-        if (_mailButton != null)
-            _mailButton.onClick.RemoveListener(() => GameManager.UI.ShowPopupUI<UIPopup>(KeyContainer.Prefabs.MailPopupUI));
-        if (_settingsButton != null)
-            _settingsButton.onClick.RemoveListener(() => GameManager.UI.ShowPopupUI<UIPopup>(KeyContainer.Prefabs.SettingsPopupUI));
-        if (_collectionButton != null)
-            _collectionButton.onClick.RemoveListener(() => GameManager.UI.ShowPopupUI<UIPopup>(KeyContainer.Prefabs.CollectionPopupUI));
-        if (_storyBookButton != null)
-            _storyBookButton.onClick.RemoveListener(() => GameManager.UI.ShowPopupUI<UIPopup>(KeyContainer.Prefabs.StoryBookPopupUI));
-        if (_notebookButton != null)
-            _notebookButton.onClick.RemoveListener(() => GameManager.UI.ShowPopupUI<UIPopup>(KeyContainer.Prefabs.NotebookPopupUI));
-        if (_rouletteButton != null)
-            _rouletteButton.onClick.RemoveListener(() => GameManager.UI.ShowPopupUI<UIPopup>(KeyContainer.Prefabs.RoulettePopupUI));
-        if (_affinityButton != null)
-            _affinityButton.onClick.RemoveListener(() => GameManager.UI.ShowPopupUI<UIPopup>(KeyContainer.Prefabs.AffinityPopupUI));
+        RemovePopupButton(_shopButton, KeyContainer.Prefabs.ShopPopupUI);
+        RemovePopupButton(_eventButton, KeyContainer.Prefabs.EventPopupUI);
+        RemovePopupButton(_dailyCheckInButton, KeyContainer.Prefabs.DailyCheckInPopupUI);
+        RemovePopupButton(_mailButton, KeyContainer.Prefabs.MailPopupUI);
+        RemovePopupButton(_settingsButton, KeyContainer.Prefabs.SettingsPopupUI);
+        RemovePopupButton(_collectionButton, KeyContainer.Prefabs.CollectionPopupUI);
+        RemovePopupButton(_storyBookButton, KeyContainer.Prefabs.StoryBookPopupUI);
+        RemovePopupButton(_notebookButton, KeyContainer.Prefabs.NotebookPopupUI);
+        RemovePopupButton(_rouletteButton, KeyContainer.Prefabs.RoulettePopupUI);
+        RemovePopupButton(_affinityButton, KeyContainer.Prefabs.AffinityPopupUI);
+
         //if (_meowMeowStarButton != null)
         //    _meowMeowStarButton.onClick.RemoveListener(() => GameManager.UI.ShowPopupUI<UIPopup>(KeyContainer.Prefabs.MeowMeowStarPopupUI));
         //if (_workshopMergeBoardButton != null)
         //    _workshopMergeBoardButton.onClick.RemoveListener(() => GameManager.UI.ShowPopupUI<UIPopup>(KeyContainer.Prefabs.WorkshopMergeBoardPopupUI));
         //if (_mainMergeBoardButton != null)
         //    _mainMergeBoardButton.onClick.RemoveListener(() => GameManager.UI.ShowPopupUI<UIPopup>(KeyContainer.Prefabs.MainMergeBoardPopupUI));
+    }
+
+    private void AddPopupButton(Button button, string key)
+    {
+        if (button == null) return;
+        button.onClick.AddListener(() => GameManager.UI.ShowPopupUI<UIPopup>(key, PlayPopupOpenAnimation));
+    }
+
+    private void RemovePopupButton(Button button, string key)
+    {
+        if (button == null) return;
+        button.onClick.RemoveListener(() => GameManager.UI.ShowPopupUI<UIPopup>(key, PlayPopupOpenAnimation));
+    }
+
+    private void PlayPopupOpenAnimation(UIPopup popup)
+    {
+        if (popup == null) return;
+        popup.PlayOpenAnimation();
     }
 }
 
