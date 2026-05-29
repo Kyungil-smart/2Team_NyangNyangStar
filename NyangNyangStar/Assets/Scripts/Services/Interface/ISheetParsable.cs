@@ -1,8 +1,6 @@
 
 public interface ISheetParsable
 {
-    int Id { get; }
-
-
+    void ClearData();
     void SetData(string[] cols);
 }

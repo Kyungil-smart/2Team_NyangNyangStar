@@ -22,11 +22,6 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 2b398541e9755b941a2769383c852c6a
-    m_Address: VolumePopupUI
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 2eebcca250b7d9b4a8bacdf8036c11e2
     m_Address: AffinityPopupUI
     m_ReadOnly: 0
@@ -84,11 +79,6 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: ce89bb6578a7bfc4080d874e815dfb65
     m_Address: SheetLoader
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: cec34d7e83c1a6d459c6e5eaeb612bd4
-    m_Address: TestSceneUI
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
