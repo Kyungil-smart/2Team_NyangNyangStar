@@ -1,10 +1,15 @@
 using Core.Managers;
+using DG.Tweening;
 using UI;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class SettingsPopupUI : UIPopup
 {
+    [Header("DOTween 설정")]
+    [SerializeField] private Transform _panel;
+    [SerializeField] private float _popupScale = 0.85f;
+    [SerializeField] private float _popupScaleDuration = 0.1f;
     [Header("오디오 설정 버튼")]
     [SerializeField] private Button _sfxButton;
     [SerializeField] private Button _bgmButton;
@@ -50,6 +55,24 @@ public class SettingsPopupUI : UIPopup
     {
         GameManager.Audio.SetBGMState();
         DebugTool.Log($"BGM 볼륨 변경 : {GameManager.Audio.BgmOnOff}", DebugType.UI, this);
+    }
+
+    public override void PlayOpenAnimation()
+    {
+        if (_panel == null) return;
+        
+        _panel.localScale = Vector3.one * _popupScale;
+        _panel.DOScale(1f, _popupScaleDuration)
+            .SetEase(Ease.OutSine);
+    }
+
+    public override void ClosePopup()
+    {
+        if( _panel == null) return;
+
+        _panel.DOScale(Vector3.one * _popupScale, _popupScaleDuration)
+            .SetEase(Ease.OutSine)
+            .OnComplete(() => base.ClosePopup());
     }
 }
 

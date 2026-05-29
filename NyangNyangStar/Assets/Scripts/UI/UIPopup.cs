@@ -1,4 +1,4 @@
-﻿using Core.Managers;
+using Core.Managers;
 
 namespace UI
 {
@@ -9,7 +9,9 @@ namespace UI
         public void SetAddressableKey(string key)
             => AddressableKey = key;
         public override void Init() { }
-        
+
+        public virtual void PlayOpenAnimation() { }
+
         public virtual void ClosePopup()
         {
             GameManager.UI.ClosePopupUI();  
