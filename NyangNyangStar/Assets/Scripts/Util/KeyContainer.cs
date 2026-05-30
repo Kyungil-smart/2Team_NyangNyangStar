@@ -35,7 +35,16 @@ namespace Util
             public const string NotebookPopupUI = "NotebookPopupUI";
             public const string RoulettePopupUI = "RoulettePopupUI";
             public const string AffinityPopupUI = "AffinityPopupUI";
-            
+
+            //냥스타그램 UI 프리펩 NyangStargram
+            public const string NyangStargramHomeProfile = "UINyangstagramHome & Profile";
+            public const string NyangStargramAddPostPopUpUI = "게시물 추가 화면 Canvas";
+            public const string NyangStargramNoticePopUpUI = "Nyagram알림 켄버스";
+            public const string NyangStargramNPCProfilePopUpUI = "Npc프로필 화면";
+            public const string NyangStargramPostPopUpUI = "게시물 Canvas";
+            public const string NyangStargramDMListPopUpUI = "NyagramDM리스트 켄버스";
+            public const string NyangStargramDMchatPopUpUI = "NyagramDM 대화";
+
             public const string ScratcherSeasonEventPanel = "ScratcherSeasonEventPanel";
         }
 
@@ -223,7 +232,16 @@ namespace Util
             PrefabKeyDict.Add(Prefabs.NotebookPopupUI, new List<GameObject>());
             PrefabKeyDict.Add(Prefabs.RoulettePopupUI, new List<GameObject>());
             PrefabKeyDict.Add(Prefabs.AffinityPopupUI, new List<GameObject>());
-            
+
+            //냥스타 그램
+            PrefabKeyDict.Add(Prefabs.NyangStargramHomeProfile, new List<GameObject>());
+            PrefabKeyDict.Add(Prefabs.NyangStargramAddPostPopUpUI, new List<GameObject>());
+            PrefabKeyDict.Add(Prefabs.NyangStargramNoticePopUpUI, new List<GameObject>());
+            PrefabKeyDict.Add(Prefabs.NyangStargramNPCProfilePopUpUI, new List<GameObject>());
+            PrefabKeyDict.Add(Prefabs.NyangStargramPostPopUpUI, new List<GameObject>());
+            PrefabKeyDict.Add(Prefabs.NyangStargramDMListPopUpUI, new List<GameObject>());
+            PrefabKeyDict.Add(Prefabs.NyangStargramDMchatPopUpUI, new List<GameObject>());
+
             PrefabKeyDict.Add(Prefabs.ScratcherSeasonEventPanel, new List<GameObject>());
         }
 

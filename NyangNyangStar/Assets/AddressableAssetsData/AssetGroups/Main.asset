@@ -71,12 +71,6 @@ MonoBehaviour:
     m_SerializedLabels:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 54d625b8f5baaed4ba33eefa3d00f4bf
-    m_Address: Main_Panel_Audio
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - Sprite
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 5b73e6ce7d80ce6478047690fd23abd3
     m_Address: Main_Panel_Level
     m_ReadOnly: 0
