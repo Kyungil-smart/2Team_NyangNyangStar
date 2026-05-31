@@ -57,7 +57,7 @@ namespace Data.Loader
                 {
                     OnSheetCompleted();
                     
-                    scratchingSo.PrintDatas();
+                    scratchingSo.PrintData();
                 });
         }
 
@@ -226,7 +226,7 @@ namespace Data.Loader
                         KeyData data = KeyDataMapping(key, fileName, usage, groupType, labelType, buildType);
 
                         log.AppendLine($"{row}번째 : Key = {data.Key} | {data.FileName} | " +
-                                       $"{data.Usage} | {data.BuildType} | " +
+                                       $"{data.GroupType} | {data.Usage} | {data.BuildType} | " +
                                        $"{data.LabelType.ToString()}");
                         
                         keyContainer.AddData(data);
@@ -313,6 +313,8 @@ namespace Data.Loader
                         return AddressableGroupType.Main;
                     case "Nyangstagram":
                         return AddressableGroupType.Nyangstagram;
+                    case "Scratching" :
+                        return AddressableGroupType.Scratching;
                     default:
                         return AddressableGroupType.None;
                 }
