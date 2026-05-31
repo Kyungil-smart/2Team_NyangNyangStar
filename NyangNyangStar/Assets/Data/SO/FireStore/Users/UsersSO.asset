@@ -12,7 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e3710038a6781e742b740445dcb3d210, type: 3}
   m_Name: UsersSO
   m_EditorClassIdentifier: 
+  m_DocumentId: 
   m_EnumType: 1
-  userId: PGgAeHlNsWbwSMIDIog8aQYdyGj1
-  nickname: MapleStory
-  resourcesSO: {fileID: 11400000, guid: 8b1517c2c8fd42b41a195195545b6c9f, type: 2}
+  userId: 
+  nickname: 
+  subCollections:
+  - {fileID: 11400000, guid: 8b1517c2c8fd42b41a195195545b6c9f, type: 2}
