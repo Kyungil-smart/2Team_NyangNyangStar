@@ -160,7 +160,7 @@ namespace Core.Managers
             };
         }
         
-        public bool TryReleasePrefab(string key, GameObject prefab)
+        public bool TryReleasePrefab(string key, GameObject prefab, bool destroy = false)
         {
             if(!KeyContainer.ContainsPrefabsKey(key))
                 return false;
@@ -172,6 +172,11 @@ namespace Core.Managers
 
             if (!result)
                 return false;
+            if (!destroy)
+            {
+                prefab.SetActive(false);
+                return true;
+            }
             
             KeyContainer.RemovePrefab(key, prefab);
             return true;
