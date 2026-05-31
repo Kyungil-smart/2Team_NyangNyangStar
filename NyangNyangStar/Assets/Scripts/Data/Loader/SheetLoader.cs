@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Core.Managers;
+using System;
 using Data.Parsing;
 using Data.LibrarySystem;
 using Data.ScriptableObjects;
@@ -28,6 +29,8 @@ namespace Data.Loader
 
         public void DataLoad()
         {
+            if(GameManager.Data == null) GameManager.Init();
+            
             if (LocalDataAccess.Instance == null)
             {
                 DebugTool.Error(

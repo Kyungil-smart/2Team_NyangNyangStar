@@ -187,9 +187,9 @@ namespace Util
             if (!PrefabKeyDict.ContainsKey(key))
                 return false;
 
-            if (!PrefabKeyDict[key].Contains(go))
+            if (PrefabKeyDict[key].Contains(go))
             {
-                DebugTool.Log("해당 프리팹이 존재하지 않습니다.", DebugType.Addressable);
+                DebugTool.Log("이미 로드한 프리펩입니다.", DebugType.Addressable);
                 return false;
             }
 

@@ -3,10 +3,23 @@ using UI;
 using UnityEngine;
 using Util;
 
-public class MainUIInitializer : MonoBehaviour
+public class MainUIInitializer : BaseScene
 {
     private void Start()
     {
-        GameManager.UI.ShowSceneUI<UIScene>(KeyContainer.Prefabs.MainUI);
+        GameManager.Data.LoadSheets();
+    }
+
+    private void Update()
+    {
+        if(Input.GetKeyDown(KeyCode.D))
+        {
+            GameManager.Data.LoadSheets();
+        }
+
+        if (Input.GetKeyDown(KeyCode.M))
+        {
+            GameManager.UI.ShowSceneUI<UIScene>(KeyContainer.Prefabs.MainUI);
+        }
     }
 }

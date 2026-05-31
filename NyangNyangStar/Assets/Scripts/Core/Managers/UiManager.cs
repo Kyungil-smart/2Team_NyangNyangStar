@@ -89,7 +89,7 @@ namespace Core.Managers
                 });
         }
 
-        public void ShowPopupUI<T>(string name = null, Action<T> onLoaded = null) where T : UIPopup
+        public void ShowPopupUI<T>(string name = null, Action<T> onLoaded = null, bool setActive = true) where T : UIPopup
         {
             if (string.IsNullOrEmpty(name))
                 name = typeof(T).Name;
@@ -98,7 +98,7 @@ namespace Core.Managers
                 uiPrefab =>
                 {
                     T popup = uiPrefab.GetComponent<T>();
-
+                    
                     if (popup == null)
                         popup = uiPrefab.AddComponent<T>();
 
@@ -109,6 +109,8 @@ namespace Core.Managers
                     SetCanvas(uiPrefab);
                     popup.Init();
                     popup.SetAddressableKey(name);
+                    
+                    popup.gameObject.SetActive(setActive);
 
                     DebugTool.Log($"{popup.name} : 팝업 창 열림 / 현재 팝업 수 : {_popupStack.Count}", DebugType.UI);
 
