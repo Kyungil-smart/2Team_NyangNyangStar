@@ -98,10 +98,19 @@ namespace Core.Managers
                 uiPrefab =>
                 {
                     T popup = uiPrefab.GetComponent<T>();
-
+                    
                     if (popup == null)
                         popup = uiPrefab.AddComponent<T>();
 
+                    foreach (var popupcomponent in _popupStack)
+                    {
+                        if (popup.gameObject == popupcomponent.gameObject)
+                        {
+                            DebugTool.Log($"{popup.gameObject.name} 이미 같은 오브젝트가 있습니다.", DebugType.UI);
+                            return;
+                        }
+                    }
+                    
                     _popupStack.Push(popup);
 
                     uiPrefab.transform.SetParent(_root.transform, false);
