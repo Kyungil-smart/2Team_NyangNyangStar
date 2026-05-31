@@ -168,15 +168,16 @@ namespace Core.Managers
             if (!KeyContainer.IsPrefabActive(key, prefab))
                 return false;
 
-            bool result = Addressables.ReleaseInstance(prefab);
-
-            if (!result)
-                return false;
             if (!destroy)
             {
                 prefab.SetActive(false);
                 return true;
             }
+            
+            bool result = Addressables.ReleaseInstance(prefab);
+
+            if (!result)
+                return false;
             
             KeyContainer.RemovePrefab(key, prefab);
             return true;
