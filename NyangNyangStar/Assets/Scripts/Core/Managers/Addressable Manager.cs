@@ -160,19 +160,13 @@ namespace Core.Managers
             };
         }
         
-        public bool TryReleasePrefab(string key, GameObject prefab, bool destroy = false)
+        public bool TryReleasePrefab(string key, GameObject prefab)
         {
             if(!KeyContainer.ContainsPrefabsKey(key))
                 return false;
             
             if (!KeyContainer.IsPrefabActive(key, prefab))
                 return false;
-
-            if (!destroy)
-            {
-                prefab.SetActive(false);
-                return true;
-            }
             
             bool result = Addressables.ReleaseInstance(prefab);
 
