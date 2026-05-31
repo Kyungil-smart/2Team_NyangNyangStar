@@ -30,6 +30,7 @@ namespace Data.Loader
         public void DataLoad()
         {
             if(GameManager.Data == null) GameManager.Init();
+            
             if (LocalDataAccess.Instance == null)
             {
                 DebugTool.Error(
