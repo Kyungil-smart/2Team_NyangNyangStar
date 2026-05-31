@@ -49,26 +49,16 @@ public class MainUI : UIScene
 
     private void InitPopups()
     {
-        GameManager.UI.ShowPopupUI<UIPopup>(KeyContainer.Prefabs.ShopPopupUI, onLoaded =>
-        { ShowPopupUI(_shopButton, onLoaded); }, false);
-        GameManager.UI.ShowPopupUI<UIPopup>(KeyContainer.Prefabs.EventPopupUI, onLoaded =>
-        { ShowPopupUI(_eventButton, onLoaded); }, false);
-        GameManager.UI.ShowPopupUI<UIPopup>(KeyContainer.Prefabs.DailyCheckInPopupUI, onLoaded =>
-        { ShowPopupUI(_dailyCheckInButton, onLoaded); }, false);
-        GameManager.UI.ShowPopupUI<UIPopup>(KeyContainer.Prefabs.MailPopupUI, onLoaded =>
-        { ShowPopupUI(_mailButton, onLoaded); }, false);
-        GameManager.UI.ShowPopupUI<UIPopup>(KeyContainer.Prefabs.SettingsPopupUI, onLoaded =>
-        { ShowPopupUI(_settingsButton, onLoaded); }, false);
-        GameManager.UI.ShowPopupUI<UIPopup>(KeyContainer.Prefabs.CollectionPopupUI, onLoaded =>
-        { ShowPopupUI(_collectionButton, onLoaded); }, false);
-        GameManager.UI.ShowPopupUI<UIPopup>(KeyContainer.Prefabs.StoryBookPopupUI, onLoaded =>
-        { ShowPopupUI(_storyBookButton, onLoaded); }, false);
-        GameManager.UI.ShowPopupUI<UIPopup>(KeyContainer.Prefabs.NotebookPopupUI, onLoaded =>
-        { ShowPopupUI(_notebookButton, onLoaded); }, false);
-        GameManager.UI.ShowPopupUI<UIPopup>(KeyContainer.Prefabs.RoulettePopupUI, onLoaded =>
-        { ShowPopupUI(_rouletteButton, onLoaded); }, false);
-        GameManager.UI.ShowPopupUI<UIPopup>(KeyContainer.Prefabs.AffinityPopupUI, onLoaded =>
-        { ShowPopupUI(_affinityButton, onLoaded); }, false);
+        InitPopup(KeyContainer.Prefabs.ShopPopupUI, _shopButton);
+        InitPopup(KeyContainer.Prefabs.EventPopupUI, _eventButton);
+        InitPopup(KeyContainer.Prefabs.DailyCheckInPopupUI, _dailyCheckInButton);
+        InitPopup(KeyContainer.Prefabs.MailPopupUI, _mailButton);
+        InitPopup(KeyContainer.Prefabs.SettingsPopupUI, _settingsButton);
+        InitPopup(KeyContainer.Prefabs.CollectionPopupUI, _collectionButton);
+        InitPopup(KeyContainer.Prefabs.StoryBookPopupUI, _storyBookButton);
+        InitPopup(KeyContainer.Prefabs.NotebookPopupUI, _notebookButton);
+        InitPopup(KeyContainer.Prefabs.RoulettePopupUI, _rouletteButton);
+        InitPopup(KeyContainer.Prefabs.AffinityPopupUI, _affinityButton);
     }
 
     private void OnDisable()
@@ -85,7 +75,12 @@ public class MainUI : UIScene
         RemovePopupButton(_affinityButton);
     }
 
-    private void ShowPopupUI(Button button, UIPopup popup)
+    private void InitPopup(string key, Button button)
+    {
+        GameManager.UI.ShowPopupUI<UIPopup>(key, onLoaded => AddPopupButton(button, onLoaded), false);
+    }
+
+    private void AddPopupButton(Button button, UIPopup popup)
     {
         if (button == null) return;
         button.onClick.AddListener(() => 
