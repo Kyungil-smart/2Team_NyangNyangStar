@@ -26,14 +26,14 @@ public class EmptyPopupUI : UIPopup
 
     private void BindButtons()
     {
-        if (_closeButton != null) _closeButton.onClick.AddListener(ClosePopup);
-        if (_background != null) _background.onClick.AddListener(ClosePopup);
+        if (_closeButton != null) _closeButton.onClick.AddListener(CloseEmptyPopup);
+        if (_background != null) _background.onClick.AddListener(CloseEmptyPopup);
     }
 
-    private void OnDisable()
+    private void OnDestroy()
     {
-        if (_closeButton != null) _closeButton.onClick.RemoveListener(ClosePopup);
-        if (_background != null) _background.onClick.RemoveListener(ClosePopup);
+        if (_closeButton != null) _closeButton.onClick.RemoveListener(CloseEmptyPopup);
+        if (_background != null) _background.onClick.RemoveListener(CloseEmptyPopup);
     }
 
     public override void PlayOpenAnimation()
@@ -45,13 +45,12 @@ public class EmptyPopupUI : UIPopup
             .SetEase(Ease.OutSine);
     }
 
-    public override void ClosePopup()
+    private void CloseEmptyPopup()
     {
         if (_panel == null) return;
-
         _panel.DOScale(Vector3.one * _popupScale, _popupScaleDuration)
             .SetEase(Ease.OutSine)
-            .OnComplete(() => base.ClosePopup());
+            .OnComplete(() => gameObject.SetActive(false));
     }
 }
 
