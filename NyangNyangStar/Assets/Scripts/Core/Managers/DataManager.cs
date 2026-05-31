@@ -29,11 +29,7 @@ namespace Core.Managers
         public void LoadSheets()
         {
             if(_sheetLoader != null)
-                if (_root == null)
-                {
-                    Init();
-                    _sheetLoader.DataLoad();
-                }
+                _sheetLoader.DataLoad();
         }
 
         // 데이터 매니저 제거 시 호출
