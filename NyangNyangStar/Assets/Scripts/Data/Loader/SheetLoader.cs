@@ -21,7 +21,7 @@ namespace Data.Loader
 
         [Space(8)] [Header("스크래칭 타임")] 
         [SerializeField] private SheetData scratchingURL;
-        [SerializeField] private ScratchingSheetLoadSo scratchingSheetLoadSo;
+        [SerializeField] private ScratchingSo scratchingSo;
 
         [Space(8)] [SerializeField] private int _pendingSheetCount;
         public int PendingSheetCount => _pendingSheetCount;
@@ -53,11 +53,11 @@ namespace Data.Loader
                 KeyContainer.PrintKeys();
             });
             
-            LoadSheetData(scratchingURL, scratchingSheetLoadSo, 1, () =>
+            LoadSheetData(scratchingURL, scratchingSo, 1, () =>
                 {
                     OnSheetCompleted();
                     
-                    scratchingSheetLoadSo.PrintDatas();
+                    scratchingSo.PrintData();
                 });
         }
 
@@ -77,7 +77,7 @@ namespace Data.Loader
             T targetSo,
             int headerRowCount = 1,
             Action onComplete = null
-        ) where T : SheetLoadSoBase, ISheetParsable
+        ) where T : SoBase, ISheetParsable
         {
             if(targetSo == null)
             {
@@ -226,7 +226,7 @@ namespace Data.Loader
                         KeyData data = KeyDataMapping(key, fileName, usage, groupType, labelType, buildType);
 
                         log.AppendLine($"{row}번째 : Key = {data.Key} | {data.FileName} | " +
-                                       $"{data.Usage} | {data.BuildType} | " +
+                                       $"{data.GroupType} | {data.Usage} | {data.BuildType} | " +
                                        $"{data.LabelType.ToString()}");
                         
                         keyContainer.AddData(data);
@@ -313,6 +313,8 @@ namespace Data.Loader
                         return AddressableGroupType.Main;
                     case "Nyangstagram":
                         return AddressableGroupType.Nyangstagram;
+                    case "Scratching" :
+                        return AddressableGroupType.Scratching;
                     default:
                         return AddressableGroupType.None;
                 }

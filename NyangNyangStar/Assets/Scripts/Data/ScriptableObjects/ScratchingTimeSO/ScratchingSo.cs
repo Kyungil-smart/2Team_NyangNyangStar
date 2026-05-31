@@ -5,8 +5,10 @@ using UnityEngine;
 namespace Data.ScriptableObjects.ScratchingTimeSO
 {
     [CreateAssetMenu(fileName = "ScratchingTime", menuName = "SO/Data/ScratchingTimeSO", order = 0)]
-    public class ScratchingSheetLoadSo : SheetLoadSoBase, ISheetParsable
+    public class ScratchingSo : SoBase, ISheetParsable
     {
+        [Header("스크래칭 타임 스테이지 데이터")]
+        [Tooltip("단계, 일일 내구도, 일일 경험치, 주간 내구도, 주간 경험치에 대한 정보")]
         [SerializeField] private List<ScratchingData> _scratchingDatas = new();
         public List<ScratchingData> ScratchingDatas => _scratchingDatas;
 
