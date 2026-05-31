@@ -31,7 +31,7 @@ namespace Core.Managers
             if(_sheetLoader != null)
                 if (_root == null)
                 {
-                    GameManager.Init();
+                    Init();
                     _sheetLoader.DataLoad();
                 }
         }
