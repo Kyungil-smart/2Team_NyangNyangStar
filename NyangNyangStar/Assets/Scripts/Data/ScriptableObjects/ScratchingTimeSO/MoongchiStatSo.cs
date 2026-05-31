@@ -21,7 +21,7 @@ namespace Data.ScriptableObjects.ScratchingTimeSO
         }
         public int MaxExp = 1000;
         [SerializeField] private int _currentExp;
-        [SerializeField] private int _baseSharpness = 10;
+        [SerializeField] private int _baseSharpness = 8;
         [SerializeField] private int _sharpnessIncreasePerLevel = 2;
         [SerializeField] private int _totalSharpness;
         [SerializeField] private int _baseCriticalChance = 5;
@@ -57,19 +57,23 @@ namespace Data.ScriptableObjects.ScratchingTimeSO
         public int GetCurrentExp()
             => _currentExp;
 
-        public int AttackValue()
+        public int Attack()
         {
             int random = Random.Range(0, 31);
             int value = _totalSharpness * Math.Clamp((100 - random) / 100, 0, 30);
             
-            int critical = Random.Range(0, 100);
+            int critChance = Random.Range(0, 100);
 
-            if (critical <= _totalCriticalChance)
+            if (critChance <= _totalCriticalChance)
             {
-                value *= 2;
                 DebugTool.Log($"[뭉치의 힘껏 긁기!] 확률 : {_totalCriticalChance} " +
-                              $"| 데미지 {_totalSharpness}", DebugType.Data);
+                              $"| 데미지 : {_totalSharpness}", DebugType.Data);
+                value *= 2;
+                return value;
             }
+            
+            DebugTool.Log($"[뭉치의 일반 공격] 데미지 : {_totalSharpness}", DebugType.Data);
+            
             return value;
         }
 
