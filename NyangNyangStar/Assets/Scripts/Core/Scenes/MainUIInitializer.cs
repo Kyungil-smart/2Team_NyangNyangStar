@@ -12,6 +12,11 @@ public class MainUIInitializer : BaseScene
 
     private void Update()
     {
+        if(Input.GetKeyDown(KeyCode.D))
+        {
+            GameManager.Data.LoadSheets();
+        }
+
         if (Input.GetKeyDown(KeyCode.M))
         {
             GameManager.UI.ShowSceneUI<UIScene>(KeyContainer.Prefabs.MainUI);
