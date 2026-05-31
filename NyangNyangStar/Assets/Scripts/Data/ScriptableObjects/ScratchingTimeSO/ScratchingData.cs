@@ -13,24 +13,34 @@ namespace Data.ScriptableObjects.ScratchingTimeSO
         [Space(15)] [Header("일일 스테이지")]
         [Header("스크래쳐 최대 내구도")]
         [SerializeField] private int _maxDailyDurability;
-        public int MaxDailyDurability { get => _maxDailyDurability; private set => _maxDailyDurability = value; }
+        public int MaxDailyDurability { get => _maxDailyDurability; set => _maxDailyDurability = value; }
         [Header("스크래쳐 현재 내구도")]
         [SerializeField] private int _currentDailyDurability;
-        public int CurrentDailyDurability { get => _currentDailyDurability; private set => _currentDailyDurability = value; }
+
+        public int CurrentDailyDurability
+        {
+            get => _currentDailyDurability;
+            set => _currentDailyDurability = Math.Max(value, 0);
+        }
         [Header("스테이지 클리어 경험치")]
         [SerializeField] private int _dailyClearExp;
-        public int DailyClearExp { get => _dailyClearExp; private set => _dailyClearExp = value; }
+        public int DailyClearExp { get => _dailyClearExp; set => _dailyClearExp = value; }
         
         [Space(15)] [Header("주간 스테이지")]
         [Header("스크래쳐 최대 내구도")]
         [SerializeField] private int _maxWeeklyDurability;
-        public int MaxWeeklyDurability { get => _maxWeeklyDurability; private set => _maxWeeklyDurability = value; }
+        public int MaxWeeklyDurability { get => _maxWeeklyDurability; set => _maxWeeklyDurability = value; }
         [Header("스크래쳐 현재 내구도")]
         [SerializeField] private int _currentWeeklyDurability;
-        public int CurrentWeeklyDurability { get => _currentWeeklyDurability; private set => _currentWeeklyDurability = value; }
+
+        public int CurrentWeeklyDurability
+        {
+            get => _currentWeeklyDurability;
+            set => _currentWeeklyDurability = Math.Max(value, 0);
+        }
         [Header("스테이지 클리어 경험치")]
         [SerializeField] private int _weeklyClearExp;
-        public int WeeklyClearExp { get => _weeklyClearExp; private set => _weeklyClearExp = value; }
+        public int WeeklyClearExp { get => _weeklyClearExp; set => _weeklyClearExp = value; }
         
         /// <summary>
         /// 스크래칭 타임 데이터 생성자
