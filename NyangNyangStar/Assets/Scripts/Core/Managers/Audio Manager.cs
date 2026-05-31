@@ -40,15 +40,20 @@ namespace Core.Managers
         private int BGMState => PlayerPrefs.GetInt(BGMStateKey, DefaultState);
         private int SfxState => PlayerPrefs.GetInt(SfxStateKey, DefaultState);
         
-        // 현재 재생 중인 BGM
+        // 현재 재생 중인 Audio
         private string _currentBgmKey;
-        // 현재 로딩 중인 BGM
+        private string _currentSfxKey;
+        // 현재 로딩 중인 Audio
         private string _loadingBgmKey;
-        // 다른 BGM 요청이 들어왔는지 확인
+        private string _loadingSfxKey;
+        // 다른 Audio 요청이 들어왔는지 확인
         private string _requestedBgmKey;
+        private string _requestedSfxKey;
         // 나중에 Release 하기 위해 저장해두는 BGM 핸들
         private AsyncOperationHandle<AudioClip> _bgmHandle;
+        private AsyncOperationHandle<AudioClip> _SfxHandle;
         private bool _isBgmLoaded;
+        private bool _isSfxLoaded;
 
         public void Init()
         {
@@ -162,6 +167,78 @@ namespace Core.Managers
             _loadingBgmKey = null;
             
             DebugTool.Log("BGM 정지", DebugType.Audio);
+        }
+
+        public void PlaySfx(string sfxKey)
+        {
+            
+            if (string.IsNullOrEmpty(sfxKey))
+            {
+                DebugTool.Warning("Sfx Key가 비어 있습니다.", DebugType.Audio);
+                return;
+            }
+
+            AudioSource sfxSource = _audioSources[(int)AudioType.SFX];
+
+            if (sfxSource == null)
+            {
+                DebugTool.Warning("SFX AudioSource가 없습니다.", DebugType.Missing);
+                return;
+            }
+
+            _requestedSfxKey = sfxKey;
+
+            if (_currentSfxKey == sfxKey && _isSfxLoaded)
+            {
+                DebugTool.Log($"같은 BGM 유지: {sfxKey}", DebugType.Audio);
+                return;
+            }
+
+            if (_loadingSfxKey == sfxKey)
+            {
+                DebugTool.Log($"이미 BGM 로딩 중: {sfxKey}", DebugType.Audio);
+                return;
+            }
+
+            _loadingSfxKey = sfxKey;
+
+            GameManager.Addressable.LoadAudioClip(
+                sfxKey,
+                (clip, handle) =>
+                {
+                    _loadingSfxKey = null;
+
+                    if (_requestedSfxKey != sfxKey)
+                    {
+                        DebugTool.Log($"다른 BGM 요청으로 로드 취소 처리: {sfxKey}", DebugType.Addressable);
+                        GameManager.Addressable.Release(handle);
+                        return;
+                    }
+
+                    ReleaseCurrentBGM();
+
+                    _SfxHandle = handle;
+                    _isSfxLoaded = true;
+                    _currentSfxKey = sfxKey;
+
+                    sfxSource.clip = null;
+                    sfxSource.loop = false;
+
+                    ApplyAudioState();
+
+                    sfxSource.PlayOneShot(clip);
+
+                    DebugTool.Log($"SFX 재생 : {sfxKey}", DebugType.Audio);
+                },
+                failedKey =>
+                {
+                    _loadingSfxKey = null;
+
+                    if (_requestedSfxKey == failedKey)
+                        _requestedSfxKey = null;
+
+                    DebugTool.Warning($"{failedKey} : BGM 로드 실패", DebugType.Audio);
+                });
         }
 
         private void LoadAudioSettings()

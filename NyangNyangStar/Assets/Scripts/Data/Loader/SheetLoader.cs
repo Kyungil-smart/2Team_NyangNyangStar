@@ -2,23 +2,28 @@
 using Data.Parsing;
 using Data.LibrarySystem;
 using Data.ScriptableObjects;
-using Data.ScriptableObjects.KeyContainer;
+using Data.ScriptableObjects.KeyContainerSO;
+using Data.ScriptableObjects.ScratchingTimeSO;
 using Services.Enums;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using UnityEngine;
+using Util;
 
 namespace Data.Loader
 {
     public class SheetLoader : MonoBehaviour
     {
         [Header("Key Container")]
-        public List<SheetData> GoogleSheetURL;
+        [SerializeField] private List<SheetData> keyCotainerURL = new();
         [SerializeField] private List<KeyContainerSo> keySo = new(); 
-        private Dictionary<int, KeyContainerSo> _keyContainerDict = new();
+        private readonly Dictionary<int, KeyContainerSo> _keyContainerDict = new();
 
-        [SerializeField] private int _pendingSheetCount;
+        [Space(8)] [Header("스크래칭 타임")] 
+        [SerializeField] private SheetData scratchingURL;
+        [SerializeField] private ScratchingSheetLoadSo scratchingSheetLoadSo;
+
+        [Space(8)] [SerializeField] private int _pendingSheetCount;
         public int PendingSheetCount => _pendingSheetCount;
 
         public void DataLoad()
@@ -31,11 +36,29 @@ namespace Data.Loader
                 return;
             }
 
-            LoadKeyContainerData(GoogleSheetURL, keySo, _keyContainerDict, onComplete: () =>
+            LoadKeyContainerData(keyCotainerURL, keySo, _keyContainerDict, onComplete: () =>
             {
                 LocalDataAccess.Instance.Game.RegisterKeyContainers(_keyContainerDict);
+                foreach (KeyContainerSo so in keySo)
+                {
+                    if (so.DataCount <= 0)
+                    {
+                        DebugTool.Warning($"{so.name} : 데이터 입니다.", DebugType.Data);
+                        continue;
+                    }
+                    so.RegisterAll();
+                }
                 OnSheetCompleted();
+                
+                KeyContainer.PrintKeys();
             });
+            
+            LoadSheetData(scratchingURL, scratchingSheetLoadSo, 1, () =>
+                {
+                    OnSheetCompleted();
+                    
+                    scratchingSheetLoadSo.PrintDatas();
+                });
         }
 
         private void OnSheetCompleted()
@@ -46,84 +69,53 @@ namespace Data.Loader
                 DebugType.Data, this);
 
             if (_pendingSheetCount <= 0)
-            {
                 LocalDataAccess.Instance.Game.MarkReady();
-            }
-        }
-
-        private Dictionary<int, T> InitDict<T>(List<T> list)
-            where T : ScriptableObject, ISheetParsable
-        {
-            if (list == null || list.Count == 0)
-            {
-                DebugTool.Warning(
-                    $"[{typeof(T).Name}] 리스트 비어있음 - 빈 사전 반환",
-                    DebugType.Data, this);
-                return new Dictionary<int, T>();
-            }
-
-            return list.ToDictionary(x => x.Id);
         }
 
         private void LoadSheetData<T>(
-            SheetData sheet,
-            List<T> list,
-            Dictionary<int, T> dict,
+             SheetData sheet,
+            T targetSo,
             int headerRowCount = 1,
             Action onComplete = null
-        ) where T : ScriptableObject, ISheetParsable
+        ) where T : SheetLoadSoBase, ISheetParsable
         {
-            StartCoroutine(sheet.Load((split, lines) =>
+            if(targetSo == null)
             {
-                if (lines == null)
-                {
-                    DebugTool.Error(
-                        $"[{typeof(T).Name}] 시트 로드 실패 - lines가 null",
-                        DebugType.Data, this);
-                    onComplete?.Invoke();
-                    return;
-                }
-
-                for (int i = headerRowCount; i < lines.Length; i++)
-                {
-                    string line = lines[i].Trim();
-                    if (string.IsNullOrEmpty(line)) 
-                        continue;
-
-                    string[] cols = line.Split(split);
-
-                    if (cols.Length == 0 || !int.TryParse(cols[0], out int id))
-                    {
-                        DebugTool.Error(
-                            $"[{typeof(T).Name}] {i}번째 줄 ID 파싱 실패: '{(cols.Length > 0 ? cols[0] : "(empty)")}'",
-                            DebugType.Data, this);
-                        continue;
-                    }
-
-                    T data;
-                    if (dict.TryGetValue(id, out var existing))
-                    {
-                        data = existing;
-                    }
-                    else
-                    {
-                        data = ScriptableObject.CreateInstance<T>();
-                        data.name = $"{typeof(T).Name}_{id}";
-                        dict.Add(id, data);
-                        list.Add(data);
-                        DebugTool.Warning(
-                            $"[{typeof(T).Name}] ID {id} 사전에 없어서 새 인스턴스 생성",
-                            DebugType.Data, this);
-                    }
-
-                    data.SetData(cols);
-                }
-
-                DebugTool.Log(
-                    $"[{typeof(T).Name}] 시트 로드 완료 (총 {dict.Count}건)",
-                    DebugType.Data, this);
+                DebugTool.Error($"[{typeof(T).Name}] SO 가 없습니다.", DebugType.Data, this);
                 onComplete?.Invoke();
-            }));
+                return;
+            }
+            
+            // 로드 전 SO 초기화
+            targetSo.Init();
+
+            StartCoroutine(sheet.Load((split, lines) =>
+                {
+                    if (lines == null)
+                    {
+                        DebugTool.Error($"[{typeof(T).Name} 시트 로드 실패 - 라인이 없습니다.", DebugType.Data, this);
+                        onComplete?.Invoke();
+                        return;
+                    }
+
+                    for (int i = headerRowCount; i < lines.Length; i++)
+                    {
+                        string line = lines[i].Trim();
+                        if(string.IsNullOrEmpty(line))
+                            continue;
+                        
+                        string[] cols = line.Split(split);
+                        if (cols.Length == 0)
+                            continue;
+                        
+                        // 각 행의 문자열 배열을 SO의 SetData로 던져서 
+                        // SO가 스스로 파싱하고 리스트에 추가하도록 위임
+                        targetSo.SetData(cols);
+                    }
+                    DebugTool.Log($"[{typeof(T).Name}] 컨테이너 시트 데이터 로드 완료", DebugType.Data, this);
+                    onComplete?.Invoke();
+                }
+            ));
         }
 
         private void LoadKeyContainerData(
@@ -207,7 +199,7 @@ namespace Data.Loader
 
                         string[] cols = line.Split(split);
 
-                        if (cols.Length < 2)
+                        if (cols.Length < 6)
                         {
                             DebugTool.Warning(
                                 $"[KeyContainer] {orderIndex}번 시트 {row}번째 줄 컬럼 부족: {line}",
@@ -217,30 +209,31 @@ namespace Data.Loader
                             continue;
                         }
 
-                        if (cols.Length > 5)
+                        if (cols.Length > 6)
                         {
                             DebugTool.Warning($"컬럼 개수가 {cols.Length} 입니다.\n" +
-                                              $"불필요한 데이터가 있는지 확인 바랍니다.", DebugType.Data);
+                                              "불필요한 데이터가 있는지 확인 바랍니다.", DebugType.Data);
                             return;
                         }
 
                         string key = cols[0].Trim();
                         string fileName = cols[1].Trim();
                         string usage = cols[2].Trim();
-                        string buildType = cols[3].Trim();
-                        string imageType = cols[4].Trim();
+                        string groupType = cols[3].Trim();
+                        string labelType = cols[4].Trim();
+                        string buildType = cols[5].Trim();
                         
-                        KeyData data = KeyDataMapping(key, fileName, usage, buildType, imageType);
+                        KeyData data = KeyDataMapping(key, fileName, usage, groupType, labelType, buildType);
 
                         log.AppendLine($"{row}번째 : Key = {data.Key} | {data.FileName} | " +
                                        $"{data.Usage} | {data.BuildType} | " +
-                                       $"{data.ImageType.ToString()}");
+                                       $"{data.LabelType.ToString()}");
                         
                         keyContainer.AddData(data);
                     }
 
                     DebugTool.Log(
-                        $"[KeyContainer] {orderIndex}번 시트 로드 완료 / 총 {keyContainer.KeyDatas.Count}건",
+                        $"[KeyContainer] {orderIndex}번 시트 로드 완료 / 총 {keyContainer.DataCount}건",
                         DebugType.Data,
                         this);
                 
@@ -266,25 +259,26 @@ namespace Data.Loader
             }
 
             KeyData KeyDataMapping(string key, string fileName, string usage, 
-                string buildtype, string ImageType)
+                string groupType, string labelType, string buildType)
             {
                 if(string.IsNullOrEmpty(key) ||  string.IsNullOrEmpty(fileName) || 
-                   string.IsNullOrEmpty(usage) || string.IsNullOrEmpty(buildtype) || 
-                   string.IsNullOrEmpty(ImageType))
+                   string.IsNullOrEmpty(usage) || string.IsNullOrEmpty(buildType) || 
+                   string.IsNullOrEmpty(labelType))
                     return null;
 
-                KeyData data = new();
-                
-                data.Key = key;
-                data.FileName = fileName;
-                data.Usage = usage;
-                data.BuildType = convertBuildType(buildtype);
-                data.ImageType = convertImageType(ImageType);
-                
+                KeyData data = new() { 
+                    Key = key, 
+                    FileName = fileName, 
+                    Usage = usage, 
+                    GroupType = ConvertGroupType(groupType),
+                    BuildType = ConvertBuildType(buildType),
+                    LabelType = ConvertLabelType(labelType)
+                };
+
                 return data;
             }
 
-            BuildType convertBuildType(string buildType)
+            BuildType ConvertBuildType(string buildType)
             {
                 switch (buildType)
                 {
@@ -297,16 +291,30 @@ namespace Data.Loader
                 }
             }
             
-            ImageType convertImageType(string imageType)
+            LabelType ConvertLabelType(string lableType)
             {
-                switch (imageType)
+                switch (lableType)
                 {
                     case "Sprite" :
-                        return ImageType.Sprite;
-                    case "UI" :
-                        return ImageType.UI;
+                        return LabelType.Sprite;
+                    case "Audio" :
+                        return LabelType.Audio;
                     default :
-                        return ImageType.None;
+                        return LabelType.None;
+                }
+            }
+            AddressableGroupType ConvertGroupType(string groupType)
+            {
+                switch (groupType)
+                {
+                    case "Common":
+                        return  AddressableGroupType.Common;
+                    case "Main":
+                        return AddressableGroupType.Main;
+                    case "Nyangstagram":
+                        return AddressableGroupType.Nyangstagram;
+                    default:
+                        return AddressableGroupType.None;
                 }
             }
         }

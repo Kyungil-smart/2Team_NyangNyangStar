@@ -22,11 +22,6 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 2b398541e9755b941a2769383c852c6a
-    m_Address: VolumePopupUI
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 2eebcca250b7d9b4a8bacdf8036c11e2
     m_Address: AffinityPopupUI
     m_ReadOnly: 0
@@ -34,6 +29,16 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 305d866fef020114f88c70e438f37f4b
     m_Address: DailyCheckInPopupUI
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 30905c6106ddbc94c97db063e6e044e3
+    m_Address: "NyagramDM \uB300\uD654"
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 39488a1c9da8e4846a64387638bea243
+    m_Address: "Nyagram\uC54C\uB9BC \uCF04\uBC84\uC2A4"
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -52,6 +57,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 77efe0ee3b2b64f47947ab75aa5b2569
+    m_Address: "Npc\uD504\uB85C\uD544 \uD654\uBA74"
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 847f79e3935d8a94799439f4684170f9
     m_Address: EventPopupUI
     m_ReadOnly: 0
@@ -59,6 +69,16 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 8af6a0d0e4b104640a78c04d7967c8b2
     m_Address: ScratcherSeasonEventPanel
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a199cd8ec1378fa469e9e0b066c7602d
+    m_Address: "\uAC8C\uC2DC\uBB3C \uCD94\uAC00 \uD654\uBA74 Canvas"
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a23e97db591ea3743a1db876e58d7f20
+    m_Address: "NyagramDM\uB9AC\uC2A4\uD2B8 \uCF04\uBC84\uC2A4"
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -77,6 +97,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c9a1312ef68d84e49987b35e7337b9d8
+    m_Address: "\uAC8C\uC2DC\uBB3C Canvas"
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: cd9c9d9253516544a94ddb7794e30911
     m_Address: EventSystem
     m_ReadOnly: 0
@@ -87,8 +112,8 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: cec34d7e83c1a6d459c6e5eaeb612bd4
-    m_Address: TestSceneUI
+  - m_GUID: dc4844e25292f834197bb1f4d7340ae0
+    m_Address: UINyangstagramHome & Profile
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
