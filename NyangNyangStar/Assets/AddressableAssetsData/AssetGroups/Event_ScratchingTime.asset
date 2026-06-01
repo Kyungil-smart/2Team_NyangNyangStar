@@ -17,13 +17,19 @@ MonoBehaviour:
     m_SerializedData: []
   m_GUID: 80e072f4a0298ee4285200d25d280eed
   m_SerializeEntries:
-  - m_GUID: 1952d69956b397942bfbc8a8b09f44ca
-    m_Address: ScratchingWeekStageUI
+  - m_GUID: 066da3c1d4a9eb145bf1daaf9c1c6cc6
+    m_Address: ST_Effect_Nromal
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 08fbf7630aaf60045a5d8b402b4b34d1
+    m_Address: ScratchingTimeScreen
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 1bef53643b4e7af45910301674e08c46
-    m_Address: ResultPopupFail
+  - m_GUID: 1952d69956b397942bfbc8a8b09f44ca
+    m_Address: ScratchingWeekStageUI
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

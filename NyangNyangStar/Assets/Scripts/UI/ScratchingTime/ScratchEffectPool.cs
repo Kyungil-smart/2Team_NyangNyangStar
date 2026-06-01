@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System;
 using UnityEngine;
 
 public class ScratchEffectPool : MonoBehaviour
@@ -12,6 +13,8 @@ public class ScratchEffectPool : MonoBehaviour
     [SerializeField] private int initialPoolSize = 10;
 
     private readonly Queue<ScratchEffectItem> pool = new Queue<ScratchEffectItem>();
+
+    public event Action OnScratchClicked;
 
     private void Awake()
     {
@@ -28,6 +31,7 @@ public class ScratchEffectPool : MonoBehaviour
             }
 
             SpawnEffect(Input.mousePosition);
+            OnScratchClicked?.Invoke();
         }
     }
 
@@ -64,8 +68,8 @@ public class ScratchEffectPool : MonoBehaviour
         );
 
         itemRect.anchoredPosition = localPosition;
-        itemRect.localRotation = Quaternion.Euler(0f, 0f, Random.Range(-20f, 20f));
-        itemRect.localScale = Vector3.one * Random.Range(0.8f, 1.2f);
+        itemRect.localRotation = Quaternion.Euler(0f, 0f, UnityEngine.Random.Range(-20f, 20f));
+        itemRect.localScale = Vector3.one * UnityEngine.Random.Range(0.8f, 1.2f);
 
         item.gameObject.SetActive(true);
         item.ResetEffect();

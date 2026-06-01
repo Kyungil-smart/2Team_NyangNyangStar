@@ -39,6 +39,9 @@ namespace Data.Loader
                 return;
             }
 
+            StopAllCoroutines();
+            _pendingSheetCount = 2;
+
             LoadKeyContainerData(keyCotainerURL, keySo, _keyContainerDict, onComplete: () =>
             {
                 LocalDataAccess.Instance.Game.RegisterKeyContainers(_keyContainerDict);
