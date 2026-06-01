@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -67,27 +68,22 @@ namespace UI
                 return null;
 
             if (recursive == false)
-            {
                 for (int i = 0; i < go.transform.childCount; i++)
                 {
                     Transform transform = go.transform.GetChild(i);
-                    if (string.IsNullOrEmpty(name) || transform.name == name)
+
+                    if (IsNameMatched(transform.name, name))
                     {
                         T component = transform.GetComponent<T>();
+
                         if (component != null)
                             return component;
                     }
                 }
-            }
-
             else
-            {
                 foreach (T component in go.GetComponentsInChildren<T>(true))
-                {
-                    if(string.IsNullOrEmpty(name) || component.name == name)
+                    if (IsNameMatched(component.name, name))
                         return component;
-                }
-            }
 
             return null;
         }
@@ -99,6 +95,22 @@ namespace UI
                 return null;
             
             return transform.gameObject;
+        }
+        
+        private static string RemoveWhiteSpace(string value)
+        {
+            if (string.IsNullOrEmpty(value))
+                return string.Empty;
+
+            return string.Concat(value.Where(c => !char.IsWhiteSpace(c)));
+        }
+
+        private static bool IsNameMatched(string targetName, string searchName)
+        {
+            if (string.IsNullOrEmpty(searchName))
+                return true;
+
+            return RemoveWhiteSpace(targetName) == RemoveWhiteSpace(searchName);
         }
     }
 }
