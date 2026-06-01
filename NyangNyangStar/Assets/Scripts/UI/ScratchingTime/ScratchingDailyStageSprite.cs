@@ -90,7 +90,8 @@ public class ScratchingDailyStageSprite : UIBase
         Register(FindChildImageUnder("BattlePopupPanel", "Outline"));
         Register(FindChildImage("Tile"));
         Register(FindChildImage("ScratcherImage"));
-        Register(FindChildImage("Image"));
+        // ExitButton 우선, 없으면 Image 이름으로 닫기 버튼 찾기임
+        Register(FindCloseButtonImage());
 
         GameObject durabilitySlider = FindChild(gameObject, "DurabilitySlider", true);
         Register(FindChild<Image>(durabilitySlider, "Background", false));
@@ -141,6 +142,17 @@ public class ScratchingDailyStageSprite : UIBase
     {
         // 현재 UI 아래 이미지 찾기임
         return FindChild<Image>(gameObject, objectName, true);
+    }
+
+    private Image FindCloseButtonImage()
+    {
+        // Screen 프리팹은 ExitButton 이름을 사용함
+        Image exitButtonImage = FindChild<Image>(gameObject, "ExitButton", true);
+        if (exitButtonImage != null)
+            return exitButtonImage;
+
+        // standalone 프리팹 호환용 Image 이름 폴백임
+        return FindChildImage("Image");
     }
 
     private Image FindChildImageUnder(string parentName, string childName)
