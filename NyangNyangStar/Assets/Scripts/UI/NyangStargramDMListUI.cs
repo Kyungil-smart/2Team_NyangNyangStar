@@ -1,15 +1,19 @@
 using Core.Managers;
+using DG.Tweening;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UI;
 using UnityEngine;
 using UnityEngine.UI;
 using Util;
-using System;
 
 public class NyangstagramDMListUI : UIPopup
 {
-    public static event Action OnRequestProfileView;
+
+    [Header("DoTween 설정")]
+    [SerializeField] private RectTransform _panel;
+    [SerializeField] private float _popupScaleDuration = 0.1f;
 
     [Header("버튼")]
     [Tooltip("DM 채팅 리스트 버튼")][SerializeField] private Button _dmItem;
@@ -21,6 +25,8 @@ public class NyangstagramDMListUI : UIPopup
     [Tooltip("냥스타그램 나가기 버튼")][SerializeField] private Button _nyangstagramCloseButton;
     [Tooltip("패널 닫기 버튼")][SerializeField] private Button _backButton;
 
+
+    private NyangStargramDMListUISprite _nyangStargramDMListUISprite;
     public override void Init()
     {
         Bind<Button>(typeof(NyangstagramDMListUIButton));
@@ -37,6 +43,8 @@ public class NyangstagramDMListUI : UIPopup
 
         BindButtons();
 
+        _nyangStargramDMListUISprite = GetComponent<NyangStargramDMListUISprite>();
+        _nyangStargramDMListUISprite.Init();
         DebugTool.Log("NyangstagramUI Init 실행됨", DebugType.UI, this);
     }
     private void BindButtons()
@@ -44,119 +52,108 @@ public class NyangstagramDMListUI : UIPopup
         //if (_storyButton != null)
         //    _storyButton.onClick.AddListener(() => GameManager.UI.ShowPopupUI<UIPopup>(KeyContainer.Prefabs.ShopPopupUI));
 
-        AddPopupButton(_dmItem, KeyContainer.Prefabs.NyangStargramDMchatPopUpUI);
-        AddCloseButton(_homeButton);
+        AddDMChatButton(_dmItem);
+        AddHomeViewButton(_homeButton);
 
         //if (_tagButton != null)
         //    _tagButton.onClick.AddListener(() => GameManager.UI.ShowPopupUI<UIPopup>(KeyContainer.Prefabs.ShopPopupUI));
 
-        AddChangePopupButton(_addPostButton, KeyContainer.Prefabs.NyangStargramAddPostPopUpUI);
-        AddChangePopupButton(_notificationButton, KeyContainer.Prefabs.NyangStargramNoticePopUpUI);
+        AddOpenPopUpButton(_addPostButton, KeyContainer.Prefabs.NyangStargramAddPostPopUpUI);
+        AddOpenPopUpButton(_notificationButton, KeyContainer.Prefabs.NyangStargramNoticePopUpUI);
         AddProfileViewButton(_profileButton);
-        AddCloseAllPopUpButton(_nyangstagramCloseButton);
-        AddCloseButton(_backButton);
+        AddCloseAllButton(_nyangstagramCloseButton);
+        AddHideSelfButton(_backButton);
     }
 
     private void OnDisable()
     {
-        RemovePopupButton(_dmItem, KeyContainer.Prefabs.NyangStargramPostPopUpUI);
-        RemoveCloseButton(_homeButton);
-        RemoveChangePopupButton(_addPostButton);
-        RemoveChangePopupButton(_notificationButton);
-        RemoveProfileViewButton(_profileButton);
-        RemoveCloseAllPopUpButton(_nyangstagramCloseButton);
-        RemoveCloseButton(_backButton);
 
     }
 
+    private void AddOpenPopUpButton(Button button, string key)
+    {
+        if (button == null) return;
+
+        button.onClick.RemoveAllListeners();
+        button.onClick.AddListener(() =>
+        {
+            HideSelf();
+            NyangstagramUIRouter.RequestOpenPopup(key);
+        });
+    }
+    private void AddDMChatButton(Button button)
+    {
+        if (button == null) return;
+
+        button.onClick.RemoveAllListeners();
+        button.onClick.AddListener(() =>
+        {
+            HideSelf();
+            NyangstagramUIRouter.RequestOpenPopup(KeyContainer.Prefabs.NyangStargramDMchatPopUpUI);
+
+            DebugTool.Log("DMList → DMChat 전환 요청", DebugType.UI, this);
+        });
+    }
+
+    private void AddHomeViewButton(Button button)
+    {
+        if (button == null) return;
+
+        button.onClick.RemoveAllListeners();
+        button.onClick.AddListener(() =>
+        {
+            HideSelf();
+            NyangstagramUIRouter.RequestHomeView();
+        });
+    }
     private void AddProfileViewButton(Button button)
     {
         if (button == null) return;
-
+        button.onClick.RemoveAllListeners();
         button.onClick.AddListener(() =>
         {
-            OnRequestProfileView?.Invoke();
-            ClosePopup();
+            HideSelf();
+            NyangstagramUIRouter.RequestProfileView();
         });
     }
-
-    private void RemoveProfileViewButton(Button button)
-    {
-        if (button == null) return;
-
-        button.onClick.RemoveListener(() =>
-        {
-            OnRequestProfileView?.Invoke();
-            ClosePopup();
-        });
-    }
-
-    private void AddPopupButton(Button button, string key)
-    {
-        if (button == null) return;
-        button.onClick.AddListener(() => GameManager.UI.ShowPopupUI<UIPopup>(key, PlayPopupOpenAnimation));
-    }
-
-    private void RemovePopupButton(Button button, string key)
-    {
-        if (button == null) return;
-        button.onClick.RemoveListener(() => GameManager.UI.ShowPopupUI<UIPopup>(key, PlayPopupOpenAnimation));
-    }
-
-    private void AddCloseButton(Button button)
-    {
-        if (button == null) return;
-        button.onClick.AddListener(() => ClosePopup());
-    }
-    private void RemoveCloseButton(Button button)
-    {
-        if (button == null) return;
-        button?.onClick?.RemoveListener(() => ClosePopup());
-    }
-
-    private void PlayPopupOpenAnimation(UIPopup popup)
-    {
-        if (popup == null) return;
-        popup.PlayOpenAnimation();
-    }
-    private void AddChangePopupButton(Button button, string key)
-    {
-        if(button == null) return;
-        button.onClick.AddListener(() =>
-        {
-            ClosePopup();
-            GameManager.UI.ShowPopupUI<UIPopup>(key, PlayPopupOpenAnimation);
-        });
-    }
-    private void RemoveChangePopupButton(Button button)
-    {
-        if(button == null) return;
-        button.onClick?.RemoveAllListeners();
-    }
-
-    //모든 팝업 다닫기
-    private void AddCloseAllPopUpButton(Button button)
-    {
-        if (button == null) return;
-        button.onClick.AddListener(() =>
-        {
-            UIPopup[] activePopups = FindObjectsByType<UIPopup>
-            (
-                FindObjectsInactive.Exclude,
-                FindObjectsSortMode.None
-
-            );
-
-            for (int i = 0; i < activePopups.Length; i++)
-            {
-                ClosePopup();
-            }
-        });
-    }
-    private void RemoveCloseAllPopUpButton(Button button)
+    private void AddHideSelfButton(Button button)
     {
         if (button == null) return;
         button.onClick.RemoveAllListeners();
+        button.onClick.AddListener(ClosePopup);
+    }
+
+    private void AddCloseAllButton(Button button)
+    {
+        if (button == null) return;
+        button.onClick.RemoveAllListeners();
+        button.onClick.AddListener(() =>
+        {
+            NyangstagramUIRouter.RequestCloseAll();
+        });
+    }
+
+    private void HideSelf()
+    {
+        gameObject.SetActive(false);
+    }
+
+    public override void PlayOpenAnimation()
+    {
+        if (_panel == null) return;
+
+        _panel.anchoredPosition = new Vector2(1000f, 0f);
+        _panel.DOAnchorPos(Vector2.zero, _popupScaleDuration)
+            .SetEase(Ease.OutSine);
+    }
+
+    private void ClosePopup()
+    {
+        if (_panel == null) return;
+
+        _panel.DOAnchorPos(new Vector2(1000f, 0f), _popupScaleDuration)
+            .SetEase(Ease.OutSine).OnComplete(() => gameObject.SetActive(false));
+
     }
 }
 

@@ -1,15 +1,20 @@
 using Core.Managers;
+using DG.Tweening;
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UI;
 using UnityEngine;
 using UnityEngine.UI;
 using Util;
-using System;
-using TMPro;
 
 public class NyangStargramAddPostUI : UIPopup
 {
+    [Header("DoTween 설정")]
+    [SerializeField] private RectTransform _panel;
+    [SerializeField] private float _popupScaleDuration = 0.1f;
+
 
     [Header("버튼")]
     [Tooltip("패널닫기 버튼")][SerializeField] private Button _backButton;
@@ -27,7 +32,7 @@ public class NyangStargramAddPostUI : UIPopup
     [SerializeField] private List<Button> _albumImageButton = new();
     [SerializeField] private Transform _albumButtonRoots;
 
-
+    private NyangStargramAddPostUISprite _nyangStargramAddPostUISprite;
     public override void Init()
     {
         Bind<Button>(typeof(NyangStargramAddPostUIButton));
@@ -39,12 +44,12 @@ public class NyangStargramAddPostUI : UIPopup
         _albumButtonRoots = UIBase.FindChild<Transform>(gameObject, "AlbumContent", true);
         _nyangstagramCloseButton = Get<Button>((int)NyangStargramAddPostUIButton.NewImageUploadButton);
 
-
-
-
         BindButtons();
         BindDropdown();
         BindAlbumImages();
+
+        _nyangStargramAddPostUISprite = GetComponent<NyangStargramAddPostUISprite>();
+        _nyangStargramAddPostUISprite.Init();
 
         DebugTool.Log("NyangstagramUI Init 실행됨", DebugType.UI, this);
     }
@@ -53,8 +58,8 @@ public class NyangStargramAddPostUI : UIPopup
         //if (_storyButton != null)
         //    _storyButton.onClick.AddListener(() => GameManager.UI.ShowPopupUI<UIPopup>(KeyContainer.Prefabs.ShopPopupUI));
 
-        AddCloseButton(_backButton);
-        AddCloseAllPopUpButton(_nyangstagramCloseButton);
+        AddHideSelfButton(_backButton);
+        AddCloseAllButton(_nyangstagramCloseButton);
         AddUploadButton(_newImageUploadButton);
 
 
@@ -65,21 +70,6 @@ public class NyangStargramAddPostUI : UIPopup
     }
     private void OnDisable()
     {
-        RemoveCloseButton(_backButton);
-        RemoveCloseAllPopUpButton(_nyangstagramCloseButton);
-        RemoveUploadButton(_newImageUploadButton);
-
-        //
-        if (_albumDropdown != null)
-            _albumDropdown.onValueChanged.RemoveListener(OnChangeAlbumFilter);
-
-        foreach (Button button in _albumImageButton)
-        {
-            if (button != null)
-                button.onClick.RemoveAllListeners();
-        }
-
-        _albumImageButton.Clear();
     }
     private void BindDropdown()
     {
@@ -97,6 +87,8 @@ public class NyangStargramAddPostUI : UIPopup
     }
     private void OnChangeAlbumFilter(int intdex)
     {
+        if(_albumDropdown == null) return;
+        if(intdex < 0 || intdex >= _albumDropdown.options.Count) return;
         string selectedOption = _albumDropdown.options[intdex].text;
         
     }
@@ -113,12 +105,12 @@ public class NyangStargramAddPostUI : UIPopup
             {
                 albumImage = buttons.GetComponentInChildren<Image>();
             }
+
             Image selectedImage = albumImage;
-            buttons.onClick.AddListener(() =>
-            {
-                SelectAlbumImage(selectedImage);
-            });
+            buttons.onClick.RemoveAllListeners();
+            buttons.onClick.AddListener(() => SelectAlbumImage(selectedImage));
             _albumImageButton.Add(buttons);
+
         }
     }
 
@@ -130,78 +122,59 @@ public class NyangStargramAddPostUI : UIPopup
         _newPostImage.color = Color.white;
         _newPostImage.preserveAspect = true;
     }
-    //
 
-
-    private void AddPopupButton(Button button, string key)
-    {
-        if (button == null) return;
-        button.onClick.AddListener(() => GameManager.UI.ShowPopupUI<UIPopup>(key, PlayPopupOpenAnimation));
-    }
-
-    private void RemovePopupButton(Button button, string key)
-    {
-        if (button == null) return;
-        button.onClick.RemoveListener(() => GameManager.UI.ShowPopupUI<UIPopup>(key, PlayPopupOpenAnimation));
-    }
-
-    private void AddCloseButton(Button button)
-    {
-        if (button == null) return;
-        button.onClick.AddListener(() => ClosePopup());
-    }
-    private void RemoveCloseButton(Button button)
-    {
-        if (button == null) return;
-        button?.onClick?.RemoveListener(() => ClosePopup());
-    }
-
-    private void PlayPopupOpenAnimation(UIPopup popup)
-    {
-        if (popup == null) return;
-        popup.PlayOpenAnimation();
-    }
-
-    //모든 팝업 다닫기
-    private void AddCloseAllPopUpButton(Button button)
-    {
-        if (button == null) return;
-        button.onClick.AddListener(() =>
-        {
-            UIPopup[] activePopups = FindObjectsByType<UIPopup>
-            (
-                FindObjectsInactive.Exclude,
-                FindObjectsSortMode.None
-
-            );
-
-            for (int i = 0; i < activePopups.Length; i++)
-            {
-                ClosePopup();
-            }
-        });
-    }
-    private void RemoveCloseAllPopUpButton(Button button)
+    private void AddHideSelfButton(Button button)
     {
         if (button == null) return;
         button.onClick.RemoveAllListeners();
+        button.onClick.AddListener(ClosePopup);
+    }
+
+
+    //모든 팝업 다닫기
+    private void AddCloseAllButton(Button button)
+    {
+        if (button == null) return;
+        button.onClick.RemoveAllListeners();
+        button.onClick.AddListener(() =>
+        {
+            NyangstagramUIRouter.RequestCloseAll();
+        });
+    }
+
+    private void HideSelf()
+    {
+        gameObject.SetActive(false);
     }
 
     private void AddUploadButton(Button button)
     {
         if(button == null) return;
-        button.onClick.AddListener(OnClickUploadButtons);
-    }
-    private void RemoveUploadButton(Button button)
-    {
-        if (button == null) return;
-        button.onClick.AddListener(OnClickUploadButtons);
-    }
-    private void OnClickUploadButtons()
-    {
-        DebugTool.Log("게시물 업로드 / 아직 미구현",DebugType.UI,this);
+        button.onClick.RemoveAllListeners();
+        button.onClick.AddListener(OnClickUploadButton);
     }
 
+    private void OnClickUploadButton()
+    {
+        DebugTool.Log("게시물 업로드 / 아직 미구현", DebugType.UI, this);
+    }
+    public override void PlayOpenAnimation()
+    {
+        if (_panel == null) return;
+
+        _panel.anchoredPosition = new Vector2(0f, -1000f);
+        _panel.DOAnchorPos(Vector2.zero, _popupScaleDuration)
+            .SetEase(Ease.OutSine);
+    }
+
+    private void ClosePopup()
+    {
+        if (_panel == null) return;
+
+        _panel.DOAnchorPos(new Vector2(0f, -1000f), _popupScaleDuration)
+            .SetEase(Ease.OutSine).OnComplete(() => gameObject.SetActive(false));
+
+    }
 }
 
 public enum NyangStargramAddPostUIButton
