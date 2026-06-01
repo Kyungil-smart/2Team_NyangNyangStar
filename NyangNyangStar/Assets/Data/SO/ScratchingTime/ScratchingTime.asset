@@ -12,4 +12,32 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a630cd4e6b804245aedb3647fdb66a94, type: 3}
   m_Name: ScratchingTime
   m_EditorClassIdentifier: 
-  _scratchingDatas: []
+  _scratchingDatas:
+  - _stage: "1\uB2E8\uACC4"
+    _maxDailyDurability: 1150
+    _currentDailyDurability: 1150
+    _dailyClearExp: 150
+    _maxWeeklyDurability: 2400
+    _currentWeeklyDurability: 2400
+    _weeklyClearExp: 2000
+  - _stage: "2\uB2E8\uACC4"
+    _maxDailyDurability: 3000
+    _currentDailyDurability: 3000
+    _dailyClearExp: 200
+    _maxWeeklyDurability: 5300
+    _currentWeeklyDurability: 5300
+    _weeklyClearExp: 2800
+  - _stage: "3\uB2E8\uACC4"
+    _maxDailyDurability: 5800
+    _currentDailyDurability: 5800
+    _dailyClearExp: 250
+    _maxWeeklyDurability: 9200
+    _currentWeeklyDurability: 9200
+    _weeklyClearExp: 3400
+  - _stage: "4\uB2E8\uACC4"
+    _maxDailyDurability: 10000
+    _currentDailyDurability: 10000
+    _dailyClearExp: 300
+    _maxWeeklyDurability: 15000
+    _currentWeeklyDurability: 15000
+    _weeklyClearExp: 3800
