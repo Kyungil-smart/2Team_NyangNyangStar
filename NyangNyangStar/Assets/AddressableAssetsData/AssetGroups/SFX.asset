@@ -1,0 +1,55 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
+  m_Name: SFX
+  m_EditorClassIdentifier: 
+  m_GroupName: SFX
+  m_Data:
+    m_SerializedData: []
+  m_GUID: 64921c42dd382b94e916bdae888a5b6e
+  m_SerializeEntries:
+  - m_GUID: 06168b2176bfee24cbf95833bcccab0a
+    m_Address: ST_SFX_Fail
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - SFX
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 47a99c7eaa358ae44b24398ac5579f2e
+    m_Address: ST_SFX_Critical
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - SFX
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 81fca162b0d3ec248b0fe2b5362c1a6a
+    m_Address: ST_SFX_Normal
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - SFX
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a0a3cd2e97db6924a8c6d017a6d657f2
+    m_Address: Main_SFX_Touch
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - SFX
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d75c53fd2e331924c88f3ac8b89fa379
+    m_Address: ST_SFX_Clear
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - SFX
+    FlaggedDuringContentUpdateRestriction: 0
+  m_ReadOnly: 0
+  m_Settings: {fileID: 11400000, guid: 567802e293b80b747b23153796443c26, type: 2}
+  m_SchemaSet:
+    m_Schemas:
+    - {fileID: 11400000, guid: 8ec060335848bdc40b9459c5db588bab, type: 2}
+    - {fileID: 11400000, guid: 079fe2c24a3bc5e4eabca4fba9b9fb4e, type: 2}
