@@ -179,7 +179,7 @@ public static class DebugTool
         {
             DebugType.Game => "#B388FF",
             DebugType.Addressable => "#FFD166",
-            // DebugType.Zombie => "#FF3B30",
+            DebugType.ScratchingTime => "#FF3B30",
             // DebugType.Spawner => "#00C2FF",
             // DebugType.Wave => "#FF7A00",
             // DebugType.Node => "#A3FF12",
@@ -207,7 +207,7 @@ public enum DebugType
     Addressable,
     Network,
     Missing,
+    ScratchingTime,    // 전투 라인 네트워크 로그 (B 소유 NetworkBehaviour 들)
     Default,
-    // CombatNet,    // 전투 라인 네트워크 로그 (B 소유 NetworkBehaviour 들)
     // EconomyNet,   // 자원·성장 라인 네트워크 로그 (F 소유 NetworkBehaviour 들)
 }
