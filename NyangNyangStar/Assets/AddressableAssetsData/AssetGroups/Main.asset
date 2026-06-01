@@ -118,11 +118,6 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 8af6a0d0e4b104640a78c04d7967c8b2
-    m_Address: ScratcherSeasonEventPanel
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: a66bb77bd248a20418a50ee3ee98fdaf
     m_Address: NotebookPopupUI
     m_ReadOnly: 0
@@ -212,12 +207,8 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: fa0c26b9af8386541b9f67d50066e3db
-    m_Address: Shape_Rectangle
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: 567802e293b80b747b23153796443c26, type: 2}
   m_SchemaSet:
-    m_Schemas: []
+    m_Schemas:
+    - {fileID: 11400000, guid: 2bbc19a900b63e74baa3a5d15a829e55, type: 2}
