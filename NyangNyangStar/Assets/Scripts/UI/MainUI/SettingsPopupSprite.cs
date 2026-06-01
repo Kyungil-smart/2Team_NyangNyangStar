@@ -6,6 +6,8 @@ public class SettingsPopupSprite : UIBase
 {
     private Image _sfxButtonImage;
     private Image _bgmButtonImage;
+    private Image _sfxIcon;
+    private Image _bgmIcon;
 
     private UISpriteController[] _spriteController;
 
@@ -22,14 +24,19 @@ public class SettingsPopupSprite : UIBase
 
         _sfxButtonImage = GetImage((int)SettingsPopupImages.SFXButton);
         _bgmButtonImage = GetImage((int)SettingsPopupImages.BGMButton);
+        _sfxIcon = GetImage((int)SettingsPopupImages.SFXIcon);
+        _bgmIcon = GetImage((int) SettingsPopupImages.BGMIcon);
 
         SetSprites();
     }
 
     private void SetSprites()
     {
-        SetSprite(SettingsPopupImages.SFXButton, "Main_Btn_Sound");
-        SetSprite(SettingsPopupImages.BGMButton, "Main_Btn_Music");
+        SetSprite(SettingsPopupImages.SFXButton, "Main_Panel_Audio");
+        SetSprite(SettingsPopupImages.BGMButton, "Main_Panel_Audio");
+        SetSprite(SettingsPopupImages.SFXIcon, "Main_Btn_Sound");
+        SetSprite(SettingsPopupImages.BGMIcon, "Main_Btn_Music");
+        SetSprite(SettingsPopupImages.CloseButton, "Btn_Close");
     }
 
     private void SetSprite(SettingsPopupImages image, string key)
@@ -41,6 +48,8 @@ public class SettingsPopupSprite : UIBase
     {
         _sfxButtonImage.color = sfxOn ? Color.white : Color.gray;
         _bgmButtonImage.color = bgmOn ? Color.white : Color.gray;
+        _sfxIcon.color = sfxOn ? Color.white : Color.gray;
+        _bgmIcon.color = bgmOn ? Color.white : Color.gray;
     }
 
     private void OnDestroy()
@@ -58,6 +67,11 @@ public enum SettingsPopupImages
 {
     SFXButton,
     BGMButton,
+    SFXIcon,
+    BGMIcon,
+    CloseButton,
+    //Panel,
+    //Title,
 
     Count
 }
