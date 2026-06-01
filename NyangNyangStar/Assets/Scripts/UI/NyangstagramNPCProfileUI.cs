@@ -1,4 +1,5 @@
 using Core.Managers;
+using DG.Tweening;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -9,8 +10,11 @@ using UnityEngine.UI;
 using Util;
 
 public class NyangstagramNPCProfileUI : UIPopup
-{
-    public static event Action OnRequestProfileView;
+{  
+    
+    [Header("DOTween 설정")]
+    [SerializeField] private RectTransform _panel;
+    [SerializeField] private float _popupScaleDuration = 0.1f;
 
     [Header("버튼")]
     [Tooltip("스토리 버튼")][SerializeField] private Button _storyButton;
@@ -23,7 +27,7 @@ public class NyangstagramNPCProfileUI : UIPopup
     [Tooltip("냥스타그램 나가기 버튼")][SerializeField] private Button _nyangstagramCloseButton;
     [Tooltip("패널닫기 버튼")][SerializeField] private Button _backButton;
 
-
+    private NyangstagramNPCProfileUISprite _nyangstagramNPCProfileUISprite;
     //private void Awake()
     //{
     //    Init();
@@ -46,110 +50,88 @@ public class NyangstagramNPCProfileUI : UIPopup
 
         BindButtons();
 
+        _nyangstagramNPCProfileUISprite = GetComponent<NyangstagramNPCProfileUISprite>();
+        _nyangstagramNPCProfileUISprite.Init();
+
         DebugTool.Log("NyangstagramUI Init 실행됨", DebugType.UI, this);
     }
     private void BindButtons()
     {
-        //if (_storyButton != null)
-        //    _storyButton.onClick.AddListener(() => GameManager.UI.ShowPopupUI<UIPopup>(KeyContainer.Prefabs.ShopPopupUI));
-
-        AddPopupButton(_image, KeyContainer.Prefabs.NyangStargramPostPopUpUI);
-        AddCloseButton(_homeButton);
-
-        //if (_tagButton != null)
-        //    _tagButton.onClick.AddListener(() => GameManager.UI.ShowPopupUI<UIPopup>(KeyContainer.Prefabs.ShopPopupUI));
-
-        AddPopupButton(_addPostButton, KeyContainer.Prefabs.NyangStargramAddPostPopUpUI);
-        AddPopupButton(_notificationButton, KeyContainer.Prefabs.NyangStargramNoticePopUpUI);
+        AddOpenPopUpButton(_image, KeyContainer.Prefabs.NyangStargramPostPopUpUI);
+        AddHomeViewButton(_homeButton);
+        AddOpenPopUpButton(_addPostButton, KeyContainer.Prefabs.NyangStargramAddPostPopUpUI);
+        AddOpenPopUpButton(_notificationButton, KeyContainer.Prefabs.NyangStargramNoticePopUpUI);
         AddProfileViewButton(_profileButton);
-        AddCloseAllPopUpButton(_nyangstagramCloseButton);
-        AddCloseButton(_backButton);
+        AddCloseAllButton(_nyangstagramCloseButton);
+        AddHideSelfButton(_backButton);
     }
 
     private void OnDisable()
     {
-        RemovePopupButton(_image, KeyContainer.Prefabs.NyangStargramPostPopUpUI);
-        RemoveCloseButton(_homeButton);
-        RemovePopupButton(_addPostButton, KeyContainer.Prefabs.NyangStargramAddPostPopUpUI);
-        RemovePopupButton(_notificationButton, KeyContainer.Prefabs.NyangStargramNoticePopUpUI);
-        RemoveProfileViewButton(_profileButton);
-        RemoveCloseAllPopUpButton(_nyangstagramCloseButton);
-        RemoveCloseButton(_backButton);
 
     }
 
+    private void AddOpenPopUpButton(Button button, string key)
+    {
+        if (button == null) return;
+
+        button.onClick.RemoveAllListeners();
+        button.onClick.AddListener(() =>
+        {
+            HideSelf();
+            NyangstagramUIRouter.RequestOpenPopup(key);
+        });
+    }
+
+    private void AddHomeViewButton(Button button)
+    {
+        if (button == null) return;
+
+        button.onClick.RemoveAllListeners();
+        button.onClick.AddListener(() =>
+        {
+            HideSelf();
+            NyangstagramUIRouter.RequestHomeView();
+        });
+    }
     private void AddProfileViewButton(Button button)
     {
         if (button == null) return;
-
+        button.onClick.RemoveAllListeners();
         button.onClick.AddListener(() =>
         {
-            OnRequestProfileView?.Invoke();
-            ClosePopup();
+            HideSelf();
+            NyangstagramUIRouter.RequestHomeView();
         });
     }
-
-    private void RemoveProfileViewButton(Button button)
-    {
-        if (button == null) return;
-
-        button.onClick.RemoveListener(() =>
-        {
-            OnRequestProfileView?.Invoke();
-            ClosePopup();
-        });
-    }
-
-    private void AddPopupButton(Button button, string key)
-    {
-        if (button == null) return;
-        button.onClick.AddListener(() => GameManager.UI.ShowPopupUI<UIPopup>(key, PlayPopupOpenAnimation));
-    }
-
-    private void RemovePopupButton(Button button, string key)
-    {
-        if (button == null) return;
-        button.onClick.RemoveListener(() => GameManager.UI.ShowPopupUI<UIPopup>(key, PlayPopupOpenAnimation));
-    }
-
-    private void AddCloseButton(Button button)
-    {
-        if (button == null) return;
-        button.onClick.AddListener(() => ClosePopup());
-    }
-    private void RemoveCloseButton(Button button)
-    {
-        if (button == null) return;
-        button?.onClick?.RemoveListener(() => ClosePopup());
-    }
-
-    private void PlayPopupOpenAnimation(UIPopup popup)
-    {
-        if (popup == null) return;
-        popup.PlayOpenAnimation();
-    }
-    private void AddCloseAllPopUpButton(Button button)
-    {
-        if (button == null) return;
-        button.onClick.AddListener(() =>
-        {
-            UIPopup[] activePopups = FindObjectsByType<UIPopup>
-            (
-                FindObjectsInactive.Exclude,
-                FindObjectsSortMode.None
-
-            );
-
-            for (int i = 0; i < activePopups.Length; i++)
-            {
-                ClosePopup();
-            }
-        });
-    }
-    private void RemoveCloseAllPopUpButton(Button button)
+    private void AddHideSelfButton(Button button)
     {
         if (button == null) return;
         button.onClick.RemoveAllListeners();
+        button.onClick.AddListener(HideSelf);
+    }
+
+    private void AddCloseAllButton(Button button)
+    {
+        if (button == null) return;
+        button.onClick.RemoveAllListeners();
+        button.onClick.AddListener(() =>
+        {
+            NyangstagramUIRouter.RequestCloseAll();
+        });
+    }
+
+    private void HideSelf()
+    {
+        gameObject.SetActive(false);
+    }
+    public override void PlayOpenAnimation()
+    {
+        if (_panel == null) return;
+
+        _panel.anchoredPosition = new Vector2(1000f, 0f);
+        _panel.DOAnchorPos(Vector2.zero, _popupScaleDuration)
+            .SetEase(Ease.OutSine);
     }
 }
 
