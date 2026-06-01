@@ -1,13 +1,9 @@
 ﻿using System;
 using UnityEngine;
-using Util;
 using Random = UnityEngine.Random;
 
 namespace Data.ScriptableObjects.ScratchingTimeSO
 {
-    /// <summary>
-    /// 뭉치의 레벨, 경험치, 예리도, 치명타 확률을 관리하는 ScriptableObject입니다.
-    /// </summary>
     [CreateAssetMenu(fileName = "MoongChiStat", menuName = "SO/Data/MoongChiStatSO", order = 0)]
     public class MoongchiStatSo : SoBase
     {
@@ -31,7 +27,7 @@ namespace Data.ScriptableObjects.ScratchingTimeSO
         /// <summary>
         /// 레벨업에 필요한 최대 경험치입니다.
         /// </summary>
-        public int GetMaxExp => 1000;
+        public int MaxExp = 1000;
 
         [SerializeField] private int _currentExp;
 
@@ -44,7 +40,7 @@ namespace Data.ScriptableObjects.ScratchingTimeSO
             get => _currentExp;
             set
             {
-                _currentExp = value;
+                _currentExp = Math.Max(value, 0);
                 OnExpChanged?.Invoke();
             }
         }
@@ -70,7 +66,7 @@ namespace Data.ScriptableObjects.ScratchingTimeSO
         /// </summary>
         public override void Init()
         {
-            _level = 1;
+            Level = 1;
         }
 
         /// <summary>
@@ -78,13 +74,13 @@ namespace Data.ScriptableObjects.ScratchingTimeSO
         /// </summary>
         private void LevelUp()
         {
-            _currentExp -= GetMaxExp;
+            CurrentExp -= MaxExp;
 
             Level++;
-
+            
             _totalSharpness = _baseSharpness + (_level * _sharpnessIncreasePerLevel);
             _totalCriticalChance = _baseCriticalChance + (_level / 5 * _baseCriticalChance);
-
+            
             DebugTool.Log($"[Level Up] 레벨 : {Level} " +
                           $"| 공격력 : {_totalSharpness} " +
                           $"| 힘껏 긁기 확률(%) : {_totalCriticalChance}", DebugType.Data);
