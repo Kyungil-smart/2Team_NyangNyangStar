@@ -1,0 +1,58 @@
+// ============================================================================
+// Firestore 동기화 SO 템플릿 ─ [서브컬렉션 문서]
+// 예) ResourcesSO 처럼  Users/{userId}/Resources/{docId}  같은 하위 문서에 대응.
+//
+// 사용법
+//  1) 이 파일을 복사 → 확장자를 .cs 로 바꾸고 클래스명/파일명을 바꾼다.
+//  2) [FirestorePath] 에서 부모 경로 + 서브컬렉션 이름을 맞춘다.
+//        {userId} = 부모 유저 id   /   {docId} = 이 문서 id (= 인스펙터 m_DocumentId 값)
+//  3) 동기화할 필드를 선언한다. (override 0개로 충분)
+//        - 서버 키 = 필드명 PascalCase  /  [FirestoreField("키")]  /  [FirestoreIgnore]
+//        - 지원 타입: int/long/float/double/bool/string/enum
+//  4) [에디터] 만든 .asset 의 m_DocumentId 를 이 문서 id 로 설정 (예: "Resources").
+//        ※ m_DocumentId 가 비어 있으면 빈 id 문서로 저장되니 반드시 채울 것.
+//  5) 이 SO 를 "부모 SO 의 subCollections 리스트" 에 넣으면, 부모의
+//        CreateNew / InitDataBase / UpdateFromServerAsync(true) 가 이 자식도 자동 처리.
+//        부모를 통해 전체 저장하려면:  부모.SaveAllToServerAsync()  (부모+모든 자식 일괄)
+// ============================================================================
+
+using UnityEngine;
+
+[FirestorePath("Users/{userId}/NewSub/{docId}")]
+[CreateAssetMenu(fileName = "NewSubSO", menuName = "ScriptableObjects/NewSubSO")]
+public class NewSubSO : BaseFireStore
+{
+    // ── 동기화 필드만 선언하면 끝 (override 불필요) ──────────────────────
+    [SerializeField] public int amount    = 0;    // → "Amount"
+    [SerializeField] public int maxAmount = 100;  // → "MaxAmount"
+    [FirestoreIgnore] [SerializeField] private int cachedValue;  // 로컬 전용(서버 X)
+}
+
+// ============================================================================
+// 사용 예시 ─ 서브컬렉션 SO 동기화
+//   전제: 부모 SO 가 로그인 시 이 자식에 db/userId 를 주입해 둔 상태
+//         (이 SO 를 부모의 subCollections 리스트에 넣어두면 자동 주입됨)
+//
+//   public class SomeGameplay : MonoBehaviour
+//   {
+//       // [방법 A] 자식 SO 를 직접 참조해 저장/로드
+//       [SerializeField] private NewSubSO sub;     // 인스펙터에서 .asset 연결
+//
+//       public async void Spend(int n)
+//       {
+//           sub.amount -= n;                // 1) 값 변경
+//           await sub.UpdateDataAsync();    // 2) 서버 저장(전 필드 자동 매핑)
+//       }
+//
+//       public async void Reload()
+//       {
+//           await sub.UpdateFromServerAsync(false);  // 서버 최신값으로 갱신
+//       }
+//
+//       // [방법 B] 부모 SO 를 통해 전체 저장 (부모 + 모든 자식 일괄)
+//       //   [SerializeField] private NewRootSO parent;
+//       //   await parent.SaveAllToServerAsync();
+//
+//       // [삭제]  await sub.DeleteDataAsync();
+//   }
+// ============================================================================

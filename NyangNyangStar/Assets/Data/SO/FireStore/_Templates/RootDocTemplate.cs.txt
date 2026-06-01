@@ -1,0 +1,80 @@
+// ============================================================================
+// Firestore 동기화 SO 템플릿 ─ [최상위 문서]
+// 예) UsersSO 처럼  Users/{userId}  같은 루트 컬렉션의 문서 1개에 대응.
+//
+// 사용법
+//  1) 이 파일을 복사 → 확장자를 .cs 로 바꾸고 클래스명/파일명을 바꾼다.
+//  2) [FirestorePath] 의 컬렉션 이름을 맞춘다.
+//        {userId} = 매니저가 주입하는 유저 id  /  {docId} = 인스펙터 m_DocumentId 값
+//        문서 id 가 곧 userId 인 루트 문서라면 보통 "Collection/{userId}" 형태.
+//  3) 동기화할 필드를 선언한다. (그게 전부)
+//        - 서버 키 = 필드명 PascalCase  (userExp → "UserExp", 선행 m_/_ 제거)
+//        - 다른 키가 필요하면        [FirestoreField("키")]
+//        - 동기화에서 빼려면          [FirestoreIgnore]
+//        - 지원 타입: int/long/float/double/bool/string/enum  (서버 long/double 자동 변환)
+//  4) [에디터] 만든 .asset 의 m_EnumType 을 이 SO 에 맞는 DataType 으로 설정.
+//        ※ FireStoreManager.cs 의 DataType enum 에 항목을 먼저 추가해야 함.
+//  5) [에디터] FireStoreManager 의 m_Data 리스트에 이 .asset 을 등록.
+//  6) 생성 시 기본값/런타임 id 시드가 필요할 때만 CreateNew 를 override (아래 예시).
+//        필요 없으면 CreateNew 블록을 통째로 삭제 → override 0개로 동작.
+// ============================================================================
+
+using Firebase.Firestore;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using UnityEngine;
+
+[FirestorePath("Users/{userId}")]
+[CreateAssetMenu(fileName = "NewRootSO", menuName = "ScriptableObjects/NewRootSO")]
+public class NewRootSO : BaseFireStore
+{
+    // ── 동기화 필드 (필요한 것만 남기고 나머지는 지우세요) ──────────────
+    [FirestoreField("UserID")] [SerializeField] private string ownerId;   // 키 직접 지정 예시
+    [SerializeField] public int level = 1;                                 // → "Level"
+    [SerializeField] public int exp   = 0;                                 // → "Exp"
+    [FirestoreIgnore] [SerializeField] private bool isDirty;               // 로컬 전용(서버 X)
+
+    // ── 서브컬렉션(하위 SO)을 둘 거면 주석 해제. 베이스가 자동 감지·재귀 ──
+    // [SerializeField] private List<BaseFireStore> subCollections;
+
+    // ── 생성 시 시드가 필요할 때만 override (아니면 이 블록 삭제) ─────────
+    public override async Task CreateNew(FirebaseFirestore database, string userId)
+    {
+        ownerId = userId;        // 런타임 id 를 저장 필드에 시드
+        // level = 1; exp = 0;   // 단순 기본값은 위 필드 초기값으로도 충분
+
+        await base.CreateNew(database, userId);  // 주입·자식재귀·저장은 베이스가 수행
+    }
+}
+
+// ============================================================================
+// 사용 예시 ─ 다른 스크립트에서 이 SO 를 동기화하기
+//   전제: FireStoreManager 가 로그인 시 이 SO 에 db/userId 를 주입해 둔 상태
+//         (m_Data 에 등록 → Init 호출 시 InitDataBase 로 주입됨)
+//
+//   public class SomeGameplay : MonoBehaviour
+//   {
+//       [SerializeField] private NewRootSO data;   // 인스펙터에서 .asset 연결
+//
+//       // [저장] 필드를 바꾼 뒤 동기화 함수 한 줄
+//       public async void GainExp(int amount)
+//       {
+//           data.exp += amount;             // 1) SO 값 변경
+//           await data.UpdateDataAsync();   // 2) 변경분을 서버에 저장(전 필드 자동 매핑)
+//       }
+//
+//       // [불러오기] 서버 최신값으로 SO 갱신
+//       public async void Refresh()
+//       {
+//           await data.UpdateFromServerAsync(false); // false=나만 / true=서브컬렉션까지
+//       }
+//
+//       // [전체 저장] 이 SO + 모든 하위 서브컬렉션을 한 번에 (세이브포인트/로그아웃 등)
+//       //   await data.SaveAllToServerAsync();
+//
+//       // [삭제]  await data.DeleteDataAsync();
+//   }
+//
+//   ※ 매니저 컨텍스트로도 호출 가능:
+//     await FireStoreManager.Instance.DocumentType(DataType.Users).GetAsync<NewRootSO>();
+// ============================================================================
