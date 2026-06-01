@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using Services.Enums;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Data.ScriptableObjects.ScratchingTimeSO
 {
@@ -14,6 +15,7 @@ namespace Data.ScriptableObjects.ScratchingTimeSO
     {
         [Header("스크래칭 타임 스테이지 데이터")]
         [Tooltip("단계, 일일 내구도, 일일 경험치, 주간 내구도, 주간 경험치에 대한 정보")]
+        [FormerlySerializedAs("_scratchingDatas")]
         [SerializeField] private List<ScratchingData> _scratchingData = new();
         public List<ScratchingData> ScratchingData => _scratchingData;
 
@@ -37,6 +39,19 @@ namespace Data.ScriptableObjects.ScratchingTimeSO
         [Header("흥미도 (제한시간)")]
         [SerializeField] private float _timeLimit = 33f;
         public float TimeLimit => _timeLimit;
+        public bool HasData
+        {
+            get
+            {
+                RebuildRuntimeDataIfNeeded();
+                return _dataDict.Count > 0;
+            }
+        }
+
+        private void OnEnable()
+        {
+            RebuildRuntimeDataIfNeeded();
+        }
 
         /// <summary>
         /// 스크래칭 타임 데이터를 초기화합니다.
@@ -419,6 +434,28 @@ namespace Data.ScriptableObjects.ScratchingTimeSO
             }
         }
 
+        private void RebuildRuntimeDataIfNeeded()
+        {
+            if (_scratchingData == null || _scratchingData.Count == 0)
+                return;
+
+            if (_dataDict.Count == _scratchingData.Count)
+                return;
+
+            _dataDict.Clear();
+            _count = 1;
+
+            foreach (ScratchingData data in _scratchingData)
+            {
+                if (data == null)
+                    continue;
+
+                data.SetRemainingChallengeCount(StageType.Daily, _remainingDailyChallengeCount);
+                data.SetRemainingChallengeCount(StageType.Weekly, _remainingWeeklyChallengeCount);
+                _dataDict[_count++] = data;
+            }
+        }
+
         /// <summary>
         /// 지정한 스테이지 데이터가 딕셔너리에 존재하는지 확인합니다.
         /// </summary>
@@ -426,6 +463,8 @@ namespace Data.ScriptableObjects.ScratchingTimeSO
         /// <returns>스테이지 데이터가 존재하면 true, 존재하지 않으면 false</returns>
         private bool IsContainsKey(int stage)
         {
+            RebuildRuntimeDataIfNeeded();
+
             if (!_dataDict.ContainsKey(stage))
             {
                 DebugTool.Warning($"{stage} 존재하지 않는 스테이지 입니다.", DebugType.Data);
