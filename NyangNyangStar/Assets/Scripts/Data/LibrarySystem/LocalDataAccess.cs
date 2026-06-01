@@ -29,8 +29,11 @@ namespace Data.LibrarySystem
 
         private void OnDestroy()
         {
-            Instance.Game.ClearEvent(); 
-            if (Instance == this) Instance = null;
+            if (Instance != this)
+                return;
+
+            Game?.ClearEvent();
+            Instance = null;
         }
     }
 }
