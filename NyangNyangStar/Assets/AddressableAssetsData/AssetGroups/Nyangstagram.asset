@@ -311,6 +311,11 @@ MonoBehaviour:
     m_SerializedLabels:
     - UI
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: dc4844e25292f834197bb1f4d7340ae0
+    m_Address: UINyangstagramHome & Profile
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: e54976ce31b68564ab0e35b5af37f65c
     m_Address: NYS_FeedImage_NPC_06
     m_ReadOnly: 0
