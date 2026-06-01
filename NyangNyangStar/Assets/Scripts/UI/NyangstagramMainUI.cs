@@ -110,15 +110,20 @@ public class NyangstagramMainUI : UIPopup
         button.onClick.RemoveListener(() => SetView(homeActive, profileActive));
     }
 
+    private void CloseNyangstagram()
+    {
+        gameObject.SetActive(false);
+    }
+
     private void AddCloseButton(Button button)
     {
         if (button == null) return;
-        button.onClick.AddListener(() => ClosePopup());
+        button.onClick.AddListener(() => CloseNyangstagram());
     }
     private void RemoveCloseButton(Button button)
     {
         if (button == null) return;
-        button?.onClick?.RemoveListener(() => ClosePopup());
+        button?.onClick?.RemoveListener(() => CloseNyangstagram());
     }
 
     private void SetProfileView()
