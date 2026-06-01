@@ -1,19 +1,24 @@
 using Core.Managers;
+using DG.Tweening;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UI;
 using UnityEngine;
 using UnityEngine.UI;
 using Util;
-using System;
 
 public class NyangstagramDMChatUI : UIPopup
 {
+    [Header("DoTween 설정")]
+    [SerializeField] private RectTransform _panel;
+    [SerializeField] private float _popupScaleDuration = 0.1f;
 
     [Header("버튼")]
     [Tooltip("패널닫기 버튼")][SerializeField] private Button _backButton;
     [Tooltip("냥스타그램 닫기 버튼")][SerializeField] private Button _nyangstagramCloseButton;
 
+    private NyangstagramDMChatUISprite _nyangstagramDMChatUISprite;
 
     public override void Init()
     {
@@ -25,6 +30,9 @@ public class NyangstagramDMChatUI : UIPopup
 
         BindButtons();
 
+        _nyangstagramDMChatUISprite = GetComponent<NyangstagramDMChatUISprite>();
+        _nyangstagramDMChatUISprite.Init();
+
         DebugTool.Log("NyangstagramUI Init 실행됨", DebugType.UI, this);
     }
     private void BindButtons()
@@ -32,8 +40,8 @@ public class NyangstagramDMChatUI : UIPopup
         //if (_storyButton != null)
         //    _storyButton.onClick.AddListener(() => GameManager.UI.ShowPopupUI<UIPopup>(KeyContainer.Prefabs.ShopPopupUI));
 
-        AddCloseButton(_backButton);
-        AddCloseAllPopUpButton(_nyangstagramCloseButton);
+        AddBackToDmList(_backButton);
+        AddCloseAllButton(_nyangstagramCloseButton);
 
 
         //if (_tagButton != null)
@@ -44,65 +52,58 @@ public class NyangstagramDMChatUI : UIPopup
 
     private void OnDisable()
     {
-        RemovePopupButton(_backButton, KeyContainer.Prefabs.NyangStargramDMchatPopUpUI);
-        RemoveCloseAllPopUpButton(_nyangstagramCloseButton);
-
 
     }
 
-
-    private void AddPopupButton(Button button, string key)
-    {
-        if (button == null) return;
-        button.onClick.AddListener(() => GameManager.UI.ShowPopupUI<UIPopup>(key, PlayPopupOpenAnimation));
-    }
-
-    private void RemovePopupButton(Button button, string key)
-    {
-        if (button == null) return;
-        button.onClick.RemoveListener(() => GameManager.UI.ShowPopupUI<UIPopup>(key, PlayPopupOpenAnimation));
-    }
-
-    private void AddCloseButton(Button button)
-    {
-        if (button == null) return;
-        button.onClick.AddListener(() => ClosePopup());
-    }
-    private void RemoveCloseButton(Button button)
-    {
-        if (button == null) return;
-        button?.onClick?.RemoveListener(() => ClosePopup());
-    }
-
-    private void PlayPopupOpenAnimation(UIPopup popup)
-    {
-        if (popup == null) return;
-        popup.PlayOpenAnimation();
-    }
-
-    //모든 팝업 다닫기
-    private void AddCloseAllPopUpButton(Button button)
-    {
-        if(button == null) return;
-        button.onClick.AddListener(() =>
-        {
-            UIPopup[] activePopups = FindObjectsByType<UIPopup>
-            (
-                FindObjectsInactive.Exclude,
-                FindObjectsSortMode.None
-
-            );
-
-            for(int i = 0; i < activePopups.Length; i++)
-            {
-                ClosePopup();
-            }
-        });
-    }
-    private void RemoveCloseAllPopUpButton( Button button)
+    private void AddHideSelfButton(Button button)
     {
         if(button == null) return;
         button.onClick.RemoveAllListeners();
+        button.onClick.AddListener(HideSelf);
+    }
+
+    //모든 팝업 다닫기
+    private void AddCloseAllButton(Button button)
+    {
+        if(button == null) return;
+        button.onClick.RemoveAllListeners();
+        button.onClick.AddListener(() =>
+        {
+            NyangstagramUIRouter.RequestCloseAll();
+        });
+    }
+    private void AddBackToDmList(Button button)
+    {
+        if(button == null) return;
+        button.onClick.RemoveAllListeners();
+        button.onClick.AddListener(() =>
+        {
+            ClosePopup();
+            NyangstagramUIRouter.RequestOpenPopup(KeyContainer.Prefabs.NyangStargramDMListPopUpUI);
+        });
+    }
+
+    private void HideSelf()
+    {
+        gameObject.SetActive(false);
+    }
+
+    public override void PlayOpenAnimation()
+    {
+        if (_panel == null) return;
+
+        _panel.anchoredPosition = new Vector2(1000f, 0f);
+        _panel.DOAnchorPos(Vector2.zero, _popupScaleDuration)
+            .SetEase(Ease.OutSine);
+    }
+
+    private void ClosePopup()
+    {
+        if (_panel == null) return;
+
+        _panel.DOAnchorPos(new Vector2(1000f, 0f), _popupScaleDuration)
+            .SetEase(Ease.OutSine).OnComplete(() => gameObject.SetActive(false));
+
     }
 
 }
