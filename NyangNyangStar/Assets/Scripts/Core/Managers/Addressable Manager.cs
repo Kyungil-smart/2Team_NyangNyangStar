@@ -167,7 +167,7 @@ namespace Core.Managers
             
             if (!KeyContainer.IsPrefabActive(key, prefab))
                 return false;
-
+            
             bool result = Addressables.ReleaseInstance(prefab);
 
             if (!result)

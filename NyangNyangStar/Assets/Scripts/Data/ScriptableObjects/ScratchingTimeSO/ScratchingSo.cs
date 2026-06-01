@@ -5,10 +5,12 @@ using UnityEngine;
 namespace Data.ScriptableObjects.ScratchingTimeSO
 {
     [CreateAssetMenu(fileName = "ScratchingTime", menuName = "SO/Data/ScratchingTimeSO", order = 0)]
-    public class ScratchingSheetLoadSo : SheetLoadSoBase, ISheetParsable
+    public class ScratchingSo : SoBase, ISheetParsable
     {
-        [SerializeField] private List<ScratchingData> _scratchingDatas = new();
-        public List<ScratchingData> ScratchingDatas => _scratchingDatas;
+        [Header("스크래칭 타임 스테이지 데이터")]
+        [Tooltip("단계, 일일 내구도, 일일 경험치, 주간 내구도, 주간 경험치에 대한 정보")]
+        [SerializeField] private List<ScratchingData> _scratchingData = new();
+        public List<ScratchingData> ScratchingData => _scratchingData;
 
         private Dictionary<int, ScratchingData> _dataDict = new();
         private int _count = 1;
@@ -18,7 +20,7 @@ namespace Data.ScriptableObjects.ScratchingTimeSO
         
         public void ClearData()
         {
-            _scratchingDatas.Clear();
+            _scratchingData.Clear();
             _dataDict.Clear();
         }
 
@@ -28,7 +30,7 @@ namespace Data.ScriptableObjects.ScratchingTimeSO
                     int.Parse(cols[1].Trim()), int.Parse(cols[2].Trim()),
                     int.Parse(cols[3].Trim()), int.Parse(cols[4].Trim()));
             
-            _scratchingDatas.Add(data);
+            _scratchingData.Add(data);
             _dataDict.Add(_count++, data);
         }
 
@@ -41,7 +43,7 @@ namespace Data.ScriptableObjects.ScratchingTimeSO
             if (!IsContainsKey(stage))
                 return 0;
 
-            return _dataDict[stage].DailyDurability;
+            return _dataDict[stage].MaxDailyDurability;
         }
 
         /// <summary>
@@ -64,7 +66,7 @@ namespace Data.ScriptableObjects.ScratchingTimeSO
         {
             if (!IsContainsKey(stage))
                 return 0;
-            return _dataDict[stage].WeeklyDurability;
+            return _dataDict[stage].MaxWeeklyDurability;
         }
 
         /// <summary>
@@ -93,17 +95,17 @@ namespace Data.ScriptableObjects.ScratchingTimeSO
             return true;
         }
 
-        public void PrintDatas()
+        public void PrintData()
         {
             StringBuilder log = new();
             log.AppendLine("[ScratchingTimeSO 로드 완료]");
 
-            foreach (ScratchingData data in _scratchingDatas)
+            foreach (ScratchingData data in _scratchingData)
             {
                 log.AppendLine($"[{data.Stage}] " +
-                           $"일일 내구도 = {data.DailyDurability}, " +
+                           $"일일 내구도 = {data.MaxDailyDurability}, " +
                            $"일일 경험치 = {data.DailyClearExp}, " +
-                           $"주간 내구도 = {data.WeeklyDurability}, " +
+                           $"주간 내구도 = {data.MaxWeeklyDurability}, " +
                            $"주간 경험치 = {data.WeeklyClearExp}");
             }
             
