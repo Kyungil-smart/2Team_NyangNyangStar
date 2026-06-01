@@ -59,6 +59,7 @@ public class MainUI : UIScene
         InitPopup(KeyContainer.Prefabs.NotebookPopupUI, _notebookButton);
         InitPopup(KeyContainer.Prefabs.RoulettePopupUI, _rouletteButton);
         InitPopup(KeyContainer.Prefabs.AffinityPopupUI, _affinityButton);
+        InitPopup(KeyContainer.Prefabs.NyangStargramHomeProfile, _meowMeowStarButton);
     }
 
     private void OnDisable()
@@ -73,6 +74,7 @@ public class MainUI : UIScene
         RemovePopupButton(_notebookButton);
         RemovePopupButton(_rouletteButton);
         RemovePopupButton(_affinityButton);
+        RemovePopupButton(_meowMeowStarButton);
     }
 
     private void InitPopup(string key, Button button)
