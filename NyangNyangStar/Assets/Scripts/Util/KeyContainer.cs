@@ -45,7 +45,7 @@ namespace Util
             public const string NyangStargramDMListPopUpUI = "NyagramDM리스트 켄버스";
             public const string NyangStargramDMchatPopUpUI = "NyagramDM 대화";
 
-            public const string ScratcherSeasonEventPanel = "ScratcherSeasonEventPanel";
+            public const string ScratchingTimeUI = "ScratchingTimeUI";
         }
 
         public static void Register(KeyData data)
@@ -242,7 +242,7 @@ namespace Util
             PrefabKeyDict.Add(Prefabs.NyangStargramDMListPopUpUI, new List<GameObject>());
             PrefabKeyDict.Add(Prefabs.NyangStargramDMchatPopUpUI, new List<GameObject>());
 
-            PrefabKeyDict.Add(Prefabs.ScratcherSeasonEventPanel, new List<GameObject>());
+            PrefabKeyDict.Add(Prefabs.ScratchingTimeUI, new List<GameObject>());
         }
 
         public static void PrintKeys()
