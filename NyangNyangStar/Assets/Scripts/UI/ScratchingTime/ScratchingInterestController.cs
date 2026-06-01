@@ -56,6 +56,11 @@ public class ScratchingInterestController : MonoBehaviour
         _elapsedDrainTime = 0f;
     }
 
+    public void StopInterestDrain()
+    {
+        _isDraining = false;
+    }
+
     private void Update()
     {
         if (!_isDraining)

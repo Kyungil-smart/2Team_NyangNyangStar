@@ -11,11 +11,15 @@ using UnityEngine.UI;
 /// </summary>
 public class ResultPopupController : UIBase
 {
-    [Header("Result Text")]
-    [SerializeField] private TMP_Text _resultTitleText;
+    [Header("Result Text")] [SerializeField]
+    private TMP_Text _resultTitleText;
 
-    [Header("Result Button")]
-    [SerializeField] private Button _backButton;
+    [SerializeField] private GameObject _clearResultObject;
+    [SerializeField] private GameObject _failResultObject;
+
+    [Header("Result Button")] [SerializeField]
+    private Button _backButton;
+
     [SerializeField] private Button _retryButton;
 
     public Action OnBackClicked;
@@ -99,6 +103,12 @@ public class ResultPopupController : UIBase
         if (_resultTitleText != null)
             _resultTitleText.text = isClear ? "클리어!" : "실패";
 
+        if (_clearResultObject != null)
+            _clearResultObject.SetActive(isClear);
+
+        if (_failResultObject != null)
+            _failResultObject.SetActive(!isClear);
+
         SetRetryButtonInteractable(canRetry);
     }
 
@@ -124,6 +134,16 @@ public class ResultPopupController : UIBase
 
     public override void Init()
     {
-        
+        _resultTitleText ??= GetComponentInChildren<TMP_Text>(true);
+        _clearResultObject ??= UIBase.FindChild(gameObject, "Clear", true);
+        _failResultObject ??= UIBase.FindChild(gameObject, "Fail", true);
+
+        Button[] buttons = GetComponentsInChildren<Button>(true);
+
+        if (_backButton == null && buttons.Length > 0)
+            _backButton = buttons[0];
+
+        if (_retryButton == null && buttons.Length > 1)
+            _retryButton = buttons[1];
     }
 }
