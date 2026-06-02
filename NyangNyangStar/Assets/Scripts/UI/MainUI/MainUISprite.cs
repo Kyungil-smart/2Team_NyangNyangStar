@@ -34,6 +34,7 @@ public class MainUISprite : UIBase
         SetSprite(MainUIImages.NotebookButton, "Main_Btn_FosterDiary");
         SetSprite(MainUIImages.RouletteButton, "Main_Btn_Roulette");
         SetSprite(MainUIImages.AffinityButton, "Main_Btn_Interact");
+        SetSprite(MainUIImages.NyangNyangSnapButton, "Main_Btn_Camera");
         SetSprite(MainUIImages.MeowMeowStarButton, "Main_Btn_Nyangstagram");
         SetSprite(MainUIImages.WorkshopMergeBoardButton, "Main_Btn_Mergeboard", _workshopMergeBoardColor);
         SetSprite(MainUIImages.MainMergeBoardButton, "Main_Btn_Mergeboard", _mainMergeBoardColor);
@@ -72,6 +73,7 @@ public enum MainUIImages
     NotebookButton,            // 임시보호 수첩
     RouletteButton,            // 룰렛
     AffinityButton,            // 교감
+    NyangNyangSnapButton,      // 냥냥스냅
     MeowMeowStarButton,        // 냥스타그램
     WorkshopMergeBoardButton,  // 공방 머지 보드판
     MainMergeBoardButton,      // 기본 머지 보드판
