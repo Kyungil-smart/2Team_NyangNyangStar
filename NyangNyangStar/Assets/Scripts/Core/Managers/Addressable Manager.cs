@@ -1,4 +1,4 @@
-﻿using System;
+﻿﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -67,7 +67,21 @@ namespace Core.Managers
                     {
                         GameObject go = handle.Result;
 
+                        if (go == null)
+                        {
+                            DebugTool.Warning($"{key} : 로드된 프리팹 인스턴스가 이미 제거되었습니다.", DebugType.Addressable);
+                            onFailed?.Invoke(key);
+                            return;
+                        }
+
                         KeyContainer.AddPrefab(key, go);
+
+                        if (go == null)
+                        {
+                            DebugTool.Warning($"{key} : 프리팹 캐시 등록 중 인스턴스가 제거되었습니다.", DebugType.Addressable);
+                            onFailed?.Invoke(key);
+                            return;
+                        }
 
                         if (dontDestroy)
                             Object.DontDestroyOnLoad(go);

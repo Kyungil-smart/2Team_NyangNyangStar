@@ -1,5 +1,4 @@
 using Core.Managers;
-using System.Collections;
 using System.Collections.Generic;
 using UI;
 using UnityEngine;
@@ -24,14 +23,20 @@ public class NyangstagramMainUI : UIPopup
     [SerializeField] private GameObject _homeView;
     [SerializeField] private GameObject _profileView;
 
+    private readonly Dictionary<string, UIPopup> _cachedPopups = new();
+    private bool _isInitialized;
 
-    //private void Awake()
-    //{
-    //    Init();
-    //}
-
+    private NyangstagramMainUISprite _nyangstagramMainUISprite;
     public override void Init()
     {
+        if (_isInitialized)
+        {
+            DebugTool.Log("NyangstagramMainUI Init 중복 실행 방지", DebugType.UI, this);
+            return;
+        }
+
+        _isInitialized = true;
+
         Bind<Button>(typeof(NyangstagramButton));
 
         _storyButton = Get<Button>((int)NyangstagramButton.StoryButton);
@@ -45,85 +50,159 @@ public class NyangstagramMainUI : UIPopup
         _dmButton = Get<Button>((int)NyangstagramButton.DMButton);
         _accountButton = Get<Button>((int)NyangstagramButton.AccountNameTextButton);
 
-        BindButtons();
+        BindViewButtons();
+        BindCloseButton();
+        BindRouterEvents();
+
+        PreloadPopups();
+
         SetProfileView();
 
-        DebugTool.Log("NyangstagramUI Init 실행됨", DebugType.UI, this);
+        _nyangstagramMainUISprite = GetComponent<NyangstagramMainUISprite>();
+        _nyangstagramMainUISprite.Init();
+
+        DebugTool.Log("NyangstagramMainUI Init 완료", DebugType.UI, this);
     }
-    private void BindButtons()
+
+    private void PreloadPopups()
     {
-        //if (_storyButton != null)
-        //    _storyButton.onClick.AddListener(() => GameManager.UI.ShowPopupUI<UIPopup>(KeyContainer.Prefabs.ShopPopupUI));
+        // 자기 자신(NyangStargramHomeProfile)은 여기서 다시 로드하면 안 된다.
+        // 이 스크립트가 붙은 메인 UI는 이미 열려있는 1개로 취급한다.
+        InitPopup(KeyContainer.Prefabs.NyangStargramPostPopUpUI, _image);
+        InitPopup(KeyContainer.Prefabs.NyangStargramNPCProfilePopUpUI, _accountButton);
+        InitPopup(KeyContainer.Prefabs.NyangStargramAddPostPopUpUI, _addPostButton);
+        InitPopup(KeyContainer.Prefabs.NyangStargramNoticePopUpUI, _notificationButton);
+        InitPopup(KeyContainer.Prefabs.NyangStargramDMListPopUpUI, _dmButton);
+        InitPopup(KeyContainer.Prefabs.NyangStargramDMchatPopUpUI, null);
+    }
 
-        NyangstagramNPCProfileUI.OnRequestProfileView += SetProfileView;
+    private void InitPopup(string key, Button openButton)
+    {
+        if (string.IsNullOrEmpty(key))
+        {
+            DebugTool.Warning("팝업 키가 비어있습니다.", DebugType.UI, this);
+            return;
+        }
 
-        AddPopupButton(_image, KeyContainer.Prefabs.NyangStargramPostPopUpUI);
+        if (_cachedPopups.ContainsKey(key))
+        {
+            DebugTool.Log($"이미 캐싱된 팝업입니다: {key}", DebugType.UI, this);
+            return;
+        }
+
+        GameManager.UI.ShowPopupUI<UIPopup>(
+            key,
+            popup =>
+            {
+                if (popup == null)
+                {
+                    DebugTool.Warning($"냥스타그램 팝업 로드 실패: {key}", DebugType.UI, this);
+                    return;
+                }
+
+                _cachedPopups[key] = popup;
+                popup.gameObject.SetActive(false);
+
+                if (openButton != null)
+                    AddPopupButton(openButton, popup);
+
+                DebugTool.Log($"냥스타그램 팝업 캐싱 완료: {key}", DebugType.UI, this);
+            },
+            false
+        );
+    }
+
+    private void AddPopupButton(Button button, UIPopup popup)
+    {
+        if (button == null || popup == null) return;
+
+        button.onClick.RemoveAllListeners();
+        button.onClick.AddListener(() => ShowCachedPopup(popup));
+    }
+
+    private void BindViewButtons()
+    {
         AddViewButton(_homeButton, true, false);
-
-        //if (_tagButton != null)
-        //    _tagButton.onClick.AddListener(() => GameManager.UI.ShowPopupUI<UIPopup>(KeyContainer.Prefabs.ShopPopupUI));
-
-        AddPopupButton(_addPostButton, KeyContainer.Prefabs.NyangStargramAddPostPopUpUI);
-        AddPopupButton(_notificationButton, KeyContainer.Prefabs.NyangStargramNoticePopUpUI);
         AddViewButton(_profileButton, false, true);
-        AddCloseButton(_nyangstagramCloseButton);
-        AddPopupButton(_dmButton, KeyContainer.Prefabs.NyangStargramDMListPopUpUI);
-        AddPopupButton(_accountButton, KeyContainer.Prefabs.NyangStargramNPCProfilePopUpUI);
-
-    }
-
-    private void OnDisable()
-    {
-        NyangstagramNPCProfileUI.OnRequestProfileView -= SetProfileView;
-
-        RemovePopupButton(_image, KeyContainer.Prefabs.NyangStargramPostPopUpUI);
-        RemoveViewButton(_homeButton, true, false);
-        RemovePopupButton(_addPostButton, KeyContainer.Prefabs.NyangStargramAddPostPopUpUI);
-        RemovePopupButton(_notificationButton, KeyContainer.Prefabs.NyangStargramNoticePopUpUI);
-        RemoveViewButton(_profileButton, false, true);
-        RemoveCloseButton(_nyangstagramCloseButton);
-        RemovePopupButton(_dmButton, KeyContainer.Prefabs.NyangStargramDMListPopUpUI);
-
-    }
-
-    private void AddPopupButton(Button button, string key)
-    {
-        if (button == null) return;
-        button.onClick.AddListener(() => GameManager.UI.ShowPopupUI<UIPopup>(key, PlayPopupOpenAnimation));
-    }
-
-    private void RemovePopupButton(Button button, string key)
-    {
-        if (button == null) return;
-        button.onClick.RemoveListener(() => GameManager.UI.ShowPopupUI<UIPopup>(key, PlayPopupOpenAnimation));
     }
 
     private void AddViewButton(Button button, bool homeActive, bool profileActive)
     {
         if (button == null) return;
+
+        button.onClick.RemoveAllListeners();
         button.onClick.AddListener(() => SetView(homeActive, profileActive));
     }
 
-    private void RemoveViewButton(Button button, bool homeActive, bool profileActive)
+    private void BindCloseButton()
     {
-        if (button == null) return;
-        button.onClick.RemoveListener(() => SetView(homeActive, profileActive));
+        AddCloseAllButton(_nyangstagramCloseButton);
     }
 
-    private void CloseNyangstagram()
+    private void AddCloseAllButton(Button button)
     {
+        if (button == null) return;
+
+        button.onClick.RemoveAllListeners();
+        button.onClick.AddListener(HideAllNyangstagramUI);
+    }
+
+    private void BindRouterEvents()
+    {
+        NyangstagramUIRouter.OnRequestOpenPopup -= ShowCachedPopup;
+        NyangstagramUIRouter.OnRequestCloseAll -= HideAllNyangstagramUI;
+        NyangstagramUIRouter.OnRequestHomeView -= SetHomeView;
+        NyangstagramUIRouter.OnRequestProfileView -= SetProfileView;
+
+        NyangstagramUIRouter.OnRequestOpenPopup += ShowCachedPopup;
+        NyangstagramUIRouter.OnRequestCloseAll += HideAllNyangstagramUI;
+        NyangstagramUIRouter.OnRequestHomeView += SetHomeView;
+        NyangstagramUIRouter.OnRequestProfileView += SetProfileView;
+    }
+
+    private void ShowCachedPopup(string key)
+    {
+        if (!_cachedPopups.TryGetValue(key, out UIPopup popup))
+        {
+            DebugTool.Warning($"캐싱된 팝업이 없습니다: {key}", DebugType.UI, this);
+            return;
+        }
+
+        ShowCachedPopup(popup);
+    }
+
+    private void ShowCachedPopup(UIPopup popup)
+    {
+        if (popup == null) return;
+
+        if (popup.gameObject.activeSelf)
+        {
+            DebugTool.Log($"이미 열려있는 팝업입니다: {popup.name}", DebugType.UI, this);
+            return;
+        }
+
+        popup.gameObject.SetActive(true);
+        PlayPopupOpenAnimation(popup);
+
+        DebugTool.Log($"캐싱 팝업 열기: {popup.name}", DebugType.UI, this);
+    }
+
+    private void HideAllNyangstagramUI()
+    {
+        foreach (UIPopup popup in _cachedPopups.Values)
+        {
+            if (popup == null) continue;
+            popup.gameObject.SetActive(false);
+        }
+
         gameObject.SetActive(false);
+
+        DebugTool.Log("냥스타그램 전체 UI 비활성화", DebugType.UI, this);
     }
 
-    private void AddCloseButton(Button button)
+    private void SetHomeView()
     {
-        if (button == null) return;
-        button.onClick.AddListener(() => CloseNyangstagram());
-    }
-    private void RemoveCloseButton(Button button)
-    {
-        if (button == null) return;
-        button?.onClick?.RemoveListener(() => CloseNyangstagram());
+        SetView(true, false);
     }
 
     private void SetProfileView()
@@ -133,20 +212,32 @@ public class NyangstagramMainUI : UIPopup
 
     private void SetView(bool homeActive, bool profileActive)
     {
-        if(_homeView != null)
-        {
+        if (_homeView != null)
             _homeView.SetActive(homeActive);
-        }
 
-        if(_profileView != null)
-        {
+        if (_profileView != null)
             _profileView.SetActive(profileActive);
-        }
+
+        DebugTool.Log($"냥스타그램 View 변경 / Home: {homeActive}, Profile: {profileActive}", DebugType.UI, this);
     }
+
     private void PlayPopupOpenAnimation(UIPopup popup)
     {
         if (popup == null) return;
         popup.PlayOpenAnimation();
+    }
+
+    private void OnDisable()
+    {
+
+    }
+
+    private void OnDestroy()
+    {
+        NyangstagramUIRouter.OnRequestOpenPopup -= ShowCachedPopup;
+        NyangstagramUIRouter.OnRequestCloseAll -= HideAllNyangstagramUI;
+        NyangstagramUIRouter.OnRequestHomeView -= SetHomeView;
+        NyangstagramUIRouter.OnRequestProfileView -= SetProfileView;
     }
 }
 

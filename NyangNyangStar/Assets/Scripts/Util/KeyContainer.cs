@@ -175,6 +175,18 @@ namespace Util
         
         public static void AddPrefab(string key, GameObject prefab)
         {
+            if (string.IsNullOrEmpty(key) || !PrefabKeyDict.ContainsKey(key))
+            {
+                DebugTool.Warning($"{key} : 등록되지 않은 Prefab Key 입니다.", DebugType.Addressable);
+                return;
+            }
+
+            if (prefab == null)
+            {
+                DebugTool.Warning($"{key} : Prefab 인스턴스가 없습니다.", DebugType.Addressable);
+                return;
+            }
+
             PrefabKeyDict[key].Add(prefab);
             DebugTool.Log($"{key} :  Prefab : {prefab.name}", DebugType.Addressable);
         }

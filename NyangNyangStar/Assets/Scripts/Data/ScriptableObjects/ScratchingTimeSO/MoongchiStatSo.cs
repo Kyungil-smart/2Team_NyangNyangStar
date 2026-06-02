@@ -67,6 +67,7 @@ namespace Data.ScriptableObjects.ScratchingTimeSO
         public override void Init()
         {
             Level = 1;
+            RefreshTotalStats();
         }
 
         /// <summary>
@@ -77,9 +78,7 @@ namespace Data.ScriptableObjects.ScratchingTimeSO
             CurrentExp -= MaxExp;
 
             Level++;
-            
-            _totalSharpness = _baseSharpness + (_level * _sharpnessIncreasePerLevel);
-            _totalCriticalChance = _baseCriticalChance + (_level / 5 * _baseCriticalChance);
+            RefreshTotalStats();
             
             DebugTool.Log($"[Level Up] 레벨 : {Level} " +
                           $"| 공격력 : {_totalSharpness} " +
@@ -106,6 +105,12 @@ namespace Data.ScriptableObjects.ScratchingTimeSO
         /// <returns>현재 경험치</returns>
         public int GetCurrentExp()
             => _currentExp;
+
+        private void RefreshTotalStats()
+        {
+            _totalSharpness = _baseSharpness + (_level * _sharpnessIncreasePerLevel);
+            _totalCriticalChance = _baseCriticalChance + (_level / 5 * _baseCriticalChance);
+        }
 
         /// <summary>
         /// 뭉치의 공격 데미지를 계산하여 반환합니다.
