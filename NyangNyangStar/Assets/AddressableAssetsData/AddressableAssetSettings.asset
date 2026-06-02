@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 468a46d0ae32c3544b7d98094e6448a9, type: 3}
   m_Name: AddressableAssetSettings
   m_EditorClassIdentifier: 
-  m_DefaultGroup: 95371cd6e3baf5047991559103deccf3
+  m_DefaultGroup: 5674fe636895c054986e073c5bc88d13
   m_currentHash:
     serializedVersion: 2
     Hash: 00000000000000000000000000000000
@@ -44,9 +44,10 @@ MonoBehaviour:
   m_BuildAddressablesWithPlayerBuild: 0
   m_overridePlayerVersion: '[UnityEditor.PlayerSettings.bundleVersion]'
   m_GroupAssets:
+  - {fileID: 11400000, guid: 3731b9094383b6846bd0874a6843b091, type: 2}
   - {fileID: 11400000, guid: c10c13aa3f5298b4d9833ba38894a657, type: 2}
+  - {fileID: 11400000, guid: 02af301e651881c4aa907d962dabdd0e, type: 2}
   - {fileID: 11400000, guid: ccaa9c68ae820724db9b82f92202a6cb, type: 2}
-  - {fileID: 11400000, guid: 1f426592689c4294f987459f245a0442, type: 2}
   - {fileID: 11400000, guid: 39f2fe5a71ae53240927fe842b4a42a9, type: 2}
   - {fileID: 11400000, guid: d52f95ba431727e47bd5502183ce734b, type: 2}
   - {fileID: 11400000, guid: 74d29b9829c246a4c895bb1808f93420, type: 2}
@@ -92,7 +93,9 @@ MonoBehaviour:
   m_LabelTable:
     m_LabelNames:
     - Sprite
-    - UI
+    - BGM
+    - SFX
+    - Audio
   m_SchemaTemplates: []
   m_GroupTemplateObjects:
   - {fileID: 11400000, guid: e26204770e131bf4a899c01cd601393b, type: 2}

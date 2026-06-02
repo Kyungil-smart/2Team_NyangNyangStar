@@ -12,4 +12,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a630cd4e6b804245aedb3647fdb66a94, type: 3}
   m_Name: ScratchingTime
   m_EditorClassIdentifier: 
-  _scratchingDatas: []
+  _scratchingData:
+  - _stage: 1
+    _maxDailyDurability: 300
+    _currentDailyDurability: 0
+    _dailyClearExp: 1
+    _maxDailyChallengeCount: 4
+    _remainingDailyChallengeCount: 0
+    _maxWeeklyDurability: 11111
+    _currentWeeklyDurability: 1111
+    _weeklyClearExp: 1
+    _maxWeeklyChallengeCount: 1
+    _remainingWeeklyChallengeCount: 1
+  _remainingDailyChallengeCount: 0
+  _remainingWeeklyChallengeCount: 1
+  _openedStageBySchedule: 1
+  _highestClearedDailyStage: 1
+  _highestClearedWeeklyStage: 0
+  _timeLimit: 10

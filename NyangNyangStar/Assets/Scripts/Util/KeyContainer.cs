@@ -45,7 +45,7 @@ namespace Util
             public const string NyangStargramDMListPopUpUI = "NyagramDM리스트 켄버스";
             public const string NyangStargramDMchatPopUpUI = "NyagramDM 대화";
 
-            public const string ScratcherSeasonEventPanel = "ScratcherSeasonEventPanel";
+            public const string ScratchingTimeUI = "ScratchingTimeUI";
         }
 
         public static void Register(KeyData data)
@@ -175,6 +175,18 @@ namespace Util
         
         public static void AddPrefab(string key, GameObject prefab)
         {
+            if (string.IsNullOrEmpty(key) || !PrefabKeyDict.ContainsKey(key))
+            {
+                DebugTool.Warning($"{key} : 등록되지 않은 Prefab Key 입니다.", DebugType.Addressable);
+                return;
+            }
+
+            if (prefab == null)
+            {
+                DebugTool.Warning($"{key} : Prefab 인스턴스가 없습니다.", DebugType.Addressable);
+                return;
+            }
+
             PrefabKeyDict[key].Add(prefab);
             DebugTool.Log($"{key} :  Prefab : {prefab.name}", DebugType.Addressable);
         }
@@ -242,7 +254,7 @@ namespace Util
             PrefabKeyDict.Add(Prefabs.NyangStargramDMListPopUpUI, new List<GameObject>());
             PrefabKeyDict.Add(Prefabs.NyangStargramDMchatPopUpUI, new List<GameObject>());
 
-            PrefabKeyDict.Add(Prefabs.ScratcherSeasonEventPanel, new List<GameObject>());
+            PrefabKeyDict.Add(Prefabs.ScratchingTimeUI, new List<GameObject>());
         }
 
         public static void PrintKeys()

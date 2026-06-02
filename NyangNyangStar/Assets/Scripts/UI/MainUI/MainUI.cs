@@ -17,6 +17,7 @@ public class MainUI : UIScene
     [Tooltip("임시보호 수첩")][SerializeField] private Button _notebookButton;
     [Tooltip("룰렛")][SerializeField] private Button _rouletteButton;
     [Tooltip("교감")][SerializeField] private Button _affinityButton;
+    [Tooltip("냥냥스냅")][SerializeField] private Button _nyangNyangSnapButton;
     [Tooltip("냥스타그램")][SerializeField] private Button _meowMeowStarButton;
     [Tooltip("공방 머지 보드판")][SerializeField] private Button _workshopMergeBoardButton;
     [Tooltip("기본 머지 보드판")][SerializeField] private Button _mainMergeBoardButton;
@@ -37,6 +38,7 @@ public class MainUI : UIScene
         _notebookButton = Get<Button>((int)MainUIButtons.NotebookButton);
         _rouletteButton = Get<Button>((int)MainUIButtons.RouletteButton);
         _affinityButton = Get<Button>((int)MainUIButtons.AffinityButton);
+        _nyangNyangSnapButton = Get<Button>((int)MainUIButtons.NyangNyangSnapButton);
         _meowMeowStarButton = Get<Button>((int)MainUIButtons.MeowMeowStarButton);
         _workshopMergeBoardButton = Get<Button>((int)MainUIButtons.WorkshopMergeBoardButton);
         _mainMergeBoardButton = Get<Button>((int)MainUIButtons.MainMergeBoardButton);
@@ -59,6 +61,7 @@ public class MainUI : UIScene
         InitPopup(KeyContainer.Prefabs.NotebookPopupUI, _notebookButton);
         InitPopup(KeyContainer.Prefabs.RoulettePopupUI, _rouletteButton);
         InitPopup(KeyContainer.Prefabs.AffinityPopupUI, _affinityButton);
+        //InitPopup(KeyContainer.Prefabs., _meowMeowStarButton);
     }
 
     private void OnDisable()
@@ -73,6 +76,8 @@ public class MainUI : UIScene
         RemovePopupButton(_notebookButton);
         RemovePopupButton(_rouletteButton);
         RemovePopupButton(_affinityButton);
+        //RemovePopupButton(_nyangNyangSnapButton);
+        RemovePopupButton(_meowMeowStarButton);
     }
 
     private void InitPopup(string key, Button button)
@@ -115,6 +120,7 @@ public enum MainUIButtons
     NotebookButton,
     RouletteButton,
     AffinityButton,
+    NyangNyangSnapButton,
     MeowMeowStarButton,
     WorkshopMergeBoardButton,
     MainMergeBoardButton
