@@ -23,8 +23,19 @@ public class ScratchingBattleController : UIBase
     [SerializeField] private Image _durabilityAmountImage;
     [Tooltip("흥미도 게이지로 사용할 Filled 타입 Image입니다.")]
     [SerializeField] private Image _interestAmountImage;
+    [SerializeField] private Slider _durabilitySlider;
+    [SerializeField] private Slider _interestSlider;
+    [SerializeField] private ScratchEffectPool _scratchEffectPool;
+    [SerializeField] private ScratchingInterestController _interestController;
 
     public Action OnCloseClicked;
+    public ScratchEffectPool ScratchEffectPool => _scratchEffectPool;
+    public ScratchingInterestController InterestController => _interestController;
+
+    public void StopInterestDrain()
+    {
+        _interestController?.StopInterestDrain();
+    }
 
     /// <summary>
     /// 전투 화면 버튼 이벤트를 등록합니다.
@@ -90,10 +101,13 @@ public class ScratchingBattleController : UIBase
     /// <param name="max">최대 흥미도 값</param>
     public void SetInterestAmount(float current, float max)
     {
-        if (_interestAmountImage == null)
-            return;
+        float ratio = GetSafeRatio(current, max);
 
-        _interestAmountImage.fillAmount = GetSafeRatio(current, max);
+        if (_interestSlider != null)
+            _interestSlider.value = ratio;
+
+        if (_interestAmountImage != null)
+            _interestAmountImage.fillAmount = ratio;
     }
 
     /// <summary>
@@ -103,10 +117,13 @@ public class ScratchingBattleController : UIBase
     /// <param name="max">최대 내구도</param>
     public void SetDurabilityAmount(int current, int max)
     {
-        if (_durabilityAmountImage == null)
-            return;
+        float ratio = GetSafeRatio(current, max);
 
-        _durabilityAmountImage.fillAmount = GetSafeRatio(current, max);
+        if (_durabilitySlider != null)
+            _durabilitySlider.value = ratio;
+
+        if (_durabilityAmountImage != null)
+            _durabilityAmountImage.fillAmount = ratio;
     }
 
     /// <summary>
@@ -140,5 +157,27 @@ public class ScratchingBattleController : UIBase
 
     public override void Init()
     {
+        _closeButton ??= GetComponentInChildren<Button>(true);
+        _battleStageText ??= GetComponentInChildren<TMP_Text>(true);
+        _durabilitySlider ??= FindSlider("DurabilitySlider");
+        _interestSlider ??= FindSlider("InterestSlider");
+        _durabilityAmountImage ??= FindFillImage("DurabilitySlider");
+        _interestAmountImage ??= FindFillImage("InterestSlider");
+        _scratchEffectPool ??= GetComponentInChildren<ScratchEffectPool>(true);
+        _interestController ??= GetComponentInChildren<ScratchingInterestController>(true);
+    }
+
+    private Slider FindSlider(string sliderName)
+    {
+        Transform slider = UIBase.FindChild<Transform>(gameObject, sliderName, true);
+        return slider != null ? slider.GetComponent<Slider>() : null;
+    }
+
+    private Image FindFillImage(string sliderName)
+    {
+        Transform slider = UIBase.FindChild<Transform>(gameObject, sliderName, true);
+        Transform fill = slider != null ? UIBase.FindChild<Transform>(slider.gameObject, "Fill", true) : null;
+
+        return fill != null ? fill.GetComponent<Image>() : null;
     }
 }

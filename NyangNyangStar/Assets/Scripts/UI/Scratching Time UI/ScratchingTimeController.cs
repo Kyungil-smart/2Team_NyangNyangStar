@@ -4,6 +4,7 @@ using TMPro;
 using UI;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.Events;
 using UnityEngine.UI;
 
 /// <summary>
@@ -17,14 +18,18 @@ public class ScratchingTimeController : UIBase
 
     [Header("Stage Button")]
     [SerializeField] private Button[] _stageButtons = new Button[4];
+    [SerializeField] private GameObject _errorPanel;
+    [SerializeField] private Button _errorCloseButton;
 
     [Header("Daily Stage UI")]
+    [SerializeField] private TMP_Text _dailyChallengeCountText; // CountPanel 통합 텍스트 연결용
     [SerializeField] private TMP_Text _dailyRemainingCountText;
     [SerializeField] private TMP_Text _dailyCountSlashText;
     [SerializeField] private TMP_Text _dailyMaxCountText;
     [SerializeField] private Button _dailyStartButton;
 
     [Header("Weekly Stage UI")]
+    [SerializeField] private TMP_Text _weeklyChallengeCountText; // CountPanel 통합 텍스트 연결용
     [SerializeField] private TMP_Text _weeklyRemainingCountText;
     [SerializeField] private TMP_Text _weeklyCountSlashText;
     [SerializeField] private TMP_Text _weeklyMaxCountText;
@@ -33,6 +38,11 @@ public class ScratchingTimeController : UIBase
     public Action OnCloseClicked;
     public Action<int> OnStageSelected;
     public Action<StageType> OnStageStartClicked;
+
+    private bool _isButtonEventRegistered;
+    private readonly UnityAction[] _stageButtonActions = new UnityAction[4];
+    private UnityAction _dailyStartAction;
+    private UnityAction _weeklyStartAction;
 
     private void Awake()
     {
@@ -54,23 +64,46 @@ public class ScratchingTimeController : UIBase
     /// </summary>
     private void RegisterButtonEvents()
     {
+        if (_isButtonEventRegistered)
+            return;
+
+        bool hasRegisteredButton = false;
+
         if (_closeButton != null)
+        {
             _closeButton.onClick.AddListener(RaiseCloseClicked);
+            hasRegisteredButton = true;
+        }
 
         if (_stageButtons != null)
         {
             for (int i = 0; i < _stageButtons.Length; i++)
             {
+                if (_stageButtons[i] == null)
+                    continue;
+
                 int stage = i + 1;
-                _stageButtons[i].onClick.AddListener(() => SelectStage(stage));
+                _stageButtonActions[i] ??= () => SelectStage(stage);
+                _stageButtons[i].onClick.AddListener(_stageButtonActions[i]);
+                hasRegisteredButton = true;
             }
         }
 
         if (_dailyStartButton != null)
-            _dailyStartButton.onClick.AddListener(() => StartSelectedStage(StageType.Daily));
+        {
+            _dailyStartAction ??= () => StartSelectedStage(StageType.Daily);
+            _dailyStartButton.onClick.AddListener(_dailyStartAction);
+            hasRegisteredButton = true;
+        }
 
         if (_weeklyStartButton != null)
-            _weeklyStartButton.onClick.AddListener(() => StartSelectedStage(StageType.Weekly));
+        {
+            _weeklyStartAction ??= () => StartSelectedStage(StageType.Weekly);
+            _weeklyStartButton.onClick.AddListener(_weeklyStartAction);
+            hasRegisteredButton = true;
+        }
+
+        _isButtonEventRegistered = hasRegisteredButton;
     }
 
     /// <summary>
@@ -83,20 +116,22 @@ public class ScratchingTimeController : UIBase
 
         if (_stageButtons != null)
         {
-            foreach (Button button in _stageButtons)
+            for (int i = 0; i < _stageButtons.Length; i++)
             {
-                if (button == null)
+                if (_stageButtons[i] == null || _stageButtonActions[i] == null)
                     continue;
 
-                button.onClick.RemoveAllListeners();
+                _stageButtons[i].onClick.RemoveListener(_stageButtonActions[i]);
             }
         }
 
-        if (_dailyStartButton != null)
-            _dailyStartButton.onClick.RemoveAllListeners();
+        if (_dailyStartButton != null && _dailyStartAction != null)
+            _dailyStartButton.onClick.RemoveListener(_dailyStartAction);
 
-        if (_weeklyStartButton != null)
-            _weeklyStartButton.onClick.RemoveAllListeners();
+        if (_weeklyStartButton != null && _weeklyStartAction != null)
+            _weeklyStartButton.onClick.RemoveListener(_weeklyStartAction);
+
+        _isButtonEventRegistered = false;
     }
 
     /// <summary>
@@ -122,7 +157,8 @@ public class ScratchingTimeController : UIBase
     public void InitView()
     {
         SetStageButtonsInteractable(true);
-        SetStageStartButtonsInteractable(false, false);
+        SetStageStartButtonsInteractable(true, true);
+        HideErrorPanel();
         ClearStageCardInfo();
     }
 
@@ -152,7 +188,30 @@ public class ScratchingTimeController : UIBase
     private void StartSelectedStage(StageType stageType)
     {
         ClearSelectedButton();
+        HideErrorPanel();
         OnStageStartClicked?.Invoke(stageType);
+    }
+
+    /// <summary>
+    /// 아직 입장할 수 없는 단계 안내 패널을 표시합니다.
+    /// </summary>
+    public void ShowErrorPanel()
+    {
+        if (_errorPanel == null)
+            return;
+
+        _errorPanel.SetActive(true);
+    }
+
+    /// <summary>
+    /// 아직 입장할 수 없는 단계 안내 패널을 숨깁니다.
+    /// </summary>
+    public void HideErrorPanel()
+    {
+        if (_errorPanel == null)
+            return;
+
+        _errorPanel.SetActive(false);
     }
 
     /// <summary>
@@ -180,13 +239,26 @@ public class ScratchingTimeController : UIBase
         int weeklyMaxCount,
         bool canStartWeekly)
     {
-        SetText(_dailyRemainingCountText, dailyRemainingCount.ToString());
-        SetText(_dailyCountSlashText, "/");
-        SetText(_dailyMaxCountText, dailyMaxCount.ToString());
+        // CountPanel 통합 텍스트가 있으면 SO 값을 한 줄로 출력함
+        if (_dailyChallengeCountText != null)
+            SetText(_dailyChallengeCountText, FormatChallengeCount(dailyRemainingCount, dailyMaxCount));
+        else
+        {
+            // 분리된 텍스트 UI 폴백용임
+            SetText(_dailyRemainingCountText, dailyRemainingCount.ToString());
+            SetText(_dailyCountSlashText, "/");
+            SetText(_dailyMaxCountText, dailyMaxCount.ToString());
+        }
 
-        SetText(_weeklyRemainingCountText, weeklyRemainingCount.ToString());
-        SetText(_weeklyCountSlashText, "/");
-        SetText(_weeklyMaxCountText, weeklyMaxCount.ToString());
+        if (_weeklyChallengeCountText != null)
+            SetText(_weeklyChallengeCountText, FormatChallengeCount(weeklyRemainingCount, weeklyMaxCount));
+        else
+        {
+            // 분리된 텍스트 UI 폴백용임
+            SetText(_weeklyRemainingCountText, weeklyRemainingCount.ToString());
+            SetText(_weeklyCountSlashText, "/");
+            SetText(_weeklyMaxCountText, weeklyMaxCount.ToString());
+        }
 
         SetStageStartButtonsInteractable(canStartDaily, canStartWeekly);
     }
@@ -196,13 +268,23 @@ public class ScratchingTimeController : UIBase
     /// </summary>
     public void ClearStageCardInfo()
     {
-        SetText(_dailyRemainingCountText, "-");
-        SetText(_dailyCountSlashText, "/");
-        SetText(_dailyMaxCountText, "-");
+        if (_dailyChallengeCountText != null)
+            SetText(_dailyChallengeCountText, FormatChallengeCount(-1, -1));
+        else
+        {
+            SetText(_dailyRemainingCountText, "-");
+            SetText(_dailyCountSlashText, "/");
+            SetText(_dailyMaxCountText, "-");
+        }
 
-        SetText(_weeklyRemainingCountText, "-");
-        SetText(_weeklyCountSlashText, "/");
-        SetText(_weeklyMaxCountText, "-");
+        if (_weeklyChallengeCountText != null)
+            SetText(_weeklyChallengeCountText, FormatChallengeCount(-1, -1));
+        else
+        {
+            SetText(_weeklyRemainingCountText, "-");
+            SetText(_weeklyCountSlashText, "/");
+            SetText(_weeklyMaxCountText, "-");
+        }
     }
 
     /// <summary>
@@ -241,7 +323,7 @@ public class ScratchingTimeController : UIBase
         if (_stageButtons[index] == null)
             return;
 
-        _stageButtons[index].interactable = value;
+        _stageButtons[index].interactable = true;
     }
 
     /// <summary>
@@ -252,10 +334,10 @@ public class ScratchingTimeController : UIBase
     public void SetStageStartButtonsInteractable(bool canStartDaily, bool canStartWeekly)
     {
         if (_dailyStartButton != null)
-            _dailyStartButton.interactable = canStartDaily;
+            _dailyStartButton.interactable = true;
 
         if (_weeklyStartButton != null)
-            _weeklyStartButton.interactable = canStartWeekly;
+            _weeklyStartButton.interactable = true;
     }
 
     /// <summary>
@@ -285,41 +367,105 @@ public class ScratchingTimeController : UIBase
     {
         Bind<Button>(typeof(StageButtons));
         Bind<TMP_Text>(typeof(StageTexts));
-        
+
         GetButtons();
         GetTexts();
+
+        if (isActiveAndEnabled)
+            RegisterButtonEvents();
     }
 
     private void GetButtons()
     {
-        _closeButton = Get<Button>((int)StageButtons.CloseButton);
-        _stageButtons[0] = Get<Button>((int)StageButtons.Stage1);
-        _stageButtons[1] = Get<Button>((int)StageButtons.Stage2);
-        _stageButtons[2] = Get<Button>((int)StageButtons.Stage3);
-        _stageButtons[3] = Get<Button>((int)StageButtons.Stage4);
-        _dailyStartButton = Get<Button>((int)StageButtons.DailyStartButton);
-        _weeklyStartButton = Get<Button>((int)StageButtons.WeeklyStartButton);
+        // HeaderPanel ExitButton 우선, 없으면 CloseButton 이름 폴백임
+        _closeButton ??= FindButtonInChild("HeaderPanel", "ExitButton") ?? FindButton("CloseButton");
+        _stageButtons[0] ??= FindButton("StageTab_1");
+        _stageButtons[1] ??= FindButton("StageTab_2");
+        _stageButtons[2] ??= FindButton("StageTab_3");
+        _stageButtons[3] ??= FindButton("StageTab_4");
+        _dailyStartButton ??= FindButtonInChild("DailyStageCard", "Button (1)");
+        _weeklyStartButton ??= FindButtonInChild("WeekStageCard", "Button (1)") ?? FindButtonInChild("WeekStageCard", "Button");
+        _errorPanel ??= UIBase.FindChild(gameObject, "ErrorPanel", true);
+        _errorCloseButton ??= FindButtonInChild("ErrorPanel", "ExitButton");
+
+        if (_errorCloseButton != null)
+        {
+            _errorCloseButton.onClick.RemoveListener(HideErrorPanel);
+            _errorCloseButton.onClick.AddListener(HideErrorPanel);
+        }
     }
 
     private void GetTexts()
     {
-        _dailyRemainingCountText = Get<TMP_Text>((int)StageTexts.DailyRemainChallengeCount);
-        _dailyCountSlashText = Get<TMP_Text>((int)StageTexts.DailyChallengeCountSlash);
-        _dailyMaxCountText = Get<TMP_Text>((int)StageTexts.DailyMaxChallengeCount);
-        _weeklyRemainingCountText = Get<TMP_Text>((int)StageTexts.WeeklyRemainChallengeCount);
-        _weeklyCountSlashText = Get<TMP_Text>((int)StageTexts.WeeklyChallengeCountSlash);
-        _weeklyMaxCountText = Get<TMP_Text>((int)StageTexts.WeeklyMaxChallengeCount);
+        // 카드별 CountPanel/Text (TMP)에 남은 횟수 텍스트 연결함
+        _dailyChallengeCountText ??= FindChallengeCountText("DailyStageCard");
+        _weeklyChallengeCountText ??= FindChallengeCountText("WeekStageCard");
+
+        // enum 이름 바인딩은 분리 UI용 폴백임
+        _dailyRemainingCountText ??= Get<TMP_Text>((int)StageTexts.DailyRemainChallengeCount);
+        _dailyCountSlashText ??= Get<TMP_Text>((int)StageTexts.DailyChallengeCountSlash);
+        _dailyMaxCountText ??= Get<TMP_Text>((int)StageTexts.DailyMaxChallengeCount);
+        _weeklyRemainingCountText ??= Get<TMP_Text>((int)StageTexts.WeeklyRemainChallengeCount);
+        _weeklyCountSlashText ??= Get<TMP_Text>((int)StageTexts.WeeklyChallengeCountSlash);
+        _weeklyMaxCountText ??= Get<TMP_Text>((int)StageTexts.WeeklyMaxChallengeCount);
+    }
+
+    private static string FormatChallengeCount(int remainingCount, int maxCount)
+    {
+        // ScratchingTimeSO 도전 횟수 표시 포맷임
+        if (remainingCount < 0 || maxCount < 0)
+            return "남은 횟수 - / -";
+
+        return $"남은 횟수 {remainingCount} / {maxCount}";
+    }
+
+    private TMP_Text FindChallengeCountText(string cardName)
+    {
+        // DailyStageCard, WeekStageCard 하위 CountPanel 텍스트 찾기임
+        GameObject card = UIBase.FindChild(gameObject, cardName, true);
+        if (card == null)
+            return null;
+
+        GameObject countPanel = UIBase.FindChild(card, "CountPanel", true);
+        if (countPanel == null)
+            return null;
+
+        TMP_Text text = UIBase.FindChild<TMP_Text>(countPanel, "Text (TMP)", false);
+        return text ?? countPanel.GetComponentInChildren<TMP_Text>(true);
     }
 
     private enum StageButtons
     {
         CloseButton,
-        Stage1,
-        Stage2,
-        Stage3,
-        Stage4,
+        StageTab_1,
+        StageTab_2,
+        StageTab_3,
+        StageTab_4,
         DailyStartButton,
         WeeklyStartButton
+    }
+
+    private Button FindButton(string childName)
+    {
+        return UIBase.FindChild<Button>(gameObject, childName, true);
+    }
+
+    private Button FindButtonInChild(string childName, string buttonName = null)
+    {
+        GameObject child = UIBase.FindChild(gameObject, childName, true);
+
+        if (child == null)
+            return null;
+
+        if (!string.IsNullOrEmpty(buttonName))
+        {
+            Button namedButton = UIBase.FindChild<Button>(child, buttonName, true);
+
+            if (namedButton != null)
+                return namedButton;
+        }
+
+        return child.GetComponentInChildren<Button>(true);
     }
 
     private enum StageTexts

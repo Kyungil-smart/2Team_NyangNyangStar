@@ -1,15 +1,20 @@
 using Core.Managers;
+using DG.Tweening;
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UI;
 using UnityEngine;
 using UnityEngine.UI;
 using Util;
-using System;
-using TMPro;
 
 public class NyangStargramPostUI : UIPopup
 {
+    [Header("DoTween 설정")]
+    [SerializeField] private RectTransform _panel;
+    [SerializeField] private float _popupScale = 0.85f;
+    [SerializeField] private float _popupScaleDuration = 0.1f;
 
     [Header("버튼")]
     [Tooltip("패널닫기 버튼")][SerializeField] private Button _backButton;
@@ -20,7 +25,7 @@ public class NyangStargramPostUI : UIPopup
     [SerializeField] private int _likeCount = 26667;
     private bool _isLiked;
 
-
+    private NyangStargramPostUISprite _nyangStargramPostUISprite;
 
     public override void Init()
     {
@@ -35,6 +40,9 @@ public class NyangStargramPostUI : UIPopup
         BindButtons();
         ReFreshLikeCountText();
 
+        _nyangStargramPostUISprite = GetComponent<NyangStargramPostUISprite>();
+        _nyangStargramPostUISprite.Init();
+
         DebugTool.Log("NyangstagramUI Init 실행됨", DebugType.UI, this);
     }
     private void BindButtons()
@@ -42,8 +50,8 @@ public class NyangStargramPostUI : UIPopup
         //if (_storyButton != null)
         //    _storyButton.onClick.AddListener(() => GameManager.UI.ShowPopupUI<UIPopup>(KeyContainer.Prefabs.ShopPopupUI));
 
-        AddCloseButton(_backButton);
-        AddCloseAllPopUpButton(_nyangstagramCloseButton);
+        AddHideSelfButton(_backButton);
+        AddCloseAllButton(_nyangstagramCloseButton);
         AddLikeButton(_likeButton);
 
 
@@ -55,66 +63,24 @@ public class NyangStargramPostUI : UIPopup
 
     private void OnDisable()
     {
-        RemoveCloseButton(_backButton);
-        RemoveCloseAllPopUpButton(_nyangstagramCloseButton);
-        RemoveLikeButton(_likeButton);
-
 
     }
 
-
-    private void AddPopupButton(Button button, string key)
+    private void AddHideSelfButton(Button button)
     {
         if (button == null) return;
-        button.onClick.AddListener(() => GameManager.UI.ShowPopupUI<UIPopup>(key, PlayPopupOpenAnimation));
-    }
-
-    private void RemovePopupButton(Button button, string key)
-    {
-        if (button == null) return;
-        button.onClick.RemoveListener(() => GameManager.UI.ShowPopupUI<UIPopup>(key, PlayPopupOpenAnimation));
-    }
-
-    private void AddCloseButton(Button button)
-    {
-        if (button == null) return;
-        button.onClick.AddListener(() => ClosePopup());
-    }
-    private void RemoveCloseButton(Button button)
-    {
-        if (button == null) return;
-        button?.onClick?.RemoveListener(() => ClosePopup());
-    }
-
-    private void PlayPopupOpenAnimation(UIPopup popup)
-    {
-        if (popup == null) return;
-        popup.PlayOpenAnimation();
+        button.onClick.AddListener(ClosePopup);
     }
 
     //모든 팝업 다닫기
-    private void AddCloseAllPopUpButton(Button button)
-    {
-        if (button == null) return;
-        button.onClick.AddListener(() =>
-        {
-            UIPopup[] activePopups = FindObjectsByType<UIPopup>
-            (
-                FindObjectsInactive.Exclude,
-                FindObjectsSortMode.None
-
-            );
-
-            for (int i = 0; i < activePopups.Length; i++)
-            {
-                ClosePopup();
-            }
-        });
-    }
-    private void RemoveCloseAllPopUpButton(Button button)
+    private void AddCloseAllButton(Button button)
     {
         if (button == null) return;
         button.onClick.RemoveAllListeners();
+        button.onClick.AddListener(() =>
+        {
+            NyangstagramUIRouter.RequestCloseAll();
+        });
     }
 
     private void AddLikeButton(Button button)
@@ -122,11 +88,7 @@ public class NyangStargramPostUI : UIPopup
         if(button == null) return;
         button.onClick.AddListener(OnClickLikeButton);
     }
-    private void RemoveLikeButton(Button button)
-    {
-        if(button == null) return;
-        button.onClick.RemoveListener(OnClickLikeButton);
-    }
+
     private void OnClickLikeButton()
     {
 
@@ -149,6 +111,27 @@ public class NyangStargramPostUI : UIPopup
 
         //_likeCountText.text = $"Like {_likeCount:N0}";
         _likeCountText.text = $"Like {_likeCount}";
+    }
+    private void HideSelf()
+    {
+        gameObject.SetActive(false);
+    }
+
+    public override void PlayOpenAnimation()
+    {
+        if (_panel == null) return;
+
+        _panel.localScale = Vector3.one * _popupScale;
+        _panel.DOScale(1f, _popupScaleDuration)
+            .SetEase(Ease.OutSine);
+    }
+
+    private void ClosePopup()
+    {
+        if (_panel == null) return;
+        _panel.DOScale(Vector3.one * _popupScale, _popupScaleDuration)
+            .SetEase(Ease.OutSine)
+            .OnComplete(() => gameObject.SetActive(false));
     }
 }
 

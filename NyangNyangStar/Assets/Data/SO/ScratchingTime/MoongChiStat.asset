@@ -13,7 +13,10 @@ MonoBehaviour:
   m_Name: MoongChiStat
   m_EditorClassIdentifier: 
   _level: 1
-  _currentExp: 1000
+  MaxExp: 1000
+  _currentExp: 13
   _baseSharpness: 50
   _sharpnessIncreasePerLevel: 2
+  _totalSharpness: 52
   _baseCriticalChance: 5
+  _totalCriticalChance: 5
