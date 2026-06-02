@@ -95,6 +95,7 @@ MonoBehaviour:
     - Sprite
     - BGM
     - SFX
+    - Audio
   m_SchemaTemplates: []
   m_GroupTemplateObjects:
   - {fileID: 11400000, guid: e26204770e131bf4a899c01cd601393b, type: 2}
