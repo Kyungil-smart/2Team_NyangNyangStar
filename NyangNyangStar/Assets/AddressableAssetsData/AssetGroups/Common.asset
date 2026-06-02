@@ -23,14 +23,80 @@ MonoBehaviour:
     m_SerializedLabels:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 14eca5e70671f9f47b99e4165aa777a5
+    m_Address: Shape_Circle
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 65eeedcdb40d2a34db66a9e0dcbfd1d0
+    m_Address: Profile_ProfileImages_1
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7fb682e962eb00e47886dcb241484dca
+    m_Address: Profile_ProfileImages_6
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9278f6aadacfab749ad5c8557c1b973a
+    m_Address: Profile_ProfileImages_3
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 93e2f4cd067c9a9428a42b01724df62e
+    m_Address: Profile_ProfileImages_2
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a48528e4ee62d1e46a5de558dded0075
+    m_Address: Profile_ProfileImages_7
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a601987096a20fc4f88c3492f3d927af
+    m_Address: Profile_ProfileImages_4
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: b0f5270f778947544817640edfcad597
     m_Address: Shape_Rectangle
     m_ReadOnly: 0
     m_SerializedLabels:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: d23994d0d05b1ca4daa36a9a52b58a0f
-    m_Address: Profile_ProfileImages
+  - m_GUID: d07dffe7c5bc7ac46910ce5d2b861499
+    m_Address: Shape_Rectangle_Outline
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: dd4bdfecfa329e049a628cd34a2afb8a
+    m_Address: Profile_ProfileImages_0
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ebdcfdfbff020cf48b3109c6ecb42634
+    m_Address: Shape_Square
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f26128ba27976474b92c2a53b14137c0
+    m_Address: Shape_Squircle
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f45c0b9edad63d547a315b92e41225b4
+    m_Address: Profile_ProfileImages_5
     m_ReadOnly: 0
     m_SerializedLabels:
     - Sprite
