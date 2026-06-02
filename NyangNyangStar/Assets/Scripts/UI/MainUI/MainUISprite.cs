@@ -33,7 +33,7 @@ public class MainUISprite : UIBase
         SetSprite(MainUIImages.StoryBookButton, "Main_Btn_Storybook");
         SetSprite(MainUIImages.NotebookButton, "Main_Btn_FosterDiary");
         SetSprite(MainUIImages.RouletteButton, "Main_Btn_Roulette");
-        //SetSprite(MainUIImages.AffinityButton, "");
+        SetSprite(MainUIImages.AffinityButton, "Main_Btn_Interact");
         SetSprite(MainUIImages.MeowMeowStarButton, "Main_Btn_Nyangstagram");
         SetSprite(MainUIImages.WorkshopMergeBoardButton, "Main_Btn_Mergeboard", _workshopMergeBoardColor);
         SetSprite(MainUIImages.MainMergeBoardButton, "Main_Btn_Mergeboard", _mainMergeBoardColor);
