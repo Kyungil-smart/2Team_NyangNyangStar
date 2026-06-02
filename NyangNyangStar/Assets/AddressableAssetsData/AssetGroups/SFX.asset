@@ -17,32 +17,32 @@ MonoBehaviour:
     m_SerializedData: []
   m_GUID: 64921c42dd382b94e916bdae888a5b6e
   m_SerializeEntries:
-  - m_GUID: 2c059703db2911d4a806f94e49be8330
-    m_Address: ST_SFX_Normal
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - Audio
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 3b68cc3af8b1abc4298ecd2c86a7165f
-    m_Address: ST_SFX_Critical
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - Audio
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 787613f401a7e7841b15f903f5d384b2
-    m_Address: Main_SFX_Touch
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - Audio
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: bedb8ba71865a7345899f01199568166
+  - m_GUID: 3d81b1fcd82021d43ae09aa6b8784d78
     m_Address: ST_SFX_Clear
     m_ReadOnly: 0
     m_SerializedLabels:
     - Audio
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: c869b232165853e4d9424172c3a24185
+  - m_GUID: 876cb6c489b5e434cb660582e570730c
+    m_Address: ST_SFX_Critical
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Audio
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8cd6c7e2ffcfab5459d237c1f68a7ae3
     m_Address: ST_SFX_Fail
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Audio
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a076790d78f3a5249bbe6b1d6eede802
+    m_Address: Main_SFX_Touch
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Audio
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ba989ef45ea8d114a96815829075dd31
+    m_Address: ST_SFX_Normal
     m_ReadOnly: 0
     m_SerializedLabels:
     - Audio
