@@ -45,6 +45,9 @@ namespace Util
             public const string NyangStargramDMListPopUpUI = "NyagramDM리스트 켄버스";
             public const string NyangStargramDMchatPopUpUI = "NyagramDM 대화";
 
+            // 냥냥스냅 UI 프리팹
+            public const string NyangNyangSnapStagePopUpUI = "NyangNyangSnapStagePopupUI";
+
             public const string ScratchingTimeUI = "ScratchingTimeUI";
         }
 
