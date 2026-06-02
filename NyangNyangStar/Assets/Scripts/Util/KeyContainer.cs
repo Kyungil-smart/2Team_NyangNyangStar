@@ -257,6 +257,9 @@ namespace Util
             PrefabKeyDict.Add(Prefabs.NyangStargramDMListPopUpUI, new List<GameObject>());
             PrefabKeyDict.Add(Prefabs.NyangStargramDMchatPopUpUI, new List<GameObject>());
 
+            // 냥냥스냅
+            PrefabKeyDict.Add(Prefabs.NyangNyangSnapStagePopUpUI, new List<GameObject>());
+
             PrefabKeyDict.Add(Prefabs.ScratchingTimeUI, new List<GameObject>());
         }
 
