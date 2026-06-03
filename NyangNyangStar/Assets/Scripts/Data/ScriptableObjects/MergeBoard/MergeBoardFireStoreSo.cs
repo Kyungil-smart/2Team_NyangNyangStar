@@ -13,7 +13,7 @@ namespace Data.ScriptableObjects.MergeBoard
     {
         private const int BoardSlotCount = 63;
         private const int BatchLimit = 450;
-        
+
         public bool IsReady => db != null && !string.IsNullOrEmpty(m_UserId);
 
         private CollectionReference SlotCollection =>
@@ -35,25 +35,12 @@ namespace Data.ScriptableObjects.MergeBoard
 
         public async Task CreateEmptyBoardAsync()
         {
-            WriteBatch batch = db.StartBatch();
-            int operationCount = 0;
+            Dictionary<int, ItemData> emptyBoard = new Dictionary<int, ItemData>();
 
             for (int slotNumber = 1; slotNumber <= BoardSlotCount; slotNumber++)
-            {
-                DocumentReference docRef = SlotCollection.Document(slotNumber.ToString());
-                batch.Set(docRef, ToSlotDictionary(slotNumber, ItemData.Empty));
-                operationCount++;
+                emptyBoard[slotNumber] = ItemData.Empty;
 
-                if (operationCount >= BatchLimit)
-                {
-                    await batch.CommitAsync();
-                    batch = db.StartBatch();
-                    operationCount = 0;
-                }
-            }
-
-            if (operationCount > 0)
-                await batch.CommitAsync();
+            await SaveBoardAsync(emptyBoard);
         }
 
         public Task SaveSlotAsync(int slotNumber, ItemData itemData)
@@ -64,12 +51,18 @@ namespace Data.ScriptableObjects.MergeBoard
                 return Task.CompletedTask;
             }
 
-            DocumentReference docRef = SlotCollection.Document(slotNumber.ToString());
+            DocumentReference docRef = SlotCollection.Document(ToSlotDocumentId(slotNumber));
             return docRef.SetAsync(ToSlotDictionary(slotNumber, itemData));
         }
 
         public async Task SaveSlotsAsync(Dictionary<int, ItemData> changedSlots)
         {
+            if (!IsReady)
+            {
+                DebugTool.Warning("Firestore가 초기화되지 않아 슬롯 저장을 생략합니다.", DebugType.Board);
+                return;
+            }
+
             if (changedSlots == null || changedSlots.Count == 0)
                 return;
 
@@ -78,8 +71,12 @@ namespace Data.ScriptableObjects.MergeBoard
 
             foreach (var pair in changedSlots)
             {
-                DocumentReference docRef = SlotCollection.Document(pair.Key.ToString());
-                batch.Set(docRef, ToSlotDictionary(pair.Key, pair.Value));
+                int slotNumber = pair.Key;
+                ItemData itemData = pair.Value;
+
+                DocumentReference docRef = SlotCollection.Document(ToSlotDocumentId(slotNumber));
+                batch.Set(docRef, ToSlotDictionary(slotNumber, itemData));
+
                 operationCount++;
 
                 if (operationCount >= BatchLimit)
@@ -100,6 +97,12 @@ namespace Data.ScriptableObjects.MergeBoard
 
             for (int slotNumber = 1; slotNumber <= BoardSlotCount; slotNumber++)
                 boardData[slotNumber] = ItemData.Empty;
+
+            if (!IsReady)
+            {
+                DebugTool.Warning("Firestore가 초기화되지 않아 보드 로드를 생략합니다.", DebugType.Board);
+                return boardData;
+            }
 
             QuerySnapshot snapshot = await SlotCollection.GetSnapshotAsync();
 
@@ -133,19 +136,22 @@ namespace Data.ScriptableObjects.MergeBoard
                 return;
 
             WriteBatch batch = db.StartBatch();
-            int operationCount = 0;
+
             int order = 1;
+            int operationCount = 0;
 
             foreach (ItemData itemData in rewardQueue)
             {
                 if (itemData == null || !itemData.HasItem)
                     continue;
 
-                DocumentReference docRef = RewardQueueCollection.Document(order.ToString());
+                string documentId = ToQueueDocumentId(order);
+                DocumentReference docRef = RewardQueueCollection.Document(documentId);
+
                 batch.Set(docRef, ToQueueDictionary(order, itemData));
 
-                operationCount++;
                 order++;
+                operationCount++;
 
                 if (operationCount >= BatchLimit)
                 {
@@ -162,6 +168,13 @@ namespace Data.ScriptableObjects.MergeBoard
         public async Task<List<ItemData>> LoadRewardQueueAsync()
         {
             List<(int Order, ItemData Item)> loadedItems = new List<(int Order, ItemData Item)>();
+
+            if (!IsReady)
+            {
+                DebugTool.Warning("Firestore가 초기화되지 않아 보상 큐 로드를 생략합니다.", DebugType.Board);
+                return new List<ItemData>();
+            }
+
             QuerySnapshot snapshot = await RewardQueueCollection.GetSnapshotAsync();
 
             foreach (DocumentSnapshot document in snapshot.Documents)
@@ -196,6 +209,73 @@ namespace Data.ScriptableObjects.MergeBoard
             }
 
             QuerySnapshot snapshot = await RewardQueueCollection.GetSnapshotAsync();
+
+            WriteBatch batch = db.StartBatch();
+            int operationCount = 0;
+
+            foreach (DocumentSnapshot document in snapshot.Documents)
+            {
+                batch.Delete(document.Reference);
+                operationCount++;
+
+                if (operationCount >= BatchLimit)
+                {
+                    await batch.CommitAsync();
+                    batch = db.StartBatch();
+                    operationCount = 0;
+                }
+            }
+
+            if (operationCount > 0)
+                await batch.CommitAsync();
+        }
+
+        public async Task SaveBoardAsync(IReadOnlyDictionary<int, ItemData> boardData)
+        {
+            if (!IsReady)
+            {
+                DebugTool.Warning("Firestore가 초기화되지 않아 보드 저장을 생략합니다.", DebugType.Board);
+                return;
+            }
+
+            await ClearBoardAsync();
+
+            WriteBatch batch = db.StartBatch();
+            int operationCount = 0;
+
+            for (int slotNumber = 1; slotNumber <= BoardSlotCount; slotNumber++)
+            {
+                ItemData itemData = ItemData.Empty;
+
+                if (boardData != null && boardData.TryGetValue(slotNumber, out ItemData data))
+                    itemData = data ?? ItemData.Empty;
+
+                DocumentReference docRef = SlotCollection.Document(ToSlotDocumentId(slotNumber));
+                batch.Set(docRef, ToSlotDictionary(slotNumber, itemData));
+
+                operationCount++;
+
+                if (operationCount >= BatchLimit)
+                {
+                    await batch.CommitAsync();
+                    batch = db.StartBatch();
+                    operationCount = 0;
+                }
+            }
+
+            if (operationCount > 0)
+                await batch.CommitAsync();
+        }
+
+        public async Task ClearBoardAsync()
+        {
+            if (!IsReady)
+            {
+                DebugTool.Warning("Firestore가 초기화되지 않아 보드 초기화를 생략합니다.", DebugType.Board);
+                return;
+            }
+
+            QuerySnapshot snapshot = await SlotCollection.GetSnapshotAsync();
 
             WriteBatch batch = db.StartBatch();
             int operationCount = 0;
@@ -322,6 +402,16 @@ namespace Data.ScriptableObjects.MergeBoard
                 return defaultValue;
 
             return value.ToString();
+        }
+
+        private string ToSlotDocumentId(int slotNumber)
+        {
+            return slotNumber.ToString("D2");
+        }
+
+        private string ToQueueDocumentId(int order)
+        {
+            return order.ToString("D2");
         }
     }
 }
