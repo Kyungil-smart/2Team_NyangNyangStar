@@ -5,7 +5,7 @@ using UnityEngine;
 namespace Data.ScriptableObjects.MergeBoard
 {
     [CreateAssetMenu(fileName = "ItemDatabaseSo", menuName = "Data/MergeBoard/Item Database")]
-    public class ItemDatabaseSo : ScriptableObject
+    public class ItemDatabaseSo : SoBase, ISheetParsable
     {
         [SerializeField] private List<ItemData> _items = new();
 
@@ -49,14 +49,31 @@ namespace Data.ScriptableObjects.MergeBoard
 
             itemData = new ItemData(
                 selected.ItemNumber,
+                selected.ItemSprite,
                 selected.ItemName,
                 selected.ItemLevel,
                 selected.ItemType,
-                selected.Amount,
+                Mathf.Max(1, selected.Amount),
                 selected.SpriteKey
             );
 
             return true;
+        }
+
+        public override void Init()
+        {
+        }
+
+        public void ClearData()
+        {
+        }
+
+        public void SetData(string[] cols)
+        {
+        }
+
+        public void PrintData()
+        {
         }
     }
 }
