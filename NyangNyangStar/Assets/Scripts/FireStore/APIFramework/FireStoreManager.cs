@@ -9,7 +9,8 @@ using UnityEngine;
 public enum DataType
 {
     None,
-    Users
+    Users,
+    MergeBoard
 }
 public class FireStoreManager : MonoBehaviour
 {
@@ -17,18 +18,55 @@ public class FireStoreManager : MonoBehaviour
     public static FireStoreManager Instance { get; private set; }
     [SerializeField] private List<BaseFireStore> m_Data;
     private Dictionary<DataType, BaseFireStore> m_DataDictionary;
-
-
+    
     private void Awake()
     {
         InitSingleton();
 
     }
+    public bool IsInitialized { get; private set; }
+
+    public async Task InitAsync(string userId = "testUserId")
+    {
+        IsInitialized = false;
+
+        Debug.Log($"[FireStoreManager] InitAsync 시작 / userId: {userId}");
+
+        if (m_Data == null || m_Data.Count == 0)
+        {
+            Debug.LogError("[FireStoreManager] m_Data가 비어 있습니다.");
+            return;
+        }
+
+        for (int i = 0; i < m_Data.Count; i++)
+        {
+            if (m_Data[i] == null)
+            {
+                Debug.LogError($"[FireStoreManager] m_Data[{i}]가 null입니다.");
+                return;
+            }
+
+            Debug.Log($"[FireStoreManager] 등록 데이터: {m_Data[i].name} / Type: {m_Data[i].EnumType}");
+        }
+
+        try
+        {
+            InitDictionary();
+            await InitFirebase(userId);
+
+            IsInitialized = true;
+            Debug.Log("[FireStoreManager] InitAsync 완료");
+        }
+        catch (System.Exception e)
+        {
+            IsInitialized = false;
+            Debug.LogError($"[FireStoreManager] InitAsync 실패: {e}");
+        }
+    }
 
     public async void Init(string userId = "testUserId")
     {
-        InitDictionary();
-        await InitFirebase(userId);
+        await InitAsync(userId);
     }
 
     private void InitSingleton()
@@ -110,7 +148,29 @@ public class FireStoreManager : MonoBehaviour
     private void InitDictionary()
     {
         m_DataDictionary = new Dictionary<DataType, BaseFireStore>();
-        m_DataDictionary = m_Data.ToDictionary(x => x.EnumType, x => x);
+
+        foreach (BaseFireStore data in m_Data)
+        {
+            if (data == null)
+            {
+                Debug.LogError("[FireStoreManager] null 데이터가 있습니다.");
+                continue;
+            }
+
+            if (data.EnumType == DataType.None)
+            {
+                Debug.LogError($"[FireStoreManager] {data.name}의 EnumType이 None입니다.");
+                continue;
+            }
+
+            if (m_DataDictionary.ContainsKey(data.EnumType))
+            {
+                Debug.LogError($"[FireStoreManager] DataType 중복 등록: {data.EnumType}");
+                continue;
+            }
+
+            m_DataDictionary.Add(data.EnumType, data);
+        }
     }
 
     public FirestoreRequestContext DocumentType(DataType type)
