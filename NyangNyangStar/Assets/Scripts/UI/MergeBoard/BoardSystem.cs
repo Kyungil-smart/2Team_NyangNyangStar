@@ -6,7 +6,6 @@ using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.UI;
-using System.Threading.Tasks;
 
 namespace UI.MergeBoard
 {
@@ -31,6 +30,9 @@ namespace UI.MergeBoard
 
         [Header("슬롯 간격")]
         [SerializeField] private int _slotSpacing = 5;
+
+        public bool IsBoardReady { get; private set; }
+        public bool IsServerDataLoaded { get; private set; }
 
         private readonly Dictionary<int, ItemData> _slotItemDict = new();
 
@@ -60,6 +62,8 @@ namespace UI.MergeBoard
             Init();
             InitSlotData();
             GenerateSlot();
+
+            IsBoardReady = true;
 
             if (BoardItemReceiver.Instance != null)
                 BoardItemReceiver.Instance.RegisterBoardSystem(this);
@@ -140,9 +144,20 @@ namespace UI.MergeBoard
             return true;
         }
 
+        public Task<bool> TryAddItemAsync(ItemData itemData)
+        {
+            return TryAddItemFromQueueAsync(itemData);
+        }
+
         private bool TryAddItemInternal(ItemData itemData, out int changedSlotNumber)
         {
             changedSlotNumber = -1;
+
+            if (!IsServerDataLoaded)
+            {
+                DebugTool.Warning("보드 서버 데이터 로드 전에는 아이템을 배치할 수 없습니다.", DebugType.Board, this);
+                return false;
+            }
 
             if (itemData == null || !itemData.HasItem)
                 return false;
@@ -169,54 +184,6 @@ namespace UI.MergeBoard
         private int FindFirstEmptyGeneralSlot()
         {
             for (int slotNumber = 1; slotNumber <= SlotCount; slotNumber++)
-            {
-                if (!_slotItemDict.TryGetValue(slotNumber, out ItemData itemData))
-                    continue;
-
-                if (itemData == null || !itemData.HasItem)
-                    return slotNumber;
-            }
-
-            return -1;
-        }
-        
-        public async Task<bool> TryAddItemAsync(ItemData itemData)
-        {
-            if (itemData == null || !itemData.HasItem)
-                return false;
-
-            if (itemData.ItemType == ItemType.Special)
-            {
-                DebugTool.Warning("특수 아이템은 일반 보드에 배치할 수 없습니다.", DebugType.Board, this);
-                return false;
-            }
-
-            int emptySlotNumber = FindFirstEmptySlotNumber();
-
-            if (emptySlotNumber <= 0)
-            {
-                DebugTool.Warning("보드판 공간이 부족합니다.", DebugType.Board, this);
-                return false;
-            }
-
-            ItemData cloneData = itemData.Clone();
-
-            _slotItemDict[emptySlotNumber] = cloneData;
-
-            ItemSlot slot = _itemSlots[emptySlotNumber - 1];
-            slot.SetItemData(cloneData);
-
-            if (_mergeBoardFirestore != null)
-                await _mergeBoardFirestore.SaveSlotAsync(emptySlotNumber, cloneData);
-
-            return true;
-        }
-        
-        private int FindFirstEmptySlotNumber()
-        {
-            int slotCount = _width * _height;
-
-            for (int slotNumber = 1; slotNumber <= slotCount; slotNumber++)
             {
                 if (!_slotItemDict.TryGetValue(slotNumber, out ItemData itemData))
                     continue;
@@ -280,16 +247,30 @@ namespace UI.MergeBoard
                 : ItemData.Empty;
         }
 
-        public async Task LoadBoardFromServerAsync()
+        public async Task LoadBoardFromServerAsync(bool normalizeDocumentIds = false)
         {
+            IsServerDataLoaded = false;
+
             if (_mergeBoardFirestore == null)
             {
                 DebugTool.Warning("MergeBoardFirestoreSO가 연결되지 않았습니다.", DebugType.Board, this);
                 return;
             }
 
+            if (!_mergeBoardFirestore.IsReady)
+            {
+                DebugTool.Warning("Firestore가 초기화되지 않아 보드 데이터를 불러올 수 없습니다.", DebugType.Board, this);
+                return;
+            }
+
             Dictionary<int, ItemData> loadedData = await _mergeBoardFirestore.LoadBoardAsync();
             ApplyBoardData(loadedData);
+
+            if (normalizeDocumentIds)
+                await _mergeBoardFirestore.SaveBoardAsync(_slotItemDict);
+
+            IsServerDataLoaded = true;
+            DebugTool.Log("보드 서버 데이터 로드 완료", DebugType.Board, this);
         }
 
         public async Task CreateEmptyBoardOnServerAsync()
