@@ -1,4 +1,5 @@
-﻿using TMPro;
+﻿using Data.ScriptableObjects.MergeBoard;
+using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -19,8 +20,9 @@ namespace UI.MergeBoard
         private int _slotIndex;
         private bool _isDragging;
 
-        public ItemData ItemData { get; private set; }
-        public bool HasItem => ItemData.HasItem;
+        public int SlotNumber => _slotIndex;
+        public ItemData ItemData { get; private set; } = ItemData.Empty;
+        public bool HasItem => ItemData != null && ItemData.HasItem;
 
         public void Init(BoardSystem boardSystem, int slotIndex, ItemData itemData, int itemSize)
         {
@@ -40,6 +42,13 @@ namespace UI.MergeBoard
             }
 
             _canvas = GetComponentInParent<Canvas>();
+
+            if (_canvas == null)
+            {
+                Debug.LogError($"{name} : 부모 Canvas를 찾을 수 없습니다.", this);
+                return;
+            }
+
             _canvasRect = _canvas.transform as RectTransform;
 
             _itemRect = _item.rectTransform;
@@ -55,14 +64,23 @@ namespace UI.MergeBoard
 
         public void SetItemData(ItemData itemData)
         {
-            ItemData = itemData;
+            ItemData = itemData ?? ItemData.Empty;
 
-            _number.text = _slotIndex.ToString();
-            _item.color = itemData.Color;
+            bool hasItem = ItemData.HasItem;
 
             if (_item != null)
-                _item.gameObject.SetActive(ItemData.HasItem);
-            
+            {
+                _item.gameObject.SetActive(hasItem);
+                _item.sprite = hasItem ? ItemData.ItemSprite : null;
+            }
+
+            if (_number != null)
+            {
+                _number.text = hasItem
+                    ? $"#{ItemData.ItemNumber}"
+                    : string.Empty;
+            }
+
             ResetSiblingOrder();
         }
 
@@ -108,12 +126,15 @@ namespace UI.MergeBoard
             _canvasGroup.blocksRaycasts = true;
             _itemRect.SetParent(transform, false);
             _itemRect.anchoredPosition = Vector2.zero;
-            
+
             ResetSiblingOrder();
         }
 
         public void OnDrop(PointerEventData eventData)
         {
+            if (eventData.pointerDrag == null)
+                return;
+
             ItemSlot fromSlot = eventData.pointerDrag.GetComponent<ItemSlot>();
 
             if (fromSlot == null)
@@ -121,7 +142,7 @@ namespace UI.MergeBoard
 
             _boardSystem.MoveOrSwapItem(fromSlot, this);
         }
-        
+
         private void ResetSiblingOrder()
         {
             if (_item != null)
@@ -129,35 +150,6 @@ namespace UI.MergeBoard
 
             if (_number != null)
                 _number.transform.SetAsLastSibling();
-        }
-    }
-
-    public struct ItemData
-    {
-        public bool HasItem;
-        public int SlotNumber;
-        public string ItemName;
-        public int ItemLevel;
-        public Color Color;
-
-        public static ItemData Empty => new ItemData(false, 0, null, 0, new Color(0,0,0, 1));
-
-        public ItemData(int slotNumber, string itemName, int itemLevel, Color color)
-        {
-            HasItem = true;
-            SlotNumber = slotNumber;
-            ItemName = itemName;
-            ItemLevel = itemLevel;
-            Color = color;
-        }
-
-        private ItemData(bool hasItem, int slotNumber, string itemName, int itemLevel, Color color)
-        {
-            HasItem = hasItem;
-            SlotNumber = slotNumber;
-            ItemName = itemName;
-            ItemLevel = itemLevel;
-            Color = color;
         }
     }
 }
