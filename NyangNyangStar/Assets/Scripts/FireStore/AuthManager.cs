@@ -10,7 +10,7 @@ public class AuthManager : MonoBehaviour
 
     private void Start()
     {
-        FirebaseApp.CheckAndFixDependenciesAsync().ContinueWithOnMainThread(task =>
+        FirebaseApp.CheckAndFixDependenciesAsync().ContinueWithOnMainThread(async task =>
         {
             if (task.Result == DependencyStatus.Available)
             {
@@ -22,6 +22,10 @@ public class AuthManager : MonoBehaviour
                 if (auth.CurrentUser != null)
                 {
                     Debug.Log($"Cached user exists: {auth.CurrentUser.UserId}");
+
+                    await FireStoreManager.Instance.InitAsync(auth.CurrentUser.UserId);
+
+                    Debug.Log("Cached user Firestore 초기화 완료");
                 }
                 else
                 {
@@ -35,7 +39,7 @@ public class AuthManager : MonoBehaviour
         });
     }
 
-    public void Login()
+    public async void Login()
     {
         if (!firebaseReady || auth == null)
         {
@@ -43,28 +47,27 @@ public class AuthManager : MonoBehaviour
             return;
         }
 
-        auth.SignInAnonymouslyAsync().ContinueWithOnMainThread(task =>
+        if (FireStoreManager.Instance == null)
         {
-            if (task.IsCanceled)
-            {
-                Debug.LogError("SignInAnonymouslyAsync was canceled.");
-                return;
-            }
+            Debug.LogError("FireStoreManager.Instance가 없습니다. 씬에 FireStoreManager 오브젝트를 추가하세요.");
+            return;
+        }
 
-            if (task.IsFaulted)
-            {
-                Debug.LogError("SignInAnonymouslyAsync error: " + task.Exception);
-                return;
-            }
-
-            AuthResult result = task.Result;
+        try
+        {
+            AuthResult result = await auth.SignInAnonymouslyAsync();
             FirebaseUser user = result.User;
 
             Debug.Log($"Anonymous login success. UID: {user.UserId}");
 
-            FireStoreManager.Instance.Init(user.UserId);
+            await FireStoreManager.Instance.InitAsync(user.UserId);
 
-        });
+            Debug.Log("Firestore 초기화까지 완료");
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"Anonymous login failed: {e}");
+        }
     }
 
     public void Logout()
