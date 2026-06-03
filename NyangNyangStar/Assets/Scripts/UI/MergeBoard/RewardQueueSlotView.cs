@@ -27,19 +27,31 @@ namespace UI.MergeBoard
             gameObject.SetActive(hasItem);
 
             if (!hasItem)
+            {
+                if (_itemSlotImage != null)
+                {
+                    _itemSlotImage.sprite = null;
+                    _itemSlotImage.enabled = false;
+                }
+
+                if (_itemText != null)
+                    _itemText.text = string.Empty;
+
                 return;
+            }
 
             if (_itemSlotImage != null)
             {
+                _itemSlotImage.enabled = true;
+                _itemSlotImage.raycastTarget = true;
                 _itemSlotImage.sprite = itemData.ItemSprite;
-                _itemSlotImage.enabled = itemData.ItemSprite != null;
             }
 
             if (_itemText != null)
             {
                 _itemText.text = itemData.Amount > 1
-                    ? itemData.Amount.ToString()
-                    : string.Empty;
+                    ? $"#{itemData.ItemNumber}\nx{itemData.Amount}"
+                    : $"#{itemData.ItemNumber}";
             }
         }
 
@@ -47,6 +59,8 @@ namespace UI.MergeBoard
         {
             if (!_isTopSlot)
                 return;
+
+            DebugTool.Log("보상 큐 최상단 슬롯 클릭", DebugType.Board, this);
 
             _rewardQueue.TryMoveTopItemToBoard();
         }
