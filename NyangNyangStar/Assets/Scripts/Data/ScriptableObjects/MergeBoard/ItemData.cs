@@ -16,7 +16,8 @@ namespace Data.ScriptableObjects.MergeBoard
         [SerializeField] private int _amount;
         [SerializeField] private string _spriteKey;
 
-        public bool HasItem => _hasItem;
+        public bool HasItem =>
+            _hasItem || (_itemNumber > 0 && _itemType != ItemType.None && _amount > 0);
         public int ItemNumber => _itemNumber;
         public Sprite ItemSprite => _itemSprite;
         public string ItemName => _itemName;
@@ -25,12 +26,31 @@ namespace Data.ScriptableObjects.MergeBoard
         public int Amount => _amount;
         public string SpriteKey => _spriteKey;
 
-        public static ItemData Empty => new ItemData(false, 0, string.Empty, 0, ItemType.None, 0, string.Empty);
+        public static ItemData Empty => new ItemData();
 
-        public ItemData(int itemNumber, string itemName, int itemLevel, ItemType itemType, int amount = 1, string spriteKey = "")
+        private ItemData()
+        {
+            _hasItem = false;
+            _itemNumber = 0;
+            _itemSprite = null;
+            _itemName = string.Empty;
+            _itemLevel = 0;
+            _itemType = ItemType.None;
+            _amount = 0;
+            _spriteKey = string.Empty;
+        }
+
+        public ItemData(
+            int itemNumber,
+            string itemName,
+            int itemLevel,
+            ItemType itemType,
+            int amount = 1,
+            string spriteKey = "")
         {
             _hasItem = true;
             _itemNumber = itemNumber;
+            _itemSprite = null;
             _itemName = itemName;
             _itemLevel = itemLevel;
             _itemType = itemType;
@@ -38,25 +58,47 @@ namespace Data.ScriptableObjects.MergeBoard
             _spriteKey = spriteKey;
         }
 
-        private ItemData(bool hasItem, int itemNumber, string itemName, int itemLevel, ItemType itemType, int amount, string spriteKey)
+        public ItemData(
+            int itemNumber,
+            Sprite itemSprite,
+            string itemName,
+            int itemLevel,
+            ItemType itemType,
+            int amount = 1,
+            string spriteKey = "")
         {
-            _hasItem = hasItem;
+            _hasItem = true;
             _itemNumber = itemNumber;
+            _itemSprite = itemSprite;
             _itemName = itemName;
             _itemLevel = itemLevel;
             _itemType = itemType;
-            _amount = Mathf.Max(0, amount);
+            _amount = Mathf.Max(1, amount);
             _spriteKey = spriteKey;
         }
 
         public ItemData Clone()
         {
-            return new ItemData(_hasItem, _itemNumber, _itemName, _itemLevel, _itemType, _amount, _spriteKey);
+            return (ItemData)MemberwiseClone();
         }
 
         public ItemData CloneWithAmount(int amount)
         {
-            return new ItemData(_hasItem, _itemNumber, _itemName, _itemLevel, _itemType, amount, _spriteKey);
+            ItemData clone = Clone();
+            clone._amount = Mathf.Max(0, amount);
+            clone._hasItem = clone._amount > 0;
+
+            if (!clone._hasItem)
+            {
+                clone._itemNumber = 0;
+                clone._itemSprite = null;
+                clone._itemName = string.Empty;
+                clone._itemLevel = 0;
+                clone._itemType = ItemType.None;
+                clone._spriteKey = string.Empty;
+            }
+
+            return clone;
         }
     }
 }
