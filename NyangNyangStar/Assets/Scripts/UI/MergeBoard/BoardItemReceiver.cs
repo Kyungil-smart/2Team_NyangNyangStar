@@ -73,7 +73,10 @@ namespace UI.MergeBoard
                 return;
             }
 
-            await _rewardQueue.EnqueueItemAsync(itemData);
+            bool result = await _rewardQueue.EnqueueItemAsync(itemData);
+
+            if (!result)
+                DebugTool.Warning("보상 큐에 아이템을 추가하지 못했습니다.", DebugType.Board, this);
         }
 
         public void ReceiveRandomTestItem()
@@ -83,7 +86,19 @@ namespace UI.MergeBoard
                 DebugTool.Warning("Firestore 초기화가 완료되지 않았습니다. 로그인 후 다시 시도하세요.", DebugType.Board, this);
                 return;
             }
-            
+
+            if (_boardSystem != null && !_boardSystem.IsServerDataLoaded)
+            {
+                DebugTool.Warning("보드 서버 데이터 로드 완료 전입니다.", DebugType.Board, this);
+                return;
+            }
+
+            if (_rewardQueue != null && !_rewardQueue.IsLoaded)
+            {
+                DebugTool.Warning("보상 큐 서버 데이터 로드 완료 전입니다.", DebugType.Board, this);
+                return;
+            }
+
             if (_itemDatabase == null)
             {
                 DebugTool.Warning("ItemDatabaseSo가 연결되지 않았습니다.", DebugType.Board, this);
