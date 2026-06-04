@@ -49,7 +49,7 @@ namespace Data.Loader
             }
 
             StopAllCoroutines();
-            _pendingSheetCount = 4;
+            _pendingSheetCount = 0;
 
             LoadKeyContainerData(keyCotainerURL, keySo, _keyContainerDict, onComplete: () =>
             {
@@ -63,10 +63,15 @@ namespace Data.Loader
                     }
                     so.RegisterAll();
                 }
-                OnSheetCompleted();
-                
+
                 KeyContainer.PrintKeys();
+                LoadContentSheets();
             });
+        }
+
+        private void LoadContentSheets()
+        {
+            _pendingSheetCount = 3;
             
             LoadSheetData(scratchingURL, scratchingSo, 1, () =>
                 {
@@ -83,13 +88,18 @@ namespace Data.Loader
 
             LoadSheetData(mergeBoardItemURL, itemDatabaseSo, 1, () =>
                 {
-                    if (itemDatabaseSo != null)
+                    if (itemDatabaseSo == null)
+                    {
+                        OnSheetCompleted();
+                        return;
+                    }
+
+                    StartCoroutine(itemDatabaseSo.LoadItemSpritesCoroutine(() =>
                     {
                         LocalDataAccess.Instance.Game.RegisterMergeBoardItemDatabase(itemDatabaseSo);
                         itemDatabaseSo.PrintData();
-                    }
-
-                    OnSheetCompleted();
+                        OnSheetCompleted();
+                    }));
                 });
         }
 
