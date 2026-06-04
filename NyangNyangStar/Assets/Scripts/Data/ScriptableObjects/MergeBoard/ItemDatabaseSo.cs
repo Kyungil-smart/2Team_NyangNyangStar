@@ -32,7 +32,7 @@ namespace Data.ScriptableObjects.MergeBoard
                 if (data == null)
                     continue;
 
-                if (data.ItemNumber <= 0)
+                if (data.ItemID <= 0)
                     continue;
 
                 if (data.ItemType != itemType)
@@ -48,13 +48,13 @@ namespace Data.ScriptableObjects.MergeBoard
             ItemData selected = candidates[index];
 
             itemData = new ItemData(
-                selected.ItemNumber,
+                selected.ItemID,
                 selected.ItemSprite,
                 selected.ItemName,
                 selected.ItemLevel,
                 selected.ItemType,
                 Mathf.Max(1, selected.Amount),
-                selected.SpriteKey
+                selected.AddressableKey
             );
 
             return true;

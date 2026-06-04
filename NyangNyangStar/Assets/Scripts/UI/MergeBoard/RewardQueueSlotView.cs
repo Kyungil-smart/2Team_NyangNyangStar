@@ -50,8 +50,8 @@ namespace UI.MergeBoard
             if (_itemText != null)
             {
                 _itemText.text = itemData.Amount > 1
-                    ? $"#{itemData.ItemNumber}\nx{itemData.Amount}"
-                    : $"#{itemData.ItemNumber}";
+                    ? $"#{itemData.ItemID}\nx{itemData.Amount}"
+                    : $"#{itemData.ItemID}";
             }
         }
 

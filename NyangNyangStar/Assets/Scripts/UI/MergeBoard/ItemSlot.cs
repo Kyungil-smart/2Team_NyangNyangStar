@@ -77,7 +77,7 @@ namespace UI.MergeBoard
             if (_number != null)
             {
                 _number.text = hasItem
-                    ? $"#{ItemData.ItemNumber}"
+                    ? $"#{ItemData.ItemID}"
                     : string.Empty;
             }
 

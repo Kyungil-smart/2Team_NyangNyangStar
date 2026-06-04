@@ -305,12 +305,12 @@ namespace Data.ScriptableObjects.MergeBoard
             {
                 { "SlotNumber", slotNumber },
                 { "HasItem", itemData.HasItem },
-                { "ItemNumber", itemData.ItemNumber },
+                { "ItemNumber", itemData.ItemID },
                 { "ItemName", itemData.ItemName },
                 { "ItemLevel", itemData.ItemLevel },
                 { "ItemType", itemData.ItemType.ToString() },
                 { "Amount", itemData.Amount },
-                { "SpriteKey", itemData.SpriteKey }
+                { "SpriteKey", itemData.AddressableKey }
             };
         }
 
@@ -322,12 +322,12 @@ namespace Data.ScriptableObjects.MergeBoard
             {
                 { "Order", order },
                 { "HasItem", itemData.HasItem },
-                { "ItemNumber", itemData.ItemNumber },
+                { "ItemNumber", itemData.ItemID },
                 { "ItemName", itemData.ItemName },
                 { "ItemLevel", itemData.ItemLevel },
                 { "ItemType", itemData.ItemType.ToString() },
                 { "Amount", itemData.Amount },
-                { "SpriteKey", itemData.SpriteKey }
+                { "SpriteKey", itemData.AddressableKey }
             };
         }
 
