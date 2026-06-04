@@ -1,5 +1,5 @@
-using Data.ScriptableObjects;
 using Data.ScriptableObjects.KeyContainerSO;
+using Data.ScriptableObjects.MergeBoard;
 using System;
 using System.Collections.Generic;
 
@@ -8,6 +8,7 @@ namespace Data.Modules
     public class GameDataModule
     {
         private Dictionary<int, KeyContainerSo> _keyContainerDict = new();
+        private ItemDatabaseSo _mergeBoardItemDatabase;
         //private WaveSpawnTableSO                   _waveSpawnTable;
         //private PlayerUpgradeTableSO               _playerUpgradeTable;
         //private TeamUpgradeTableSO                 _teamUpgradeTable;
@@ -34,6 +35,35 @@ namespace Data.Modules
             DebugTool.Log($"[GameDataModule] KeyContainer 등록 ({dict?.Count ?? 0}개)", DebugType.Data);
         }
 
+        public void RegisterMergeBoardItemDatabase(ItemDatabaseSo itemDatabase)
+        {
+            _mergeBoardItemDatabase = itemDatabase;
+
+            int dataCount = itemDatabase != null ? itemDatabase.DataCount : 0;
+            DebugTool.Log($"[GameDataModule] MergeBoard ItemDatabase 등록 ({dataCount}개)", DebugType.Data);
+        }
+
+        public bool TryGetMergeBoardItemById(int itemID, out ItemData itemData)
+        {
+            itemData = null;
+
+            if (!CheckReady(nameof(TryGetMergeBoardItemById), itemID))
+                return false;
+
+            if (_mergeBoardItemDatabase == null)
+            {
+                DebugTool.Warning("[GameDataModule] MergeBoard ItemDatabase가 등록되지 않았습니다.", DebugType.Data);
+                return false;
+            }
+
+            return _mergeBoardItemDatabase.TryGetItemById(itemID, out itemData);
+        }
+
+        public bool TryGetMergeBoardItemById(int itemID, int count, out ItemData itemData)
+        {
+            return TryGetMergeBoardItemById(itemID, out itemData);
+        }
+
         public void MarkReady()
         {
             if (IsReady)
@@ -55,6 +85,9 @@ namespace Data.Modules
         }
 
         public void ClearEvent()
-            => _onReady = null;
+        {
+            _onReady = null;
+            _mergeBoardItemDatabase = null;
+        }
     }
 }
