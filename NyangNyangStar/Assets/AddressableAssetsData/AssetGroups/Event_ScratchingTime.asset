@@ -17,6 +17,12 @@ MonoBehaviour:
     m_SerializedData: []
   m_GUID: 80e072f4a0298ee4285200d25d280eed
   m_SerializeEntries:
+  - m_GUID: 066da3c1d4a9eb145bf1daaf9c1c6cc6
+    m_Address: ST_Effect_Normal
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 08fbf7630aaf60045a5d8b402b4b34d1
     m_Address: ScratchingTimeScreen
     m_ReadOnly: 0
@@ -58,12 +64,6 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 623559c72d6c07545a8c9e3041941a65
     m_Address: ST_Highlight_Curved
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - Sprite
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 6fd05e265a5af6d47b2d158f07a94951
-    m_Address: ST_Tile_Cats
     m_ReadOnly: 0
     m_SerializedLabels:
     - Sprite
