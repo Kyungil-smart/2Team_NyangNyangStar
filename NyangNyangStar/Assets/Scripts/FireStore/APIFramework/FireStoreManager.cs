@@ -179,36 +179,7 @@ public class FireStoreManager : MonoBehaviour
         return new FirestoreRequestContext(m_DataDictionary[type]);
     }
 
-    [ContextMenu("Download")]
-    public async void sdsd()
-    {
-        await Test();
-    }
-    private async Task Test()
-    {
-        var data = await FireStoreManager.Instance.DocumentType(DataType.Users).GetAsync<UsersSO>();
-        if (data.Exists)
-        {
-            Debug.Log(data.ToDictionary());
-        }
-
-    }
-
-    [ContextMenu("Upload")]
-    public async void sdsd2()
-    {
-        await Test2();
-    }
-    private async Task Test2()
-    {
-        //var data = new Dictionary<string, object>
-        //{
-        //    { "Name", "Maple" }
-
-        //};
-
-        //await FireStoreManager.Instance.DocumentType(DataType.Users).SetAsync(data);
-
-        await FireStoreManager.Instance.DocumentType(DataType.Users).SaveAllToServerAsync();
-    }
+    // [ContextMenu("Download")]
+    //
+    // [ContextMenu("Upload")]
 }
