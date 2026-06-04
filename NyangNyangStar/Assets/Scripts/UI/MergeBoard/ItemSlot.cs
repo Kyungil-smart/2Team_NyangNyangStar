@@ -1,15 +1,13 @@
 ﻿using Data.ScriptableObjects.MergeBoard;
-using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace UI.MergeBoard
 {
-    public class ItemSlot : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler, IDropHandler
+    public class ItemSlot : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler, IDropHandler, IPointerClickHandler
     {
         [SerializeField] private Image _item;
-        [SerializeField] private TMP_Text _number;
 
         private BoardSystem _boardSystem;
         private RectTransform _itemRect;
@@ -35,12 +33,6 @@ namespace UI.MergeBoard
                 return;
             }
 
-            if (_number == null)
-            {
-                Debug.LogError($"{name} : _number가 연결되지 않았습니다.", this);
-                return;
-            }
-
             _canvas = GetComponentInParent<Canvas>();
 
             if (_canvas == null)
@@ -59,7 +51,6 @@ namespace UI.MergeBoard
                 _canvasGroup = _item.gameObject.AddComponent<CanvasGroup>();
 
             SetItemData(itemData);
-            ResetSiblingOrder();
         }
 
         public void SetItemData(ItemData itemData)
@@ -71,17 +62,10 @@ namespace UI.MergeBoard
             if (_item != null)
             {
                 _item.gameObject.SetActive(hasItem);
+                _item.enabled = hasItem;
                 _item.sprite = hasItem ? ItemData.ItemSprite : null;
+                _item.raycastTarget = hasItem;
             }
-
-            if (_number != null)
-            {
-                _number.text = hasItem
-                    ? $"#{ItemData.ItemID}"
-                    : string.Empty;
-            }
-
-            ResetSiblingOrder();
         }
 
         public void ClearItem()
@@ -126,8 +110,6 @@ namespace UI.MergeBoard
             _canvasGroup.blocksRaycasts = true;
             _itemRect.SetParent(transform, false);
             _itemRect.anchoredPosition = Vector2.zero;
-
-            ResetSiblingOrder();
         }
 
         public void OnDrop(PointerEventData eventData)
@@ -143,13 +125,21 @@ namespace UI.MergeBoard
             _boardSystem.MoveOrSwapItem(fromSlot, this);
         }
 
-        private void ResetSiblingOrder()
+        public void OnPointerClick(PointerEventData eventData)
         {
-            if (_item != null)
-                _item.transform.SetSiblingIndex(0);
+            if (_isDragging)
+                return;
 
-            if (_number != null)
-                _number.transform.SetAsLastSibling();
+            if (_boardSystem == null)
+                return;
+
+            if (!HasItem)
+            {
+                _boardSystem.ClearSelectedSlot();
+                return;
+            }
+
+            _boardSystem.SelectSlot(this);
         }
     }
 }

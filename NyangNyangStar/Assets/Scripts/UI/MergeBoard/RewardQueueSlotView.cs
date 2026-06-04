@@ -1,5 +1,4 @@
 ﻿using Data.ScriptableObjects.MergeBoard;
-using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -9,7 +8,6 @@ namespace UI.MergeBoard
     public class RewardQueueSlotView : MonoBehaviour, IPointerClickHandler
     {
         [SerializeField] private Image _itemSlotImage;
-        [SerializeField] private TMP_Text _itemText;
 
         private BoardRewardQueue _rewardQueue;
         private bool _isTopSlot;
@@ -26,29 +24,13 @@ namespace UI.MergeBoard
 
             gameObject.SetActive(hasItem);
 
-            if (!hasItem)
-            {
-                if (_itemSlotImage != null)
-                {
-                    _itemSlotImage.sprite = null;
-                    _itemSlotImage.enabled = false;
-                }
-
-                if (_itemText != null)
-                    _itemText.text = string.Empty;
-
+            if (_itemSlotImage == null)
                 return;
-            }
 
-            if (_itemSlotImage != null)
-            {
-                _itemSlotImage.enabled = true;
-                _itemSlotImage.raycastTarget = true;
-                _itemSlotImage.sprite = itemData.ItemSprite;
-            }
-
-            if (_itemText != null)
-                _itemText.text = $"#{itemData.ItemID}";
+            _itemSlotImage.gameObject.SetActive(hasItem);
+            _itemSlotImage.enabled = hasItem;
+            _itemSlotImage.raycastTarget = hasItem;
+            _itemSlotImage.sprite = hasItem ? itemData.ItemSprite : null;
         }
 
         public void OnPointerClick(PointerEventData eventData)

@@ -1,4 +1,5 @@
-﻿using Data.ScriptableObjects.MergeBoard;
+﻿using Data.LibrarySystem;
+using Data.ScriptableObjects.MergeBoard;
 using Services.Enums;
 using System;
 using System.Collections.Generic;
@@ -144,7 +145,7 @@ namespace UI.MergeBoard
 
             SpecialItemSlotData currentData = _specialSlotDict[slotNumber];
             int newCount = currentData.HasItem ? currentData.Count + safeCount : safeCount;
-            SpecialItemSlotData newSlotData = new SpecialItemSlotData(slotNumber, itemData, newCount);
+            SpecialItemSlotData newSlotData = new SpecialItemSlotData(slotNumber, CreateRuntimeItem(itemData), newCount);
 
             SetSlotData(slotNumber, newSlotData);
             await SaveSlotSafeAsync(slotNumber);
@@ -218,7 +219,7 @@ namespace UI.MergeBoard
                     if (!IsValidSlotNumber(pair.Key))
                         continue;
 
-                    _specialSlotDict[pair.Key] = pair.Value?.Clone() ?? SpecialItemSlotData.Empty(pair.Key);
+                    _specialSlotDict[pair.Key] = CreateRuntimeSlotData(pair.Key, pair.Value);
                 }
             }
 
@@ -230,7 +231,7 @@ namespace UI.MergeBoard
             if (!IsValidSlotNumber(slotNumber))
                 return;
 
-            SpecialItemSlotData safeSlotData = slotData?.Clone() ?? SpecialItemSlotData.Empty(slotNumber);
+            SpecialItemSlotData safeSlotData = CreateRuntimeSlotData(slotNumber, slotData);
             _specialSlotDict[slotNumber] = safeSlotData;
 
             SpecialItemSlotView slotView = GetSlot(slotNumber);
@@ -253,6 +254,29 @@ namespace UI.MergeBoard
 
                 slotView.SetSlotData(slotData);
             }
+        }
+
+
+        private SpecialItemSlotData CreateRuntimeSlotData(int slotNumber, SpecialItemSlotData slotData)
+        {
+            if (slotData == null || !slotData.HasItem)
+                return SpecialItemSlotData.Empty(slotNumber);
+
+            return new SpecialItemSlotData(slotNumber, CreateRuntimeItem(slotData.ItemData), slotData.Count);
+        }
+
+        private ItemData CreateRuntimeItem(ItemData itemData)
+        {
+            if (itemData == null || !itemData.HasItem)
+                return ItemData.Empty;
+
+            if (LocalDataAccess.Instance?.Game != null &&
+                LocalDataAccess.Instance.Game.TryCreateMergeBoardRuntimeItem(itemData, out ItemData runtimeData))
+            {
+                return runtimeData;
+            }
+
+            return itemData.Clone();
         }
 
         private SpecialItemSlotView GetSlot(int slotNumber)
