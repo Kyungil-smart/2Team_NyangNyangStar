@@ -91,8 +91,16 @@ public abstract class BaseFireStore : ScriptableObject
 
     public virtual async Task SaveAllToServerAsync()
     {
-        await UpdateDataAsync();                  
+        await UpdateDataAsync();
         foreach (var sub in FirestoreMapper.GetSubCollections(this))
-            await sub.SaveAllToServerAsync();         
+            await sub.SaveAllToServerAsync();
     }
+
+#if UNITY_EDITOR
+    // 에디터에서 인스펙터 편집 시 동적 맵의 중복 키를 미리 경고한다.
+    protected virtual void OnValidate()
+    {
+        FirestoreMapper.ValidateMapKeys(this);
+    }
+#endif
 }

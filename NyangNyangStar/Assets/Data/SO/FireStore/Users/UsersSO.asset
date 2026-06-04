@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_DocumentId: 
   m_EnumType: 1
-  userId: 5PQ0eGc9XFRs5RXxR9HCXSrNeCM2
+  userId: JvrP8RcfAnbI3uZFH0UMZvcTnx62
   nickname: New User
   userLevel: 1
   userExp: 0
@@ -28,3 +28,4 @@ MonoBehaviour:
   subCollections:
   - {fileID: 11400000, guid: 8b1517c2c8fd42b41a195195545b6c9f, type: 2}
   - {fileID: 11400000, guid: 419935e80d2b58746917d51cbf3a24b9, type: 2}
+  - {fileID: 11400000, guid: 57aaf4d68781da74082c9ae8b06a8086, type: 2}
