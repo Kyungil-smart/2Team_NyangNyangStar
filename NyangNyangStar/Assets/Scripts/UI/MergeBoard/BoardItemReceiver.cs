@@ -180,13 +180,22 @@ namespace UI.MergeBoard
                 return;
             }
 
-            if (_itemDatabase == null)
+            if (LocalDataAccess.Instance == null || LocalDataAccess.Instance.Game == null || !LocalDataAccess.Instance.Game.IsReady)
             {
-                DebugTool.Warning("ItemDatabaseSo가 연결되지 않았습니다.", DebugType.Board, this);
+                DebugTool.Warning("아이템 데이터 로드 완료 전입니다.", DebugType.Board, this);
                 return;
             }
 
-            if (!_itemDatabase.TryGetRandomItem(ItemType.Common, out ItemData itemData))
+            ItemData itemData = null;
+            bool hasItemData = false;
+
+            if (_itemDatabase != null)
+                hasItemData = _itemDatabase.TryGetRandomItem(ItemType.Common, out itemData);
+
+            if (!hasItemData && LocalDataAccess.Instance?.Game != null)
+                hasItemData = LocalDataAccess.Instance.Game.TryGetRandomMergeBoardItem(ItemType.Common, out itemData);
+
+            if (!hasItemData)
             {
                 DebugTool.Warning("생성 가능한 Common 아이템 데이터가 없습니다.", DebugType.Board, this);
                 return;

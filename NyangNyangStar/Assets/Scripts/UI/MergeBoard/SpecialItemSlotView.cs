@@ -1,5 +1,4 @@
 ﻿using Data.ScriptableObjects.MergeBoard;
-using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -8,7 +7,6 @@ namespace UI.MergeBoard
     public class SpecialItemSlotView : MonoBehaviour
     {
         [SerializeField] private Image _itemImage;
-        [SerializeField] private TMP_Text _itemText;
 
         public int SlotNumber { get; private set; }
         public SpecialItemSlotData SlotData { get; private set; } = SpecialItemSlotData.Empty(0);
@@ -31,13 +29,6 @@ namespace UI.MergeBoard
                 _itemImage.gameObject.SetActive(hasItem);
                 _itemImage.enabled = hasItem;
                 _itemImage.sprite = hasItem ? itemData.ItemSprite : null;
-            }
-
-            if (_itemText != null)
-            {
-                _itemText.text = hasItem
-                    ? $"#{itemData.ItemID}\nx{SlotData.Count}"
-                    : string.Empty;
             }
         }
     }

@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using Data.LibrarySystem;
 using System.Threading.Tasks;
 using UI.MergeBoard;
 using UnityEngine;
@@ -44,6 +45,9 @@ namespace Data.ScriptableObjects.MergeBoard
                 yield return new WaitForSeconds(_checkInterval);
 
             while (FireStoreManager.Instance == null || !FireStoreManager.Instance.IsInitialized)
+                yield return new WaitForSeconds(_checkInterval);
+
+            while (LocalDataAccess.Instance == null || LocalDataAccess.Instance.Game == null || !LocalDataAccess.Instance.Game.IsReady)
                 yield return new WaitForSeconds(_checkInterval);
 
             Task loadTask = LoadFromServerAsync();

@@ -1,5 +1,6 @@
 using Data.ScriptableObjects.KeyContainerSO;
 using Data.ScriptableObjects.MergeBoard;
+using Services.Enums;
 using System;
 using System.Collections.Generic;
 
@@ -62,6 +63,39 @@ namespace Data.Modules
         public bool TryGetMergeBoardItemById(int itemID, int count, out ItemData itemData)
         {
             return TryGetMergeBoardItemById(itemID, out itemData);
+        }
+
+        public bool TryGetRandomMergeBoardItem(ItemType itemType, out ItemData itemData)
+        {
+            itemData = null;
+
+            if (!CheckReady(nameof(TryGetRandomMergeBoardItem), 0))
+                return false;
+
+            if (_mergeBoardItemDatabase == null)
+            {
+                DebugTool.Warning("[GameDataModule] MergeBoard ItemDatabase가 등록되지 않았습니다.", DebugType.Data);
+                return false;
+            }
+
+            return _mergeBoardItemDatabase.TryGetRandomItem(itemType, out itemData);
+        }
+
+        public bool TryCreateMergeBoardRuntimeItem(ItemData sourceData, out ItemData itemData)
+        {
+            itemData = null;
+
+            if (!CheckReady(nameof(TryCreateMergeBoardRuntimeItem), sourceData?.ItemID ?? 0))
+                return false;
+
+            if (_mergeBoardItemDatabase == null)
+            {
+                DebugTool.Warning("[GameDataModule] MergeBoard ItemDatabase가 등록되지 않았습니다.", DebugType.Data);
+                return false;
+            }
+
+            itemData = _mergeBoardItemDatabase.CreateRuntimeItem(sourceData);
+            return itemData != null && itemData.HasItem;
         }
 
         public void MarkReady()
