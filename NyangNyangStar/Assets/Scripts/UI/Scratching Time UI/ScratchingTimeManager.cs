@@ -1,18 +1,22 @@
-﻿using Data.ScriptableObjects.ScratchingTimeSO;
+using System;
+using System.Collections;
+using Data.Parsing;
+using Data.ScriptableObjects.ScratchingTimeSO;
 using Core.Managers;
 using Data.LibrarySystem;
 using Services.Enums;
 using UI;
 using UnityEngine;
 
-/// <summary>
-/// 스크래칭 타임의 선택 상태, 화면 전환, 결과 팝업 흐름을 관리합니다.
-/// 전투 입력과 흥미도 감소 로직은 포함하지 않습니다.
-/// </summary>
+// 스크래칭 타임의 선택 상태, 화면 전환, 결과 팝업 흐름을 관리
 public class ScratchingTimeManager : UIBase
 {
     [Header("Data")]
     [SerializeField] private ScratchingSo _scratching;
+    [Tooltip("스크래칭 밸런스 시트 URL. SheetLoader.prefab scratchingURL과 동일하게 유지")]
+    [SerializeField]
+    private string _scratchingSheetFallbackUrl =
+        "https://docs.google.com/spreadsheets/d/1hD2NCEzCWr2aml-_aqHsHZu_8HeZ0xCLpMDt_A9NfoU/edit?gid=0#gid=0";
 
     [Header("Controller")]
     [SerializeField] private ScratchingTimeController _selectionController;
@@ -28,8 +32,12 @@ public class ScratchingTimeManager : UIBase
     [SerializeField] private bool _isStarted;
 
     private bool HasSelectedStage => _selectedStage > 0;
+    private bool _isUiTransitioning;
     private bool _isInitialized;
     private bool _isWaitingForDataReady;
+    private Coroutine _scratchingDataLoadCoroutine;
+
+    private const int ScratchingSheetHeaderRowCount = 1;
 
     private ScratchingBattleController CurrentBattleController =>
         _selectedStageType == StageType.Weekly
@@ -41,10 +49,8 @@ public class ScratchingTimeManager : UIBase
         EnsureRequiredDataLoad();
         Init();
     }
-
-    /// <summary>
-    /// 스크래칭 타임 UI 이벤트를 등록합니다.
-    /// </summary>
+    
+    // 스크래칭 타임 UI 이벤트를 등록
     private void OnEnable()
     {
         if (_selectionController != null)
@@ -71,9 +77,7 @@ public class ScratchingTimeManager : UIBase
         }
     }
 
-    /// <summary>
-    /// 스크래칭 타임 UI 이벤트를 해제합니다.
-    /// </summary>
+    // 이벤트 해제
     private void OnDisable()
     {
         if (_selectionController != null)
@@ -103,11 +107,11 @@ public class ScratchingTimeManager : UIBase
     private void OnDestroy()
     {
         UnsubscribeDataReady();
+        StopScratchingDataLoad();
     }
 
-    /// <summary>
-    /// 스크래칭 타임 UI와 뭉치 정보를 초기 상태로 출력합니다.
-    /// </summary>
+    
+    // 스크래칭 타임 UI와 뭉치 정보를 초기 상태로 출력
     private void Start()
     {
         ResetAllState();
@@ -123,23 +127,24 @@ public class ScratchingTimeManager : UIBase
         if (_isStarted)
             return;
 
-        if (!IsRequiredDataReady())
-        {
-            EnsureRequiredDataLoad();
-            DebugTool.Warning("스크래칭 타임 데이터가 아직 준비되지 않았습니다.", DebugType.ScratchingTime);
-            return;
-        }
-
-        if (!_scratching.IsOpenedBySchedule(stage))
+        if (_scratching != null && !_scratching.IsOpenedBySchedule(stage))
         {
             DebugTool.Warning($"{stage} 단계는 아직 개방되지 않았습니다.", DebugType.ScratchingTime);
             _selectionController?.ShowErrorPanel();
             return;
         }
 
+        if (!IsRequiredDataReady())
+        {
+            EnsureRequiredDataLoad();
+            DebugTool.Warning("스크래칭 타임 시트 데이터 로드 중입니다.", DebugType.ScratchingTime);
+            return;
+        }
+
         _selectionController?.HideErrorPanel();
         _selectedStage = stage;
         _selectedStageType = StageType.None;
+        RefreshSelectionInfo();
     }
 
     /// <summary>
@@ -151,13 +156,27 @@ public class ScratchingTimeManager : UIBase
         if (!IsRequiredDataReady())
         {
             EnsureRequiredDataLoad();
-            DebugTool.Warning("스크래칭 타임 데이터가 아직 준비되지 않았습니다.", DebugType.ScratchingTime);
+            DebugTool.Warning("스크래칭 타임 시트 데이터 로드 중입니다.", DebugType.ScratchingTime);
             return;
         }
 
         if (!HasSelectedStage || stageType == StageType.None)
         {
             DebugTool.Warning("스테이지를 시작할 수 없는 상태입니다.", DebugType.ScratchingTime);
+            return;
+        }
+
+        if (!CanStart(stageType))
+        {
+            DebugTool.Warning("남은 도전 횟수가 없거나 아직 개방되지 않은 스테이지입니다.", DebugType.ScratchingTime);
+            RefreshSelectionInfo();
+            return;
+        }
+
+        if (!_scratching.TryConsumeChallengeCount(_selectedStage, stageType))
+        {
+            DebugTool.Warning("남은 도전 횟수가 없어 스테이지를 시작할 수 없습니다.", DebugType.ScratchingTime);
+            RefreshSelectionInfo();
             return;
         }
 
@@ -178,18 +197,19 @@ public class ScratchingTimeManager : UIBase
         _resultPopupController?.HidePopup();
         _selectionController?.Hide();
         HideBattleScreens();
-        CurrentBattleController?.Show();
+        CurrentBattleController?.ConfigureInterestDrain(_scratching.TimeLimit);
         CurrentBattleController?.SetInterestAmount(_scratching.TimeLimit, _scratching.TimeLimit);
+        CurrentBattleController?.Show();
 
         RefreshBattleInfo();
 
         DebugTool.Log($"스테이지 시작 : {_selectedStage} / {_selectedStageType}", DebugType.ScratchingTime);
     }
 
-    /// <summary>
-    /// 스크래치 이펙트가 발생한 클릭을 현재 스테이지 공격으로 처리합니다.
-    /// </summary>
-    private void AttackCurrentScratcher()
+    
+    // 스크래치 이펙트가 발생한 클릭을 현재 스테이지 공격으로 처리
+    
+    private void AttackCurrentScratcher(Vector2 screenPosition)
     {
         if (!_isStarted || _selectedStageType == StageType.None)
             return;
@@ -201,7 +221,14 @@ public class ScratchingTimeManager : UIBase
             return;
         }
 
-        int damage = _moongchiStatController != null ? _moongchiStatController.MoongchiAttack() : 0;
+        int damage = 0;
+        bool isCritical = false;
+
+        if (_moongchiStatController != null)
+        {
+            damage = _moongchiStatController.MoongchiAttack(out isCritical);
+            CurrentBattleController?.ScratchEffectPool?.SpawnEffect(screenPosition, isCritical);
+        }
 
         if (damage <= 0)
             return;
@@ -214,9 +241,8 @@ public class ScratchingTimeManager : UIBase
             ShowStageClearResult();
     }
 
-    /// <summary>
-    /// 제한 시간 안에 스크래쳐 내구도를 0으로 만들지 못하면 실패 처리합니다.
-    /// </summary>
+    
+    // 제한 시간 안에 스크래쳐 내구도를 0으로 만들지 못하면 실패 처리
     private void FailCurrentStageOnInterestDepleted()
     {
         if (!_isStarted || _selectedStageType == StageType.None)
@@ -237,10 +263,9 @@ public class ScratchingTimeManager : UIBase
             ShowStageFailResult();
     }
 
-    /// <summary>
-    /// 현재 스테이지를 클리어 처리합니다.
-    /// 클리어 시에만 남은 도전 횟수를 차감하고 뭉치 경험치를 지급합니다.
-    /// </summary>
+    
+    // 현재 스테이지를 클리어 처리
+    // 도전 횟수는 START 시점에 차감되며, 클리어 시 경험치와 클리어 기록만 갱신
     public void ShowStageClearResult()
     {
         if (!_isStarted)
@@ -260,10 +285,10 @@ public class ScratchingTimeManager : UIBase
         DebugTool.Log($"스테이지 클리어 : {_selectedStage} / {_selectedStageType} / EXP {clearExp}", DebugType.ScratchingTime);
     }
 
-    /// <summary>
-    /// 현재 스테이지를 실패 처리합니다.
-    /// 실패 시 도전 횟수는 차감하지 않습니다.
-    /// </summary>
+    
+    // 현재 스테이지를 실패 처리
+    // 도전 횟수는 START 시점에 이미 차감된 상태
+    
     public void ShowStageFailResult()
     {
         if (!_isStarted)
@@ -278,47 +303,46 @@ public class ScratchingTimeManager : UIBase
         DebugTool.Log($"스테이지 실패 : {_selectedStage} / {_selectedStageType}", DebugType.ScratchingTime);
     }
 
-    /// <summary>
-    /// 결과 팝업에서 선택 화면으로 돌아갑니다.
-    /// 스크래칭 타임을 닫기 전까지 선택된 단계는 유지합니다.
-    /// </summary>
-    private void BackToSelection()
-    {
-        BackToSelectionKeepingSelectedStage();
-    }
-
-    /// <summary>
-    /// 전투 화면 닫기 버튼을 눌렀을 때 전투만 종료하고 선택 화면으로 돌아갑니다.
-    /// 도전 횟수와 클리어 기록은 변경하지 않고, 선택된 단계는 유지합니다.
-    /// </summary>
-    private void BackToSelectionFromBattle()
-    {
-        BackToSelectionKeepingSelectedStage();
-    }
-
-    /// <summary>
-    /// 스크래칭 타임 이벤트 UI를 다시 엽니다.
-    /// 외부 UI에서 이벤트 버튼을 눌렀을 때 호출할 수 있습니다.
-    /// </summary>
+    
+    // 스크래칭 타임 이벤트 UI를 다시 엽니다.
+    // 외부 UI에서 이벤트 버튼을 눌렀을 때 호출할 수 있습니다.
+    
     public void OpenEventView()
     {
         EnsureRequiredDataLoad();
         ResetAllState();
     }
 
-    /// <summary>
-    /// 스크래칭 타임 이벤트 UI 전체를 닫고 선택 상태를 초기화합니다.
-    /// </summary>
+    
+    /// 스크래칭 타임 이벤트 UI 전체를 닫고 선택 상태를 초기화
+    
     private void CloseEventView()
     {
+        if (_isUiTransitioning)
+            return;
+
         _isStarted = false;
         StopBattleInterestDrain();
         _selectedStage = 0;
         _selectedStageType = StageType.None;
+        _isUiTransitioning = true;
 
         _resultPopupController?.HidePopup();
         HideBattleScreens();
+
+        if (_selectionController != null && _selectionController.gameObject.activeInHierarchy)
+        {
+            _selectionController.Hide(FinishCloseEventView);
+            return;
+        }
+
+        FinishCloseEventView();
+    }
+
+    private void FinishCloseEventView()
+    {
         _selectionController?.Hide();
+        _isUiTransitioning = false;
         gameObject.SetActive(false);
     }
 
@@ -334,21 +358,40 @@ public class ScratchingTimeManager : UIBase
             return;
         }
 
-        _resultPopupController?.HidePopup();
-        StartStage(_selectedStageType);
+        _resultPopupController?.HidePopup(() => StartStage(_selectedStageType));
     }
 
     /// <summary>
     /// 선택된 단계를 유지한 채 선택 화면으로 돌아갑니다.
-    /// 전투 상태와 선택된 스테이지 타입만 초기화합니다.
+    /// 결과 팝업 돌아가기·전투 Exit 버튼 모두 이 메서드로 처리합니다.
     /// </summary>
-    private void BackToSelectionKeepingSelectedStage()
+    private void BackToSelection()
     {
+        if (_isUiTransitioning)
+            return;
+
+        ScratchingBattleController visibleBattle = GetVisibleBattleController();
+
         _isStarted = false;
         StopBattleInterestDrain();
         _selectedStageType = StageType.None;
+        _isUiTransitioning = true;
 
-        _resultPopupController?.HidePopup();
+        _resultPopupController?.HidePopup(() =>
+        {
+            if (visibleBattle != null && visibleBattle.gameObject.activeInHierarchy)
+            {
+                visibleBattle.Hide(ShowSelectionAfterBattleClosed);
+                return;
+            }
+
+            HideBattleScreens();
+            ShowSelectionAfterBattleClosed();
+        });
+    }
+
+    private void ShowSelectionAfterBattleClosed()
+    {
         HideBattleScreens();
         _selectionController?.Show();
         _selectionController?.HideErrorPanel();
@@ -359,6 +402,8 @@ public class ScratchingTimeManager : UIBase
             RefreshSelectionInfo();
         else
             _selectionController?.InitView();
+
+        _isUiTransitioning = false;
     }
 
     /// <summary>
@@ -446,6 +491,7 @@ public class ScratchingTimeManager : UIBase
     /// </summary>
     private void ResetAllState()
     {
+        _isUiTransitioning = false;
         _isStarted = false;
         _selectedStage = 0;
         _selectedStageType = StageType.None;
@@ -462,14 +508,110 @@ public class ScratchingTimeManager : UIBase
         GameManager.Init();
         EnsureLocalDataAccess();
 
+        if (_scratching == null)
+        {
+            DebugTool.Warning(
+                "ScratchingSo 참조가 비어 있습니다. ScratchingTimeScreen 프리팹의 Scratching Time Manager에 SO를 연결하세요.",
+                DebugType.ScratchingTime);
+            return;
+        }
+
         if (IsRequiredDataReady())
         {
             UnsubscribeDataReady();
+            StopScratchingDataLoad();
             return;
         }
 
         SubscribeDataReady();
-        GameManager.Data.LoadSheets();
+        StartScratchingDataLoad();
+    }
+
+    private void StartScratchingDataLoad()
+    {
+        if (_scratchingDataLoadCoroutine != null)
+            return;
+
+        _scratchingDataLoadCoroutine = StartCoroutine(LoadScratchingDataRoutine());
+    }
+
+    private void StopScratchingDataLoad()
+    {
+        if (_scratchingDataLoadCoroutine == null)
+            return;
+
+        StopCoroutine(_scratchingDataLoadCoroutine);
+        _scratchingDataLoadCoroutine = null;
+    }
+
+    /// <summary>
+    /// 스크래칭 시트만 즉시 요청합니다. SheetLoader·긴 대기 없이 네트워크 1회로 완료합니다.
+    /// </summary>
+    private IEnumerator LoadScratchingDataRoutine()
+    {
+        if (IsRequiredDataReady())
+        {
+            OnScratchingDataLoaded();
+            yield break;
+        }
+
+        yield return LoadScratchingSheetDirectly();
+
+        _scratchingDataLoadCoroutine = null;
+
+        if (IsRequiredDataReady())
+            OnScratchingDataLoaded();
+        else
+            DebugTool.Warning(
+                "스크래칭 타임 시트 로드에 실패했습니다. Fallback URL·시트 공개 설정을 확인하세요.",
+                DebugType.ScratchingTime);
+    }
+
+    private void OnScratchingDataLoaded()
+    {
+        UnsubscribeDataReady();
+
+        if (!gameObject.activeInHierarchy)
+            return;
+
+        ResetAllState();
+        _moongchiStatController?.PrintMoongchiStat();
+
+        if (HasSelectedStage)
+            RefreshSelectionInfo();
+    }
+
+    /// <summary>
+    /// Google Sheets에서 스크래칭 밸런스만 받아 SO에 채웁니다.
+    /// </summary>
+    private IEnumerator LoadScratchingSheetDirectly()
+    {
+        if (_scratching == null || string.IsNullOrWhiteSpace(_scratchingSheetFallbackUrl))
+            yield break;
+
+        _scratching.Init();
+        SheetData sheet = new(_scratchingSheetFallbackUrl.Trim(), SheetType.TSV);
+
+        yield return sheet.Load(ParseScratchingSheetLines);
+    }
+
+    private void ParseScratchingSheetLines(char split, string[] lines)
+    {
+        if (lines == null || lines.Length <= ScratchingSheetHeaderRowCount)
+            return;
+
+        for (int i = ScratchingSheetHeaderRowCount; i < lines.Length; i++)
+        {
+            string line = lines[i].Trim();
+            if (string.IsNullOrEmpty(line))
+                continue;
+
+            string[] cols = line.Split(split);
+            if (cols.Length < 5)
+                continue;
+
+            _scratching.SetData(cols);
+        }
     }
 
     private static void EnsureLocalDataAccess()
@@ -481,9 +623,7 @@ public class ScratchingTimeManager : UIBase
     }
 
     private bool IsRequiredDataReady()
-    {
-        return _scratching != null && _scratching.HasData;
-    }
+        => _scratching != null && _scratching.HasData;
 
     private void SubscribeDataReady()
     {
@@ -504,13 +644,10 @@ public class ScratchingTimeManager : UIBase
 
     private void HandleDataReady()
     {
-        UnsubscribeDataReady();
-
-        if (!gameObject.activeInHierarchy)
+        if (!IsRequiredDataReady())
             return;
 
-        ResetAllState();
-        _moongchiStatController?.PrintMoongchiStat();
+        OnScratchingDataLoaded();
     }
 
     public override void Init()
@@ -560,8 +697,8 @@ public class ScratchingTimeManager : UIBase
         if (controller == null)
             return;
 
-        controller.OnCloseClicked -= BackToSelectionFromBattle;
-        controller.OnCloseClicked += BackToSelectionFromBattle;
+        controller.OnCloseClicked -= BackToSelection;
+        controller.OnCloseClicked += BackToSelection;
     }
 
     private void UnregisterBattleCloseEvent(ScratchingBattleController controller)
@@ -569,7 +706,7 @@ public class ScratchingTimeManager : UIBase
         if (controller == null)
             return;
 
-        controller.OnCloseClicked -= BackToSelectionFromBattle;
+        controller.OnCloseClicked -= BackToSelection;
     }
 
     private void RegisterScratchAttackEvent(ScratchingBattleController controller)
@@ -611,6 +748,20 @@ public class ScratchingTimeManager : UIBase
         _battleController?.Hide();
         _dailyStageController?.Hide();
         _weeklyStageController?.Hide();
+    }
+
+    private ScratchingBattleController GetVisibleBattleController()
+    {
+        if (_weeklyStageController != null && _weeklyStageController.gameObject.activeInHierarchy)
+            return _weeklyStageController;
+
+        if (_dailyStageController != null && _dailyStageController.gameObject.activeInHierarchy)
+            return _dailyStageController;
+
+        if (_battleController != null && _battleController.gameObject.activeInHierarchy)
+            return _battleController;
+
+        return null;
     }
 
     private void StopBattleInterestDrain()
