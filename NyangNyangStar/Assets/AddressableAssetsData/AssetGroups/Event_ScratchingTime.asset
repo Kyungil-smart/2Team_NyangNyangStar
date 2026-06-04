@@ -27,15 +27,75 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1c95adba8d51b0a46a70f242eac8d919
+    m_Address: ST_Effect_Critical
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 20c13008691267545bc385442609e075
     m_Address: ScratchingTimeUI
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3994982f0efb9d842a173fac28e6ca85
+    m_Address: ST_BG_Cloud_Face
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3ea861654b96554449ff4b44fe4f01c2
+    m_Address: ST_Boss_Day
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 56912f8bc3c7bca48a4d4b199385f592
+    m_Address: ST_BG_Rainbow
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 623559c72d6c07545a8c9e3041941a65
+    m_Address: ST_Highlight_Curved
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6fd05e265a5af6d47b2d158f07a94951
+    m_Address: ST_Tile_Cats
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 7e421478b4ff4444c98a5351b85abdc2
     m_Address: ScratchingDailyStageUI
     m_ReadOnly: 0
     m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: af62d267442423e4ab4b5cfd268bd860
+    m_Address: ST_BG_Cloud_Right
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: bdef56c579292274da6ba750706d9f5d
+    m_Address: ST_Highlight_Straight
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: bebacb41e8112564c8a25752eebb9f47
+    m_Address: ST_Boss_Week
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d6d29c1cb24596e4881570d174b56e87
+    m_Address: ST_BG_Cloud_Left
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: e42603bb71d672a4ab818a447d00cf08
     m_Address: ResultPopup

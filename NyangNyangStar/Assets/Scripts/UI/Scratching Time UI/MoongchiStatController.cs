@@ -1,4 +1,4 @@
-﻿using Data.ScriptableObjects.ScratchingTimeSO;
+using Data.ScriptableObjects.ScratchingTimeSO;
 using TMPro;
 using UI;
 using UnityEngine;
@@ -75,11 +75,16 @@ public class MoongchiStatController : UIBase
     }
 
     public int MoongchiAttack()
+        => MoongchiAttack(out _);
+
+    public int MoongchiAttack(out bool isCritical)
     {
+        isCritical = false;
+
         if (_moongchiStat == null)
             return 0;
 
-        return _moongchiStat.Attack();
+        return _moongchiStat.Attack(out isCritical);
     }
 
     public void PrintMoongchiStat()
@@ -87,8 +92,9 @@ public class MoongchiStatController : UIBase
         if (_moongchiStat == null)
             return;
 
-        int currentExp = _moongchiStat.GetCurrentExp();
+        int currentExp = Mathf.Min(_moongchiStat.GetCurrentExp(), _moongchiStat.MaxExp);
         int maxExp = _moongchiStat.MaxExp;
+        float fillRatio = _moongchiStat.GetExpFillRatio();
 
         // MoongchiStat SO 값을 LvPanel, InfoPanel 텍스트에 반영함
         SetText(_levelText, $"Lv. {_moongchiStat.Level} 뭉치");
@@ -105,19 +111,31 @@ public class MoongchiStatController : UIBase
             SetText(_maxExpText, maxExp.ToString());
         }
 
-        SetExpAmount(currentExp, maxExp);
+        SetExpAmount(fillRatio);
     }
 
-    public void SetExpAmount(int currentExp, int maxExp)
+    public void SetExpAmount(float fillRatio)
     {
-        float ratio = GetSafeRatio(currentExp, maxExp);
+        float ratio = Mathf.Clamp01(fillRatio);
 
-        // Slider와 Fill Image 모두 갱신함
+        // Slider Fill은 anchorMax.x로 너비를 맞춤 (스프라이트 없는 Image는 fillAmount가 동작하지 않음)
         if (_expSlider != null)
-            _expSlider.value = ratio;
+            _expSlider.SetValueWithoutNotify(ratio);
+        else
+            ApplyExpFillRect(ratio);
+    }
 
-        if (_expAmountImage != null)
-            _expAmountImage.fillAmount = ratio;
+    private void ApplyExpFillRect(float ratio)
+    {
+        if (_expAmountImage == null)
+            return;
+
+        RectTransform fillRect = _expAmountImage.rectTransform;
+        fillRect.anchorMin = new Vector2(0f, 0f);
+        fillRect.anchorMax = new Vector2(ratio, 1f);
+        fillRect.offsetMin = Vector2.zero;
+        fillRect.offsetMax = Vector2.zero;
+        fillRect.pivot = new Vector2(0f, 0.5f);
     }
 
     private static void SetText(TMP_Text text, string value)
@@ -126,14 +144,6 @@ public class MoongchiStatController : UIBase
             return;
 
         text.text = value;
-    }
-
-    private static float GetSafeRatio(float current, float max)
-    {
-        if (max <= 0)
-            return 0f;
-
-        return Mathf.Clamp01(current / max);
     }
 
     public override void Init()
@@ -166,6 +176,39 @@ public class MoongchiStatController : UIBase
                             ?? FindSliderFillImage(statRoot, "Panel (1)");
 
         BindInfoPanelTexts(statRoot);
+        ConfigureExpSlider();
+    }
+
+    private void ConfigureExpSlider()
+    {
+        SetupExpFillRect();
+
+        if (_expSlider == null)
+            return;
+
+        _expSlider.minValue = 0f;
+        _expSlider.maxValue = 1f;
+        _expSlider.wholeNumbers = false;
+
+        if (_expAmountImage != null)
+            _expSlider.fillRect = _expAmountImage.rectTransform;
+    }
+
+    private void SetupExpFillRect()
+    {
+        if (_expAmountImage == null)
+            return;
+
+        RectTransform fillRect = _expAmountImage.rectTransform;
+        fillRect.anchorMin = new Vector2(0f, 0f);
+        fillRect.anchorMax = new Vector2(0f, 1f);
+        fillRect.pivot = new Vector2(0f, 0.5f);
+        fillRect.anchoredPosition = Vector2.zero;
+        fillRect.sizeDelta = Vector2.zero;
+
+        // Filled + 전체 stretch는 스프라이트 없을 때 항상 100%로 보임
+        if (_expAmountImage.type == Image.Type.Filled)
+            _expAmountImage.type = Image.Type.Sliced;
     }
 
     private void BindInfoPanelTexts(GameObject statRoot)
