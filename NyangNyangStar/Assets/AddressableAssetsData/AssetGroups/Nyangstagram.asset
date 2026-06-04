@@ -177,12 +177,6 @@ MonoBehaviour:
     m_SerializedLabels:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 6aee4d77872667a4ba20208463dbf41f
-    m_Address: NYS_Btn_Back
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - Sprite
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 6d88cd39a46b16f45bf64f411dad4f92
     m_Address: NYS_Divider
     m_ReadOnly: 0
@@ -331,12 +325,6 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: da0ae305fa9330d448dbd9808a7c466f
     m_Address: NYS_Btn_Exit
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - Sprite
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: dc3c78d4c35c7374a91b36659c1ab532
-    m_Address: NYS_UploadPost_Check
     m_ReadOnly: 0
     m_SerializedLabels:
     - Sprite
