@@ -1,0 +1,204 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
+  m_Name: Main
+  m_EditorClassIdentifier: 
+  m_GroupName: Main
+  m_Data:
+    m_SerializedData: []
+  m_GUID: 5674fe636895c054986e073c5bc88d13
+  m_SerializeEntries:
+  - m_GUID: 02b7e2b4b0a2a3743b60c84e1e817772
+    m_Address: Main_Icon_Coin
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 04140f22c6f18a14f8b764b01b3ad13d
+    m_Address: Main_Btn_Mail
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 049063c77d4d809498451c53cc75cab1
+    m_Address: MainUI
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 099fb12fdb3f17d46bfcc9ea7e9a2c22
+    m_Address: Main_Btn_Sound
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 0a6aa1d163f06634e874f1f4386bf940
+    m_Address: Main_Btn_FosterDiary
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 0ffe10357245e8c439759e9d33f55301
+    m_Address: Main_Btn_Shop
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1859535382109db4c84c15614149ddf3
+    m_Address: Main_Btn_Roulette
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 24e64e53a59dd8444b27d491af32a533
+    m_Address: Main_Btn_Storybook
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2eebcca250b7d9b4a8bacdf8036c11e2
+    m_Address: AffinityPopupUI
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 305d866fef020114f88c70e438f37f4b
+    m_Address: DailyCheckInPopupUI
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 49abb60bf8ddc184f82c74386c5520e3
+    m_Address: Main_Btn_Attendance
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4ec631be5f1935041af227da31af6192
+    m_Address: CollectionPopupUI
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 51bf678886930e04791cb0988e811746
+    m_Address: Main_Alert
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 54d625b8f5baaed4ba33eefa3d00f4bf
+    m_Address: Main_Panel_Audio
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5b73e6ce7d80ce6478047690fd23abd3
+    m_Address: Main_Panel_Level
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 606b966252192d34fa1bec9b0f7ed3d1
+    m_Address: ShopPopupUI
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6b150ff861cf8d64a85f4f735c298b1e
+    m_Address: StoryBookPopupUI
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 83eb43cef89901940a2c3c9840d0ee4f
+    m_Address: Main_Btn_Settings
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 847f79e3935d8a94799439f4684170f9
+    m_Address: EventPopupUI
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a66bb77bd248a20418a50ee3ee98fdaf
+    m_Address: NotebookPopupUI
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ad6b79f89b06dd64bbc98ee20a751f88
+    m_Address: Main_Btn_Mergeboard
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: adca8245f6402ed4bb504ab042b878f3
+    m_Address: Main_Btn_Music
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b42ae568c53d3064f90b8d98db6a838e
+    m_Address: Main_Btn_Collection
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b6c912e56d019a148bc2dc766a4c32f9
+    m_Address: Main_Btn_Interact
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b765d3a56ef0ce54696d4320eea85e2e
+    m_Address: BGMPopupUI
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b7fb5c1113044e441a7aaeb7a9179d36
+    m_Address: Main_Btn_Nyangstagram
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b8584585b9e078a4caa0498da6833983
+    m_Address: Main_Icon_Energy
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b8e6032c3d97316489254df64ea7e67c
+    m_Address: Main_Btn_Event_Scratching
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c44a66ded60e4be43af454324ce12a3a
+    m_Address: MailPopupUI
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c5c7591d8d3890a49800412e6c416429
+    m_Address: Main_Btn_Camera
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: cd9c9d9253516544a94ddb7794e30911
+    m_Address: EventSystem
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ce89bb6578a7bfc4080d874e815dfb65
+    m_Address: SheetLoader
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e377c98bf2451334380dba5104958f8e
+    m_Address: Main_Icon_Jewel
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e86839ae30eff014d99d119c85c147bb
+    m_Address: SettingsPopupUI
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e9416ec04bd608e45b72e538ca600e70
+    m_Address: Main_Profile_Frame
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ed42ed3b5b294d34aac9ad844a46e94c
+    m_Address: RoulettePopupUI
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  m_ReadOnly: 0
+  m_Settings: {fileID: 11400000, guid: 567802e293b80b747b23153796443c26, type: 2}
+  m_SchemaSet:
+    m_Schemas:
+    - {fileID: 11400000, guid: 2bbc19a900b63e74baa3a5d15a829e55, type: 2}

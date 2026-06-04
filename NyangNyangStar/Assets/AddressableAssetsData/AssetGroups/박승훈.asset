@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
+  m_Name: "\uBC15\uC2B9\uD6C8"
+  m_EditorClassIdentifier: 
+  m_GroupName: "\uBC15\uC2B9\uD6C8"
+  m_Data:
+    m_SerializedData: []
+  m_GUID: 780cbbccf77853a4d89cf52d9ae39502
+  m_SerializeEntries:
+  - m_GUID: 33808f098da4af24ba6aee52e53b7967
+    m_Address: Merge Board
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3de316d8114e3b649bf197d9f3286756
+    m_Address: Board Item Receiver
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  m_ReadOnly: 0
+  m_Settings: {fileID: 11400000, guid: 567802e293b80b747b23153796443c26, type: 2}
+  m_SchemaSet:
+    m_Schemas:
+    - {fileID: 11400000, guid: 8860cb6b19ef5804b9d6a00a579168cf, type: 2}
+    - {fileID: 11400000, guid: 0531ccb541e046a4f8942b4f5efed0d5, type: 2}
