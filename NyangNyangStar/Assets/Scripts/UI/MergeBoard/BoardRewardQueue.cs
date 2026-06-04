@@ -46,7 +46,12 @@ namespace UI.MergeBoard
                 BoardItemReceiver.Instance.RegisterRewardQueue(this);
         }
 
-        public async Task<bool> EnqueueItemAsync(ItemData itemData)
+        public Task<bool> EnqueueItemAsync(ItemData itemData)
+        {
+            return EnqueueItemAsync(itemData, 1);
+        }
+
+        public async Task<bool> EnqueueItemAsync(ItemData itemData, int count)
         {
             if (!IsLoaded)
             {
@@ -57,7 +62,16 @@ namespace UI.MergeBoard
             if (itemData == null || !itemData.HasItem)
                 return false;
 
-            _rewardQueue.Enqueue(itemData.Clone());
+            if (itemData.ItemType != Services.Enums.ItemType.Common)
+            {
+                DebugTool.Warning("보상 큐에는 Common 타입 아이템만 추가할 수 있습니다.", DebugType.Board, this);
+                return false;
+            }
+
+            int safeCount = Mathf.Max(1, count);
+
+            for (int i = 0; i < safeCount; i++)
+                _rewardQueue.Enqueue(itemData.Clone());
 
             RefreshView();
 

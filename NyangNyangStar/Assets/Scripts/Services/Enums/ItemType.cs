@@ -3,7 +3,7 @@
     public enum ItemType
     {
         None,
-        General,
+        Common,
         Special,
     }
 }

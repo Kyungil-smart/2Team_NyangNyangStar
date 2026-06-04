@@ -1,4 +1,5 @@
-﻿using Data.ScriptableObjects.MergeBoard;
+﻿using Data.LibrarySystem;
+using Data.ScriptableObjects.MergeBoard;
 using Services.Enums;
 using UnityEngine;
 using UnityEngine.UI;
@@ -11,6 +12,9 @@ namespace UI.MergeBoard
 
         [Header("보드 시스템")]
         [SerializeField] private BoardSystem _boardSystem;
+
+        [Header("특수 아이템 보드")]
+        [SerializeField] private SpecialItemBoardSystem _specialItemBoardSystem;
 
         [Header("보상 큐")]
         [SerializeField] private BoardRewardQueue _rewardQueue;
@@ -34,6 +38,9 @@ namespace UI.MergeBoard
             if (_boardSystem == null)
                 _boardSystem = FindFirstObjectByType<BoardSystem>();
 
+            if (_specialItemBoardSystem == null)
+                _specialItemBoardSystem = FindFirstObjectByType<SpecialItemBoardSystem>();
+
             if (_rewardQueue == null)
                 _rewardQueue = FindFirstObjectByType<BoardRewardQueue>();
         }
@@ -51,17 +58,70 @@ namespace UI.MergeBoard
             _boardSystem = boardSystem;
         }
 
+        public void RegisterSpecialItemBoardSystem(SpecialItemBoardSystem specialItemBoardSystem)
+        {
+            _specialItemBoardSystem = specialItemBoardSystem;
+        }
+
         public void RegisterRewardQueue(BoardRewardQueue rewardQueue)
         {
             _rewardQueue = rewardQueue;
         }
 
+        public void RegisterItemDatabase(ItemDatabaseSo itemDatabase)
+        {
+            _itemDatabase = itemDatabase;
+        }
+
+        public void ReceiveItemById(int itemID)
+        {
+            ReceiveItemById(itemID, 1);
+        }
+
+        public void ReceiveItemById(int itemID, int count)
+        {
+            if (itemID <= 0)
+            {
+                DebugTool.Warning($"유효하지 않은 아이템 ID입니다. ID: {itemID}", DebugType.Board, this);
+                return;
+            }
+
+            if (!TryGetItemDataById(itemID, out ItemData itemData))
+            {
+                DebugTool.Warning($"{itemID} ID에 해당하는 아이템 데이터를 찾을 수 없습니다.", DebugType.Board, this);
+                return;
+            }
+
+            ReceiveItem(itemData, count);
+        }
+
         public async void ReceiveItem(ItemData itemData)
+        {
+            await ReceiveItemAsync(itemData, 1);
+        }
+
+        public async void ReceiveItem(ItemData itemData, int count)
+        {
+            await ReceiveItemAsync(itemData, count);
+        }
+
+        private async System.Threading.Tasks.Task<bool> ReceiveItemAsync(ItemData itemData, int count)
         {
             if (itemData == null || !itemData.HasItem)
             {
                 DebugTool.Warning("유효하지 않은 아이템 데이터입니다.", DebugType.Board, this);
-                return;
+                return false;
+            }
+
+            int safeCount = Mathf.Max(1, count);
+
+            if (itemData.ItemType == ItemType.Special)
+                return await ReceiveSpecialItemAsync(itemData, safeCount);
+
+            if (itemData.ItemType != ItemType.Common)
+            {
+                DebugTool.Warning($"지원하지 않는 아이템 타입입니다. Type: {itemData.ItemType}", DebugType.Board, this);
+                return false;
             }
 
             if (_rewardQueue == null)
@@ -70,13 +130,34 @@ namespace UI.MergeBoard
             if (_rewardQueue == null)
             {
                 DebugTool.Warning("BoardRewardQueue가 등록되지 않았습니다.", DebugType.Board, this);
-                return;
+                return false;
             }
 
-            bool result = await _rewardQueue.EnqueueItemAsync(itemData);
+            bool result = await _rewardQueue.EnqueueItemAsync(itemData, safeCount);
 
             if (!result)
                 DebugTool.Warning("보상 큐에 아이템을 추가하지 못했습니다.", DebugType.Board, this);
+
+            return result;
+        }
+
+        private async System.Threading.Tasks.Task<bool> ReceiveSpecialItemAsync(ItemData itemData, int count)
+        {
+            if (_specialItemBoardSystem == null)
+                _specialItemBoardSystem = FindFirstObjectByType<SpecialItemBoardSystem>();
+
+            if (_specialItemBoardSystem == null)
+            {
+                DebugTool.Warning("SpecialItemBoardSystem이 등록되지 않았습니다.", DebugType.Board, this);
+                return false;
+            }
+
+            bool result = await _specialItemBoardSystem.TryAddSpecialItemAsync(itemData, count);
+
+            if (!result)
+                DebugTool.Warning("특수 아이템 보드에 아이템을 추가하지 못했습니다.", DebugType.Board, this);
+
+            return result;
         }
 
         public void ReceiveRandomTestItem()
@@ -105,13 +186,27 @@ namespace UI.MergeBoard
                 return;
             }
 
-            if (!_itemDatabase.TryGetRandomItem(ItemType.General, out ItemData itemData))
+            if (!_itemDatabase.TryGetRandomItem(ItemType.Common, out ItemData itemData))
             {
-                DebugTool.Warning("생성 가능한 General 아이템 데이터가 없습니다.", DebugType.Board, this);
+                DebugTool.Warning("생성 가능한 Common 아이템 데이터가 없습니다.", DebugType.Board, this);
                 return;
             }
 
             ReceiveItem(itemData);
+        }
+
+        private bool TryGetItemDataById(int itemID, out ItemData itemData)
+        {
+            itemData = null;
+
+            if (_itemDatabase != null && _itemDatabase.TryGetItemById(itemID, out itemData))
+                return true;
+
+            if (LocalDataAccess.Instance?.Game != null &&
+                LocalDataAccess.Instance.Game.TryGetMergeBoardItemById(itemID, out itemData))
+                return true;
+
+            return false;
         }
 
         private void OnDestroy()

@@ -162,9 +162,9 @@ namespace UI.MergeBoard
             if (itemData == null || !itemData.HasItem)
                 return false;
 
-            if (itemData.ItemType != ItemType.General)
+            if (itemData.ItemType != ItemType.Common)
             {
-                DebugTool.Warning("일반 보드에는 General 타입 아이템만 배치할 수 있습니다.", DebugType.Board, this);
+                DebugTool.Warning("일반 보드에는 Common 타입 아이템만 배치할 수 있습니다.", DebugType.Board, this);
                 return false;
             }
 

@@ -48,11 +48,7 @@ namespace UI.MergeBoard
             }
 
             if (_itemText != null)
-            {
-                _itemText.text = itemData.Amount > 1
-                    ? $"#{itemData.ItemID}\nx{itemData.Amount}"
-                    : $"#{itemData.ItemID}";
-            }
+                _itemText.text = $"#{itemData.ItemID}";
         }
 
         public void OnPointerClick(PointerEventData eventData)
