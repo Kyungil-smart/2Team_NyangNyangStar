@@ -46,7 +46,7 @@ public class NyangNyangSnapStagePopupUI : UIPopup
         if (button == null) return;
         button.onClick.AddListener(() =>
         {
-            popup.SetStage(stage);
+            popup.OpenPopup(stage);
             popup.gameObject.SetActive(true);
             PlayPopupOpenAnimation(popup);
         });

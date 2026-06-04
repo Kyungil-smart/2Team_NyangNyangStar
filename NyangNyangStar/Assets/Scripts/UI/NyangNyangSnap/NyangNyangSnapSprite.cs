@@ -24,7 +24,7 @@ public class NyangNyangSnapSprite : UIBase
     public void SetBackground(int stage)
     {
         string key = _backgroundSO.GetRandomBackgroundKey(stage);
-        Debug.Log(key);
+        DebugTool.Log($"SetBackground: {key}", DebugType.UI);
         SetSprite(NyangNyangSnapImages.BackPanel, key);
     }
 

@@ -7,6 +7,9 @@ using Util;
 
 public class NyangNyangSnapUI : UIPopup
 {
+    [Tooltip("시작 패널")][SerializeField] private GameObject _startPanel;
+    [Tooltip("시작 버튼")][SerializeField] private GameObject _startButton;
+
     [Header("버튼")]
     [Tooltip("뒤로가기 버튼")][SerializeField] private Button _backButton;
     [Tooltip("사진 버튼")][SerializeField] private Button _photoButton;
@@ -86,9 +89,12 @@ public class NyangNyangSnapUI : UIPopup
         });
     }
 
-    public void SetStage(int stage)
+    public void OpenPopup(int stage)
     {
         _sprite.SetBackground(stage);
+        gameObject.SetActive(true);
+        _startPanel.SetActive(true);
+        _startButton.SetActive(true);
     }
 }
 
