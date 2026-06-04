@@ -64,6 +64,10 @@ MonoBehaviour:
     <URL>k__BackingField: https://docs.google.com/spreadsheets/d/1hD2NCEzCWr2aml-_aqHsHZu_8HeZ0xCLpMDt_A9NfoU/edit?gid=1207676295#gid=1207676295
     <Type>k__BackingField: 2
   nyangNyangSnapBackgroundSo: {fileID: 11400000, guid: b3e0326560a126d4586ecdc988ab7a71, type: 2}
+  mergeBoardItemURL:
+    <URL>k__BackingField: https://docs.google.com/spreadsheets/d/1hD2NCEzCWr2aml-_aqHsHZu_8HeZ0xCLpMDt_A9NfoU/edit?gid=803702527#gid=803702527
+    <Type>k__BackingField: 2
+  itemDatabaseSo: {fileID: 11400000, guid: 0073675bff47ab64e8be560c0d594644, type: 2}
   _pendingSheetCount: 0
 --- !u!114 &7187299137341658617
 MonoBehaviour:
