@@ -1,4 +1,4 @@
-﻿using Core.Managers;
+using Core.Managers;
 using System;
 using Data.Parsing;
 using Data.LibrarySystem;
@@ -23,6 +23,10 @@ namespace Data.Loader
         [Space(8)] [Header("스크래칭 타임")] 
         [SerializeField] private SheetData scratchingURL;
         [SerializeField] private ScratchingSo scratchingSo;
+
+        [Space(8)] [Header("냥냥스냅 배경")]
+        [SerializeField] private SheetData nyangNyangSnapBackgroundURL;
+        [SerializeField] private NyangNyangSnapBackgroundSO nyangNyangSnapBackgroundSo;
 
         [Space(8)] [SerializeField] private int _pendingSheetCount;
         public int PendingSheetCount => _pendingSheetCount;
@@ -64,6 +68,12 @@ namespace Data.Loader
                     OnSheetCompleted();
                     
                     scratchingSo.PrintData();
+                });
+
+            LoadSheetData(nyangNyangSnapBackgroundURL, nyangNyangSnapBackgroundSo, 3, () =>
+                {
+                    OnSheetCompleted();
+                    nyangNyangSnapBackgroundSo.PrintData();
                 });
         }
 
