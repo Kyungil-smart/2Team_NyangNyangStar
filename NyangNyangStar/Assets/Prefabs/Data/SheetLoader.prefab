@@ -60,6 +60,10 @@ MonoBehaviour:
     <URL>k__BackingField: https://docs.google.com/spreadsheets/d/1hD2NCEzCWr2aml-_aqHsHZu_8HeZ0xCLpMDt_A9NfoU/edit?gid=0#gid=0
     <Type>k__BackingField: 2
   scratchingSo: {fileID: 11400000, guid: bdec79777a560544fb7f8f70232dd29b, type: 2}
+  nyangNyangSnapBackgroundURL:
+    <URL>k__BackingField: https://docs.google.com/spreadsheets/d/1hD2NCEzCWr2aml-_aqHsHZu_8HeZ0xCLpMDt_A9NfoU/edit?gid=1207676295#gid=1207676295
+    <Type>k__BackingField: 2
+  nyangNyangSnapBackgroundSo: {fileID: 11400000, guid: b3e0326560a126d4586ecdc988ab7a71, type: 2}
   _pendingSheetCount: 0
 --- !u!114 &7187299137341658617
 MonoBehaviour:
