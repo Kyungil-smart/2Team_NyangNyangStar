@@ -47,6 +47,9 @@ namespace Util
 
             // 냥냥스냅 UI 프리팹
             public const string NyangNyangSnapStagePopUpUI = "NyangNyangSnapStagePopupUI";
+            public const string NyangNyangSnapSnackPopupUI = "NyangNyangSnapSnackCanvas";
+            public const string NyangNyangSnapToyPopupUI = "NyangNyangSnapToyCanvas";
+            public const string NyangNyangSnapPopupUI = "NyangNyangSnapCanvas";
 
             public const string ScratchingTimeUI = "ScratchingTimeUI";
         }
@@ -259,6 +262,9 @@ namespace Util
 
             // 냥냥스냅
             PrefabKeyDict.Add(Prefabs.NyangNyangSnapStagePopUpUI, new List<GameObject>());
+            PrefabKeyDict.Add(Prefabs.NyangNyangSnapSnackPopupUI, new List<GameObject>());
+            PrefabKeyDict.Add(Prefabs.NyangNyangSnapToyPopupUI, new List<GameObject>());
+            PrefabKeyDict.Add(Prefabs.NyangNyangSnapPopupUI, new List<GameObject>());
 
             PrefabKeyDict.Add(Prefabs.ScratchingTimeUI, new List<GameObject>());
         }
