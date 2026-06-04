@@ -1,4 +1,5 @@
-﻿using System;
+using System;
+using DG.Tweening;
 using Services.Enums;
 using TMPro;
 using UI;
@@ -16,10 +17,26 @@ public class ScratchingTimeController : UIBase
     [Header("Close Button")]
     [SerializeField] private Button _closeButton;
 
+    [Header("Close Animation")]
+    [Tooltip("비우면 이 UI 루트 전체가 줄어듭니다. EventPopupPanel만 지정하면 배경은 그대로라 체감이 거의 없습니다.")]
+    [SerializeField] private Transform _closeRoot;
+    [Tooltip("닫힐 때 도달하는 스케일 (1=원크기, 0.8=80%). 값을 크게 바꿔야 눈에 띕니다.")]
+    [SerializeField] private float _contentScaleFrom = 0.8f;
+    [Tooltip("닫기 연출 시간(초). 0.15는 너무 짧아 스케일 변화가 잘 안 보입니다.")]
+    [SerializeField] private float _closeDuration = 0.25f;
+
+    private CanvasGroup _closeCanvasGroup;
+    private Sequence _closeSequence;
+    private bool _isCloseAnimating;
+
     [Header("Stage Button")]
     [SerializeField] private Button[] _stageButtons = new Button[4];
     [SerializeField] private GameObject _errorPanel;
-    [SerializeField] private Button _errorCloseButton;
+    [SerializeField] private float _errorFadeDuration = 0.25f;
+    [SerializeField] private float _errorDisplayDuration = 2f;
+
+    private CanvasGroup _errorCanvasGroup;
+    private Tween _errorFadeTween;
 
     [Header("Daily Stage UI")]
     [SerializeField] private TMP_Text _dailyChallengeCountText; // CountPanel 통합 텍스트 연결용
@@ -57,6 +74,12 @@ public class ScratchingTimeController : UIBase
     private void OnDisable()
     {
         UnregisterButtonEvents();
+    }
+
+    private void OnDestroy()
+    {
+        KillErrorPanelTween();
+        KillCloseTween();
     }
 
     /// <summary>
@@ -139,15 +162,66 @@ public class ScratchingTimeController : UIBase
     /// </summary>
     public void Show()
     {
+        KillCloseTween();
+        _isCloseAnimating = false;
         gameObject.SetActive(true);
+        EnsureCloseTweenTargets();
+        UIPanelCloseTween.PrepareShow(_closeRoot, _closeCanvasGroup, 1f);
+        SetCloseInputBlocked(false);
     }
 
     /// <summary>
-    /// 선택 화면을 숨깁니다.
+    /// 선택 화면을 즉시 숨깁니다.
     /// </summary>
     public void Hide()
     {
+        KillCloseTween();
+        _isCloseAnimating = false;
+        SetCloseInputBlocked(false);
         gameObject.SetActive(false);
+    }
+
+    /// <summary>
+    /// 선택 화면을 닫기 애니메이션 후 숨깁니다.
+    /// </summary>
+    /// <param name="onComplete">닫기 완료 후 호출할 콜백</param>
+    public void Hide(Action onComplete)
+    {
+        if (!gameObject.activeSelf)
+        {
+            onComplete?.Invoke();
+            return;
+        }
+
+        if (_isCloseAnimating)
+        {
+            onComplete?.Invoke();
+            return;
+        }
+
+        EnsureCloseTweenTargets();
+        KillCloseTween();
+        _isCloseAnimating = true;
+        SetCloseInputBlocked(true);
+
+        if (_closeRoot == null && _closeCanvasGroup == null)
+        {
+            Hide();
+            onComplete?.Invoke();
+            return;
+        }
+
+        _closeSequence = UIPanelCloseTween.Play(
+            _closeRoot,
+            _closeCanvasGroup,
+            _contentScaleFrom,
+            _closeDuration,
+            () =>
+            {
+                _isCloseAnimating = false;
+                Hide();
+                onComplete?.Invoke();
+            });
     }
 
     /// <summary>
@@ -157,7 +231,7 @@ public class ScratchingTimeController : UIBase
     public void InitView()
     {
         SetStageButtonsInteractable(true);
-        SetStageStartButtonsInteractable(true, true);
+        SetStageStartButtonsInteractable(false, false);
         HideErrorPanel();
         ClearStageCardInfo();
     }
@@ -167,6 +241,9 @@ public class ScratchingTimeController : UIBase
     /// </summary>
     private void RaiseCloseClicked()
     {
+        if (_isCloseAnimating)
+            return;
+
         ClearSelectedButton();
         OnCloseClicked?.Invoke();
     }
@@ -197,10 +274,33 @@ public class ScratchingTimeController : UIBase
     /// </summary>
     public void ShowErrorPanel()
     {
-        if (_errorPanel == null)
+        BindErrorPanel();
+
+        if (_errorPanel == null || _errorCanvasGroup == null)
             return;
 
+        KillErrorPanelTween();
+        _errorCanvasGroup.alpha = 0f;
         _errorPanel.SetActive(true);
+        _errorPanel.transform.SetAsLastSibling();
+
+        _errorFadeTween = _errorCanvasGroup
+            .DOFade(1f, _errorFadeDuration)
+            .SetUpdate(true)
+            .OnComplete(ScheduleErrorPanelAutoHide);
+    }
+
+    private void ScheduleErrorPanelAutoHide()
+    {
+        if (_errorDisplayDuration <= 0f)
+        {
+            HideErrorPanel();
+            return;
+        }
+
+        _errorFadeTween = DOVirtual
+            .DelayedCall(_errorDisplayDuration, HideErrorPanel)
+            .SetUpdate(true);
     }
 
     /// <summary>
@@ -208,10 +308,28 @@ public class ScratchingTimeController : UIBase
     /// </summary>
     public void HideErrorPanel()
     {
+        BindErrorPanel();
+
         if (_errorPanel == null)
             return;
 
-        _errorPanel.SetActive(false);
+        if (!_errorPanel.activeSelf)
+        {
+            DeactivateErrorPanel();
+            return;
+        }
+
+        if (_errorCanvasGroup == null)
+        {
+            DeactivateErrorPanel();
+            return;
+        }
+
+        KillErrorPanelTween();
+        _errorFadeTween = _errorCanvasGroup
+            .DOFade(0f, _errorFadeDuration)
+            .SetUpdate(true)
+            .OnComplete(DeactivateErrorPanel);
     }
 
     /// <summary>
@@ -334,10 +452,10 @@ public class ScratchingTimeController : UIBase
     public void SetStageStartButtonsInteractable(bool canStartDaily, bool canStartWeekly)
     {
         if (_dailyStartButton != null)
-            _dailyStartButton.interactable = true;
+            _dailyStartButton.interactable = canStartDaily;
 
         if (_weeklyStartButton != null)
-            _weeklyStartButton.interactable = true;
+            _weeklyStartButton.interactable = canStartWeekly;
     }
 
     /// <summary>
@@ -370,9 +488,31 @@ public class ScratchingTimeController : UIBase
 
         GetButtons();
         GetTexts();
+        EnsureCloseTweenTargets();
 
         if (isActiveAndEnabled)
             RegisterButtonEvents();
+    }
+
+    private void EnsureCloseTweenTargets()
+    {
+        _closeRoot ??= transform;
+        _closeCanvasGroup ??= UIPanelCloseTween.GetOrAddCanvasGroup(gameObject);
+    }
+
+    private void SetCloseInputBlocked(bool blocked)
+    {
+        if (_closeCanvasGroup == null)
+            return;
+
+        _closeCanvasGroup.interactable = !blocked;
+        _closeCanvasGroup.blocksRaycasts = !blocked;
+    }
+
+    private void KillCloseTween()
+    {
+        UIPanelCloseTween.Kill(_closeRoot, _closeCanvasGroup, _closeSequence);
+        _closeSequence = null;
     }
 
     private void GetButtons()
@@ -385,14 +525,7 @@ public class ScratchingTimeController : UIBase
         _stageButtons[3] ??= FindButton("StageTab_4");
         _dailyStartButton ??= FindButtonInChild("DailyStageCard", "Button (1)");
         _weeklyStartButton ??= FindButtonInChild("WeekStageCard", "Button (1)") ?? FindButtonInChild("WeekStageCard", "Button");
-        _errorPanel ??= UIBase.FindChild(gameObject, "ErrorPanel", true);
-        _errorCloseButton ??= FindButtonInChild("ErrorPanel", "ExitButton");
-
-        if (_errorCloseButton != null)
-        {
-            _errorCloseButton.onClick.RemoveListener(HideErrorPanel);
-            _errorCloseButton.onClick.AddListener(HideErrorPanel);
-        }
+        BindErrorPanel();
     }
 
     private void GetTexts()
@@ -448,6 +581,43 @@ public class ScratchingTimeController : UIBase
     private Button FindButton(string childName)
     {
         return UIBase.FindChild<Button>(gameObject, childName, true);
+    }
+
+    private void BindErrorPanel()
+    {
+        if (_errorPanel == null)
+            _errorPanel = UIBase.FindChild(gameObject, "ErrorPanel", true);
+
+        if (_errorPanel == null || _errorCanvasGroup != null)
+            return;
+
+        _errorCanvasGroup = _errorPanel.GetComponent<CanvasGroup>();
+
+        if (_errorCanvasGroup == null)
+            _errorCanvasGroup = _errorPanel.AddComponent<CanvasGroup>();
+
+        _errorCanvasGroup.interactable = false;
+        _errorCanvasGroup.blocksRaycasts = false;
+    }
+
+    private void KillErrorPanelTween()
+    {
+        _errorFadeTween?.Kill();
+        _errorFadeTween = null;
+        _errorCanvasGroup?.DOKill();
+    }
+
+    private void DeactivateErrorPanel()
+    {
+        if (_errorPanel == null)
+            return;
+
+        KillErrorPanelTween();
+
+        if (_errorCanvasGroup != null)
+            _errorCanvasGroup.alpha = 0f;
+
+        _errorPanel.SetActive(false);
     }
 
     private Button FindButtonInChild(string childName, string buttonName = null)

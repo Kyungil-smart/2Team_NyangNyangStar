@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using Services.Enums;
@@ -179,8 +179,24 @@ namespace Data.ScriptableObjects.ScratchingTimeSO
         }
 
         /// <summary>
-        /// 스테이지 클리어를 기록하고 남은 도전 횟수와 최고 클리어 단계를 갱신합니다.
-        /// 도전 횟수는 클리어 시에만 차감됩니다.
+        /// 스테이지 시작 시 남은 도전 횟수를 1 차감합니다.
+        /// </summary>
+        /// <param name="stage">시작할 스테이지 값</param>
+        /// <param name="stageType">시작할 스테이지 타입</param>
+        /// <returns>차감에 성공하면 true</returns>
+        public bool TryConsumeChallengeCount(int stage, StageType stageType)
+        {
+            if (!CanChallenge(stage, stageType))
+                return false;
+
+            int remainingCount = GetRemainingChallengeCount(stage, stageType);
+            SetRemainingChallengeCountForAll(stageType, remainingCount - 1);
+            return true;
+        }
+
+        /// <summary>
+        /// 스테이지 클리어를 기록하고 최고 클리어 단계를 갱신합니다.
+        /// 도전 횟수는 START 시점에 차감됩니다.
         /// </summary>
         /// <param name="stage">클리어한 스테이지 값</param>
         /// <param name="stageType">클리어한 스테이지 타입</param>
@@ -188,13 +204,6 @@ namespace Data.ScriptableObjects.ScratchingTimeSO
         {
             if (!IsContainsKey(stage))
                 return;
-
-            int remainingCount = GetRemainingChallengeCount(stage, stageType);
-
-            if (remainingCount <= 0)
-                return;
-
-            SetRemainingChallengeCountForAll(stageType, remainingCount - 1);
 
             switch (stageType)
             {

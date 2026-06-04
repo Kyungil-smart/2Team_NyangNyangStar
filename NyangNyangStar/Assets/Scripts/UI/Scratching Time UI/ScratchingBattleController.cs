@@ -1,4 +1,5 @@
 ﻿using System;
+using DG.Tweening;
 using Services.Enums;
 using TMPro;
 using UI;
@@ -6,14 +7,25 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-/// <summary>
-/// 스크래칭 타임 전투 화면 UI를 관리합니다.
-/// 흥미도와 스크래쳐 내구도는 Filled 타입 Image의 fillAmount로 표시합니다.
-/// </summary>
+
+// 스크래칭 타임 전투 화면 UI를 관리
+// 흥미도와 스크래쳐 내구도는 Filled 타입 Image의 fillAmount로 표시
+
 public class ScratchingBattleController : UIBase
 {
     [Header("닫기 버튼")]
     [SerializeField] private Button _closeButton;
+
+    [Header("Close Animation")]
+    [Tooltip("비우면 전투 UI 루트 전체가 닫힙니다.")]
+    [SerializeField] private Transform _closeRoot;
+    [Tooltip("닫힐 때 도달하는 스케일. 0.5~0.7로 바꿔 보면 차이가 확실합니다.")]
+    [SerializeField] private float _contentScaleFrom = 0.82f;
+    [SerializeField] private float _closeDuration = 0.22f;
+
+    private CanvasGroup _closeCanvasGroup;
+    private Sequence _closeSequence;
+    private bool _isCloseAnimating;
 
     [Header("스테이지/단계 표시 텍스트")]
     [SerializeField] private TMP_Text _battleStageText;
@@ -37,47 +49,106 @@ public class ScratchingBattleController : UIBase
         _interestController?.StopInterestDrain();
     }
 
-    /// <summary>
-    /// 전투 화면 버튼 이벤트를 등록합니다.
-    /// </summary>
+    public void ConfigureInterestDrain(float timeLimit)
+    {
+        _interestController?.SetDrainDuration(timeLimit);
+    }
+
+    
+    // 전투 화면 버튼 이벤트를 등록
     private void OnEnable()
     {
         if (_closeButton != null)
             _closeButton.onClick.AddListener(RaiseCloseClicked);
     }
 
-    /// <summary>
-    /// 전투 화면 버튼 이벤트를 해제합니다.
-    /// </summary>
+    
+    // 전투 화면 버튼 이벤트를 해제
     private void OnDisable()
     {
         if (_closeButton != null)
             _closeButton.onClick.RemoveListener(RaiseCloseClicked);
     }
 
-    /// <summary>
-    /// 닫기 버튼 입력을 매니저에 전달합니다.
-    /// </summary>
+    private void OnDestroy()
+    {
+        KillCloseTween();
+    }
+
+    
+    // 닫기 버튼 입력을 매니저에 전달
     private void RaiseCloseClicked()
     {
+        if (_isCloseAnimating)
+            return;
+
         EventSystem.current?.SetSelectedGameObject(null);
         OnCloseClicked?.Invoke();
     }
 
-    /// <summary>
-    /// 전투 화면을 표시합니다.
-    /// </summary>
+    
+    // 전투 화면을 표시
     public void Show()
     {
+        KillCloseTween();
+        _isCloseAnimating = false;
         gameObject.SetActive(true);
+        EnsureCloseTweenTargets();
+        UIPanelCloseTween.PrepareShow(_closeRoot, _closeCanvasGroup, 1f);
+        SetCloseInputBlocked(false);
+    }
+
+    
+    // 전투 화면을 즉시 숨기기
+    public void Hide()
+    {
+        KillCloseTween();
+        _isCloseAnimating = false;
+        SetCloseInputBlocked(false);
+        gameObject.SetActive(false);
     }
 
     /// <summary>
-    /// 전투 화면을 숨깁니다.
+    /// 전투 화면을 닫기 애니메이션 후 숨깁니다.
     /// </summary>
-    public void Hide()
+    /// <param name="onComplete">닫기 완료 후 호출할 콜백</param>
+    public void Hide(Action onComplete)
     {
-        gameObject.SetActive(false);
+        if (!gameObject.activeSelf)
+        {
+            onComplete?.Invoke();
+            return;
+        }
+
+        if (_isCloseAnimating)
+        {
+            onComplete?.Invoke();
+            return;
+        }
+
+        EnsureCloseTweenTargets();
+        KillCloseTween();
+        _isCloseAnimating = true;
+        SetCloseInputBlocked(true);
+
+        if (_closeRoot == null && _closeCanvasGroup == null)
+        {
+            Hide();
+            onComplete?.Invoke();
+            return;
+        }
+
+        _closeSequence = UIPanelCloseTween.Play(
+            _closeRoot,
+            _closeCanvasGroup,
+            _contentScaleFrom,
+            _closeDuration,
+            () =>
+            {
+                _isCloseAnimating = false;
+                Hide();
+                onComplete?.Invoke();
+            });
     }
 
     /// <summary>
@@ -157,6 +228,7 @@ public class ScratchingBattleController : UIBase
 
     public override void Init()
     {
+        _closeButton ??= UIBase.FindChild<Button>(gameObject, "ExitButton", true);
         _closeButton ??= GetComponentInChildren<Button>(true);
         _battleStageText ??= GetComponentInChildren<TMP_Text>(true);
         _durabilitySlider ??= FindSlider("DurabilitySlider");
@@ -165,6 +237,28 @@ public class ScratchingBattleController : UIBase
         _interestAmountImage ??= FindFillImage("InterestSlider");
         _scratchEffectPool ??= GetComponentInChildren<ScratchEffectPool>(true);
         _interestController ??= GetComponentInChildren<ScratchingInterestController>(true);
+        EnsureCloseTweenTargets();
+    }
+
+    private void EnsureCloseTweenTargets()
+    {
+        _closeRoot ??= transform;
+        _closeCanvasGroup ??= UIPanelCloseTween.GetOrAddCanvasGroup(gameObject);
+    }
+
+    private void SetCloseInputBlocked(bool blocked)
+    {
+        if (_closeCanvasGroup == null)
+            return;
+
+        _closeCanvasGroup.interactable = !blocked;
+        _closeCanvasGroup.blocksRaycasts = !blocked;
+    }
+
+    private void KillCloseTween()
+    {
+        UIPanelCloseTween.Kill(_closeRoot, _closeCanvasGroup, _closeSequence);
+        _closeSequence = null;
     }
 
     private Slider FindSlider(string sliderName)

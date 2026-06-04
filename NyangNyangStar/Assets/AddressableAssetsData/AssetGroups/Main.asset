@@ -52,6 +52,11 @@ MonoBehaviour:
     m_SerializedLabels:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 14eca5e70671f9f47b99e4165aa777a5
+    m_Address: Shape_Circle
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 1859535382109db4c84c15614149ddf3
     m_Address: Main_Btn_Roulette
     m_ReadOnly: 0
