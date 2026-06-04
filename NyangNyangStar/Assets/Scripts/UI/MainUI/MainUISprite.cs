@@ -45,7 +45,7 @@ public class MainUISprite : UIBase
         SetSprite(MainUIImages.Energy, "Shape_Rectangle");
         SetSprite(MainUIImages.Coin, "Shape_Rectangle");
         SetSprite(MainUIImages.Gem, "Shape_Rectangle");
-        SetSprite(MainUIImages.ProfileImage, "Profile_ProfileImages");
+        SetSprite(MainUIImages.ProfileImage, "Profile_ProfileImages_0");
         SetSprite(MainUIImages.ProfileFrame, "Main_Profile_Frame");
     }
 
