@@ -2,6 +2,7 @@ using Core.Managers;
 using UI;
 using UnityEngine;
 using UnityEngine.UI;
+using Util;
 
 public class NyangNyangSnapStagePopupUI : UIPopup
 {
@@ -18,8 +19,8 @@ public class NyangNyangSnapStagePopupUI : UIPopup
         _stage2Button = Get<Button>((int)NyangNyangSnapStageButtons.Stage2Button);
         _closeButton = Get<Button>((int)NyangNyangSnapStageButtons.CloseButton);
 
-        // InitPopup(KeyContainer.Prefabs., _stage1Button);
-        // InitPopup(KeyContainer.Prefabs., _stage2Button);
+        InitNyangNyangSnap();
+
         if (_closeButton != null) _closeButton.onClick.AddListener(CloseNyangNyangSnapStagePopup);
     }
 
@@ -30,16 +31,22 @@ public class NyangNyangSnapStagePopupUI : UIPopup
         RemovePopupButton(_closeButton);
     }
 
-    private void InitPopup(string key, Button button)
+    private void InitNyangNyangSnap()
     {
-        GameManager.UI.ShowPopupUI<UIPopup>(key, onLoaded => AddPopupButton(button, onLoaded), false);
+        GameManager.UI.ShowPopupUI<NyangNyangSnapUI>(KeyContainer.Prefabs.NyangNyangSnapPopupUI,
+            onLoaded =>
+            {
+                AddNyangNyangSnapPopupButton(_stage1Button, onLoaded, 1);
+                AddNyangNyangSnapPopupButton(_stage2Button, onLoaded, 2);
+            }, false);
     }
 
-    private void AddPopupButton(Button button, UIPopup popup)
+    private void AddNyangNyangSnapPopupButton(Button button, NyangNyangSnapUI popup, int stage)
     {
         if (button == null) return;
         button.onClick.AddListener(() =>
         {
+            popup.SetStage(stage);
             popup.gameObject.SetActive(true);
             PlayPopupOpenAnimation(popup);
         });

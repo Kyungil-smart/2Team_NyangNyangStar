@@ -3601,6 +3601,7 @@ GameObject:
   - component: {fileID: 3541661580833314696}
   - component: {fileID: 3997457834617875789}
   - component: {fileID: 9216541236283594842}
+  - component: {fileID: 5077266957889570623}
   m_Layer: 5
   m_Name: NyangNyangSnapCanvas
   m_TagString: Untagged
@@ -3710,3 +3711,16 @@ MonoBehaviour:
   _settingsButton: {fileID: 0}
   _snackPanelButton: {fileID: 0}
   _toyPanelButton: {fileID: 0}
+--- !u!114 &5077266957889570623
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9053692611377901051}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1ab1825dbe965f04cbdae6a0f65b698a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _backgroundSO: {fileID: 11400000, guid: b3e0326560a126d4586ecdc988ab7a71, type: 2}

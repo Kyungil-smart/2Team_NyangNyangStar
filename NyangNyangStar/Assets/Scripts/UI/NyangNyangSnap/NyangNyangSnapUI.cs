@@ -14,7 +14,7 @@ public class NyangNyangSnapUI : UIPopup
     [Tooltip("간식 패널 버튼")][SerializeField] private Button _snackPanelButton;
     [Tooltip("장난감 패널 버튼")][SerializeField] private Button _toyPanelButton;
 
-
+    private NyangNyangSnapSprite _sprite;
 
     public override void Init()
     {
@@ -25,8 +25,10 @@ public class NyangNyangSnapUI : UIPopup
         _snackPanelButton = Get<Button>((int)NyangNyangSnapButtons.SnackPanelButton);
         _toyPanelButton = Get<Button>((int)NyangNyangSnapButtons.ToyPanelButton);
 
-
         InitPopups();
+
+        _sprite = GetComponent<NyangNyangSnapSprite>();
+        _sprite.Init();
     }
 
     private void InitPopups()
@@ -39,6 +41,7 @@ public class NyangNyangSnapUI : UIPopup
 
 
     }
+
     private void OnDisable()
     {
         //RemovePopupButton(_photoButton);
@@ -83,6 +86,10 @@ public class NyangNyangSnapUI : UIPopup
         });
     }
 
+    public void SetStage(int stage)
+    {
+        _sprite.SetBackground(stage);
+    }
 }
 
 public enum NyangNyangSnapButtons
