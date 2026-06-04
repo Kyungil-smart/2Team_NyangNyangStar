@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -106,6 +106,17 @@ namespace Data.ScriptableObjects.ScratchingTimeSO
         public int GetCurrentExp()
             => _currentExp;
 
+        /// <summary>
+        /// 현재 레벨 구간 경험치 비율(0~1)을 반환합니다. MaxExp는 1000 고정 기준입니다.
+        /// </summary>
+        public float GetExpFillRatio()
+        {
+            if (MaxExp <= 0)
+                return 0f;
+
+            return Mathf.Clamp01((float)_currentExp / MaxExp);
+        }
+
         private void RefreshTotalStats()
         {
             _totalSharpness = _baseSharpness + (_level * _sharpnessIncreasePerLevel);
@@ -119,6 +130,18 @@ namespace Data.ScriptableObjects.ScratchingTimeSO
         /// <returns>계산된 공격 데미지</returns>
         public int Attack()
         {
+            return Attack(out _);
+        }
+
+        /// <summary>
+        /// 뭉치의 공격 데미지와 크리티컬 여부를 함께 반환합니다.
+        /// </summary>
+        /// <param name="isCritical">힘껏 긁기(크리티컬) 발생 여부</param>
+        /// <returns>계산된 공격 데미지</returns>
+        public int Attack(out bool isCritical)
+        {
+            isCritical = false;
+
             int random = Random.Range(0, 31);
             float magnification = Mathf.Clamp((100 - random) / 100f, 0, 30);
 
@@ -128,6 +151,7 @@ namespace Data.ScriptableObjects.ScratchingTimeSO
 
             if (critChance <= _totalCriticalChance)
             {
+                isCritical = true;
                 value *= 2;
                 DebugTool.Log($"[뭉치의 힘껏 긁기!] 확률 : {_totalCriticalChance} " +
                               $"| 데미지 : {value}", DebugType.Data);
@@ -152,9 +176,9 @@ namespace Data.ScriptableObjects.ScratchingTimeSO
                 return;
             }
 
-            _currentExp += expAmount;
+            CurrentExp = _currentExp + expAmount;
 
-            if (_currentExp >= MaxExp)
+            while (_currentExp >= MaxExp)
                 LevelUp();
         }
     }

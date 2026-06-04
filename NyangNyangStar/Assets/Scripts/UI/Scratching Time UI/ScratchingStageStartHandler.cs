@@ -26,9 +26,7 @@ public class ScratchingStageStartHandler : MonoBehaviour, IPointerDownHandler
     {
         // UI가 다시 활성화될 때마다 첫 터치 상태로 초기화
         _hasStarted = false;
-
-        if (_touchGuideText != null)
-            _touchGuideText.SetActive(true);
+        ShowTouchGuide();
     }
 
     public void OnPointerDown(PointerEventData eventData)
@@ -39,10 +37,34 @@ public class ScratchingStageStartHandler : MonoBehaviour, IPointerDownHandler
 
         _hasStarted = true;
 
-        if (_touchGuideText != null)
-            _touchGuideText.SetActive(false);
+        HideTouchGuide();
 
         _interestController?.StartInterestDrain();
+    }
+
+    private void ShowTouchGuide()
+    {
+        if (_touchGuideText == null)
+            return;
+
+        TouchBlinkAnim blinkAnim = _touchGuideText.GetComponent<TouchBlinkAnim>();
+
+        if (!_touchGuideText.activeSelf)
+        {
+            _touchGuideText.SetActive(true);
+            return;
+        }
+
+        blinkAnim?.StartBlink();
+    }
+
+    private void HideTouchGuide()
+    {
+        if (_touchGuideText == null)
+            return;
+
+        _touchGuideText.GetComponent<TouchBlinkAnim>()?.StopBlink();
+        _touchGuideText.SetActive(false);
     }
 
     private void CacheReferences()
