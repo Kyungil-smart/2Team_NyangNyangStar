@@ -1,4 +1,5 @@
-﻿using Data.ScriptableObjects.MergeBoard;
+﻿using Data.LibrarySystem;
+using Data.ScriptableObjects.MergeBoard;
 using Services.Enums;
 using System;
 using System.Collections.Generic;
@@ -20,6 +21,9 @@ namespace UI.MergeBoard
         [Header("Firestore")]
         [SerializeField] private MergeBoardFirestoreSo _mergeBoardFirestore;
 
+        [Header("아이템 정보 UI")]
+        [SerializeField] private BoardItemInfoPanel _itemInfoPanel;
+
         [Header("보드 크기")]
         [SerializeField] private int _width = 7;
         [SerializeField] private int _height = 9;
@@ -35,6 +39,7 @@ namespace UI.MergeBoard
         public bool IsServerDataLoaded { get; private set; }
 
         private readonly Dictionary<int, ItemData> _slotItemDict = new();
+        private ItemSlot _selectedSlot;
 
         public int SlotCount => _width * _height;
         public IReadOnlyDictionary<int, ItemData> SlotItemDict => _slotItemDict;
@@ -62,6 +67,14 @@ namespace UI.MergeBoard
             Init();
             InitSlotData();
             GenerateSlot();
+
+            if (_itemInfoPanel == null)
+                _itemInfoPanel = FindFirstObjectByType<BoardItemInfoPanel>();
+
+            if (_itemInfoPanel != null)
+                _itemInfoPanel.Init(this);
+
+            ClearSelectedSlot();
 
             IsBoardReady = true;
 
@@ -225,6 +238,7 @@ namespace UI.MergeBoard
             };
 
             await SaveSlotsSafeAsync(changedSlots);
+            ClearSelectedSlot();
         }
 
         public async Task<bool> ClearSlotAsync(int slotNumber)
@@ -234,6 +248,10 @@ namespace UI.MergeBoard
 
             SetSlotData(slotNumber, ItemData.Empty);
             await SaveSlotSafeAsync(slotNumber);
+
+            if (_selectedSlot != null && _selectedSlot.SlotNumber == slotNumber)
+                ClearSelectedSlot();
+
             return true;
         }
 
@@ -245,6 +263,51 @@ namespace UI.MergeBoard
             return _slotItemDict.TryGetValue(slotNumber, out ItemData itemData)
                 ? itemData.Clone()
                 : ItemData.Empty;
+        }
+
+        public void SelectSlot(ItemSlot itemSlot)
+        {
+            if (itemSlot == null || !itemSlot.HasItem)
+            {
+                ClearSelectedSlot();
+                return;
+            }
+
+            _selectedSlot = itemSlot;
+
+            if (_itemInfoPanel == null)
+                _itemInfoPanel = FindFirstObjectByType<BoardItemInfoPanel>();
+
+            if (_itemInfoPanel != null)
+                _itemInfoPanel.Show(itemSlot.ItemData);
+        }
+
+        public void ClearSelectedSlot()
+        {
+            _selectedSlot = null;
+
+            if (_itemInfoPanel != null)
+                _itemInfoPanel.Hide();
+        }
+
+        public async Task<bool> SellSelectedItemAsync()
+        {
+            if (_selectedSlot == null || !_selectedSlot.HasItem)
+            {
+                DebugTool.Warning("판매할 아이템이 선택되지 않았습니다.", DebugType.Board, this);
+                return false;
+            }
+
+            int slotNumber = _selectedSlot.SlotNumber;
+
+            if (!IsValidSlotNumber(slotNumber))
+                return false;
+
+            SetSlotData(slotNumber, ItemData.Empty);
+            await SaveSlotSafeAsync(slotNumber);
+            ClearSelectedSlot();
+
+            return true;
         }
 
         public async Task LoadBoardFromServerAsync(bool normalizeDocumentIds = false)
@@ -295,11 +358,12 @@ namespace UI.MergeBoard
                     if (!IsValidSlotNumber(pair.Key))
                         continue;
 
-                    _slotItemDict[pair.Key] = pair.Value?.Clone() ?? ItemData.Empty;
+                    _slotItemDict[pair.Key] = CreateRuntimeItem(pair.Value);
                 }
             }
 
             RefreshAllSlotUI();
+            ClearSelectedSlot();
         }
 
         private void SetSlotData(int slotNumber, ItemData itemData)
@@ -307,7 +371,7 @@ namespace UI.MergeBoard
             if (!IsValidSlotNumber(slotNumber))
                 return;
 
-            ItemData safeItemData = itemData?.Clone() ?? ItemData.Empty;
+            ItemData safeItemData = CreateRuntimeItem(itemData);
             _slotItemDict[slotNumber] = safeItemData;
 
             ItemSlot itemSlot = GetSlot(slotNumber);
@@ -330,6 +394,21 @@ namespace UI.MergeBoard
 
                 itemSlot.SetItemData(itemData);
             }
+        }
+
+
+        private ItemData CreateRuntimeItem(ItemData itemData)
+        {
+            if (itemData == null || !itemData.HasItem)
+                return ItemData.Empty;
+
+            if (LocalDataAccess.Instance?.Game != null &&
+                LocalDataAccess.Instance.Game.TryCreateMergeBoardRuntimeItem(itemData, out ItemData runtimeData))
+            {
+                return runtimeData;
+            }
+
+            return itemData.Clone();
         }
 
         private ItemSlot GetSlot(int slotNumber)

@@ -1,4 +1,5 @@
-﻿using Data.ScriptableObjects.MergeBoard;
+﻿using Data.LibrarySystem;
+using Data.ScriptableObjects.MergeBoard;
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -70,8 +71,10 @@ namespace UI.MergeBoard
 
             int safeCount = Mathf.Max(1, count);
 
+            ItemData runtimeItemData = CreateRuntimeItem(itemData);
+
             for (int i = 0; i < safeCount; i++)
-                _rewardQueue.Enqueue(itemData.Clone());
+                _rewardQueue.Enqueue(runtimeItemData.Clone());
 
             RefreshView();
 
@@ -143,7 +146,7 @@ namespace UI.MergeBoard
                 if (itemData == null || !itemData.HasItem)
                     continue;
 
-                _rewardQueue.Enqueue(itemData.Clone());
+                _rewardQueue.Enqueue(CreateRuntimeItem(itemData));
             }
 
             RefreshView();
@@ -153,6 +156,21 @@ namespace UI.MergeBoard
 
             IsLoaded = true;
             DebugTool.Log("보상 큐 서버 데이터 로드 완료", DebugType.Board, this);
+        }
+
+
+        private ItemData CreateRuntimeItem(ItemData itemData)
+        {
+            if (itemData == null || !itemData.HasItem)
+                return ItemData.Empty;
+
+            if (LocalDataAccess.Instance?.Game != null &&
+                LocalDataAccess.Instance.Game.TryCreateMergeBoardRuntimeItem(itemData, out ItemData runtimeData))
+            {
+                return runtimeData;
+            }
+
+            return itemData.Clone();
         }
 
         private void ShowAlert(string message)
