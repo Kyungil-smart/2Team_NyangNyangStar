@@ -9,6 +9,7 @@ namespace Data.ScriptableObjects.MergeBoard
     {
         [SerializeField] private BoardSystem _boardSystem;
         [SerializeField] private BoardRewardQueue _rewardQueue;
+        [SerializeField] private SpecialItemBoardSystem _specialItemBoardSystem;
 
         [Header("문서 ID 정리")]
         [SerializeField] private bool _normalizeDocumentIds = true;
@@ -28,6 +29,9 @@ namespace Data.ScriptableObjects.MergeBoard
             if (_rewardQueue == null)
                 _rewardQueue = FindFirstObjectByType<BoardRewardQueue>();
 
+            if (_specialItemBoardSystem == null)
+                _specialItemBoardSystem = FindFirstObjectByType<SpecialItemBoardSystem>();
+
             while (_boardSystem == null || !_boardSystem.IsBoardReady)
             {
                 if (_boardSystem == null)
@@ -35,6 +39,9 @@ namespace Data.ScriptableObjects.MergeBoard
 
                 yield return new WaitForSeconds(_checkInterval);
             }
+
+            while (_specialItemBoardSystem != null && !_specialItemBoardSystem.IsBoardReady)
+                yield return new WaitForSeconds(_checkInterval);
 
             while (FireStoreManager.Instance == null || !FireStoreManager.Instance.IsInitialized)
                 yield return new WaitForSeconds(_checkInterval);
@@ -60,6 +67,9 @@ namespace Data.ScriptableObjects.MergeBoard
 
             if (_rewardQueue != null)
                 await _rewardQueue.LoadQueueFromServerAsync(_normalizeDocumentIds);
+
+            if (_specialItemBoardSystem != null)
+                await _specialItemBoardSystem.LoadSpecialBoardFromServerAsync(_normalizeDocumentIds);
         }
     }
 }

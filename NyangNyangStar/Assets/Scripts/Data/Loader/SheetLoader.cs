@@ -4,6 +4,7 @@ using Data.Parsing;
 using Data.LibrarySystem;
 using Data.ScriptableObjects;
 using Data.ScriptableObjects.KeyContainerSO;
+using Data.ScriptableObjects.MergeBoard;
 using Data.ScriptableObjects.ScratchingTimeSO;
 using Services.Enums;
 using System.Collections.Generic;
@@ -28,6 +29,10 @@ namespace Data.Loader
         [SerializeField] private SheetData nyangNyangSnapBackgroundURL;
         [SerializeField] private NyangNyangSnapBackgroundSO nyangNyangSnapBackgroundSo;
 
+        [Space(8)] [Header("머지 보드 아이템")]
+        [SerializeField] private SheetData mergeBoardItemURL;
+        [SerializeField] private ItemDatabaseSo itemDatabaseSo;
+
         [Space(8)] [SerializeField] private int _pendingSheetCount;
         public int PendingSheetCount => _pendingSheetCount;
 
@@ -44,7 +49,7 @@ namespace Data.Loader
             }
 
             StopAllCoroutines();
-            _pendingSheetCount = 2;
+            _pendingSheetCount = 4;
 
             LoadKeyContainerData(keyCotainerURL, keySo, _keyContainerDict, onComplete: () =>
             {
@@ -67,13 +72,24 @@ namespace Data.Loader
                 {
                     OnSheetCompleted();
                     
-                    scratchingSo.PrintData();
+                    scratchingSo?.PrintData();
                 });
 
             LoadSheetData(nyangNyangSnapBackgroundURL, nyangNyangSnapBackgroundSo, 3, () =>
                 {
                     OnSheetCompleted();
-                    nyangNyangSnapBackgroundSo.PrintData();
+                    nyangNyangSnapBackgroundSo?.PrintData();
+                });
+
+            LoadSheetData(mergeBoardItemURL, itemDatabaseSo, 1, () =>
+                {
+                    if (itemDatabaseSo != null)
+                    {
+                        LocalDataAccess.Instance.Game.RegisterMergeBoardItemDatabase(itemDatabaseSo);
+                        itemDatabaseSo.PrintData();
+                    }
+
+                    OnSheetCompleted();
                 });
         }
 
@@ -104,6 +120,13 @@ namespace Data.Loader
             
             // 로드 전 SO 초기화
             targetSo.Init();
+
+            if (string.IsNullOrEmpty(sheet.URL))
+            {
+                DebugTool.Warning($"[{typeof(T).Name}] SheetData URL이 비어있습니다.", DebugType.Data, this);
+                onComplete?.Invoke();
+                return;
+            }
 
             StartCoroutine(sheet.Load((split, lines) =>
                 {
@@ -350,6 +373,10 @@ namespace Data.Loader
 
                 keyContainer.ClearData();
             }
+
+            scratchingSo?.ClearData();
+            nyangNyangSnapBackgroundSo?.ClearData();
+            itemDatabaseSo?.ClearData();
 
             _keyContainerDict.Clear();
 

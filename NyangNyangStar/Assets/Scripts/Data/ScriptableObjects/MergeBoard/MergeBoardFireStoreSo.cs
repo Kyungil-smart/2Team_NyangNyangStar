@@ -12,6 +12,7 @@ namespace Data.ScriptableObjects.MergeBoard
     public class MergeBoardFirestoreSo : BaseFireStore
     {
         private const int BoardSlotCount = 63;
+        private const int SpecialSlotCount = 2;
         private const int BatchLimit = 450;
 
         public bool IsReady => db != null && !string.IsNullOrEmpty(m_UserId);
@@ -26,10 +27,16 @@ namespace Data.ScriptableObjects.MergeBoard
                 .Document(m_UserId)
                 .Collection("MergeBoardRewardQueue");
 
+        private CollectionReference SpecialItemCollection =>
+            db.Collection("Users")
+                .Document(m_UserId)
+                .Collection("SpecialItemBoard");
+
         public override async Task CreateNew(FirebaseFirestore database, string userId)
         {
             InitDataBase(database, userId);
             await CreateEmptyBoardAsync();
+            await CreateEmptySpecialBoardAsync();
             await ClearRewardQueueAsync();
         }
 
@@ -297,6 +304,134 @@ namespace Data.ScriptableObjects.MergeBoard
                 await batch.CommitAsync();
         }
 
+        public Task CreateEmptySpecialBoardAsync()
+        {
+            return CreateEmptySpecialBoardAsync(SpecialSlotCount);
+        }
+
+        public async Task CreateEmptySpecialBoardAsync(int slotCount)
+        {
+            Dictionary<int, SpecialItemSlotData> emptyBoard = new Dictionary<int, SpecialItemSlotData>();
+            int safeSlotCount = Mathf.Max(1, slotCount);
+
+            for (int slotNumber = 1; slotNumber <= safeSlotCount; slotNumber++)
+                emptyBoard[slotNumber] = SpecialItemSlotData.Empty(slotNumber);
+
+            await SaveSpecialBoardAsync(emptyBoard, safeSlotCount);
+        }
+
+        public Task SaveSpecialSlotAsync(int slotNumber, SpecialItemSlotData slotData)
+        {
+            if (!IsReady)
+            {
+                DebugTool.Warning("Firestore가 초기화되지 않아 특수 아이템 슬롯 저장을 생략합니다.", DebugType.Board);
+                return Task.CompletedTask;
+            }
+
+            DocumentReference docRef = SpecialItemCollection.Document(ToSpecialSlotDocumentId(slotNumber));
+            return docRef.SetAsync(ToSpecialSlotDictionary(slotNumber, slotData));
+        }
+
+        public async Task<Dictionary<int, SpecialItemSlotData>> LoadSpecialBoardAsync(int slotCount = SpecialSlotCount)
+        {
+            int safeSlotCount = Mathf.Max(1, slotCount);
+            Dictionary<int, SpecialItemSlotData> specialBoardData = new Dictionary<int, SpecialItemSlotData>();
+
+            for (int slotNumber = 1; slotNumber <= safeSlotCount; slotNumber++)
+                specialBoardData[slotNumber] = SpecialItemSlotData.Empty(slotNumber);
+
+            if (!IsReady)
+            {
+                DebugTool.Warning("Firestore가 초기화되지 않아 특수 아이템 보드 로드를 생략합니다.", DebugType.Board);
+                return specialBoardData;
+            }
+
+            QuerySnapshot snapshot = await SpecialItemCollection.GetSnapshotAsync();
+
+            foreach (DocumentSnapshot document in snapshot.Documents)
+            {
+                if (!document.Exists)
+                    continue;
+
+                int slotNumber = ReadInt(document, "SlotNumber", TryParseDocumentId(document.Id));
+
+                if (slotNumber < 1 || slotNumber > safeSlotCount)
+                    continue;
+
+                specialBoardData[slotNumber] = ToSpecialItemSlotData(document, slotNumber);
+            }
+
+            return specialBoardData;
+        }
+
+        public async Task SaveSpecialBoardAsync(IReadOnlyDictionary<int, SpecialItemSlotData> boardData, int slotCount = SpecialSlotCount)
+        {
+            if (!IsReady)
+            {
+                DebugTool.Warning("Firestore가 초기화되지 않아 특수 아이템 보드 저장을 생략합니다.", DebugType.Board);
+                return;
+            }
+
+            await ClearSpecialBoardAsync();
+
+            WriteBatch batch = db.StartBatch();
+            int operationCount = 0;
+            int safeSlotCount = Mathf.Max(1, slotCount);
+
+            for (int slotNumber = 1; slotNumber <= safeSlotCount; slotNumber++)
+            {
+                SpecialItemSlotData slotData = SpecialItemSlotData.Empty(slotNumber);
+
+                if (boardData != null && boardData.TryGetValue(slotNumber, out SpecialItemSlotData data))
+                    slotData = data ?? SpecialItemSlotData.Empty(slotNumber);
+
+                DocumentReference docRef = SpecialItemCollection.Document(ToSpecialSlotDocumentId(slotNumber));
+                batch.Set(docRef, ToSpecialSlotDictionary(slotNumber, slotData));
+
+                operationCount++;
+
+                if (operationCount >= BatchLimit)
+                {
+                    await batch.CommitAsync();
+                    batch = db.StartBatch();
+                    operationCount = 0;
+                }
+            }
+
+            if (operationCount > 0)
+                await batch.CommitAsync();
+        }
+
+        public async Task ClearSpecialBoardAsync()
+        {
+            if (!IsReady)
+            {
+                DebugTool.Warning("Firestore가 초기화되지 않아 특수 아이템 보드 초기화를 생략합니다.", DebugType.Board);
+                return;
+            }
+
+            QuerySnapshot snapshot = await SpecialItemCollection.GetSnapshotAsync();
+
+            WriteBatch batch = db.StartBatch();
+            int operationCount = 0;
+
+            foreach (DocumentSnapshot document in snapshot.Documents)
+            {
+                batch.Delete(document.Reference);
+                operationCount++;
+
+                if (operationCount >= BatchLimit)
+                {
+                    await batch.CommitAsync();
+                    batch = db.StartBatch();
+                    operationCount = 0;
+                }
+            }
+
+            if (operationCount > 0)
+                await batch.CommitAsync();
+        }
+
         private Dictionary<string, object> ToSlotDictionary(int slotNumber, ItemData itemData)
         {
             itemData ??= ItemData.Empty;
@@ -305,12 +440,11 @@ namespace Data.ScriptableObjects.MergeBoard
             {
                 { "SlotNumber", slotNumber },
                 { "HasItem", itemData.HasItem },
-                { "ItemNumber", itemData.ItemID },
+                { "ItemID", itemData.ItemID },
                 { "ItemName", itemData.ItemName },
                 { "ItemLevel", itemData.ItemLevel },
                 { "ItemType", itemData.ItemType.ToString() },
-                { "Amount", itemData.Amount },
-                { "SpriteKey", itemData.AddressableKey }
+                { "AddressableKey", itemData.AddressableKey }
             };
         }
 
@@ -322,12 +456,29 @@ namespace Data.ScriptableObjects.MergeBoard
             {
                 { "Order", order },
                 { "HasItem", itemData.HasItem },
-                { "ItemNumber", itemData.ItemID },
+                { "ItemID", itemData.ItemID },
                 { "ItemName", itemData.ItemName },
                 { "ItemLevel", itemData.ItemLevel },
                 { "ItemType", itemData.ItemType.ToString() },
-                { "Amount", itemData.Amount },
-                { "SpriteKey", itemData.AddressableKey }
+                { "AddressableKey", itemData.AddressableKey }
+            };
+        }
+
+        private Dictionary<string, object> ToSpecialSlotDictionary(int slotNumber, SpecialItemSlotData slotData)
+        {
+            slotData ??= SpecialItemSlotData.Empty(slotNumber);
+            ItemData itemData = slotData.ItemData ?? ItemData.Empty;
+
+            return new Dictionary<string, object>
+            {
+                { "SlotNumber", slotNumber },
+                { "HasItem", slotData.HasItem },
+                { "ItemID", itemData.ItemID },
+                { "ItemName", itemData.ItemName },
+                { "ItemLevel", itemData.ItemLevel },
+                { "ItemType", itemData.ItemType.ToString() },
+                { "Count", slotData.Count },
+                { "AddressableKey", itemData.AddressableKey }
             };
         }
 
@@ -338,17 +489,32 @@ namespace Data.ScriptableObjects.MergeBoard
             if (!hasItem)
                 return ItemData.Empty;
 
-            int itemNumber = ReadInt(snapshot, "ItemNumber", 0);
+            int itemID = ReadInt(snapshot, "ItemID", ReadInt(snapshot, "ItemNumber", 0));
             string itemName = ReadString(snapshot, "ItemName", string.Empty);
             int itemLevel = ReadInt(snapshot, "ItemLevel", 1);
-            string itemTypeValue = ReadString(snapshot, "ItemType", ItemType.General.ToString());
-            int amount = ReadInt(snapshot, "Amount", 1);
-            string spriteKey = ReadString(snapshot, "SpriteKey", string.Empty);
+            string itemTypeValue = ReadString(snapshot, "ItemType", ItemType.Common.ToString());
+            string addressableKey = ReadString(snapshot, "AddressableKey", ReadString(snapshot, "SpriteKey", string.Empty));
 
-            if (!Enum.TryParse(itemTypeValue, out ItemType itemType))
-                itemType = ItemType.General;
+            if (!Enum.TryParse(itemTypeValue, true, out ItemType itemType))
+                itemType = ItemType.Common;
 
-            return new ItemData(itemNumber, itemName, itemLevel, itemType, amount, spriteKey);
+            return new ItemData(itemID, itemName, itemLevel, itemType, addressableKey);
+        }
+
+        private SpecialItemSlotData ToSpecialItemSlotData(DocumentSnapshot snapshot, int slotNumber)
+        {
+            bool hasItem = ReadBool(snapshot, "HasItem", false);
+            int count = ReadInt(snapshot, "Count", 0);
+
+            if (!hasItem || count <= 0)
+                return SpecialItemSlotData.Empty(slotNumber);
+
+            ItemData itemData = ToItemData(snapshot);
+
+            if (itemData == null || !itemData.HasItem)
+                return SpecialItemSlotData.Empty(slotNumber);
+
+            return new SpecialItemSlotData(slotNumber, itemData, count);
         }
 
         private int TryParseDocumentId(string documentId)
@@ -412,6 +578,11 @@ namespace Data.ScriptableObjects.MergeBoard
         private string ToQueueDocumentId(int order)
         {
             return order.ToString("D2");
+        }
+
+        private string ToSpecialSlotDocumentId(int slotNumber)
+        {
+            return slotNumber.ToString("D2");
         }
     }
 }
