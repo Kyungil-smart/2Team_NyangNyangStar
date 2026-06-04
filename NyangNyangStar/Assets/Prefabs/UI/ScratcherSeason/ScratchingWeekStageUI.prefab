@@ -136,7 +136,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8f8beafac5eb467586941744027ac8ec, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  effectPrefab: {fileID: 4715528182821937630, guid: 8110c629ca722514da7b9d7c1b955e29, type: 3}
   effectRoot: {fileID: 8611161174809288664}
   touchArea: {fileID: 3477048487758474388}
   initialPoolSize: 10

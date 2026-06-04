@@ -1984,13 +1984,17 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _closeButton: {fileID: 0}
+  _closeRoot: {fileID: 0}
+  _contentScaleFrom: 0.8
+  _closeDuration: 0.25
   _stageButtons:
   - {fileID: 0}
   - {fileID: 0}
   - {fileID: 0}
   - {fileID: 0}
-  _errorPanel: {fileID: 0}
-  _errorCloseButton: {fileID: 0}
+  _errorPanel: {fileID: 2074494757568062179}
+  _errorFadeDuration: 0.25
+  _errorDisplayDuration: 2
   _dailyChallengeCountText: {fileID: 0}
   _dailyRemainingCountText: {fileID: 0}
   _dailyCountSlashText: {fileID: 0}
@@ -2017,9 +2021,11 @@ MonoBehaviour:
   _levelText: {fileID: 0}
   _sharpnessText: {fileID: 0}
   _criticalChanceText: {fileID: 0}
+  _expCountText: {fileID: 0}
   _currentExpText: {fileID: 0}
   _expSlashText: {fileID: 0}
   _maxExpText: {fileID: 0}
+  _expSlider: {fileID: 0}
   _expAmountImage: {fileID: 0}
   _isFirstTime: 1
 --- !u!1 &1487531589927503320
@@ -2938,6 +2944,7 @@ GameObject:
   - component: {fileID: 4926878566042867190}
   - component: {fileID: 8093279113708005546}
   - component: {fileID: 7641802748343798926}
+  - component: {fileID: 9182736450001111222}
   m_Layer: 5
   m_Name: ErrorPanel
   m_TagString: Untagged
@@ -2961,10 +2968,10 @@ RectTransform:
   - {fileID: 4192435654960962956}
   m_Father: {fileID: 662383535294936195}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -0.00061035156, y: 523}
-  m_SizeDelta: {x: -100, y: -1759.6288}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 549}
+  m_SizeDelta: {x: 980, y: 160.37122}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &8093279113708005546
 CanvasRenderer:
@@ -2988,7 +2995,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 0.27058825}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
@@ -3004,6 +3011,18 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!225 &9182736450001111222
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2074494757568062179}
+  m_Enabled: 1
+  m_Alpha: 0
+  m_Interactable: 0
+  m_BlocksRaycasts: 0
+  m_IgnoreParentGroups: 0
 --- !u!1 &2134488110729428736
 GameObject:
   m_ObjectHideFlags: 0
@@ -3581,7 +3600,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &7592630085353655158
 RectTransform:
   m_ObjectHideFlags: 0
@@ -3666,6 +3685,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _closeButton: {fileID: 0}
+  _closeRoot: {fileID: 0}
+  _contentScaleFrom: 0.82
+  _closeDuration: 0.22
   _battleStageText: {fileID: 0}
   _durabilityAmountImage: {fileID: 0}
   _interestAmountImage: {fileID: 0}
@@ -4511,10 +4533,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8f8beafac5eb467586941744027ac8ec, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  effectPrefab: {fileID: 4715528182821937630, guid: 8110c629ca722514da7b9d7c1b955e29, type: 3}
   effectRoot: {fileID: 5535654470780644500}
   touchArea: {fileID: 8157616864578332185}
   initialPoolSize: 10
+  effectSize: {x: 100, y: 100}
+  effectDisplaySeconds: 0.8
 --- !u!1 &3121073918187599844
 GameObject:
   m_ObjectHideFlags: 0
@@ -5296,6 +5319,7 @@ GameObject:
   - component: {fileID: 8555923856820416063}
   - component: {fileID: 6988920105411105591}
   - component: {fileID: 381092247234960417}
+  - component: {fileID: 8150497012693829330}
   m_Layer: 0
   m_Name: TouchGuideText
   m_TagString: Untagged
@@ -5359,8 +5383,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 2885681407
-  m_fontColor: {r: 1, g: 0, b: 0, a: 0.6745098}
+    rgba: 4043309311
+  m_fontColor: {r: 1, g: 0, b: 0, a: 0.94509804}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -5431,9 +5455,115 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 424d2e60ccd6cea408aab1fd413725ab, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  minAlpha: 0.1
-  maxAlpha: 0.5
-  blinkDuration: 1
+  _blinkTween: {fileID: 8150497012693829330}
+--- !u!114 &8150497012693829330
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3832753820859421798}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4d0390bd8b8ffd640b34fe25065ff1df, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  updateType: 0
+  isSpeedBased: 0
+  hasOnStart: 0
+  hasOnPlay: 0
+  hasOnUpdate: 0
+  hasOnStepComplete: 0
+  hasOnComplete: 0
+  hasOnTweenCreated: 0
+  hasOnRewind: 0
+  onStart:
+    m_PersistentCalls:
+      m_Calls: []
+  onPlay:
+    m_PersistentCalls:
+      m_Calls: []
+  onUpdate:
+    m_PersistentCalls:
+      m_Calls: []
+  onStepComplete:
+    m_PersistentCalls:
+      m_Calls: []
+  onComplete:
+    m_PersistentCalls:
+      m_Calls: []
+  onTweenCreated:
+    m_PersistentCalls:
+      m_Calls: []
+  onRewind:
+    m_PersistentCalls:
+      m_Calls: []
+  targetIsSelf: 1
+  targetGO: {fileID: 0}
+  tweenTargetIsTargetGO: 1
+  delay: 0
+  duration: 0.8
+  easeType: 1
+  easeCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  loopType: 1
+  loops: -1
+  id: 
+  isRelative: 0
+  isFrom: 0
+  isIndependentUpdate: 0
+  autoKill: 0
+  autoGenerate: 1
+  isActive: 1
+  isValid: 1
+  target: {fileID: 6988920105411105591}
+  animationType: 7
+  targetType: 3
+  forcedTargetType: 0
+  autoPlay: 0
+  useTargetAsV3: 0
+  endValueFloat: 0.1
+  endValueV3: {x: 0, y: 0, z: 0}
+  endValueV2: {x: 0, y: 0}
+  endValueColor: {r: 1, g: 1, b: 1, a: 1}
+  endValueString: 
+  endValueRect:
+    serializedVersion: 2
+    x: 0
+    y: 0
+    width: 0
+    height: 0
+  endValueTransform: {fileID: 0}
+  optionalBool0: 0
+  optionalBool1: 0
+  optionalFloat0: 0
+  optionalInt0: 0
+  optionalRotationMode: 0
+  optionalScrambleMode: 0
+  optionalShakeRandomnessMode: 0
+  optionalString: 
 --- !u!1 &3870327889459097180
 GameObject:
   m_ObjectHideFlags: 0
@@ -5956,6 +6086,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _closeButton: {fileID: 0}
+  _closeRoot: {fileID: 0}
+  _contentScaleFrom: 0.82
+  _closeDuration: 0.22
   _battleStageText: {fileID: 0}
   _durabilityAmountImage: {fileID: 0}
   _interestAmountImage: {fileID: 0}
@@ -6142,10 +6275,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8f8beafac5eb467586941744027ac8ec, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  effectPrefab: {fileID: 4715528182821937630, guid: 8110c629ca722514da7b9d7c1b955e29, type: 3}
   effectRoot: {fileID: 346811889252979425}
   touchArea: {fileID: 2460400304811484629}
   initialPoolSize: 10
+  effectSize: {x: 100, y: 100}
+  effectDisplaySeconds: 0.8
 --- !u!1 &4260216287203834038
 GameObject:
   m_ObjectHideFlags: 0
@@ -6751,6 +6885,19 @@ MonoBehaviour:
   _failResultObject: {fileID: 0}
   _backButton: {fileID: 0}
   _retryButton: {fileID: 0}
+  _contentPanel: {fileID: 0}
+  _buttonArea: {fileID: 0}
+  _dimBackgroundObject: {fileID: 0}
+  _dimTargetAlpha: 0.65
+  _dimFadeDuration: 0.2
+  _contentScaleFrom: 0.85
+  _contentScaleDuration: 0.25
+  _buttonAreaDelay: 0.1
+  _buttonStaggerDelay: 0.08
+  _buttonAnimDuration: 0.18
+  _buttonSlideOffsetY: -24
+  _closeDuration: 0.15
+  _clearPunchStrength: 0.08
 --- !u!1 &4439199340661393904
 GameObject:
   m_ObjectHideFlags: 0
@@ -11614,7 +11761,7 @@ RectTransform:
   m_Father: {fileID: 6955780384394250117}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
+  m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -11802,6 +11949,7 @@ GameObject:
   - component: {fileID: 4450100425646404376}
   - component: {fileID: 8984918008382070517}
   - component: {fileID: 2529569414486363570}
+  - component: {fileID: 4301324041143088896}
   m_Layer: 0
   m_Name: TouchGuideText
   m_TagString: Untagged
@@ -11865,8 +12013,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 2885681407
-  m_fontColor: {r: 1, g: 0, b: 0, a: 0.6745098}
+    rgba: 4278190335
+  m_fontColor: {r: 1, g: 0, b: 0, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -11937,9 +12085,115 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 424d2e60ccd6cea408aab1fd413725ab, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  minAlpha: 0.1
-  maxAlpha: 0.5
-  blinkDuration: 1
+  _blinkTween: {fileID: 4301324041143088896}
+--- !u!114 &4301324041143088896
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7876799464499973278}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4d0390bd8b8ffd640b34fe25065ff1df, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  updateType: 0
+  isSpeedBased: 0
+  hasOnStart: 0
+  hasOnPlay: 0
+  hasOnUpdate: 0
+  hasOnStepComplete: 0
+  hasOnComplete: 0
+  hasOnTweenCreated: 0
+  hasOnRewind: 0
+  onStart:
+    m_PersistentCalls:
+      m_Calls: []
+  onPlay:
+    m_PersistentCalls:
+      m_Calls: []
+  onUpdate:
+    m_PersistentCalls:
+      m_Calls: []
+  onStepComplete:
+    m_PersistentCalls:
+      m_Calls: []
+  onComplete:
+    m_PersistentCalls:
+      m_Calls: []
+  onTweenCreated:
+    m_PersistentCalls:
+      m_Calls: []
+  onRewind:
+    m_PersistentCalls:
+      m_Calls: []
+  targetIsSelf: 1
+  targetGO: {fileID: 0}
+  tweenTargetIsTargetGO: 1
+  delay: 0
+  duration: 0.8
+  easeType: 1
+  easeCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  loopType: 1
+  loops: -1
+  id: 
+  isRelative: 0
+  isFrom: 0
+  isIndependentUpdate: 0
+  autoKill: 0
+  autoGenerate: 1
+  isActive: 1
+  isValid: 1
+  target: {fileID: 8984918008382070517}
+  animationType: 7
+  targetType: 3
+  forcedTargetType: 0
+  autoPlay: 0
+  useTargetAsV3: 0
+  endValueFloat: 0.1
+  endValueV3: {x: 0, y: 0, z: 0}
+  endValueV2: {x: 0, y: 0}
+  endValueColor: {r: 1, g: 1, b: 1, a: 1}
+  endValueString: 
+  endValueRect:
+    serializedVersion: 2
+    x: 0
+    y: 0
+    width: 0
+    height: 0
+  endValueTransform: {fileID: 0}
+  optionalBool0: 0
+  optionalBool1: 0
+  optionalFloat0: 0
+  optionalInt0: 0
+  optionalRotationMode: 0
+  optionalScrambleMode: 0
+  optionalShakeRandomnessMode: 0
+  optionalString: 
 --- !u!1 &7884400101417656685
 GameObject:
   m_ObjectHideFlags: 0
@@ -12899,7 +13153,7 @@ RectTransform:
   m_Father: {fileID: 8562493062356729323}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
+  m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: -0.000030517578, y: 0}
   m_SizeDelta: {x: -0.000061035, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -13380,6 +13634,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _scratching: {fileID: 11400000, guid: bdec79777a560544fb7f8f70232dd29b, type: 2}
+  _scratchingSheetFallbackUrl: https://docs.google.com/spreadsheets/d/1hD2NCEzCWr2aml-_aqHsHZu_8HeZ0xCLpMDt_A9NfoU/edit?gid=0#gid=0
   _selectionController: {fileID: 0}
   _battleController: {fileID: 0}
   _dailyStageController: {fileID: 0}
