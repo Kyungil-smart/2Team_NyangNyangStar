@@ -69,6 +69,11 @@ namespace Data.ScriptableObjects.MergeBoard
             _addressableKey = addressableKey;
         }
 
+        public void SetSprite(Sprite sprite)
+        {
+            _itemSprite = sprite;
+        }
+
         public ItemData Clone()
         {
             return (ItemData)MemberwiseClone();

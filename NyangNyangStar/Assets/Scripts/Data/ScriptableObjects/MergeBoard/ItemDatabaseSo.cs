@@ -1,8 +1,11 @@
-﻿using Services.Enums;
+﻿using Core.Managers;
+using Services.Enums;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
+using UnityEngine.ResourceManagement.AsyncOperations;
 
 namespace Data.ScriptableObjects.MergeBoard
 {
@@ -14,9 +17,11 @@ namespace Data.ScriptableObjects.MergeBoard
         [SerializeField] private List<ItemData> _items = new();
 
         private readonly Dictionary<int, ItemData> _itemDict = new();
+        private readonly Dictionary<int, AsyncOperationHandle<Sprite>> _spriteHandles = new();
 
         public IReadOnlyList<ItemData> Items => _items;
         public int DataCount => _items?.Count ?? 0;
+        public bool IsSpriteLoaded { get; private set; }
 
         private void OnEnable()
         {
@@ -30,8 +35,10 @@ namespace Data.ScriptableObjects.MergeBoard
 
         public void ClearData()
         {
+            ReleaseSpriteHandles();
             _items.Clear();
             _itemDict.Clear();
+            IsSpriteLoaded = false;
         }
 
         public void SetData(string[] cols)
@@ -78,6 +85,57 @@ namespace Data.ScriptableObjects.MergeBoard
                 addressableKey);
 
             AddOrUpdateItem(itemData);
+        }
+
+        public IEnumerator LoadItemSpritesCoroutine(Action onComplete = null)
+        {
+            IsSpriteLoaded = false;
+            ReleaseSpriteHandles();
+            RebuildItemDictionaryIfNeeded();
+
+            if (_items == null || _items.Count == 0)
+            {
+                IsSpriteLoaded = true;
+                onComplete?.Invoke();
+                yield break;
+            }
+
+            int pendingCount = 0;
+
+            for (int i = 0; i < _items.Count; i++)
+            {
+                ItemData itemData = _items[i];
+
+                if (itemData == null || !itemData.HasItem)
+                    continue;
+
+                if (string.IsNullOrEmpty(itemData.AddressableKey))
+                    continue;
+
+                pendingCount++;
+                ItemData capturedItemData = itemData;
+
+                GameManager.Addressable.LoadSprite(
+                    capturedItemData.AddressableKey,
+                    (sprite, handle) =>
+                    {
+                        capturedItemData.SetSprite(sprite);
+                        _spriteHandles[capturedItemData.ItemID] = handle;
+                        pendingCount--;
+                    },
+                    failedKey =>
+                    {
+                        DebugTool.Warning($"[ItemDatabaseSo] {failedKey} Sprite 로드 실패", DebugType.Addressable, this);
+                        pendingCount--;
+                    });
+            }
+
+            while (pendingCount > 0)
+                yield return null;
+
+            IsSpriteLoaded = true;
+            DebugTool.Log($"[ItemDatabaseSo] 아이템 Sprite 로드 완료", DebugType.Addressable, this);
+            onComplete?.Invoke();
         }
 
         public bool TryGetItemById(int itemID, out ItemData itemData)
@@ -142,6 +200,24 @@ namespace Data.ScriptableObjects.MergeBoard
             return true;
         }
 
+        public ItemData CreateRuntimeItem(ItemData sourceData)
+        {
+            if (sourceData == null || !sourceData.HasItem)
+                return ItemData.Empty;
+
+            ItemData runtimeData = sourceData.Clone();
+
+            RebuildItemDictionaryIfNeeded();
+
+            if (_itemDict.TryGetValue(sourceData.ItemID, out ItemData originData) && originData != null)
+            {
+                if (originData.ItemSprite != null)
+                    runtimeData.SetSprite(originData.ItemSprite);
+            }
+
+            return runtimeData;
+        }
+
         public void PrintData()
         {
             StringBuilder log = new StringBuilder();
@@ -159,7 +235,8 @@ namespace Data.ScriptableObjects.MergeBoard
                     $"Name: {itemData.ItemName}, " +
                     $"Level: {itemData.ItemLevel}, " +
                     $"Type: {itemData.ItemType}, " +
-                    $"Key: {itemData.AddressableKey}");
+                    $"Key: {itemData.AddressableKey}, " +
+                    $"Sprite: {(itemData.ItemSprite != null ? itemData.ItemSprite.name : "null")}");
             }
 
             DebugTool.Log(log.ToString(), DebugType.Data, this);
@@ -219,6 +296,19 @@ namespace Data.ScriptableObjects.MergeBoard
 
                 _itemDict[itemData.ItemID] = itemData;
             }
+        }
+
+        private void ReleaseSpriteHandles()
+        {
+            foreach (AsyncOperationHandle<Sprite> handle in _spriteHandles.Values)
+            {
+                if (!handle.IsValid())
+                    continue;
+
+                GameManager.Addressable.Release(handle);
+            }
+
+            _spriteHandles.Clear();
         }
 
         private string GetColumn(string[] cols, int index)
