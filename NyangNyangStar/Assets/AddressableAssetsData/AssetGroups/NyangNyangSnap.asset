@@ -17,6 +17,21 @@ MonoBehaviour:
     m_SerializedData: []
   m_GUID: 20a5cbf6712fe294b8515eaf279e2357
   m_SerializeEntries:
+  - m_GUID: 0599a81dc0e0084468f4d2215f97518a
+    m_Address: NyangNyangSnapToyCanvas
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 53ede35c30f1bb247904ecd55c02cf78
+    m_Address: NyangNyangSnapCanvas
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7c172bb0b4dbbcc4ea8c7faf8806a9b1
+    m_Address: NyangNyangSnapSnackCanvas
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: d18ea216e994cfa4c8b73c0279298ec0
     m_Address: NyangNyangSnapStagePopupUI
     m_ReadOnly: 0
