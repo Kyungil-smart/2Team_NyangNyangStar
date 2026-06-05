@@ -1,9 +1,14 @@
 using UI;
+using UI.Base;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class NyangstagramMainUISprite : UIBase
 {
+
+    private const string LikeEmptySpriteKey = "NYS_Btn_Heart_Empty";
+    private const string LikeFilledSpriteKey = "NYS_Btn_Heart_Filled";
+
     private UISpriteController[] _spriteController;
 
     public override void Init()
@@ -39,7 +44,7 @@ public class NyangstagramMainUISprite : UIBase
         SetSprite(NyangstagramMainUIImages.DMButton, "NYS_Btn_DM");
         SetSprite(NyangstagramMainUIImages.VerifyIconFront, "NYS_Profile_User_01");
         SetSprite(NyangstagramMainUIImages.VerifyIcon, "NYS_UploadPost_Check");
-        SetSprite(NyangstagramMainUIImages.LikeButton, "NYS_Btn_Heart_Empty");
+        SetSprite(NyangstagramMainUIImages.LikeButton, LikeEmptySpriteKey);
         SetSprite(NyangstagramMainUIImages.NPCImage, "NYS_Profile_User_01");
         SetSprite(NyangstagramMainUIImages.Viewport, "NYS_Content");
 
@@ -67,6 +72,14 @@ public class NyangstagramMainUISprite : UIBase
         _spriteController[(int)image].ChangeColor(color);
         _spriteController[(int)image].ChangeSprite(key,true);
     }
+    public void SetLikeSprite(bool isLiked)
+    {
+        string spriteKey = isLiked ? LikeFilledSpriteKey : LikeEmptySpriteKey;
+
+        SetSprite(NyangstagramMainUIImages.LikeButton, spriteKey);
+        DebugTool.Log($"좋아요 아이콘 변경: {spriteKey}", DebugType.UI, this);
+    }
+
 }
 
 public enum NyangstagramMainUIImages

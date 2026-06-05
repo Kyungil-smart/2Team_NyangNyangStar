@@ -5,6 +5,7 @@ using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UI;
+using UI.Base;
 using UnityEngine;
 using UnityEngine.UI;
 using Util;
@@ -35,6 +36,10 @@ public class NyangStargramPostUI : UIPopup
         _nyangstagramCloseButton = Get<Button>((int)NyangStargramPostUIButton.NyangstagramCloseButton);
         _likeButton = Get<Button>((int)NyangStargramPostUIButton.LikeButton);
         _likeCountText = UIBase.FindChild<TMP_Text>(gameObject, "Like Count", true);
+
+        _nyangStargramPostUISprite = GetComponent<NyangStargramPostUISprite>();
+        _nyangStargramPostUISprite.Init();
+        _nyangStargramPostUISprite.SetLikeSprite(_isLiked);
 
 
         BindButtons();
@@ -104,6 +109,7 @@ public class NyangStargramPostUI : UIPopup
         }
 
         ReFreshLikeCountText();
+        _nyangStargramPostUISprite.SetLikeSprite(_isLiked);
     }
     private void ReFreshLikeCountText()
     {

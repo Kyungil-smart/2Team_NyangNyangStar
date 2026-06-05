@@ -33,6 +33,11 @@ namespace Data.Loader
         [SerializeField] private SheetData mergeBoardItemURL;
         [SerializeField] private ItemDatabaseSo itemDatabaseSo;
 
+        [Space(8)]
+        [Header("냥냥스냅 포즈")]
+        [SerializeField] private SheetData nyangNyangSnapPoseURL;
+        [SerializeField] private NyangNyangSnapPoseSO nyangNyangSnapPoseSo;
+
         [Space(8)] [SerializeField] private int _pendingSheetCount;
         public int PendingSheetCount => _pendingSheetCount;
 
@@ -73,7 +78,7 @@ namespace Data.Loader
 
         private void LoadContentSheets()
         {
-            _pendingSheetCount = 3;
+            _pendingSheetCount = 4;
             
             LoadSheetData(scratchingURL, scratchingSo, 1, () =>
                 {
@@ -103,6 +108,11 @@ namespace Data.Loader
                         OnSheetCompleted();
                     }));
                 });
+            LoadSheetData(nyangNyangSnapPoseURL, nyangNyangSnapPoseSo, 3, () =>
+            {
+                OnSheetCompleted();
+                nyangNyangSnapPoseSo.PrintData();
+            });
         }
 
         private void OnSheetCompleted()

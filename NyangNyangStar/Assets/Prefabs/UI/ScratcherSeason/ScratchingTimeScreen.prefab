@@ -1985,7 +1985,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _closeButton: {fileID: 0}
   _closeRoot: {fileID: 0}
-  _contentScaleFrom: 0.8
+  _contentScaleFrom: 0.3
   _closeDuration: 0.25
   _stageButtons:
   - {fileID: 0}
@@ -3600,7 +3600,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &7592630085353655158
 RectTransform:
   m_ObjectHideFlags: 0
@@ -4052,9 +4052,9 @@ RectTransform:
   - {fileID: 5542873712363191248}
   m_Father: {fileID: 6136055963354673467}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 292.25, y: -152.895}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 273.2, y: 100}
   m_Pivot: {x: 0.5, y: 0}
 --- !u!222 &2451553032582780310
@@ -5455,7 +5455,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 424d2e60ccd6cea408aab1fd413725ab, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _blinkTween: {fileID: 8150497012693829330}
+  _minAlpha: 0.25
+  _maxAlpha: 1
+  _blinkHalfDuration: 0.45
 --- !u!114 &8150497012693829330
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -11566,9 +11568,9 @@ RectTransform:
   - {fileID: 4406726764589903680}
   m_Father: {fileID: 6136055963354673467}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 587.75, y: -152.895}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 273.2, y: 100}
   m_Pivot: {x: 0.5, y: 0}
 --- !u!222 &614545866074991201
@@ -11761,7 +11763,7 @@ RectTransform:
   m_Father: {fileID: 6955780384394250117}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -12085,7 +12087,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 424d2e60ccd6cea408aab1fd413725ab, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _blinkTween: {fileID: 4301324041143088896}
+  _minAlpha: 0.25
+  _maxAlpha: 1
+  _blinkHalfDuration: 0.45
 --- !u!114 &4301324041143088896
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -13153,7 +13157,7 @@ RectTransform:
   m_Father: {fileID: 8562493062356729323}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: -0.000030517578, y: 0}
   m_SizeDelta: {x: -0.000061035, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -13634,6 +13638,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _scratching: {fileID: 11400000, guid: bdec79777a560544fb7f8f70232dd29b, type: 2}
+  _scratchingProgress: {fileID: 11400000, guid: f854c7e7a87af9c428d7d7b34076304d, type: 2}
   _scratchingSheetFallbackUrl: https://docs.google.com/spreadsheets/d/1hD2NCEzCWr2aml-_aqHsHZu_8HeZ0xCLpMDt_A9NfoU/edit?gid=0#gid=0
   _selectionController: {fileID: 0}
   _battleController: {fileID: 0}
