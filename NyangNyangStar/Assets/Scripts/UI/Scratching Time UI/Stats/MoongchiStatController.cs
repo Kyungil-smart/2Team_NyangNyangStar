@@ -1,3 +1,4 @@
+using System;
 using Data.ScriptableObjects.ScratchingTimeSO;
 using TMPro;
 using UI;
@@ -10,6 +11,7 @@ using UnityEngine.UI;
 public class MoongchiStatController : UIBase
 {
     [Header("Data")] [SerializeField] private MoongchiStatSo _moongchiStat;
+    [SerializeField] private MoongchiProgressSO _moongchiProgress;
 
     [Header("Stat Text")] [SerializeField] private TMP_Text _levelText;
     [SerializeField] private TMP_Text _sharpnessText;
@@ -61,6 +63,7 @@ public class MoongchiStatController : UIBase
             _isFirstTime = false;
         }
 
+        LoadMoongchiProgressFromServer();
         PrintMoongchiStat();
     }
 
@@ -70,8 +73,44 @@ public class MoongchiStatController : UIBase
             return;
 
         _moongchiStat.IncreaseExp(exp);
+        SaveMoongchiProgressToServer();
         PrintMoongchiStat();
         DebugTool.Log($"경험치 증가 : {exp}", DebugType.ScratchingTime);
+    }
+
+
+    private async void LoadMoongchiProgressFromServer()
+    {
+        if (_moongchiProgress == null || _moongchiStat == null)
+            return;
+
+        try
+        {
+            await _moongchiProgress.UpdateFromServerAsync(false);
+            _moongchiProgress.ApplyTo(_moongchiStat);
+            PrintMoongchiStat();
+        }
+        catch (Exception e)
+        {
+            DebugTool.Warning($"MoongchiProgressSO 불러오기 실패: {e.Message}", DebugType.ScratchingTime);
+        }
+    }
+
+    private async void SaveMoongchiProgressToServer()
+    {
+        if (_moongchiProgress == null || _moongchiStat == null)
+            return;
+
+        _moongchiProgress.CaptureFrom(_moongchiStat);
+
+        try
+        {
+            await _moongchiProgress.UpdateDataAsync();
+        }
+        catch (Exception e)
+        {
+            DebugTool.Warning($"MoongchiProgressSO 저장 실패: {e.Message}", DebugType.ScratchingTime);
+        }
     }
 
     public int MoongchiAttack()

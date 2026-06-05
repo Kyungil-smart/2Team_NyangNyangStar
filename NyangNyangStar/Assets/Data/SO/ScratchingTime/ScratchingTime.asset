@@ -15,15 +15,15 @@ MonoBehaviour:
   _scratchingData:
   - _stage: "1\uB2E8\uACC4"
     _maxDailyDurability: 1150
-    _currentDailyDurability: 1150
+    _currentDailyDurability: 819
     _dailyClearExp: 150
-    _maxDailyChallengeCount: 300
-    _remainingDailyChallengeCount: 1
+    _maxDailyChallengeCount: 4
+    _remainingDailyChallengeCount: 4
     _maxWeeklyDurability: 2400
-    _currentWeeklyDurability: 2102
+    _currentWeeklyDurability: 0
     _weeklyClearExp: 2000
     _maxWeeklyChallengeCount: 1
-    _remainingWeeklyChallengeCount: 0
+    _remainingWeeklyChallengeCount: 1
   - _stage: "2\uB2E8\uACC4"
     _maxDailyDurability: 3000
     _currentDailyDurability: 0
@@ -34,7 +34,7 @@ MonoBehaviour:
     _currentWeeklyDurability: 0
     _weeklyClearExp: 2800
     _maxWeeklyChallengeCount: 11111
-    _remainingWeeklyChallengeCount: 0
+    _remainingWeeklyChallengeCount: 1
   - _stage: "3\uB2E8\uACC4"
     _maxDailyDurability: 5800
     _currentDailyDurability: 0
@@ -45,7 +45,7 @@ MonoBehaviour:
     _currentWeeklyDurability: 0
     _weeklyClearExp: 3400
     _maxWeeklyChallengeCount: 1
-    _remainingWeeklyChallengeCount: 0
+    _remainingWeeklyChallengeCount: 1
   - _stage: "4\uB2E8\uACC4"
     _maxDailyDurability: 10000
     _currentDailyDurability: 0
@@ -56,10 +56,10 @@ MonoBehaviour:
     _currentWeeklyDurability: 0
     _weeklyClearExp: 3800
     _maxWeeklyChallengeCount: 1
-    _remainingWeeklyChallengeCount: 0
-  _remainingDailyChallengeCount: 290
+    _remainingWeeklyChallengeCount: 1
+  _remainingDailyChallengeCount: 4
   _remainingWeeklyChallengeCount: 1
   _openedStageBySchedule: 1
   _highestClearedDailyStage: 1
   _highestClearedWeeklyStage: 1
-  _timeLimit: 5
+  _timeLimit: 33
