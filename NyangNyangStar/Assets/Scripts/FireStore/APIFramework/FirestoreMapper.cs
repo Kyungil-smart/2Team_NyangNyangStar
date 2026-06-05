@@ -28,6 +28,8 @@ public static class FirestoreMapper
 
     // [FirestoreMap] 오용 경고를 필드당 1회만 출력하기 위한 기록
     private static readonly HashSet<FieldInfo> s_WarnedMapMisuse = new HashSet<FieldInfo>();
+    // 중첩 배열 경고를 필드당 1회만 출력하기 위한 기록
+    private static readonly HashSet<FieldInfo> s_WarnedNestedArray = new HashSet<FieldInfo>();
 
     // ──────────────────────────────────────────────────────────────
     // 경로 조립
@@ -133,14 +135,18 @@ public static class FirestoreMapper
     {
         var kind = Classify(type, field);
         if (value == null)
-            return kind == FieldKind.DynamicMap ? new Dictionary<string, object>() : null;
+        {
+            if (kind == FieldKind.DynamicMap) return new Dictionary<string, object>();  // null → 빈 맵 {}
+            if (kind == FieldKind.Array)      return new List<object>();                // null → 빈 배열 []
+            return null;
+        }
 
         switch (kind)
         {
             case FieldKind.Scalar:     return SerializeScalar(value);
             case FieldKind.FixedMap:   return SerializeFixedMap(value, type);
             case FieldKind.DynamicMap: return SerializeDynamicMap(value, type);
-            case FieldKind.Array:      return value;  
+            case FieldKind.Array:      return SerializeArray(value, type, field);
             default:                   return value;
         }
     }
@@ -152,7 +158,7 @@ public static class FirestoreMapper
         {
             case FieldKind.FixedMap:   return DeserializeFixedMap(raw, type);
             case FieldKind.DynamicMap: return DeserializeDynamicMap(raw, type);
-            case FieldKind.Array:      return DeserializeScalar(raw, type);
+            case FieldKind.Array:      return DeserializeArray(raw, type);
             default:                   return DeserializeScalar(raw, type);
         }
     }
@@ -267,6 +273,64 @@ public static class FirestoreMapper
             list.Add(item);
         }
         return list;
+    }
+
+ 
+    private static object SerializeArray(object value, Type collectionType, FieldInfo field)
+    {
+        var result = new List<object>();
+        if (!(value is IEnumerable list)) return result;
+
+        Type elemType = GetElementType(collectionType);
+        foreach (var item in list)
+        {
+            if (item == null) { result.Add(null); continue; }
+
+            object s = SerializeValue(item, elemType, null);
+            if (s is IList)   // Firestore 는 배열 안 배열을 허용하지 않는다
+            {
+                if (field == null || s_WarnedNestedArray.Add(field))
+                    Debug.LogWarning($"[FirestoreMapper] '{(field != null ? field.DeclaringType?.Name + "." + field.Name : collectionType.Name)}': " +
+                                     "Firestore는 배열 안 배열을 허용하지 않습니다 — 해당 원소를 건너뜁니다. " +
+                                     "내부 배열을 struct로 감싸면 array-of-maps로 저장할 수 있습니다.");
+                continue;
+            }
+            result.Add(s);
+        }
+        return result;
+    }
+
+
+    private static object DeserializeArray(object raw, Type collectionType)
+    {
+        if (raw == null) return DefaultOf(collectionType);
+
+        if (!(raw is IList items))
+        {
+            Debug.LogWarning($"[FirestoreMapper] array 복원 실패: 서버 값이 배열이 아닙니다({raw.GetType().Name}) → 기본값 유지. 대상: {collectionType.Name}");
+            return DefaultOf(collectionType);
+        }
+
+        Type elemType = GetElementType(collectionType);
+
+        if (collectionType.IsArray)                                      
+        {
+            var arr = Array.CreateInstance(elemType, items.Count);
+            for (int i = 0; i < items.Count; i++)
+                arr.SetValue(DeserializeValue(items[i], elemType, null), i);
+            return arr;
+        }
+
+        if (collectionType.IsGenericType && typeof(IList).IsAssignableFrom(collectionType))   
+        {
+            var list = (IList)Activator.CreateInstance(collectionType);
+            foreach (var r in items)
+                list.Add(DeserializeValue(r, elemType, null));
+            return list;
+        }
+
+        Debug.LogWarning($"[FirestoreMapper] '{collectionType.Name}': T[]/List<T> 외 컬렉션은 복원을 지원하지 않습니다.");
+        return DefaultOf(collectionType);
     }
 
 
