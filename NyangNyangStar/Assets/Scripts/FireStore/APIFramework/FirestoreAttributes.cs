@@ -19,3 +19,12 @@ public sealed class FirestoreFieldAttribute : Attribute
 
 [AttributeUsage(AttributeTargets.Field, AllowMultiple = false)]
 public sealed class FirestoreIgnoreAttribute : Attribute { }
+
+
+
+[AttributeUsage(AttributeTargets.Field, AllowMultiple = false)]
+public sealed class FirestoreMapAttribute : Attribute { }
+
+
+[AttributeUsage(AttributeTargets.Field, AllowMultiple = false)]
+public sealed class FirestoreMapKeyAttribute : Attribute { }
