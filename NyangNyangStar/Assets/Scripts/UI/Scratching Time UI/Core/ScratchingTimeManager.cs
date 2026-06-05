@@ -6,6 +6,7 @@ using Core.Managers;
 using Data.LibrarySystem;
 using Services.Enums;
 using UI;
+using UI.Base;
 using UnityEngine;
 
 // 스크래칭 타임의 선택 상태, 화면 전환, 결과 팝업 흐름을 관리
@@ -13,6 +14,7 @@ public class ScratchingTimeManager : UIBase
 {
     [Header("Data")]
     [SerializeField] private ScratchingSo _scratching;
+    [SerializeField] private ScratchingProgressSO _scratchingProgress;
     [Tooltip("스크래칭 밸런스 시트 URL. SheetLoader.prefab scratchingURL과 동일하게 유지")]
     [SerializeField]
     private string _scratchingSheetFallbackUrl =
@@ -180,6 +182,8 @@ public class ScratchingTimeManager : UIBase
             return;
         }
 
+        SaveScratchingProgressToServer();
+
         _selectedStageType = stageType;
 
         int maxDurability = _scratching.GetMaxDurability(_selectedStage, _selectedStageType);
@@ -274,6 +278,7 @@ public class ScratchingTimeManager : UIBase
         int clearExp = _scratching.GetClearExp(_selectedStage, _selectedStageType);
 
         _scratching.RecordStageClear(_selectedStage, _selectedStageType);
+        SaveScratchingProgressToServer();
         _moongchiStatController?.IncreaseExp(clearExp);
 
         _isStarted = false;
@@ -545,7 +550,7 @@ public class ScratchingTimeManager : UIBase
     }
 
     /// <summary>
-    /// 스크래칭 시트만 즉시 요청합니다. SheetLoader·긴 대기 없이 네트워크 1회로 완료합니다.
+    /// 스크래칭 시트만 즉시 요청합니다. SheetLoader 긴 대기 없이 네트워크 1회로 완료합니다.
     /// </summary>
     private IEnumerator LoadScratchingDataRoutine()
     {
@@ -575,6 +580,7 @@ public class ScratchingTimeManager : UIBase
             return;
 
         ResetAllState();
+        LoadScratchingProgressFromServer();
         _moongchiStatController?.PrintMoongchiStat();
 
         if (HasSelectedStage)
@@ -624,6 +630,54 @@ public class ScratchingTimeManager : UIBase
 
     private bool IsRequiredDataReady()
         => _scratching != null && _scratching.HasData;
+
+    private void RefreshInitialSelectionInfo()
+    {
+        if (HasSelectedStage)
+        {
+            RefreshSelectionInfo();
+            return;
+        }
+
+        _selectedStage = 1;
+        _selectedStageType = StageType.None;
+        RefreshSelectionInfo();
+    }
+
+    private async void LoadScratchingProgressFromServer()
+    {
+        if (_scratchingProgress == null || _scratching == null)
+            return;
+
+        try
+        {
+            await _scratchingProgress.UpdateFromServerAsync(false);
+            _scratchingProgress.ApplyTo(_scratching);
+            RefreshStageButtonUnlockState();
+            RefreshInitialSelectionInfo();
+        }
+        catch (Exception e)
+        {
+            DebugTool.Warning($"ScratchingProgressSO 불러오기 실패: {e.Message}", DebugType.ScratchingTime);
+        }
+    }
+
+    private async void SaveScratchingProgressToServer()
+    {
+        if (_scratchingProgress == null || _scratching == null)
+            return;
+
+        _scratchingProgress.CaptureFrom(_scratching);
+
+        try
+        {
+            await _scratchingProgress.UpdateDataAsync();
+        }
+        catch (Exception e)
+        {
+            DebugTool.Warning($"ScratchingProgressSO 저장 실패: {e.Message}", DebugType.ScratchingTime);
+        }
+    }
 
     private void SubscribeDataReady()
     {

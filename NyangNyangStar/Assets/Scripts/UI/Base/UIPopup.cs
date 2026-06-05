@@ -1,6 +1,6 @@
 using Core.Managers;
 
-namespace UI
+namespace UI.Base
 {
     public class UIPopup : UIBase
     {

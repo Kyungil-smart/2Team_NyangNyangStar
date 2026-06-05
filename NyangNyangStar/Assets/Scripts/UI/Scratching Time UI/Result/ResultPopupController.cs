@@ -2,6 +2,7 @@
 using DG.Tweening;
 using TMPro;
 using UI;
+using UI.Base;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -46,6 +47,8 @@ public class ResultPopupController : UIBase
     private CanvasGroup _dimCanvasGroup;
     private CanvasGroup _backButtonCanvasGroup;
     private CanvasGroup _retryButtonCanvasGroup;
+    private LayoutElement _backButtonLayoutElement;
+    private LayoutElement _retryButtonLayoutElement;
     private RectTransform _backButtonRect;
     private RectTransform _retryButtonRect;
     private Vector2 _backButtonOriginPos;
@@ -68,6 +71,7 @@ public class ResultPopupController : UIBase
     {
         UnregisterButtonEvents();
         KillPopupTween();
+        RestoreButtonLayoutState();
     }
 
     private void OnDestroy()
@@ -124,6 +128,7 @@ public class ResultPopupController : UIBase
     public void ShowResultPopup(bool isClear, bool canRetry)
     {
         EnsureReferences();
+        BindButtons();
         BindTweenTargets();
         KillPopupTween();
 
@@ -315,15 +320,14 @@ public class ResultPopupController : UIBase
                 _dimCanvasGroup = _dimBackgroundObject.AddComponent<CanvasGroup>();
         }
 
-        BindButtonTweenTargets(_backButton, ref _backButtonCanvasGroup, ref _backButtonRect, ref _backButtonOriginPos);
-        BindButtonTweenTargets(_retryButton, ref _retryButtonCanvasGroup, ref _retryButtonRect, ref _retryButtonOriginPos);
+        BindButtonTweenTargets(_backButton, ref _backButtonCanvasGroup, ref _backButtonRect);
+        BindButtonTweenTargets(_retryButton, ref _retryButtonCanvasGroup, ref _retryButtonRect);
     }
 
     private static void BindButtonTweenTargets(
         Button button,
         ref CanvasGroup canvasGroup,
-        ref RectTransform rect,
-        ref Vector2 originPos)
+        ref RectTransform rect)
     {
         if (button == null)
             return;
@@ -334,9 +338,40 @@ public class ResultPopupController : UIBase
 
         if (canvasGroup == null)
             canvasGroup = button.gameObject.AddComponent<CanvasGroup>();
+    }
 
-        if (rect != null)
-            originPos = rect.anchoredPosition;
+    private void RebuildButtonLayout()
+    {
+        if (_buttonArea is not RectTransform buttonAreaRect)
+            return;
+
+        LayoutRebuilder.ForceRebuildLayoutImmediate(buttonAreaRect);
+    }
+
+    private void EnsureButtonLayoutElements()
+    {
+        if (_backButton != null)
+            _backButtonLayoutElement ??= GetOrAddLayoutElement(_backButton.gameObject);
+
+        if (_retryButton != null)
+            _retryButtonLayoutElement ??= GetOrAddLayoutElement(_retryButton.gameObject);
+    }
+
+    private static LayoutElement GetOrAddLayoutElement(GameObject target)
+    {
+        if (!target.TryGetComponent(out LayoutElement layoutElement))
+            layoutElement = target.AddComponent<LayoutElement>();
+
+        return layoutElement;
+    }
+
+    private void SetButtonsIgnoreLayout(bool ignore)
+    {
+        if (_backButtonLayoutElement != null)
+            _backButtonLayoutElement.ignoreLayout = ignore;
+
+        if (_retryButtonLayoutElement != null)
+            _retryButtonLayoutElement.ignoreLayout = ignore;
     }
 
     private void CacheButtonOriginPositions()
@@ -344,13 +379,41 @@ public class ResultPopupController : UIBase
         if (_buttonOriginCached)
             return;
 
+        EnsureButtonLayoutElements();
+        SetButtonsIgnoreLayout(false);
+        RebuildButtonLayout();
+
         if (_backButtonRect != null)
             _backButtonOriginPos = _backButtonRect.anchoredPosition;
 
         if (_retryButtonRect != null)
             _retryButtonOriginPos = _retryButtonRect.anchoredPosition;
 
+        SetButtonsIgnoreLayout(true);
         _buttonOriginCached = true;
+    }
+
+    private void RestoreButtonLayoutState()
+    {
+        if (!_buttonOriginCached)
+            return;
+
+        SetButtonsIgnoreLayout(false);
+
+        if (_backButtonRect != null)
+            _backButtonRect.anchoredPosition = Vector2.zero;
+
+        if (_retryButtonRect != null)
+            _retryButtonRect.anchoredPosition = Vector2.zero;
+
+        if (_backButtonCanvasGroup != null)
+            _backButtonCanvasGroup.alpha = 1f;
+
+        if (_retryButtonCanvasGroup != null)
+            _retryButtonCanvasGroup.alpha = 1f;
+
+        _buttonOriginCached = false;
+        RebuildButtonLayout();
     }
 
     private void PrepareOpenState()
@@ -400,6 +463,7 @@ public class ResultPopupController : UIBase
     private void DeactivatePopup(Action onComplete)
     {
         KillPopupTween();
+        RestoreButtonLayoutState();
         gameObject.SetActive(false);
         onComplete?.Invoke();
     }

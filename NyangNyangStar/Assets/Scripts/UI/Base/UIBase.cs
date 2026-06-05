@@ -6,7 +6,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using Object = UnityEngine.Object;
 
-namespace UI
+namespace UI.Base
 {
     public abstract class UIBase : MonoBehaviour
     {
