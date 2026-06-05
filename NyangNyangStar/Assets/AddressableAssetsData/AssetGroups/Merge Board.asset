@@ -12,11 +12,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
   m_Name: Merge Board
   m_EditorClassIdentifier: 
-  m_GroupName: Merge Baord
+  m_GroupName: Merge Board
   m_Data:
     m_SerializedData: []
   m_GUID: d11da767e33a82841bc72934b7d2a4ec
-  m_SerializeEntries: []
+  m_SerializeEntries:
+  - m_GUID: 33808f098da4af24ba6aee52e53b7967
+    m_Address: Assets/Prefabs/UI/MergeBoard/Merge Board.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: 567802e293b80b747b23153796443c26, type: 2}
   m_SchemaSet:
