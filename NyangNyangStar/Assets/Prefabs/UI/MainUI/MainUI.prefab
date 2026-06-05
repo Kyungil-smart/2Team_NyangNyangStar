@@ -1485,6 +1485,7 @@ MonoBehaviour:
   _notebookButton: {fileID: 0}
   _rouletteButton: {fileID: 0}
   _affinityButton: {fileID: 0}
+  _nyangNyangSnapButton: {fileID: 0}
   _meowMeowStarButton: {fileID: 0}
   _workshopMergeBoardButton: {fileID: 0}
   _mainMergeBoardButton: {fileID: 0}
@@ -3190,7 +3191,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Snap
+  m_text: 
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
