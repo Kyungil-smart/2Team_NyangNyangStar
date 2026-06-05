@@ -5,8 +5,12 @@ using UnityEngine.UI;
 
 namespace UI.MergeBoard
 {
-    public class ItemSlot : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler, IDropHandler, IPointerClickHandler
+    public class ItemSlot : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler, IPointerClickHandler
     {
+        [Header("Raycast")]
+        [SerializeField] private Image _slotRaycastImage;
+
+        [Header("Item")]
         [SerializeField] private Image _item;
 
         private BoardSystem _boardSystem;
@@ -17,8 +21,10 @@ namespace UI.MergeBoard
 
         private int _slotIndex;
         private bool _isDragging;
+        private bool _ignoreClickOnce;
 
         public int SlotNumber => _slotIndex;
+        public RectTransform RectTransform => transform as RectTransform;
         public ItemData ItemData { get; private set; } = ItemData.Empty;
         public bool HasItem => ItemData != null && ItemData.HasItem;
 
@@ -26,6 +32,8 @@ namespace UI.MergeBoard
         {
             _boardSystem = boardSystem;
             _slotIndex = slotIndex;
+
+            SetupRaycastImage();
 
             if (_item == null)
             {
@@ -50,7 +58,22 @@ namespace UI.MergeBoard
             if (_canvasGroup == null)
                 _canvasGroup = _item.gameObject.AddComponent<CanvasGroup>();
 
+            _item.raycastTarget = false;
             SetItemData(itemData);
+        }
+
+        private void SetupRaycastImage()
+        {
+            if (_slotRaycastImage == null)
+                _slotRaycastImage = GetComponent<Image>();
+
+            if (_slotRaycastImage == null)
+            {
+                _slotRaycastImage = gameObject.AddComponent<Image>();
+                _slotRaycastImage.color = new Color(1f, 1f, 1f, 0f);
+            }
+
+            _slotRaycastImage.raycastTarget = true;
         }
 
         public void SetItemData(ItemData itemData)
@@ -59,13 +82,13 @@ namespace UI.MergeBoard
 
             bool hasItem = ItemData.HasItem;
 
-            if (_item != null)
-            {
-                _item.gameObject.SetActive(hasItem);
-                _item.enabled = hasItem;
-                _item.sprite = hasItem ? ItemData.ItemSprite : null;
-                _item.raycastTarget = hasItem;
-            }
+            if (_item == null)
+                return;
+
+            _item.gameObject.SetActive(hasItem);
+            _item.enabled = hasItem;
+            _item.sprite = hasItem ? ItemData.ItemSprite : null;
+            _item.raycastTarget = false;
         }
 
         public void ClearItem()
@@ -79,6 +102,7 @@ namespace UI.MergeBoard
                 return;
 
             _isDragging = true;
+            _ignoreClickOnce = true;
 
             _canvasGroup.blocksRaycasts = false;
             _itemRect.SetParent(_canvas.transform, true);
@@ -110,19 +134,9 @@ namespace UI.MergeBoard
             _canvasGroup.blocksRaycasts = true;
             _itemRect.SetParent(transform, false);
             _itemRect.anchoredPosition = Vector2.zero;
-        }
 
-        public void OnDrop(PointerEventData eventData)
-        {
-            if (eventData.pointerDrag == null)
-                return;
-
-            ItemSlot fromSlot = eventData.pointerDrag.GetComponent<ItemSlot>();
-
-            if (fromSlot == null)
-                return;
-
-            _boardSystem.MoveOrSwapItem(fromSlot, this);
+            if (_boardSystem != null)
+                _boardSystem.HandleDragEnd(this, eventData);
         }
 
         public void OnPointerClick(PointerEventData eventData)
@@ -130,14 +144,17 @@ namespace UI.MergeBoard
             if (_isDragging)
                 return;
 
+            if (_ignoreClickOnce)
+            {
+                _ignoreClickOnce = false;
+                return;
+            }
+
             if (_boardSystem == null)
                 return;
 
             if (!HasItem)
-            {
-                _boardSystem.ClearSelectedSlot();
                 return;
-            }
 
             _boardSystem.SelectSlot(this);
         }

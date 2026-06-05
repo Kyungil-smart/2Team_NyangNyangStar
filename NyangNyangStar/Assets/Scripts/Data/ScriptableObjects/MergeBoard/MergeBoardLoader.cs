@@ -1,6 +1,6 @@
 ﻿using System.Collections;
-using Data.LibrarySystem;
 using System.Threading.Tasks;
+using Data.LibrarySystem;
 using UI.MergeBoard;
 using UnityEngine;
 
@@ -13,42 +13,42 @@ namespace Data.ScriptableObjects.MergeBoard
         [SerializeField] private SpecialItemBoardSystem _specialItemBoardSystem;
 
         [Header("문서 ID 정리")]
-        [SerializeField] private bool _normalizeDocumentIds = true;
+        [SerializeField] private bool _normalizeDocumentIds;
 
         [Header("초기화 대기")]
         [SerializeField] private float _checkInterval = 0.1f;
 
-        public bool IsLoaded { get; private set; }
+        private bool _isLoading;
+        private bool _isLoaded;
 
         private IEnumerator Start()
         {
-            IsLoaded = false;
+            yield return WaitUntilReady();
+            yield return LoadFromServerRoutine();
+        }
 
-            if (_boardSystem == null)
-                _boardSystem = FindFirstObjectByType<BoardSystem>();
-
-            if (_rewardQueue == null)
-                _rewardQueue = FindFirstObjectByType<BoardRewardQueue>();
-
-            if (_specialItemBoardSystem == null)
-                _specialItemBoardSystem = FindFirstObjectByType<SpecialItemBoardSystem>();
-
+        private IEnumerator WaitUntilReady()
+        {
             while (_boardSystem == null || !_boardSystem.IsBoardReady)
-            {
-                if (_boardSystem == null)
-                    _boardSystem = FindFirstObjectByType<BoardSystem>();
-
-                yield return new WaitForSeconds(_checkInterval);
-            }
-
-            while (_specialItemBoardSystem != null && !_specialItemBoardSystem.IsBoardReady)
                 yield return new WaitForSeconds(_checkInterval);
 
             while (FireStoreManager.Instance == null || !FireStoreManager.Instance.IsInitialized)
                 yield return new WaitForSeconds(_checkInterval);
 
-            while (LocalDataAccess.Instance == null || LocalDataAccess.Instance.Game == null || !LocalDataAccess.Instance.Game.IsReady)
+            while (LocalDataAccess.Instance == null ||
+                   LocalDataAccess.Instance.Game == null ||
+                   !LocalDataAccess.Instance.Game.IsReady)
+            {
                 yield return new WaitForSeconds(_checkInterval);
+            }
+        }
+
+        private IEnumerator LoadFromServerRoutine()
+        {
+            if (_isLoading || _isLoaded)
+                yield break;
+
+            _isLoading = true;
 
             Task loadTask = LoadFromServerAsync();
 
@@ -56,12 +56,11 @@ namespace Data.ScriptableObjects.MergeBoard
                 yield return null;
 
             if (loadTask.Exception != null)
-            {
                 Debug.LogException(loadTask.Exception);
-                yield break;
-            }
 
-            IsLoaded = true;
+            _isLoading = false;
+            _isLoaded = true;
+
             DebugTool.Log("MergeBoard 서버 데이터 로드 완료", DebugType.Board, this);
         }
 
