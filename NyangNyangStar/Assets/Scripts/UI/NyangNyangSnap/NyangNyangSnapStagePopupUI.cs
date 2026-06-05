@@ -9,7 +9,9 @@ public class NyangNyangSnapStagePopupUI : UIPopup
     [Header("버튼")]
     [Tooltip("스테이지 1")][SerializeField] private Button _stage1Button;
     [Tooltip("스테이지 2")][SerializeField] private Button _stage2Button;
-    [Tooltip("닫기")][SerializeField] private Button _closeButton;
+    [Tooltip("뒤로가기")][SerializeField] private Button _backButton;
+
+    private NyangNyangSnapStagePopupSprite _sprite;
 
     public override void Init()
     {
@@ -17,18 +19,21 @@ public class NyangNyangSnapStagePopupUI : UIPopup
 
         _stage1Button = Get<Button>((int)NyangNyangSnapStageButtons.Stage1Button);
         _stage2Button = Get<Button>((int)NyangNyangSnapStageButtons.Stage2Button);
-        _closeButton = Get<Button>((int)NyangNyangSnapStageButtons.CloseButton);
+        _backButton = Get<Button>((int)NyangNyangSnapStageButtons.BackButton);
 
         InitNyangNyangSnap();
 
-        if (_closeButton != null) _closeButton.onClick.AddListener(CloseNyangNyangSnapStagePopup);
+        if (_backButton != null) _backButton.onClick.AddListener(CloseNyangNyangSnapStagePopup);
+
+        _sprite = GetComponent<NyangNyangSnapStagePopupSprite>();
+        _sprite.Init();
     }
 
     private void OnDestroy()
     {
         RemovePopupButton(_stage1Button);
         RemovePopupButton(_stage2Button);
-        RemovePopupButton(_closeButton);
+        RemovePopupButton(_backButton);
     }
 
     private void InitNyangNyangSnap()
@@ -74,5 +79,5 @@ public enum NyangNyangSnapStageButtons
 {
     Stage1Button,
     Stage2Button,
-    CloseButton
+    BackButton
 }
