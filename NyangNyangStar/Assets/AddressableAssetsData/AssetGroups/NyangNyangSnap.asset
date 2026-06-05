@@ -62,6 +62,12 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 947445f613340f445921153ee9f6862e
+    m_Address: Snap_BG
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 98f8328b49b33974e817a5ba6154812b
     m_Address: Snap_Btn_White
     m_ReadOnly: 0

@@ -46,6 +46,12 @@ MonoBehaviour:
     m_SerializedLabels:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 0c3e9a336b51fd244a4245bd45dfa119
+    m_Address: Login_BG
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 0ffe10357245e8c439759e9d33f55301
     m_Address: Main_Btn_Shop
     m_ReadOnly: 0
@@ -113,6 +119,12 @@ MonoBehaviour:
     m_Address: ShopPopupUI
     m_ReadOnly: 0
     m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 60f52f38727c89b4497ea5841646ac7c
+    m_Address: Login_Logo
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 6b150ff861cf8d64a85f4f735c298b1e
     m_Address: StoryBookPopupUI
@@ -193,6 +205,12 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: e377c98bf2451334380dba5104958f8e
     m_Address: Main_Icon_Jewel
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e56108ccc00b02647b51a5175053643b
+    m_Address: Main_BG
     m_ReadOnly: 0
     m_SerializedLabels:
     - Sprite
