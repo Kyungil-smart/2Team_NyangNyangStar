@@ -46,16 +46,17 @@ MonoBehaviour:
     m_SerializedLabels:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 0c3e9a336b51fd244a4245bd45dfa119
+    m_Address: Login_BG
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 0ffe10357245e8c439759e9d33f55301
     m_Address: Main_Btn_Shop
     m_ReadOnly: 0
     m_SerializedLabels:
     - Sprite
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 14eca5e70671f9f47b99e4165aa777a5
-    m_Address: Shape_Circle
-    m_ReadOnly: 0
-    m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 1859535382109db4c84c15614149ddf3
     m_Address: Main_Btn_Roulette
@@ -78,6 +79,12 @@ MonoBehaviour:
     m_Address: DailyCheckInPopupUI
     m_ReadOnly: 0
     m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 456dd4e56018a01478b2712aad1817f3
+    m_Address: Main_Panel_Settings_Header
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 49abb60bf8ddc184f82c74386c5520e3
     m_Address: Main_Btn_Attendance
@@ -112,6 +119,12 @@ MonoBehaviour:
     m_Address: ShopPopupUI
     m_ReadOnly: 0
     m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 60f52f38727c89b4497ea5841646ac7c
+    m_Address: Login_Logo
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 6b150ff861cf8d64a85f4f735c298b1e
     m_Address: StoryBookPopupUI
@@ -163,12 +176,6 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: b7fb5c1113044e441a7aaeb7a9179d36
-    m_Address: Main_Btn_Nyangstagram
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - Sprite
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: b8584585b9e078a4caa0498da6833983
     m_Address: Main_Icon_Energy
     m_ReadOnly: 0
@@ -186,12 +193,6 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: c5c7591d8d3890a49800412e6c416429
-    m_Address: Main_Btn_Camera
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - Sprite
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: cd9c9d9253516544a94ddb7794e30911
     m_Address: EventSystem
     m_ReadOnly: 0
@@ -204,6 +205,12 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: e377c98bf2451334380dba5104958f8e
     m_Address: Main_Icon_Jewel
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e56108ccc00b02647b51a5175053643b
+    m_Address: Main_BG
     m_ReadOnly: 0
     m_SerializedLabels:
     - Sprite

@@ -17,10 +17,109 @@ MonoBehaviour:
     m_SerializedData: []
   m_GUID: 20a5cbf6712fe294b8515eaf279e2357
   m_SerializeEntries:
+  - m_GUID: 0599a81dc0e0084468f4d2215f97518a
+    m_Address: NyangNyangSnapToyCanvas
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 18eecb3baea7c26459793f9c4eb412b9
+    m_Address: Snap_Btn_Gray
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2843d457e92d686418c38e8f9bc8c7ed
+    m_Address: Snap_Btn_Pink
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 314b94708f45d384dae0221bc3324aa3
+    m_Address: Snap_Btn_Filter
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 53ede35c30f1bb247904ecd55c02cf78
+    m_Address: NyangNyangSnapCanvas
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 64b8daed39e4c21408201b0c399e64dc
+    m_Address: Snap_Panel_Tool
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 743a1bd7105bf6e40b45253bdce50de5
+    m_Address: Snap_Btn_Blue
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7c172bb0b4dbbcc4ea8c7faf8806a9b1
+    m_Address: NyangNyangSnapSnackCanvas
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 947445f613340f445921153ee9f6862e
+    m_Address: Snap_BG
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 98f8328b49b33974e817a5ba6154812b
+    m_Address: Snap_Btn_White
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9a14ac77e371ec942a84e8db5677f057
+    m_Address: Snap_Icon_PinkStar
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9aa71ec6e340c0b408adf3ba0ba391fa
+    m_Address: Snap_Btn_Delete
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9c242930455be3b46bbbf5cd14ea970a
+    m_Address: Snap_Btn_Red
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b584179b9a70de047898112a3ff3460b
+    m_Address: Snap_Icon_Star
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c003b8fa81801ae45abfb0184828988d
+    m_Address: Snap_Btn_Green
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: d18ea216e994cfa4c8b73c0279298ec0
     m_Address: NyangNyangSnapStagePopupUI
     m_ReadOnly: 0
     m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ec42f1cc09848294fa1a47acf0e29924
+    m_Address: Snap_Panel_ToolList
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ff173edddbbc14744867dcf5527a0a2e
+    m_Address: Snap_Icon_Center
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
     FlaggedDuringContentUpdateRestriction: 0
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: 567802e293b80b747b23153796443c26, type: 2}

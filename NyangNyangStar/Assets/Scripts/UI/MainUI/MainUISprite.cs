@@ -34,8 +34,8 @@ public class MainUISprite : UIBase
         SetSprite(MainUIImages.NotebookButton, "Main_Btn_FosterDiary");
         SetSprite(MainUIImages.RouletteButton, "Main_Btn_Roulette");
         SetSprite(MainUIImages.AffinityButton, "Main_Btn_Interact");
-        SetSprite(MainUIImages.NyangNyangSnapButton, "Main_Btn_Camera");
-        SetSprite(MainUIImages.MeowMeowStarButton, "Main_Btn_Nyangstagram");
+        SetSprite(MainUIImages.NyangNyangSnapButton, "Btn_Camera");
+        SetSprite(MainUIImages.MeowMeowStarButton, "Btn_Nyangstagram");
         SetSprite(MainUIImages.WorkshopMergeBoardButton, "Main_Btn_Mergeboard", _workshopMergeBoardColor);
         SetSprite(MainUIImages.MainMergeBoardButton, "Main_Btn_Mergeboard", _mainMergeBoardColor);
         SetSprite(MainUIImages.CoinImage, "Main_Icon_Coin");
@@ -45,7 +45,7 @@ public class MainUISprite : UIBase
         SetSprite(MainUIImages.Energy, "Shape_Rectangle");
         SetSprite(MainUIImages.Coin, "Shape_Rectangle");
         SetSprite(MainUIImages.Gem, "Shape_Rectangle");
-        SetSprite(MainUIImages.ProfileImage, "Profile_ProfileImages");
+        SetSprite(MainUIImages.ProfileImage, "Profile_ProfileImages_0");
         SetSprite(MainUIImages.ProfileFrame, "Main_Profile_Frame");
     }
 

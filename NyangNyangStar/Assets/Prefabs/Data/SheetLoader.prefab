@@ -52,14 +52,28 @@ MonoBehaviour:
     <Type>k__BackingField: 2
   - <URL>k__BackingField: https://docs.google.com/spreadsheets/d/1Eat_qUKSYptXHbRKL7qy8Ko-XytjoS5dzaVKSlag87I/edit?gid=1289319021#gid=1289319021
     <Type>k__BackingField: 2
+  - <URL>k__BackingField: https://docs.google.com/spreadsheets/d/1Eat_qUKSYptXHbRKL7qy8Ko-XytjoS5dzaVKSlag87I/edit?gid=1365707540#gid=1365707540
+    <Type>k__BackingField: 2
+  - <URL>k__BackingField: https://docs.google.com/spreadsheets/d/1Eat_qUKSYptXHbRKL7qy8Ko-XytjoS5dzaVKSlag87I/edit?gid=535069127#gid=535069127
+    <Type>k__BackingField: 2
   keySo:
   - {fileID: 11400000, guid: ef7329f5a4722ca49b5345cf692ac5bf, type: 2}
   - {fileID: 11400000, guid: 3ba2b810f2d048e4ba5d51cefa1e8a1a, type: 2}
   - {fileID: 11400000, guid: bc532c50f9ad6184985b318534218a8d, type: 2}
+  - {fileID: 11400000, guid: e4db64fc696733d459adcf5597cd43df, type: 2}
+  - {fileID: 11400000, guid: 17e3456b885ccc7439b581a322ab9df0, type: 2}
   scratchingURL:
     <URL>k__BackingField: https://docs.google.com/spreadsheets/d/1hD2NCEzCWr2aml-_aqHsHZu_8HeZ0xCLpMDt_A9NfoU/edit?gid=0#gid=0
     <Type>k__BackingField: 2
   scratchingSo: {fileID: 11400000, guid: bdec79777a560544fb7f8f70232dd29b, type: 2}
+  nyangNyangSnapBackgroundURL:
+    <URL>k__BackingField: https://docs.google.com/spreadsheets/d/1hD2NCEzCWr2aml-_aqHsHZu_8HeZ0xCLpMDt_A9NfoU/edit?gid=1207676295#gid=1207676295
+    <Type>k__BackingField: 2
+  nyangNyangSnapBackgroundSo: {fileID: 11400000, guid: b3e0326560a126d4586ecdc988ab7a71, type: 2}
+  mergeBoardItemURL:
+    <URL>k__BackingField: https://docs.google.com/spreadsheets/d/1hD2NCEzCWr2aml-_aqHsHZu_8HeZ0xCLpMDt_A9NfoU/edit?gid=803702527#gid=803702527
+    <Type>k__BackingField: 2
+  itemDatabaseSo: {fileID: 11400000, guid: 0073675bff47ab64e8be560c0d594644, type: 2}
   _pendingSheetCount: 0
 --- !u!114 &7187299137341658617
 MonoBehaviour:

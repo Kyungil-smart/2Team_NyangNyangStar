@@ -1,0 +1,193 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
+  m_Name: Items
+  m_EditorClassIdentifier: 
+  m_GroupName: Items
+  m_Data:
+    m_SerializedData: []
+  m_GUID: 70bacfadd8d1fec40b0b4f26bd3628b1
+  m_SerializeEntries:
+  - m_GUID: 1b31e64b1031716468a5ba57915b48b5
+    m_Address: Item_Food_FishPouch
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1d3d3407f3d39da4eba686b0c493f345
+    m_Address: Item_Toy_YarnBall
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 226fd7da88a1ee249903d20b03fac1b6
+    m_Address: Item_Food_LobsterScallopCan
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3071247457e209b4682352c92826b478
+    m_Address: Item_Treat_Cube
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 31abf69d91acc7041a100c98439ecb8a
+    m_Address: Item_Toy_ChickWand
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3412d21f5c0e47f4a8e8366a15e2c8ba
+    m_Address: Item_Toy_MouseToy
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3f3cd1c222c05164bb36dc223f9f828e
+    m_Address: Item_Toy_FishCake
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 458f1e5bf6b32bb4c816056268027f67
+    m_Address: Item_Food_TurkeyStewPouch
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4b6d49115be15aa49adf4893b950fce8
+    m_Address: Item_Food_AnchovyPouch
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4c29c2faf38343e4085a3e9ae19d7d5b
+    m_Address: Item_Food_KibbleSample
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4f335c301af2d604db676dc8c788d0c4
+    m_Address: Item_Treat_DessertBox
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5d0cebab855793944bcec97a695de707
+    m_Address: Item_Toy_FeatherWand
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 68b3c2126e01dc248841acda33a303d2
+    m_Address: Item_Toy_FishToy
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 73aea014d76599341be3458d2c779f25
+    m_Address: Item_Special_FluffyHeart
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 778839208a656584b89cb0c43a83f8f2
+    m_Address: Item_Special_MeowStone
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 819188778b561094a9b5c462e3e8fc31
+    m_Address: Item_Toy_Ball
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 83af6f82ad515b449b87c900485e07ce
+    m_Address: Item_Toy_BellWand
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 87b77ccb8f212e74aae85884a54f98d9
+    m_Address: Item_Toy_ToyBall
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8c1704ddb45fb3c4c912d8e9d729522c
+    m_Address: Item_Food_BaggedKibble
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 97ca79e8513a1b8498966344d31f2eb1
+    m_Address: Item_Treat_Slice
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a7cda038443c51045819db6c4429d4f7
+    m_Address: Item_Food_Kibble
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b0037e312ee5eac4ca9fd12b614f9111
+    m_Address: Item_Food_BeefCan
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b0595c5bdde20c44f974d4bd95f8bf05
+    m_Address: Item_Food_ChickenCan
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b5662011507eafc4d860372d42460800
+    m_Address: Item_Food_TunaCan
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b7d495bfaa1dddf48ac21e3db1db1b18
+    m_Address: Item_Toy_SnakeToy
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b966a11841d1ef845b5eca8f24e0d183
+    m_Address: Item_Treat_Churu
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ddfba4785519d984eb7a499b2ac817cc
+    m_Address: Item_Toy_RoboticToy
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ff97495adf95f1a4eab90422af644332
+    m_Address: Item_Treat_Crunchy
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  m_ReadOnly: 0
+  m_Settings: {fileID: 11400000, guid: 567802e293b80b747b23153796443c26, type: 2}
+  m_SchemaSet:
+    m_Schemas:
+    - {fileID: 11400000, guid: f35116f94529c2e4b99588dc27b331a4, type: 2}
+    - {fileID: 11400000, guid: a93902dec31f8c249970b104604517bd, type: 2}
