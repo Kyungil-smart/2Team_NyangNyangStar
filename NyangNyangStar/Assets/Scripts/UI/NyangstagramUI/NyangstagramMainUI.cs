@@ -1,5 +1,6 @@
 using Core.Managers;
 using System.Collections.Generic;
+using TMPro;
 using UI;
 using UnityEngine;
 using UnityEngine.UI;
@@ -18,6 +19,12 @@ public class NyangstagramMainUI : UIPopup
     [Tooltip("냥스타그램 나가기 버튼")][SerializeField] private Button _nyangstagramCloseButton;
     [Tooltip("DM Button")][SerializeField] private Button _dmButton;
     [Tooltip("계정명 버튼")][SerializeField] private Button _accountButton;
+    [Tooltip("좋아요 버튼")][SerializeField] private Button _likeButton;
+    [Tooltip("좋아요 text")][SerializeField] private TMP_Text _likeCountText;
+
+    [SerializeField] private int _likeCount = 26667;
+    private bool _isLiked;
+
 
     [Header("내부 화면")]
     [SerializeField] private GameObject _homeView;
@@ -49,10 +56,15 @@ public class NyangstagramMainUI : UIPopup
         _nyangstagramCloseButton = Get<Button>((int)NyangstagramButton.NyangstagramCloseButton);
         _dmButton = Get<Button>((int)NyangstagramButton.DMButton);
         _accountButton = Get<Button>((int)NyangstagramButton.AccountNameTextButton);
+        _likeButton = Get<Button>((int)NyangstagramButton.LikeButton);
+        _likeCountText = UIBase.FindChild<TMP_Text>(gameObject, "Like Count", true);
+
 
         BindViewButtons();
         BindCloseButton();
         BindRouterEvents();
+
+        BindButtons();
 
         PreloadPopups();
 
@@ -110,6 +122,19 @@ public class NyangstagramMainUI : UIPopup
             },
             false
         );
+    }
+    private void BindButtons()
+    {
+        //if (_storyButton != null)
+        //    _storyButton.onClick.AddListener(() => GameManager.UI.ShowPopupUI<UIPopup>(KeyContainer.Prefabs.ShopPopupUI));
+
+        AddLikeButton(_likeButton);
+
+
+        //if (_tagButton != null)
+        //    _tagButton.onClick.AddListener(() => GameManager.UI.ShowPopupUI<UIPopup>(KeyContainer.Prefabs.ShopPopupUI));
+
+
     }
 
     private void AddPopupButton(Button button, UIPopup popup)
@@ -226,6 +251,36 @@ public class NyangstagramMainUI : UIPopup
         if (popup == null) return;
         popup.PlayOpenAnimation();
     }
+    private void AddLikeButton(Button button)
+    {
+        if (button == null) return;
+        button.onClick.AddListener(OnClickLikeButton);
+    }
+
+    private void OnClickLikeButton()
+    {
+
+        if (_isLiked)
+        {
+            _likeCount--;
+            _isLiked = false;
+        }
+        else
+        {
+            _likeCount++;
+            _isLiked = true;
+        }
+
+        ReFreshLikeCountText();
+        _nyangstagramMainUISprite.SetLikeSprite(_isLiked);
+    }
+    private void ReFreshLikeCountText()
+    {
+        if (_likeCountText == null) return;
+
+        //_likeCountText.text = $"Like {_likeCount:N0}";
+        _likeCountText.text = $"Like {_likeCount}";
+    }
 
     private void OnDisable()
     {
@@ -252,5 +307,6 @@ public enum NyangstagramButton
     ProfileButton,
     NyangstagramCloseButton,
     DMButton,
-    AccountNameTextButton
+    AccountNameTextButton,
+    LikeButton
 }
