@@ -30,12 +30,13 @@ public class NyangNyangSnapSprite : UIBase
 
     private void SetSprites()
     {
-        //SetSprite(NyangNyangSnapImages.BackButton, "");
-        //SetSprite(NyangNyangSnapImages.SnackPanelButton, "");
-        //SetSprite(NyangNyangSnapImages.ToyPanelButton, "");
-        //SetSprite(NyangNyangSnapImages.Photo, "");
-        //SetSprite(NyangNyangSnapImages.StartButton, "");
-        //SetSprite(NyangNyangSnapImages.SettingButton, "");
+        SetSprite(NyangNyangSnapImages.BackButton, "Btn_Back");
+        SetSprite(NyangNyangSnapImages.SnackPanelButton, "Snap_Btn_Pink");
+        SetSprite(NyangNyangSnapImages.ToyPanelButton, "Snap_Btn_White");
+        SetSprite(NyangNyangSnapImages.Photo, "Snap_Btn_Red");
+        SetSprite(NyangNyangSnapImages.RemainingAttempts, "Snap_Btn_Gray");
+        SetSprite(NyangNyangSnapImages.StartButton, "Snap_Btn_Gray");
+        SetSprite(NyangNyangSnapImages.SettingButton, "Main_Btn_Settings");
     }
 
     private void SetSprite(NyangNyangSnapImages image, string key)
@@ -61,6 +62,7 @@ public enum NyangNyangSnapImages
     SnackPanelButton,
     ToyPanelButton,
     Photo,
+    RemainingAttempts,
     StartButton,
     SettingButton,
 
