@@ -37,6 +37,8 @@ public class SettingsPopupSprite : UIBase
         SetSprite(SettingsPopupImages.SFXIcon, "Main_Btn_Sound");
         SetSprite(SettingsPopupImages.BGMIcon, "Main_Btn_Music");
         SetSprite(SettingsPopupImages.CloseButton, "Btn_Close");
+        SetSprite(SettingsPopupImages.Panel, "Shape_Rectangle");
+        SetSprite(SettingsPopupImages.Header, "Main_Panel_Settings_Header");
     }
 
     private void SetSprite(SettingsPopupImages image, string key)
@@ -70,8 +72,8 @@ public enum SettingsPopupImages
     SFXIcon,
     BGMIcon,
     CloseButton,
-    //Panel,
-    //Title,
+    Panel,
+    Header,
 
     Count
 }
