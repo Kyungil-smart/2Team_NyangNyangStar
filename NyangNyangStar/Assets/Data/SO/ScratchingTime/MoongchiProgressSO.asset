@@ -9,14 +9,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6cd2d540d1d04b7f926d461eae04b135, type: 3}
-  m_Name: MoongChiStat
+  m_Script: {fileID: 11500000, guid: 8de4c4c512315614c850dd87faf11de1, type: 3}
+  m_Name: MoongchiProgressSO
   m_EditorClassIdentifier: 
+  m_DocumentId: Progress
+  m_EnumType: 0
   _level: 1
-  MaxExp: 1000
-  _currentExp: 50
-  _baseSharpness: 50
-  _sharpnessIncreasePerLevel: 2
-  _totalSharpness: 54
-  _baseCriticalChance: 20
-  _totalCriticalChance: 20
+  _currentExp: 0
