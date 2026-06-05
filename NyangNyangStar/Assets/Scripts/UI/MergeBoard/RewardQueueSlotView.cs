@@ -11,6 +11,7 @@ namespace UI.MergeBoard
 
         private BoardRewardQueue _rewardQueue;
         private bool _isTopSlot;
+        private bool _hasItem;
 
         public void Init(BoardRewardQueue rewardQueue, bool isTopSlot)
         {
@@ -20,25 +21,24 @@ namespace UI.MergeBoard
 
         public void SetItem(ItemData itemData)
         {
-            bool hasItem = itemData != null && itemData.HasItem;
-
-            gameObject.SetActive(hasItem);
+            _hasItem = itemData != null && itemData.HasItem;
 
             if (_itemSlotImage == null)
                 return;
 
-            _itemSlotImage.gameObject.SetActive(hasItem);
-            _itemSlotImage.enabled = hasItem;
-            _itemSlotImage.raycastTarget = hasItem;
-            _itemSlotImage.sprite = hasItem ? itemData.ItemSprite : null;
+            _itemSlotImage.gameObject.SetActive(_hasItem);
+            _itemSlotImage.enabled = _hasItem;
+            _itemSlotImage.raycastTarget = false;
+            _itemSlotImage.sprite = _hasItem ? itemData.ItemSprite : null;
         }
 
         public void OnPointerClick(PointerEventData eventData)
         {
-            if (!_isTopSlot)
+            if (!_isTopSlot || !_hasItem)
                 return;
 
-            DebugTool.Log("보상 큐 최상단 슬롯 클릭", DebugType.Board, this);
+            if (_rewardQueue == null)
+                return;
 
             _rewardQueue.TryMoveTopItemToBoard();
         }

@@ -1,4 +1,4 @@
-using Core.Managers;
+﻿using Core.Managers;
 using System;
 using Data.Parsing;
 using Data.LibrarySystem;
@@ -47,6 +47,8 @@ namespace Data.Loader
                     DebugType.Data, this);
                 return;
             }
+
+            LocalDataAccess.Instance.Game.MarkNotReady();
 
             StopAllCoroutines();
             _pendingSheetCount = 0;
@@ -364,6 +366,8 @@ namespace Data.Loader
                         return AddressableGroupType.Nyangstagram;
                     case "Scratching" :
                         return AddressableGroupType.Scratching;
+                    case "Snap" :
+                        return AddressableGroupType.Snap;
                     default:
                         return AddressableGroupType.None;
                 }

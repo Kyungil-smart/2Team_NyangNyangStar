@@ -7,5 +7,6 @@
         Main,
         Nyangstagram,
         Scratching,
+        Snap,
     }
 }

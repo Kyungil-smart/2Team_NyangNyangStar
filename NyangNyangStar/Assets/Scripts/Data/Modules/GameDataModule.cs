@@ -17,6 +17,11 @@ namespace Data.Modules
         // ─── 상태 ────────────────────────────────────────────────
         public bool IsReady { get; private set; }
 
+        public void MarkNotReady()
+        {
+            IsReady = false;
+        }
+        
         private event Action _onReady;
 
         public event Action OnReady

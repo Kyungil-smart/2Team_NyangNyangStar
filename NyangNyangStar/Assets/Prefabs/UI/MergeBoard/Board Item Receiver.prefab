@@ -49,6 +49,7 @@ MonoBehaviour:
   _specialItemBoardSystem: {fileID: 0}
   _rewardQueue: {fileID: 0}
   _itemDatabase: {fileID: 11400000, guid: 0073675bff47ab64e8be560c0d594644, type: 2}
+  _itemIdInputField: {fileID: 0}
   _testReceiveButton: {fileID: 0}
 --- !u!114 &3408012149333413592
 MonoBehaviour:
