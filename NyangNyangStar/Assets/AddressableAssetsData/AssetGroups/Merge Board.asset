@@ -10,9 +10,9 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
-  m_Name: MergeBoard
+  m_Name: Merge Board
   m_EditorClassIdentifier: 
-  m_GroupName: Packed Assets
+  m_GroupName: Merge Baord
   m_Data:
     m_SerializedData: []
   m_GUID: d11da767e33a82841bc72934b7d2a4ec

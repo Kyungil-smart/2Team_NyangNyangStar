@@ -16,17 +16,7 @@ MonoBehaviour:
   m_Data:
     m_SerializedData: []
   m_GUID: 780cbbccf77853a4d89cf52d9ae39502
-  m_SerializeEntries:
-  - m_GUID: 33808f098da4af24ba6aee52e53b7967
-    m_Address: Merge Board
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 3de316d8114e3b649bf197d9f3286756
-    m_Address: Board Item Receiver
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
+  m_SerializeEntries: []
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: 567802e293b80b747b23153796443c26, type: 2}
   m_SchemaSet:
