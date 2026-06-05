@@ -36,6 +36,10 @@ public class NyangStargramPostUI : UIPopup
         _likeButton = Get<Button>((int)NyangStargramPostUIButton.LikeButton);
         _likeCountText = UIBase.FindChild<TMP_Text>(gameObject, "Like Count", true);
 
+        _nyangStargramPostUISprite = GetComponent<NyangStargramPostUISprite>();
+        _nyangStargramPostUISprite.Init();
+        _nyangStargramPostUISprite.SetLikeSprite(_isLiked);
+
 
         BindButtons();
         ReFreshLikeCountText();
@@ -104,6 +108,7 @@ public class NyangStargramPostUI : UIPopup
         }
 
         ReFreshLikeCountText();
+        _nyangStargramPostUISprite.SetLikeSprite(_isLiked);
     }
     private void ReFreshLikeCountText()
     {

@@ -74,6 +74,10 @@ MonoBehaviour:
     <URL>k__BackingField: https://docs.google.com/spreadsheets/d/1hD2NCEzCWr2aml-_aqHsHZu_8HeZ0xCLpMDt_A9NfoU/edit?gid=803702527#gid=803702527
     <Type>k__BackingField: 2
   itemDatabaseSo: {fileID: 11400000, guid: 0073675bff47ab64e8be560c0d594644, type: 2}
+  nyangNyangSnapPoseURL:
+    <URL>k__BackingField: https://docs.google.com/spreadsheets/d/1hD2NCEzCWr2aml-_aqHsHZu_8HeZ0xCLpMDt_A9NfoU/edit?gid=1224660622#gid=1224660622
+    <Type>k__BackingField: 2
+  nyangNyangSnapPoseSo: {fileID: 11400000, guid: 2d506e23c35a91140a7555d9a210a339, type: 2}
   _pendingSheetCount: 0
 --- !u!114 &7187299137341658617
 MonoBehaviour:

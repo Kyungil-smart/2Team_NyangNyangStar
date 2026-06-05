@@ -50,6 +50,8 @@ namespace Util
             public const string NyangNyangSnapSnackPopupUI = "NyangNyangSnapSnackCanvas";
             public const string NyangNyangSnapToyPopupUI = "NyangNyangSnapToyCanvas";
             public const string NyangNyangSnapPopupUI = "NyangNyangSnapCanvas";
+            public const string NyangNyangSnapResultPopupUI = "NyangNyangSnapResultCanvas";
+
 
             public const string ScratchingTimeUI = "ScratchingTimeUI";
         }
@@ -265,6 +267,7 @@ namespace Util
             PrefabKeyDict.Add(Prefabs.NyangNyangSnapSnackPopupUI, new List<GameObject>());
             PrefabKeyDict.Add(Prefabs.NyangNyangSnapToyPopupUI, new List<GameObject>());
             PrefabKeyDict.Add(Prefabs.NyangNyangSnapPopupUI, new List<GameObject>());
+            PrefabKeyDict.Add(Prefabs.NyangNyangSnapResultPopupUI, new List<GameObject>());
 
             PrefabKeyDict.Add(Prefabs.ScratchingTimeUI, new List<GameObject>());
         }

@@ -1,0 +1,197 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c1e76c20b13722a4788cf7778e80cd82, type: 3}
+  m_Name: NyangNyangSnapPose
+  m_EditorClassIdentifier: 
+  _poseData:
+  - _id: 2001
+    _poseName: "\uB54C\uB9AC\uAE30"
+    _poseGrade: 1
+    _poseScore: 5
+    _toolId: 20001
+    _poseDataId: "\uBB49\uCE58"
+    _animationPath: 
+  - _id: 2002
+    _poseName: "\uC7A1\uAE30"
+    _poseGrade: 1
+    _poseScore: 12
+    _toolId: 20002
+    _poseDataId: "\uBB49\uCE58"
+    _animationPath: 
+  - _id: 2003
+    _poseName: "\uBB3C\uAE30"
+    _poseGrade: 1
+    _poseScore: 7
+    _toolId: 20003
+    _poseDataId: "\uBB49\uCE58"
+    _animationPath: 
+  - _id: 2004
+    _poseName: "\uBB3C\uAE30"
+    _poseGrade: 1
+    _poseScore: 7
+    _toolId: 20004
+    _poseDataId: "\uBB49\uCE58"
+    _animationPath: 
+  - _id: 2005
+    _poseName: "\uBB3C\uAE30"
+    _poseGrade: 1
+    _poseScore: 7
+    _toolId: 20005
+    _poseDataId: "\uBB49\uCE58"
+    _animationPath: 
+  - _id: 2006
+    _poseName: "\uB54C\uB9AC\uAE30"
+    _poseGrade: 2
+    _poseScore: 8
+    _toolId: 20006
+    _poseDataId: "\uBB49\uCE58"
+    _animationPath: 
+  - _id: 2007
+    _poseName: "\uBB3C\uAE30"
+    _poseGrade: 2
+    _poseScore: 10
+    _toolId: 20007
+    _poseDataId: "\uBB49\uCE58"
+    _animationPath: 
+  - _id: 2008
+    _poseName: "\uBB3C\uAE30"
+    _poseGrade: 2
+    _poseScore: 10
+    _toolId: 20008
+    _poseDataId: "\uBB49\uCE58"
+    _animationPath: 
+  - _id: 2009
+    _poseName: "\uBB3C\uAE30"
+    _poseGrade: 2
+    _poseScore: 10
+    _toolId: 20009
+    _poseDataId: "\uBB49\uCE58"
+    _animationPath: 
+  - _id: 2010
+    _poseName: "\uBB3C\uAE30"
+    _poseGrade: 3
+    _poseScore: 15
+    _toolId: 20010
+    _poseDataId: "\uBB49\uCE58"
+    _animationPath: 
+  - _id: 2011
+    _poseName: "\uC7A1\uAE30"
+    _poseGrade: 3
+    _poseScore: 20
+    _toolId: 20011
+    _poseDataId: "\uBB49\uCE58"
+    _animationPath: 
+  - _id: 2012
+    _poseName: "\uBB3C\uAE30"
+    _poseGrade: 1
+    _poseScore: 7
+    _toolId: 20012
+    _poseDataId: "\uBB49\uCE58"
+    _animationPath: 
+  - _id: 2013
+    _poseName: "\uBB3C\uAE30"
+    _poseGrade: 1
+    _poseScore: 7
+    _toolId: 20013
+    _poseDataId: "\uBB49\uCE58"
+    _animationPath: 
+  - _id: 2014
+    _poseName: "\uB54C\uB9AC\uAE30"
+    _poseGrade: 1
+    _poseScore: 5
+    _toolId: 20014
+    _poseDataId: "\uBB49\uCE58"
+    _animationPath: 
+  - _id: 2015
+    _poseName: "\uB54C\uB9AC\uAE30"
+    _poseGrade: 1
+    _poseScore: 5
+    _toolId: 20015
+    _poseDataId: "\uBB49\uCE58"
+    _animationPath: 
+  - _id: 2016
+    _poseName: "\uBB3C\uAE30"
+    _poseGrade: 1
+    _poseScore: 7
+    _toolId: 20016
+    _poseDataId: "\uBB49\uCE58"
+    _animationPath: 
+  - _id: 2017
+    _poseName: "\uC7A1\uAE30"
+    _poseGrade: 2
+    _poseScore: 15
+    _toolId: 20017
+    _poseDataId: "\uBB49\uCE58"
+    _animationPath: 
+  - _id: 2018
+    _poseName: "\uBB3C\uAE30"
+    _poseGrade: 2
+    _poseScore: 10
+    _toolId: 20018
+    _poseDataId: "\uBB49\uCE58"
+    _animationPath: 
+  - _id: 2019
+    _poseName: "\uBB3C\uAE30"
+    _poseGrade: 2
+    _poseScore: 10
+    _toolId: 20019
+    _poseDataId: "\uBB49\uCE58"
+    _animationPath: 
+  - _id: 2020
+    _poseName: "\uC7A1\uAE30"
+    _poseGrade: 3
+    _poseScore: 20
+    _toolId: 20020
+    _poseDataId: "\uBB49\uCE58"
+    _animationPath: 
+  - _id: 2021
+    _poseName: "\uBB3C\uAE30"
+    _poseGrade: 3
+    _poseScore: 15
+    _toolId: 20021
+    _poseDataId: "\uBB49\uCE58"
+    _animationPath: 
+  - _id: 2022
+    _poseName: "\uD565\uAE30"
+    _poseGrade: 1
+    _poseScore: 12
+    _toolId: 20022
+    _poseDataId: "\uBB49\uCE58"
+    _animationPath: 
+  - _id: 2023
+    _poseName: "\uBB3C\uAE30"
+    _poseGrade: 2
+    _poseScore: 10
+    _toolId: 20023
+    _poseDataId: "\uBB49\uCE58"
+    _animationPath: 
+  - _id: 2024
+    _poseName: "\uB54C\uB9AC\uAE30"
+    _poseGrade: 2
+    _poseScore: 8
+    _toolId: 20024
+    _poseDataId: "\uBB49\uCE58"
+    _animationPath: 
+  - _id: 2025
+    _poseName: "\uBB3C\uAE30"
+    _poseGrade: 3
+    _poseScore: 15
+    _toolId: 20025
+    _poseDataId: "\uBB49\uCE58"
+    _animationPath: 
+  - _id: 2026
+    _poseName: "\uBB3C\uAE30"
+    _poseGrade: 3
+    _poseScore: 15
+    _toolId: 20026
+    _poseDataId: "\uBB49\uCE58"
+    _animationPath: 
