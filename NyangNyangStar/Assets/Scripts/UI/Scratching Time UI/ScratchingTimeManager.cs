@@ -6,6 +6,7 @@ using Core.Managers;
 using Data.LibrarySystem;
 using Services.Enums;
 using UI;
+using UI.Base;
 using UnityEngine;
 
 // 스크래칭 타임의 선택 상태, 화면 전환, 결과 팝업 흐름을 관리

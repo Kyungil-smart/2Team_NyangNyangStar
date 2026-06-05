@@ -1,6 +1,7 @@
 using Core.Managers;
 using System.Collections.Generic;
 using UI;
+using UI.Base;
 using UnityEngine;
 using UnityEngine.UI;
 using Util;
