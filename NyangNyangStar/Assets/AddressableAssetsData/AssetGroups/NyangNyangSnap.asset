@@ -45,6 +45,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5bc47388ba43c4f448a39529228b8a81
+    m_Address: NyangNyangSnapResultCanvas
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 64b8daed39e4c21408201b0c399e64dc
     m_Address: Snap_Panel_Tool
     m_ReadOnly: 0
