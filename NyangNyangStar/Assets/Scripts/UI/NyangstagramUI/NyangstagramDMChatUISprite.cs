@@ -1,7 +1,9 @@
+using System;
 using UI;
 using UI.Base;
 using UnityEngine;
 using UnityEngine.UI;
+using static NyangNyangSnapSprite;
 
 public class NyangstagramDMChatUISprite : UIBase
 {
@@ -11,8 +13,9 @@ public class NyangstagramDMChatUISprite : UIBase
     {
         Bind<Image>(typeof(NyangstagramDMChatUIImages));
 
-        _spriteController = new UISpriteController[(int)NyangstagramDMChatUIImages.Count];
-        for (int i = 0; i < (int)NyangstagramDMChatUIImages.Count; i++)
+        _spriteController = new UISpriteController[Enum.GetValues(typeof(NyangstagramDMChatUIImages)).Length];
+
+        for (int i = 0; i < Enum.GetValues(typeof(NyangstagramDMChatUIImages)).Length; i++)
         {
             _spriteController[i] = new UISpriteController(GetImage(i));
         }
@@ -27,7 +30,7 @@ public class NyangstagramDMChatUISprite : UIBase
 
         //profile뷰
         SetSprite(NyangstagramDMChatUIImages.HeaderPanel, "NYS_TopBar");
-        SetSprite(NyangstagramDMChatUIImages.BackButton, "NYS_Btn_Back");
+        SetSprite(NyangstagramDMChatUIImages.BackButton, "Btn_Back");
         SetSprite(NyangstagramDMChatUIImages.NpcMessageBubble, "NYS_DM_Box_Opponent");
         SetSprite(NyangstagramDMChatUIImages.NPCProfileImage, "NYS_Btn_Profile",new Color32(0,0,0,255));
         SetSprite(NyangstagramDMChatUIImages.PlayerMassageBubble, "NYS_DM_Box_Me");
@@ -61,8 +64,4 @@ public enum NyangstagramDMChatUIImages
     NPCProfileImage,
     PlayerMassageBubble,
     NyangstagramCloseButton,
-
-    Count
-
-
 }

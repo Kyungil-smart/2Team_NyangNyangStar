@@ -1,7 +1,9 @@
+using System;
 using UI;
 using UI.Base;
 using UnityEngine;
 using UnityEngine.UI;
+using static NyangNyangSnapSprite;
 using static UnityEngine.Rendering.DebugUI;
 
 public class NyangStargramAddPostUISprite : UIBase
@@ -12,8 +14,9 @@ public class NyangStargramAddPostUISprite : UIBase
     {
         Bind<Image>(typeof(NyangStargramAddPostUIImages));
 
-        _spriteController = new UISpriteController[(int)NyangStargramAddPostUIImages.Count];
-        for (int i = 0; i < (int)NyangStargramAddPostUIImages.Count; i++)
+        _spriteController = new UISpriteController[Enum.GetValues(typeof(NyangStargramAddPostUIImages)).Length];
+
+        for (int i = 0; i < Enum.GetValues(typeof(NyangStargramAddPostUIImages)).Length; i++)
         {
             _spriteController[i] = new UISpriteController(GetImage(i));
         }
@@ -28,7 +31,7 @@ public class NyangStargramAddPostUISprite : UIBase
 
         //profile뷰
         SetSprite(NyangStargramAddPostUIImages.HeaderPanel, "NYS_TopBar");
-        SetSprite(NyangStargramAddPostUIImages.BackButton, "NYS_Btn_Back");
+        SetSprite(NyangStargramAddPostUIImages.BackButton, "Btn_Back");
         SetSprite(NyangStargramAddPostUIImages.ImagePanel, "NYS_Content");
         SetSprite(NyangStargramAddPostUIImages.NewImageUploadButton, "NYS_Btn_DropDown");
         SetSprite(NyangStargramAddPostUIImages.DropdownPanel, "NYS_TopBar");
@@ -69,7 +72,7 @@ public enum NyangStargramAddPostUIImages
     엘범,
     NyangstagramCloseButton,
 
-    Count
+    
 
 
 }

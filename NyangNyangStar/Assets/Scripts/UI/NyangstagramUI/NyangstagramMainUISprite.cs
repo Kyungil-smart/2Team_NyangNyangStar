@@ -1,7 +1,9 @@
+using System;
 using UI;
 using UI.Base;
 using UnityEngine;
 using UnityEngine.UI;
+using static NyangNyangSnapSprite;
 
 public class NyangstagramMainUISprite : UIBase
 {
@@ -15,9 +17,9 @@ public class NyangstagramMainUISprite : UIBase
     {
         Bind<Image>(typeof(NyangstagramMainUIImages));
 
-        _spriteController = new UISpriteController[(int)NyangstagramMainUIImages.Count];
+        _spriteController = new UISpriteController[Enum.GetValues(typeof(NyangstagramMainUIImages)).Length];
 
-        for (int i = 0; i < (int)NyangstagramMainUIImages.Count; i++)
+        for (int i = 0; i < Enum.GetValues(typeof(NyangstagramMainUIImages)).Length; i++)
         {
             _spriteController[i] = new UISpriteController(GetImage(i));
         }
@@ -33,7 +35,7 @@ public class NyangstagramMainUISprite : UIBase
         //profile뷰
         SetSprite(NyangstagramMainUIImages.ProfileFixedHeaderPanel, "NYS_TopBar");
         SetSprite(NyangstagramMainUIImages.VerifyIconProfile, "NYS_ProfileBadge");
-        SetSprite(NyangstagramMainUIImages.ViewportProfile, "NYS_Content");
+        SetSprite(NyangstagramMainUIImages.Prifilepanel, "NYS_Content");
         SetSprite(NyangstagramMainUIImages.ImageFrame, "NYS_Profile_Frame");
         SetSprite(NyangstagramMainUIImages.Image, "NYS_Profile_User_01");
 
@@ -43,7 +45,7 @@ public class NyangstagramMainUISprite : UIBase
         SetSprite(NyangstagramMainUIImages.HomeHeaderImage, "NYS_TitleLogo");
         SetSprite(NyangstagramMainUIImages.DMButton, "NYS_Btn_DM");
         SetSprite(NyangstagramMainUIImages.VerifyIconFront, "NYS_Profile_User_01");
-        SetSprite(NyangstagramMainUIImages.VerifyIcon, "NYS_UploadPost_Check");
+        SetSprite(NyangstagramMainUIImages.VerifyIcon, "NYS_ProfileBadge");
         SetSprite(NyangstagramMainUIImages.LikeButton, LikeEmptySpriteKey);
         SetSprite(NyangstagramMainUIImages.NPCImage, "NYS_Profile_User_01");
         SetSprite(NyangstagramMainUIImages.Viewport, "NYS_Content");
@@ -101,9 +103,7 @@ public enum NyangstagramMainUIImages
     NyangstagramCloseButton,
     ProfileFixedHeaderPanel,
     VerifyIconProfile,
-    ViewportProfile,
+    Prifilepanel,
     ImageFrame,
     Image,
-
-    Count
 }
