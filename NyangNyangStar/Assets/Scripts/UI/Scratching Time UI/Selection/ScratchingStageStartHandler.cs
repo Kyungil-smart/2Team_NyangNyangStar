@@ -2,12 +2,12 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 
 
-// TouchArea 첫 터치를 감지해 TOUCH! 안내를 숨기고 흥미도 감소를 시작합니다.
-// ScratchingDailyStageUI / ScratchingWeekStageUI 공통 사용.
+// TouchArea 첫 터치를 감지해 TOUCH! 안내를 숨기고 흥미도 감소를 시작
+// ScratchingDailyStageUI / ScratchingWeekStageUI 공통 사용
 
 public class ScratchingStageStartHandler : MonoBehaviour, IPointerDownHandler
 {
-    // 흥미도 감소를 제어하는 컨트롤러입니다.
+    // 흥미도 감소를 제어하는 컨트롤러
     [SerializeField] private ScratchingInterestController _interestController;
 
     // 첫 터치 전까지 표시되는 TOUCH! 안내

@@ -21,7 +21,7 @@ public class ScratchingTimeUISprite : UIBase
     private const string HighlightCurved = "ST_Highlight_Curved";
     private const string CloudFace = "ST_BG_Cloud_Face";
     private const string CloudLeft = "ST_BG_Cloud_Left";
-    private const string TileCats = "ST_Tile_Cats";
+    private const string TileCats = "BG_Tile_Cats";
 
     // ScratchingTimeUI_Sprite 프리팹 기준 경로별 Addressable 매핑
     private static readonly Dictionary<string, string> SpriteKeysByPath = new()

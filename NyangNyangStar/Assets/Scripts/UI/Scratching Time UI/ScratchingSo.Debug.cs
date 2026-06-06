@@ -5,9 +5,7 @@ namespace Data.ScriptableObjects.ScratchingTimeSO
 {
     public partial class ScratchingSo
     {
-        /// <summary>
-        /// 로드된 스크래칭 타임 데이터를 로그로 출력합니다.
-        /// </summary>
+        // 로드된 스크래칭 타임 데이터를 로그로 출력
         public void PrintData()
         {
             StringBuilder log = new();

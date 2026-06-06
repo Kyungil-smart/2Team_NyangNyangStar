@@ -16,7 +16,7 @@ public class ScratchingDailyStageSprite : UIBase
     private const string ShapeRectangleOutline = "Shape_Rectangle_Outline";
     private const string CloseButton = "Btn_Close";
     private const string BossDay = "ST_Boss_Day";
-    private const string TileCats = "ST_Tile_Cats";
+    private const string TileCats = "BG_Tile_Cats";
 
     // 교체할 이미지 컨트롤러 목록
     private readonly List<UISpriteController> _spriteControllers = new();

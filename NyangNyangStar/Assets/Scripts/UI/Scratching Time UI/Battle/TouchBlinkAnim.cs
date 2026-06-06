@@ -3,7 +3,7 @@ using TMPro;
 using UnityEngine;
 
 
-// TOUCH! 안내 텍스트 알파 깜빡임을 재생합니다.
+// TOUCH! 안내 텍스트 알파 깜빡임을 재생
 public class TouchBlinkAnim : MonoBehaviour
 {
     [SerializeField] private float _minAlpha = 0.25f;
@@ -29,7 +29,7 @@ public class TouchBlinkAnim : MonoBehaviour
     }
 
     
-    // 깜빡임을 다시 시작합니다. 이미 활성인 오브젝트를 다시 켤 때 호출
+    // 깜빡임을 다시 시작. 이미 활성인 오브젝트를 다시 켤 때 호출
     public void StartBlink()
     {
         if (_touchText == null)

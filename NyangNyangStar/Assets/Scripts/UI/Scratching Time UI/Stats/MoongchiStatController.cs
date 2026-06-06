@@ -6,26 +6,25 @@ using UI.Base;
 using UnityEngine;
 using UnityEngine.UI;
 
-/// <summary>
-/// 뭉치 스탯 정보를 UI에 출력하고 경험치 증가 요청을 전달합니다.
-/// </summary>
+// 뭉치 스탯 정보를 UI에 출력하고 경험치 증가 요청을 전달
 public class MoongchiStatController : UIBase
 {
-    [Header("Data")] [SerializeField] private MoongchiStatSo _moongchiStat;
+    [Header("Data")][SerializeField] private MoongchiStatSo _moongchiStat;
     [SerializeField] private MoongchiProgressSO _moongchiProgress;
 
-    [Header("Stat Text")] [SerializeField] private TMP_Text _levelText;
+    [Header("Stat Text")][SerializeField] private TMP_Text _levelText;
     [SerializeField] private TMP_Text _sharpnessText;
     [SerializeField] private TMP_Text _criticalChanceText;
 
-    [Header("Exp Text")] [SerializeField] private TMP_Text _expCountText; // ExpPanel Slider 통합 텍스트 연결용임
+    [Header("Exp Text")][SerializeField] private TMP_Text _expCountText; // ExpPanel Slider 통합 텍스트 연결용임
     [SerializeField] private TMP_Text _currentExpText;
     [SerializeField] private TMP_Text _expSlashText;
     [SerializeField] private TMP_Text _maxExpText;
 
-    [Header("Exp Gauge")] [SerializeField] private Slider _expSlider; // ExpPanel Slider value 연동용임
+    [Header("Exp Gauge")][SerializeField] private Slider _expSlider; // ExpPanel Slider value 연동용임
 
-    [Tooltip("뭉치 경험치 게이지로 사용할 Filled 타입 Image입니다.")] [SerializeField]
+    [Tooltip("뭉치 경험치 게이지로 사용할 Filled 타입 Image입니다.")]
+    [SerializeField]
     private Image _expAmountImage;
 
     [SerializeField] private bool _isFirstTime = true;

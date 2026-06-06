@@ -2018,6 +2018,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _moongchiStat: {fileID: 11400000, guid: 4f3ec3284ee0615409e4a1458a5ea0b5, type: 2}
+  _moongchiProgress: {fileID: 11400000, guid: 4f6d6359379f32249aa736a67b698dae, type: 2}
   _levelText: {fileID: 0}
   _sharpnessText: {fileID: 0}
   _criticalChanceText: {fileID: 0}
