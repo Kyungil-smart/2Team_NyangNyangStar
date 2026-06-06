@@ -23,7 +23,7 @@ MonoBehaviour:
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 1680ae63f692b624c9dc5536b29235d9
-    m_Address: NyangNyangSnapCanvas
+    m_Address: NyangNyangSnapPopupUI
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
