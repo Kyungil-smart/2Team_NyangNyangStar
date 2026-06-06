@@ -44,7 +44,7 @@ public class NyangNyangSnapStagePopupUI : UIPopup
             {
                 AddNyangNyangSnapPopupButton(_stage1Button, onLoaded, 1);
                 AddNyangNyangSnapPopupButton(_stage2Button, onLoaded, 2);
-            }, false);
+            }, false, false);
     }
 
     private void AddNyangNyangSnapPopupButton(Button button, NyangNyangSnapUI popup, int stage)
