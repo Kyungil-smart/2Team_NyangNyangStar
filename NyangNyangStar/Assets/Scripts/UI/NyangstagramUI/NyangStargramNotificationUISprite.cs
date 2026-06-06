@@ -1,7 +1,9 @@
+using System;
 using UI;
 using UI.Base;
 using UnityEngine;
 using UnityEngine.UI;
+using static NyangNyangSnapSprite;
 
 public class NyangStargramNotificationUISprite : UIBase
 {
@@ -11,8 +13,9 @@ public class NyangStargramNotificationUISprite : UIBase
     {
         Bind<Image>(typeof(NyangStargramNotificationUIImages));
 
-        _spriteController = new UISpriteController[(int)NyangStargramNotificationUIImages.Count];
-        for (int i = 0; i < (int)NyangStargramNotificationUIImages.Count; i++)
+        _spriteController = new UISpriteController[Enum.GetValues(typeof(NyangStargramNotificationUIImages)).Length];
+
+        for (int i = 0; i < Enum.GetValues(typeof(NyangStargramNotificationUIImages)).Length; i++)
         {
             _spriteController[i] = new UISpriteController(GetImage(i));
         }
@@ -27,7 +30,7 @@ public class NyangStargramNotificationUISprite : UIBase
 
         //profile뷰
         SetSprite(NyangStargramNotificationUIImages.HeaderPanel, "NYS_TopBar");
-        SetSprite(NyangStargramNotificationUIImages.BackButton, "NYS_Btn_Back");
+        SetSprite(NyangStargramNotificationUIImages.BackButton, "Btn_Back");
         SetSprite(NyangStargramNotificationUIImages.Viewport, "NYS_Content"); 
         SetSprite(NyangStargramNotificationUIImages.NPCImage, "NYS_Btn_Profile", new Color32(0,0,0,255));
 
@@ -71,7 +74,7 @@ public enum NyangStargramNotificationUIImages
     NotificationButton,
     ProfileButton,
 
-    Count
+    
 
 
 }

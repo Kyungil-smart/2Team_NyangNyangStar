@@ -10,7 +10,6 @@ public class NyangStargramPostUISprite : UIBase
     private const string LikeFilledSpriteKey = "NYS_Btn_Heart_Filled";
 
     private UISpriteController[] _spriteController;
-
     public override void Init()
     {
         Bind<Image>(typeof(NyangStargramPostUIImages));

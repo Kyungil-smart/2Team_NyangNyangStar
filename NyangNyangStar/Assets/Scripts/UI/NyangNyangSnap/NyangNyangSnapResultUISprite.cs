@@ -1,4 +1,5 @@
 using DG.Tweening;
+using System;
 using UI;
 using UI.Base;
 using UnityEngine;
@@ -27,15 +28,14 @@ public class NyangNyangSnapResultUISprite : UIBase
 
     public override void Init()
     {
-        Bind<Image>(typeof(NyangNyangSnapResultImages));
+        Bind<Image>(typeof(NyangstagramMainUIImages));
 
-        _spriteController = new UISpriteController[(int)NyangNyangSnapResultImages.Count];
+        _spriteController = new UISpriteController[Enum.GetValues(typeof(NyangstagramMainUIImages)).Length];
 
-        for (int i = 0; i < (int)NyangNyangSnapResultImages.Count; i++)
+        for (int i = 0; i < Enum.GetValues(typeof(NyangstagramMainUIImages)).Length; i++)
         {
             _spriteController[i] = new UISpriteController(GetImage(i));
         }
-
         AutoAssignRuntimeImages();
         SetSprites();
     }

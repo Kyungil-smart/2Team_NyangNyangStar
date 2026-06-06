@@ -1,7 +1,9 @@
+using System;
 using UI;
 using UI.Base;
 using UnityEngine;
 using UnityEngine.UI;
+using static NyangNyangSnapSprite;
 
 public class NyangstagramNPCProfileUISprite : UIBase
 {
@@ -11,8 +13,9 @@ public class NyangstagramNPCProfileUISprite : UIBase
     {
         Bind<Image>(typeof(NyangStarGramProfileUIImages));
 
-        _spriteController = new UISpriteController[(int)NyangStarGramProfileUIImages.Count];
-        for (int i = 0; i < (int)NyangStarGramProfileUIImages.Count; i++)
+        _spriteController = new UISpriteController[Enum.GetValues(typeof(NyangStarGramProfileUIImages)).Length];
+
+        for (int i = 0; i < Enum.GetValues(typeof(NyangStarGramProfileUIImages)).Length; i++)
         {
             _spriteController[i] = new UISpriteController(GetImage(i));
         }
@@ -24,11 +27,12 @@ public class NyangstagramNPCProfileUISprite : UIBase
     {
         //메인 패널
         SetSprite(NyangStarGramProfileUIImages.backGroundpanel, "NYS_Frame");
+        
 
         //profile뷰
         SetSprite(NyangStarGramProfileUIImages.ProfileFixedHeaderPanel, "NYS_TopBar");
         SetSprite(NyangStarGramProfileUIImages.VerifyIcon, "NYS_ProfileBadge");
-        SetSprite(NyangStarGramProfileUIImages.GoHomeButton, "NYS_Btn_Back");
+        SetSprite(NyangStarGramProfileUIImages.GoHomeButton, "Btn_Back");
         SetSprite(NyangStarGramProfileUIImages.ImageFrame, "NYS_Profile_Frame");
         SetSprite(NyangStarGramProfileUIImages.Image, "NYS_Profile_User_01");
         SetSprite(NyangStarGramProfileUIImages.StoryButton, "NYS_Btn_Feed");
@@ -74,7 +78,7 @@ public enum NyangStarGramProfileUIImages
     ProfileButton,
     NyangstagramCloseButton,
 
-    Count
+    
 
 
 }
