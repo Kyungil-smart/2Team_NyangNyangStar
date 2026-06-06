@@ -22,6 +22,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1680ae63f692b624c9dc5536b29235d9
+    m_Address: NyangNyangSnapPopupUI
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 18eecb3baea7c26459793f9c4eb412b9
     m_Address: Snap_Btn_Gray
     m_ReadOnly: 0
@@ -39,11 +44,6 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels:
     - Sprite
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 53ede35c30f1bb247904ecd55c02cf78
-    m_Address: NyangNyangSnapCanvas
-    m_ReadOnly: 0
-    m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 5bc47388ba43c4f448a39529228b8a81
     m_Address: NyangNyangSnapResultCanvas
