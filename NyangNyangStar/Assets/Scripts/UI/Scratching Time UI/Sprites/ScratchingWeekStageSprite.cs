@@ -17,7 +17,7 @@ public class ScratchingWeekStageSprite : UIBase
     private const string ShapeRectangleOutline = "Shape_Rectangle_Outline";
     private const string CloseButton = "Btn_Close";
     private const string BossWeek = "ST_Boss_Week";
-    private const string TileCats = "ST_Tile_Cats";
+    private const string TileCats = "BG_Tile_Cats";
 
     // UI 경로별 Addressable 스프라이트 매핑
     private static readonly Dictionary<string, string> SpriteKeysByPath = new()

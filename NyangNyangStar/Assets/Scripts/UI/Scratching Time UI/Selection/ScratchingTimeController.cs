@@ -9,10 +9,8 @@ using UnityEngine.EventSystems;
 using UnityEngine.Events;
 using UnityEngine.UI;
 
-/// <summary>
-/// 스크래칭 타임 선택 화면 UI를 관리합니다.
-/// 단계 선택 버튼과 일일/주간 START 버튼 입력을 매니저에 전달합니다.
-/// </summary>
+// 스크래칭 타임 선택 화면 UI를 관리
+// 단계 선택 버튼과 일일/주간 START 버튼 입력을 매니저에 전달
 public class ScratchingTimeController : UIBase
 {
     [Header("Close Button")]
@@ -83,9 +81,7 @@ public class ScratchingTimeController : UIBase
         KillCloseTween();
     }
 
-    /// <summary>
-    /// 단계 버튼과 일일/주간 START 버튼 이벤트를 등록합니다.
-    /// </summary>
+    // 단계 버튼과 일일/주간 START 버튼 이벤트를 등록
     private void RegisterButtonEvents()
     {
         if (_isButtonEventRegistered)
@@ -130,9 +126,7 @@ public class ScratchingTimeController : UIBase
         _isButtonEventRegistered = hasRegisteredButton;
     }
 
-    /// <summary>
-    /// 등록된 단계 버튼과 일일/주간 START 버튼 이벤트를 해제합니다.
-    /// </summary>
+    // 등록된 단계 버튼과 일일/주간 START 버튼 이벤트를 해제
     private void UnregisterButtonEvents()
     {
         if (_closeButton != null)
@@ -158,9 +152,7 @@ public class ScratchingTimeController : UIBase
         _isButtonEventRegistered = false;
     }
 
-    /// <summary>
-    /// 선택 화면을 표시합니다.
-    /// </summary>
+    // 선택 화면을 표시
     public void Show()
     {
         KillCloseTween();
@@ -171,9 +163,7 @@ public class ScratchingTimeController : UIBase
         SetCloseInputBlocked(false);
     }
 
-    /// <summary>
-    /// 선택 화면을 즉시 숨깁니다.
-    /// </summary>
+    // 선택 화면을 즉시 숨김
     public void Hide()
     {
         KillCloseTween();
@@ -182,10 +172,7 @@ public class ScratchingTimeController : UIBase
         gameObject.SetActive(false);
     }
 
-    /// <summary>
-    /// 선택 화면을 닫기 애니메이션 후 숨깁니다.
-    /// </summary>
-    /// <param name="onComplete">닫기 완료 후 호출할 콜백</param>
+    // 선택 화면을 닫기 애니메이션 후 숨김
     public void Hide(Action onComplete)
     {
         if (!gameObject.activeSelf)
@@ -225,10 +212,8 @@ public class ScratchingTimeController : UIBase
             });
     }
 
-    /// <summary>
-    /// 선택 화면을 초기 상태로 되돌립니다.
-    /// 단계 버튼만 활성화하고 일일/주간 START 버튼은 비활성화합니다.
-    /// </summary>
+    // 선택 화면을 초기 상태로 되돌림
+    // 단계 버튼만 활성화하고 일일/주간 START 버튼은 비활성화
     public void InitView()
     {
         SetStageButtonsInteractable(true);
@@ -237,9 +222,7 @@ public class ScratchingTimeController : UIBase
         ClearStageCardInfo();
     }
 
-    /// <summary>
-    /// 닫기 버튼 입력을 매니저에 전달합니다.
-    /// </summary>
+    // 닫기 버튼 입력을 매니저에 전달
     private void RaiseCloseClicked()
     {
         if (_isCloseAnimating)
@@ -249,20 +232,14 @@ public class ScratchingTimeController : UIBase
         OnCloseClicked?.Invoke();
     }
 
-    /// <summary>
-    /// 단계 버튼 입력을 매니저에 전달합니다.
-    /// </summary>
-    /// <param name="stage">선택한 스테이지 단계</param>
+    // 단계 버튼 입력을 매니저에 전달
     private void SelectStage(int stage)
     {
         ClearSelectedButton();
         OnStageSelected?.Invoke(stage);
     }
 
-    /// <summary>
-    /// 선택한 단계의 일일/주간 START 버튼 입력을 매니저에 전달합니다.
-    /// </summary>
-    /// <param name="stageType">시작할 스테이지 타입</param>
+    // 선택한 단계의 일일/주간 START 버튼 입력을 매니저에 전달
     private void StartSelectedStage(StageType stageType)
     {
         ClearSelectedButton();
@@ -270,9 +247,7 @@ public class ScratchingTimeController : UIBase
         OnStageStartClicked?.Invoke(stageType);
     }
 
-    /// <summary>
-    /// 아직 입장할 수 없는 단계 안내 패널을 표시합니다.
-    /// </summary>
+    // 아직 입장할 수 없는 단계 안내 패널을 표시
     public void ShowErrorPanel()
     {
         BindErrorPanel();
@@ -304,9 +279,7 @@ public class ScratchingTimeController : UIBase
             .SetUpdate(true);
     }
 
-    /// <summary>
-    /// 아직 입장할 수 없는 단계 안내 패널을 숨깁니다.
-    /// </summary>
+    // 아직 입장할 수 없는 단계 안내 패널을 숨김
     public void HideErrorPanel()
     {
         BindErrorPanel();
@@ -333,23 +306,13 @@ public class ScratchingTimeController : UIBase
             .OnComplete(DeactivateErrorPanel);
     }
 
-    /// <summary>
-    /// 버튼 클릭 후 Space 또는 Enter로 같은 버튼이 다시 눌리지 않도록 선택 상태를 해제합니다.
-    /// </summary>
+    // 버튼 클릭 후 Space 또는 Enter로 같은 버튼이 다시 눌리지 않도록 선택 상태를 해제
     private void ClearSelectedButton()
     {
         EventSystem.current?.SetSelectedGameObject(null);
     }
 
-    /// <summary>
-    /// 선택한 단계 기준으로 일일/주간 카드의 남은 횟수와 보상 경험치를 출력합니다.
-    /// </summary>
-    /// <param name="dailyRemainingCount">일일 스테이지 남은 도전 횟수</param>
-    /// <param name="dailyMaxCount">일일 스테이지 최대 도전 횟수</param>
-    /// <param name="canStartDaily">일일 스테이지 시작 가능 여부</param>
-    /// <param name="weeklyRemainingCount">주간 스테이지 남은 도전 횟수</param>
-    /// <param name="weeklyMaxCount">주간 스테이지 최대 도전 횟수</param>
-    /// <param name="canStartWeekly">주간 스테이지 시작 가능 여부</param>
+    // 선택한 단계 기준으로 일일/주간 카드의 남은 횟수와 보상 경험치를 출력
     public void PrintStageCardInfo(
         int dailyRemainingCount,
         int dailyMaxCount,
@@ -382,9 +345,7 @@ public class ScratchingTimeController : UIBase
         SetStageStartButtonsInteractable(canStartDaily, canStartWeekly);
     }
 
-    /// <summary>
-    /// 일일/주간 카드의 출력 정보를 기본값으로 초기화합니다.
-    /// </summary>
+    // 일일/주간 카드의 출력 정보를 기본값으로 초기화
     public void ClearStageCardInfo()
     {
         if (_dailyChallengeCountText != null)
@@ -406,10 +367,7 @@ public class ScratchingTimeController : UIBase
         }
     }
 
-    /// <summary>
-    /// 단계 버튼 전체의 활성화 상태를 변경합니다.
-    /// </summary>
-    /// <param name="value">활성화 여부</param>
+    // 단계 버튼 전체의 활성화 상태를 변경
     public void SetStageButtonsInteractable(bool value)
     {
         if (_stageButtons == null)
@@ -424,11 +382,7 @@ public class ScratchingTimeController : UIBase
         }
     }
 
-    /// <summary>
-    /// 지정한 단계 버튼 하나의 활성화 상태를 변경합니다.
-    /// </summary>
-    /// <param name="stage">변경할 단계 값</param>
-    /// <param name="value">활성화 여부</param>
+    // 지정한 단계 버튼 하나의 활성화 상태를 변경
     public void SetStageButtonInteractable(int stage, bool value)
     {
         if (_stageButtons == null)
@@ -445,11 +399,7 @@ public class ScratchingTimeController : UIBase
         _stageButtons[index].interactable = true;
     }
 
-    /// <summary>
-    /// 일일/주간 START 버튼의 활성화 상태를 변경합니다.
-    /// </summary>
-    /// <param name="canStartDaily">일일 스테이지 START 버튼 활성화 여부</param>
-    /// <param name="canStartWeekly">주간 스테이지 START 버튼 활성화 여부</param>
+    // 일일/주간 START 버튼의 활성화 상태를 변경
     public void SetStageStartButtonsInteractable(bool canStartDaily, bool canStartWeekly)
     {
         if (_dailyStartButton != null)
@@ -459,21 +409,14 @@ public class ScratchingTimeController : UIBase
             _weeklyStartButton.interactable = canStartWeekly;
     }
 
-    /// <summary>
-    /// 선택 화면의 모든 버튼 활성화 상태를 변경합니다.
-    /// </summary>
-    /// <param name="value">활성화 여부</param>
+    // 선택 화면의 모든 버튼 활성화 상태를 변경
     public void SetAllButtonsInteractable(bool value)
     {
         SetStageButtonsInteractable(value);
         SetStageStartButtonsInteractable(value, value);
     }
 
-    /// <summary>
-    /// 텍스트 컴포넌트가 연결되어 있을 때만 문자열을 출력합니다.
-    /// </summary>
-    /// <param name="text">출력 대상 텍스트</param>
-    /// <param name="value">출력할 문자열</param>
+    // 텍스트 컴포넌트가 연결되어 있을 때만 문자열을 출력
     private void SetText(TMP_Text text, string value)
     {
         if (text == null)

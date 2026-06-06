@@ -5,11 +5,7 @@ namespace Data.ScriptableObjects.ScratchingTimeSO
 {
     public partial class ScratchingSo
     {
-        /// <summary>
-        /// 지정한 스테이지 타입의 현재 내구도를 최대 내구도로 초기화합니다.
-        /// </summary>
-        /// <param name="stage">초기화를 적용할 스테이지 값</param>
-        /// <param name="stageType">초기화할 스테이지 타입</param>
+        // 지정한 스테이지 타입의 현재 내구도를 최대 내구도로 초기화
         public void StageStart(int stage, StageType stageType)
         {
             if (!IsContainsKey(stage))
@@ -31,13 +27,7 @@ namespace Data.ScriptableObjects.ScratchingTimeSO
             }
         }
 
-        /// <summary>
-        /// 지정한 스테이지 타입의 스크래쳐에 데미지를 적용하고 남은 현재 내구도를 반환합니다.
-        /// </summary>
-        /// <param name="stage">데미지를 적용할 스테이지 값</param>
-        /// <param name="stageType">데미지를 적용할 스테이지 타입</param>
-        /// <param name="damage">적용할 데미지 값</param>
-        /// <returns>데미지 적용 후 남은 현재 내구도</returns>
+        // 지정한 스테이지 타입의 스크래쳐에 데미지를 적용하고 남은 현재 내구도를 반환
         public int TakeDamageOnScratcher(int stage, StageType stageType, int damage)
         {
             if (!IsContainsKey(stage))
@@ -59,12 +49,7 @@ namespace Data.ScriptableObjects.ScratchingTimeSO
             }
         }
 
-        /// <summary>
-        /// 스테이지 시작 시 남은 도전 횟수를 1 차감합니다.
-        /// </summary>
-        /// <param name="stage">시작할 스테이지 값</param>
-        /// <param name="stageType">시작할 스테이지 타입</param>
-        /// <returns>차감에 성공하면 true</returns>
+        // 스테이지 시작 시 남은 도전 횟수를 1 차감
         public bool TryConsumeChallengeCount(int stage, StageType stageType)
         {
             if (!CanChallenge(stage, stageType))
@@ -75,12 +60,8 @@ namespace Data.ScriptableObjects.ScratchingTimeSO
             return true;
         }
 
-        /// <summary>
-        /// 스테이지 클리어를 기록하고 최고 클리어 단계를 갱신합니다.
-        /// 도전 횟수는 START 시점에 차감됩니다.
-        /// </summary>
-        /// <param name="stage">클리어한 스테이지 값</param>
-        /// <param name="stageType">클리어한 스테이지 타입</param>
+        // 스테이지 클리어를 기록하고 최고 클리어 단계를 갱신
+        // 도전 횟수는 START 시점에 차감됨
         public void RecordStageClear(int stage, StageType stageType)
         {
             if (!IsContainsKey(stage))

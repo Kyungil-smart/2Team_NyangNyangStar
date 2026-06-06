@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using DG.Tweening;
 using TMPro;
 using UI;
@@ -119,7 +119,6 @@ public class ResultPopupController : UIBase
     {
         EventSystem.current?.SetSelectedGameObject(null);
     }
-
     /// <summary>
     /// 공용 결과 팝업을 표시합니다.
     /// </summary>
@@ -184,7 +183,7 @@ public class ResultPopupController : UIBase
     }
 
    
-    // 결과 팝업을 숨깁니다. 닫기 애니메이션 후 비활성화합니다.
+    // 결과 팝업을 숨김. 닫기 애니메이션 후 비활성화
     public void HidePopup(Action onComplete = null)
     {
         if (!gameObject.activeSelf)
@@ -213,7 +212,7 @@ public class ResultPopupController : UIBase
     }
 
     
-    // 다시하기 버튼 활성화 상태를 변경합니다.
+    // 다시하기 버튼 활성화 상태 변경
     public void SetRetryButtonInteractable(bool value)
     {
         if (_retryButton == null)
@@ -231,7 +230,7 @@ public class ResultPopupController : UIBase
     }
 
     
-    // 인스펙터 미연결 참조를 하위 오브젝트에서 찾아 바인딩합니다.
+    // 인스펙터 미연결 참조를 하위 오브젝트에서 찾아 바인딩
     private void EnsureReferences()
     {
         GameObject topArea = UIBase.FindChild(gameObject, "TopArea", true);
