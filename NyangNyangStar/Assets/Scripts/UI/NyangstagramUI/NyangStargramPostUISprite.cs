@@ -1,3 +1,4 @@
+using System;
 using UI;
 using UI.Base;
 using UnityEngine;
@@ -9,13 +10,13 @@ public class NyangStargramPostUISprite : UIBase
     private const string LikeFilledSpriteKey = "NYS_Btn_Heart_Filled";
 
     private UISpriteController[] _spriteController;
-
     public override void Init()
     {
         Bind<Image>(typeof(NyangStargramPostUIImages));
 
-        _spriteController = new UISpriteController[(int)NyangStargramPostUIImages.Count];
-        for (int i = 0; i < (int)NyangStargramPostUIImages.Count; i++)
+        _spriteController = new UISpriteController[Enum.GetValues(typeof(NyangStargramPostUIImages)).Length];
+
+        for (int i = 0; i < Enum.GetValues(typeof(NyangStargramPostUIImages)).Length; i++)
         {
             _spriteController[i] = new UISpriteController(GetImage(i));
         }
@@ -79,8 +80,6 @@ public enum NyangStargramPostUIImages
     LikeButton,
     NPCImage,
     NyangstagramCloseButton,
-
-    Count
 
 
 }
