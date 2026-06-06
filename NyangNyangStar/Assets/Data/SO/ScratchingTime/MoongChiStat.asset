@@ -14,9 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _level: 1
   MaxExp: 1000
-  _currentExp: 50
+  _currentExp: 350
   _baseSharpness: 50
   _sharpnessIncreasePerLevel: 2
-  _totalSharpness: 54
+  _totalSharpness: 52
   _baseCriticalChance: 20
   _totalCriticalChance: 20

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using DG.Tweening;
 using Services.Enums;
 using TMPro;
@@ -55,7 +55,7 @@ public class ScratchingBattleController : UIBase
         _interestController?.SetDrainDuration(timeLimit);
     }
 
-    
+
     // 전투 화면 버튼 이벤트를 등록
     private void OnEnable()
     {
@@ -63,7 +63,7 @@ public class ScratchingBattleController : UIBase
             _closeButton.onClick.AddListener(RaiseCloseClicked);
     }
 
-    
+
     // 전투 화면 버튼 이벤트를 해제
     private void OnDisable()
     {
@@ -76,7 +76,7 @@ public class ScratchingBattleController : UIBase
         KillCloseTween();
     }
 
-    
+
     // 닫기 버튼 입력을 매니저에 전달
     private void RaiseCloseClicked()
     {
@@ -87,7 +87,7 @@ public class ScratchingBattleController : UIBase
         OnCloseClicked?.Invoke();
     }
 
-    
+
     // 전투 화면을 표시
     public void Show()
     {
@@ -99,7 +99,7 @@ public class ScratchingBattleController : UIBase
         SetCloseInputBlocked(false);
     }
 
-    
+
     // 전투 화면을 즉시 숨기기
     public void Hide()
     {
@@ -108,11 +108,7 @@ public class ScratchingBattleController : UIBase
         SetCloseInputBlocked(false);
         gameObject.SetActive(false);
     }
-
-    /// <summary>
-    /// 전투 화면을 닫기 애니메이션 후 숨깁니다.
-    /// </summary>
-    /// <param name="onComplete">닫기 완료 후 호출할 콜백</param>
+    // 전투 화면을 닫기 애니메이션 후 숨김. onComplete: 닫기 완료 후 콜백
     public void Hide(Action onComplete)
     {
         if (!gameObject.activeSelf)
@@ -151,7 +147,6 @@ public class ScratchingBattleController : UIBase
                 onComplete?.Invoke();
             });
     }
-
     /// <summary>
     /// 전투 화면의 스테이지 제목을 출력합니다.
     /// </summary>
@@ -164,7 +159,6 @@ public class ScratchingBattleController : UIBase
 
         _battleStageText.text = $"{GetStageTypeText(stageType)} 스테이지 ({stage}단계)";
     }
-
     /// <summary>
     /// 흥미도 게이지 이미지를 현재/최대 비율로 표시합니다.
     /// 흥미도 감소 로직은 포함하지 않습니다.
@@ -181,7 +175,6 @@ public class ScratchingBattleController : UIBase
         if (_interestAmountImage != null)
             _interestAmountImage.fillAmount = ratio;
     }
-
     /// <summary>
     /// 내구도 게이지 이미지를 현재/최대 비율로 표시합니다.
     /// </summary>
@@ -197,7 +190,6 @@ public class ScratchingBattleController : UIBase
         if (_durabilityAmountImage != null)
             _durabilityAmountImage.fillAmount = ratio;
     }
-
     /// <summary>
     /// 현재/최대 값으로 UI 게이지 비율을 계산합니다.
     /// </summary>
@@ -211,7 +203,6 @@ public class ScratchingBattleController : UIBase
 
         return Mathf.Clamp01(current / max);
     }
-
     /// <summary>
     /// 스테이지 타입을 화면 출력용 문자열로 변환합니다.
     /// </summary>
