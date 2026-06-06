@@ -1,12 +1,17 @@
 using Core.Managers;
+using DG.Tweening;
 using UI;
 using UI.Base;
+using UI.MainUI;
+using UI.MergeBoard;
 using UnityEngine;
 using UnityEngine.UI;
 using Util;
 
 public class MainUI : UIScene
 {
+    [SerializeField] private Canvas _mainUICanvas;
+    
     [Header("버튼")]
     [Tooltip("상점")][SerializeField] private Button _shopButton;
     [Tooltip("시즌 이벤트")][SerializeField] private Button _eventButton;
@@ -22,6 +27,9 @@ public class MainUI : UIScene
     [Tooltip("냥스타그램")][SerializeField] private Button _meowMeowStarButton;
     [Tooltip("공방 머지 보드판")][SerializeField] private Button _workshopMergeBoardButton;
     [Tooltip("기본 머지 보드판")][SerializeField] private Button _mainMergeBoardButton;
+
+    [Space(10)] [Header("이미지")]
+    [SerializeField] private UpDownScreenController _upDownCon;
 
     private MainUISprite _mainUISprite;
 
@@ -45,6 +53,9 @@ public class MainUI : UIScene
         _mainMergeBoardButton = Get<Button>((int)MainUIButtons.MainMergeBoardButton);
 
         InitPopups();
+        
+        _mainUICanvas.overrideSorting = true;
+        _mainUICanvas.sortingOrder = 2;
 
         _mainUISprite = GetComponent<MainUISprite>();
         _mainUISprite.Init();
@@ -64,6 +75,7 @@ public class MainUI : UIScene
         InitPopup(KeyContainer.Prefabs.AffinityPopupUI, _affinityButton);
         InitPopup(KeyContainer.Prefabs.NyangNyangSnapStagePopUpUI, _nyangNyangSnapButton);
         InitPopup(KeyContainer.Prefabs.NyangStargramHomeProfile, _meowMeowStarButton);
+        LoadMergeBoard();
     }
 
     private void OnDisable()
@@ -80,6 +92,33 @@ public class MainUI : UIScene
         RemovePopupButton(_affinityButton);
         RemovePopupButton(_nyangNyangSnapButton);
         RemovePopupButton(_meowMeowStarButton);
+        _mainMergeBoardButton.onClick.RemoveAllListeners();
+    }
+
+    private void LoadMergeBoard()
+    {
+        GameManager.Addressable.LoadPrefab(KeyContainer.Prefabs.MergeBoard,
+            onLoaded =>
+            {
+                MergeBoardController boardCon = onLoaded.GetComponentInChildren<MergeBoardController>();
+
+                if (boardCon == null)
+                {
+                    DebugTool.Warning($"{onLoaded.name}의 머지보드 컨트롤러를 찾을 수 없습니다.", DebugType.Board);
+                    return;
+                }
+                
+                boardCon.OpenBoard();
+            },
+            onFailed =>
+        {
+            DebugTool.Warning($"{onFailed} 를 불러올 수 없습니다.", DebugType.Addressable);
+        });
+        
+        _mainMergeBoardButton.onClick.AddListener(() =>
+        {
+            _upDownCon.DownAnimation(_mainUICanvas);
+        });
     }
 
     private void InitPopup(string key, Button button)
