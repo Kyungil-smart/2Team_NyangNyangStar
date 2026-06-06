@@ -1,3 +1,4 @@
+using System;
 using UI;
 using UI.Base;
 using UnityEngine;
@@ -13,9 +14,9 @@ public class NyangNyangSnapStagePopupSprite : UIBase
     {
         Bind<Image>(typeof(NyangNyangSnapStagePopupImages));
 
-        _spriteController = new UISpriteController[(int)NyangNyangSnapStagePopupImages.Count];
+        _spriteController = new UISpriteController[Enum.GetValues(typeof(NyangNyangSnapStagePopupImages)).Length];
 
-        for (int i = 0; i < (int)NyangNyangSnapStagePopupImages.Count; i++)
+        for (int i = 0; i < Enum.GetValues(typeof(NyangNyangSnapStagePopupImages)).Length; i++)
         {
             _spriteController[i] = new UISpriteController(GetImage(i));
         }
@@ -55,18 +56,16 @@ public class NyangNyangSnapStagePopupSprite : UIBase
             controller?.ReleaseSprite();
         }
     }
-}
 
-public enum NyangNyangSnapStagePopupImages
-{
-    Background,
-    Pattern1,
-    Pattern2,
-    Pattern3,
-    Pattern4,
-    Stage1Button,
-    Stage2Button,
-    BackButton,
-
-    Count
+    public enum NyangNyangSnapStagePopupImages
+    {
+        Background,
+        Pattern1,
+        Pattern2,
+        Pattern3,
+        Pattern4,
+        Stage1Button,
+        Stage2Button,
+        BackButton,
+    }
 }

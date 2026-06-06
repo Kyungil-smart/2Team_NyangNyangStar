@@ -14,7 +14,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_DocumentId: 
   m_EnumType: 1
-  userId: OYCkIoIGJ3R8HKTC5GJ3uHJPIrV2
+  subCollections:
+  - {fileID: 11400000, guid: 8b1517c2c8fd42b41a195195545b6c9f, type: 2}
+  - {fileID: 11400000, guid: e83d2b0ab54c59242b8fa1becca1283d, type: 2}
+  - {fileID: 11400000, guid: 57dc979a21601044686517dde60c7179, type: 2}
+  - {fileID: 11400000, guid: 57aaf4d68781da74082c9ae8b06a8086, type: 2}
+  userId: eth19vXJ5uTBmgOrPdBF2rkoMje2
   nickname: New User
   userLevel: 1
   userExp: 0
@@ -25,6 +30,3 @@ MonoBehaviour:
   followingNumber: 0
   lastLogin: 0
   lastLogout: 0
-  subCollections:
-  - {fileID: 11400000, guid: 8b1517c2c8fd42b41a195195545b6c9f, type: 2}
-  - {fileID: 11400000, guid: e83d2b0ab54c59242b8fa1becca1283d, type: 2}

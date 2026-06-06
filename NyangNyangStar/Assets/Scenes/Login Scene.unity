@@ -152,6 +152,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   resourcesSO: {fileID: 11400000, guid: 8b1517c2c8fd42b41a195195545b6c9f, type: 2}
+  workShopStorageSO: {fileID: 0}
 --- !u!4 &251804871
 Transform:
   m_ObjectHideFlags: 0
@@ -354,6 +355,14 @@ PrefabInstance:
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
       value: AuthManager, Assembly-CSharp
       objectReference: {fileID: 0}
+    - target: {fileID: 256818872218525592, guid: 96a1aa2ce5b5cb7439e16faa87137bf1, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 256818872218525592, guid: 96a1aa2ce5b5cb7439e16faa87137bf1, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 2
+      objectReference: {fileID: 0}
     - target: {fileID: 1783804862878144109, guid: 96a1aa2ce5b5cb7439e16faa87137bf1, type: 3}
       propertyPath: m_Name
       value: Canvas
@@ -446,12 +455,43 @@ PrefabInstance:
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
       value: AuthManager, Assembly-CSharp
       objectReference: {fileID: 0}
+    - target: {fileID: 5720137594806332737, guid: 96a1aa2ce5b5cb7439e16faa87137bf1, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 5952211005714190276, guid: 96a1aa2ce5b5cb7439e16faa87137bf1, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
       value: 
       objectReference: {fileID: 251804870}
+    - target: {fileID: 7331274338614799222, guid: 96a1aa2ce5b5cb7439e16faa87137bf1, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7331274338614799222, guid: 96a1aa2ce5b5cb7439e16faa87137bf1, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7331274338614799222, guid: 96a1aa2ce5b5cb7439e16faa87137bf1, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 7331274338614799222, guid: 96a1aa2ce5b5cb7439e16faa87137bf1, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 7331274338614799222, guid: 96a1aa2ce5b5cb7439e16faa87137bf1, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7331274338614799222, guid: 96a1aa2ce5b5cb7439e16faa87137bf1, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 361.17
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
-    m_RemovedGameObjects: []
+    m_RemovedGameObjects:
+    - {fileID: 6476321592004584289, guid: 96a1aa2ce5b5cb7439e16faa87137bf1, type: 3}
+    - {fileID: 6672608996280837178, guid: 96a1aa2ce5b5cb7439e16faa87137bf1, type: 3}
+    - {fileID: 1638829236781645438, guid: 96a1aa2ce5b5cb7439e16faa87137bf1, type: 3}
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 96a1aa2ce5b5cb7439e16faa87137bf1, type: 3}

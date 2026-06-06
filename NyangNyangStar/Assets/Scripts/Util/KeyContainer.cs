@@ -52,7 +52,7 @@ namespace Util
             public const string NyangNyangSnapStagePopUpUI = "NyangNyangSnapStagePopupUI";
             public const string NyangNyangSnapSnackPopupUI = "NyangNyangSnapSnackCanvas";
             public const string NyangNyangSnapToyPopupUI = "NyangNyangSnapToyCanvas";
-            public const string NyangNyangSnapPopupUI = "NyangNyangSnapCanvas";
+            public const string NyangNyangSnapPopupUI = "NyangNyangSnapPopupUI";
             public const string NyangNyangSnapResultPopupUI = "NyangNyangSnapResultCanvas";
 
 
