@@ -1,3 +1,4 @@
+using System;
 using UI;
 using UI.Base;
 using UnityEngine;
@@ -12,9 +13,9 @@ public class NyangNyangSnapSprite : UIBase
     {
         Bind<Image>(typeof(NyangNyangSnapImages));
 
-        _spriteController = new UISpriteController[(int)NyangNyangSnapImages.Count];
+        _spriteController = new UISpriteController[Enum.GetValues(typeof(NyangNyangSnapImages)).Length];
 
-        for (int i = 0; i < (int)NyangNyangSnapImages.Count; i++)
+        for (int i = 0; i < Enum.GetValues(typeof(NyangNyangSnapImages)).Length; i++)
         {
             _spriteController[i] = new UISpriteController(GetImage(i));
         }
@@ -54,18 +55,18 @@ public class NyangNyangSnapSprite : UIBase
             controller?.ReleaseSprite();
         }
     }
+
+    public enum NyangNyangSnapImages
+    {
+        BackPanel,
+        BackButton,
+        SnackPanelButton,
+        ToyPanelButton,
+        PhotoButton,
+        RemainingAttempts,
+        StartButton,
+        SettingsButton,
+    }
 }
 
-public enum NyangNyangSnapImages
-{
-    BackPanel,
-    BackButton,
-    SnackPanelButton,
-    ToyPanelButton,
-    PhotoButton,
-    RemainingAttempts,
-    StartButton,
-    SettingsButton,
 
-    Count
-}
