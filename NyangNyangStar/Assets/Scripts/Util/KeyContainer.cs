@@ -35,6 +35,9 @@ namespace Util
             public const string NotebookPopupUI = "NotebookPopupUI";
             public const string RoulettePopupUI = "RoulettePopupUI";
             public const string AffinityPopupUI = "AffinityPopupUI";
+            
+            // 머지보드 UI 프리펩
+            public const string MergeBoard = "MergeBoard";
 
             //냥스타그램 UI 프리펩 NyangStargram
             public const string NyangStargramHomeProfile = "UINyangstagramHome & Profile";
@@ -252,6 +255,8 @@ namespace Util
             PrefabKeyDict.Add(Prefabs.NotebookPopupUI, new List<GameObject>());
             PrefabKeyDict.Add(Prefabs.RoulettePopupUI, new List<GameObject>());
             PrefabKeyDict.Add(Prefabs.AffinityPopupUI, new List<GameObject>());
+            
+            PrefabKeyDict.Add(Prefabs.MergeBoard, new List<GameObject>());
 
             //냥스타 그램
             PrefabKeyDict.Add(Prefabs.NyangStargramHomeProfile, new List<GameObject>());
