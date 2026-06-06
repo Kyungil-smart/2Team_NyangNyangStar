@@ -1,3 +1,4 @@
+using System;
 using UI;
 using UI.Base;
 using UnityEngine;
@@ -15,9 +16,9 @@ public class NyangstagramMainUISprite : UIBase
     {
         Bind<Image>(typeof(NyangstagramMainUIImages));
 
-        _spriteController = new UISpriteController[(int)NyangstagramMainUIImages.Count];
+        _spriteController = new UISpriteController[Enum.GetValues(typeof(NyangstagramMainUIImages)).Length];
 
-        for (int i = 0; i < (int)NyangstagramMainUIImages.Count; i++)
+        for (int i = 0; i < Enum.GetValues(typeof(NyangstagramMainUIImages)).Length; i++)
         {
             _spriteController[i] = new UISpriteController(GetImage(i));
         }
@@ -84,26 +85,24 @@ public class NyangstagramMainUISprite : UIBase
 
 public enum NyangstagramMainUIImages
 {
-    Panel,
-    HomeHeaderPanel,
-    HomeHeaderImage,
-    DMButton,
-    VerifyIconFront,
-    VerifyIcon,
-    LikeButton,
-    NPCImage,
-    Viewport,
-    HomeButton,
-    TagButton,
-    AddPostButton,
-    NotificationButton,
-    ProfileButton,
-    NyangstagramCloseButton,
-    ProfileFixedHeaderPanel,
-    VerifyIconProfile,
-    ViewportProfile,
-    ImageFrame,
-    Image,
-
-    Count
+    Panel = 0,
+    HomeHeaderPanel = 1,
+    HomeHeaderImage = 2,
+    DMButton = 3,
+    VerifyIconFront = 4,
+    VerifyIcon = 5,
+    LikeButton = 6,
+    NPCImage = 7,
+    Viewport = 8,
+    HomeButton = 9,
+    TagButton = 10,
+    AddPostButton = 11,
+    NotificationButton = 12,
+    ProfileButton = 13,
+    NyangstagramCloseButton = 14,
+    ProfileFixedHeaderPanel = 15,
+    VerifyIconProfile = 16,
+    ViewportProfile = 17,
+    ImageFrame = 18,
+    Image = 19,
 }

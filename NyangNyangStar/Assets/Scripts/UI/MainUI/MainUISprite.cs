@@ -1,3 +1,4 @@
+using System;
 using UI;
 using UI.Base;
 using UnityEngine;
@@ -13,9 +14,9 @@ public class MainUISprite : UIBase
     {
         Bind<Image>(typeof(MainUIImages));
 
-        _spriteController = new UISpriteController[(int)MainUIImages.Count];
+        _spriteController = new UISpriteController[Enum.GetValues(typeof(MainUIImages)).Length];
 
-        for (int i = 0; i < (int)MainUIImages.Count; i++)
+        for (int i = 0; i < Enum.GetValues(typeof(MainUIImages)).Length; i++)
         {
             _spriteController[i] = new UISpriteController(GetImage(i));
         }
@@ -89,6 +90,4 @@ public enum MainUIImages
     Gem,                       // 보석 패널
     ProfileImage,              // 프로필 이미지
     ProfileFrame,              // 프로필 이미지 테두리
-
-    Count
 }

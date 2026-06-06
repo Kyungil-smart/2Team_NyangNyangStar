@@ -1,3 +1,4 @@
+using System;
 using UI;
 using UI.Base;
 using UnityEngine;
@@ -16,9 +17,9 @@ public class SettingsPopupSprite : UIBase
     {
         Bind<Image>(typeof(SettingsPopupImages));
 
-        _spriteController = new UISpriteController[(int)SettingsPopupImages.Count];
+        _spriteController = new UISpriteController[Enum.GetValues(typeof(SettingsPopupImages)).Length];
 
-        for (int i = 0; i < (int)SettingsPopupImages.Count; i++)
+        for (int i = 0; i < Enum.GetValues(typeof(SettingsPopupImages)).Length; i++)
         {
             _spriteController[i] = new UISpriteController(GetImage(i));
         }
@@ -75,6 +76,4 @@ public enum SettingsPopupImages
     CloseButton,
     Panel,
     Header,
-
-    Count
 }

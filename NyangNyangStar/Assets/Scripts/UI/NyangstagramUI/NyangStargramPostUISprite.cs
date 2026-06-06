@@ -1,3 +1,4 @@
+using System;
 using UI;
 using UI.Base;
 using UnityEngine;
@@ -14,8 +15,8 @@ public class NyangStargramPostUISprite : UIBase
     {
         Bind<Image>(typeof(NyangStargramPostUIImages));
 
-        _spriteController = new UISpriteController[(int)NyangStargramPostUIImages.Count];
-        for (int i = 0; i < (int)NyangStargramPostUIImages.Count; i++)
+        _spriteController = new UISpriteController[Enum.GetValues(typeof(NyangStargramPostUIImages)).Length];
+        for (int i = 0; i < Enum.GetValues(typeof(NyangStargramPostUIImages)).Length; i++)
         {
             _spriteController[i] = new UISpriteController(GetImage(i));
         }
@@ -65,22 +66,18 @@ public class NyangStargramPostUISprite : UIBase
         _spriteController[(int)image].ChangeColor(color);
         _spriteController[(int)image].ChangeSprite(key);
     }
-}
-
-public enum NyangStargramPostUIImages
-{
-    backGroundpanel,
-    PostHeaderpanel,
-    BackButton,
-    Viewport,
-    VerifyIconFront,
-    VerifyIcon,
-    PostImage,
-    LikeButton,
-    NPCImage,
-    NyangstagramCloseButton,
-
-    Count
-
-
+    
+    public enum NyangStargramPostUIImages
+    {
+        backGroundpanel,
+        PostHeaderpanel,
+        BackButton,
+        Viewport,
+        VerifyIconFront,
+        VerifyIcon,
+        PostImage,
+        LikeButton,
+        NPCImage,
+        NyangstagramCloseButton,
+    }
 }

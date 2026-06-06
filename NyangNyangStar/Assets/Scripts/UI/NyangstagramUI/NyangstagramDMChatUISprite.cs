@@ -1,3 +1,4 @@
+using System;
 using UI;
 using UI.Base;
 using UnityEngine;
@@ -11,8 +12,8 @@ public class NyangstagramDMChatUISprite : UIBase
     {
         Bind<Image>(typeof(NyangstagramDMChatUIImages));
 
-        _spriteController = new UISpriteController[(int)NyangstagramDMChatUIImages.Count];
-        for (int i = 0; i < (int)NyangstagramDMChatUIImages.Count; i++)
+        _spriteController = new UISpriteController[Enum.GetValues(typeof(NyangstagramDMChatUIImages)).Length];
+        for (int i = 0; i < Enum.GetValues(typeof(NyangstagramDMChatUIImages)).Length; i++)
         {
             _spriteController[i] = new UISpriteController(GetImage(i));
         }
@@ -50,19 +51,14 @@ public class NyangstagramDMChatUISprite : UIBase
         _spriteController[(int)image].ChangeColor(color);
         _spriteController[(int)image].ChangeSprite(key);
     }
-}
-
-public enum NyangstagramDMChatUIImages
-{
-    backGroundpanel,
-    HeaderPanel,
-    BackButton,
-    NpcMessageBubble,
-    NPCProfileImage,
-    PlayerMassageBubble,
-    NyangstagramCloseButton,
-
-    Count
-
-
+    public enum NyangstagramDMChatUIImages
+    {
+        backGroundpanel,
+        HeaderPanel,
+        BackButton,
+        NpcMessageBubble,
+        NPCProfileImage,
+        PlayerMassageBubble,
+        NyangstagramCloseButton
+    }
 }
