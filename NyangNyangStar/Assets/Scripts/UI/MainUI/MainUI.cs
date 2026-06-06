@@ -132,7 +132,8 @@ public class MainUI : UIScene
         button.onClick.AddListener(() => 
         { 
             popup.gameObject.SetActive(true);
-            PlayPopupOpenAnimation(popup); 
+            PlayPopupOpenAnimation(popup);
+            GameManager.Audio.PlaySfx("Main_SFX_Touch");
         });
     }
 
