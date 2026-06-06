@@ -14,5 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_DocumentId: Progress
   m_EnumType: 0
+  subCollections: []
   _level: 1
   _currentExp: 0
