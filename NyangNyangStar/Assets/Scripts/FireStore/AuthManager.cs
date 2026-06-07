@@ -1,15 +1,26 @@
-using UnityEngine;
+using Core.Managers;
+using Data.LibrarySystem;
 using Firebase;
 using Firebase.Auth;
 using Firebase.Extensions;
+using System.Collections;
+using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class AuthManager : MonoBehaviour
 {
     private FirebaseAuth auth;
     private bool firebaseReady = false;
+    private GameObject logInButton;
 
+    private void Awake()
+    {
+        DontDestroyOnLoad(this);
+        
+    }   
     private void Start()
     {
+        logInButton = GameObject.Find("LogInButton");
         FirebaseApp.CheckAndFixDependenciesAsync().ContinueWithOnMainThread(async task =>
         {
             if (task.Result == DependencyStatus.Available)
@@ -26,6 +37,9 @@ public class AuthManager : MonoBehaviour
                     await FireStoreManager.Instance.InitAsync(auth.CurrentUser.UserId);
 
                     Debug.Log("Cached user Firestore 초기화 완료");
+
+                    Login();
+                    
                 }
                 else
                 {
@@ -37,6 +51,8 @@ public class AuthManager : MonoBehaviour
                 Debug.LogError($"Firebase dependencies error: {task.Result}");
             }
         });
+
+
     }
 
     public async void Login()
@@ -55,12 +71,17 @@ public class AuthManager : MonoBehaviour
 
         try
         {
+            logInButton.SetActive(false);
             AuthResult result = await auth.SignInAnonymouslyAsync();
             FirebaseUser user = result.User;
 
             Debug.Log($"Anonymous login success. UID: {user.UserId}");
 
             await FireStoreManager.Instance.InitAsync(user.UserId);
+            
+            Debug.Log("Firestore 초기화 및 시트 로드 완료");
+
+            StartCoroutine(WaitForDataLoad());
 
             Debug.Log("Firestore 초기화까지 완료");
         }
@@ -68,24 +89,20 @@ public class AuthManager : MonoBehaviour
         {
             Debug.LogError($"Anonymous login failed: {e}");
         }
+        
     }
-
-    public void Logout()
+    private IEnumerator WaitForDataLoad()
     {
-        if (!firebaseReady || auth == null)
+        GameManager.Data.LoadSheets();
+
+        while (LocalDataAccess.Instance == null ||
+           LocalDataAccess.Instance.Game == null ||
+           !LocalDataAccess.Instance.Game.IsReady)
         {
-            Debug.LogWarning("Firebase is not ready yet.");
-            return;
+            yield return null;
         }
 
-        if (auth.CurrentUser != null)
-        {
-            Debug.Log($"Signing out user: {auth.CurrentUser.UserId}");
-        }
-
-        auth.SignOut();
-
-        Debug.Log("Signed out.");
+        SceneManager.LoadScene("Scenes/Game Scene");
     }
 
     public void FreshAnonymousLogin()
@@ -103,6 +120,25 @@ public class AuthManager : MonoBehaviour
         }
 
         Login();
+    }
+
+    [ContextMenu("Logout")]
+    public void Logout()
+    {
+        if (!firebaseReady || auth == null)
+        {
+            Debug.LogWarning("Firebase is not ready yet.");
+            return;
+        }
+
+        if (auth.CurrentUser != null)
+        {
+            Debug.Log($"Signing out user: {auth.CurrentUser.UserId}");
+        }
+
+        auth.SignOut();
+
+        Debug.Log("Signed out.");
     }
 
 

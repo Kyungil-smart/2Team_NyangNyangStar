@@ -9,7 +9,7 @@ public class MainUIInitializer : BaseScene
 {
     private void Start()
     {
-        GameManager.Data.LoadSheets();
+
         StartCoroutine(LoadMainUI());
     }
 
@@ -22,5 +22,6 @@ public class MainUIInitializer : BaseScene
         
         GameManager.UI.ShowSceneUI<UIScene>(KeyContainer.Prefabs.MainUI);
         GameManager.Audio.PlayBgm("BGM_Main");
+
     }
 }
