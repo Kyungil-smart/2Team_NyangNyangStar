@@ -1,9 +1,11 @@
-using UnityEngine;
+using Core.Managers;
+using Data.LibrarySystem;
 using Firebase;
 using Firebase.Auth;
 using Firebase.Extensions;
+using System.Collections;
+using UnityEngine;
 using UnityEngine.SceneManagement;
-using Core.Managers;
 
 public class AuthManager : MonoBehaviour
 {
@@ -76,7 +78,10 @@ public class AuthManager : MonoBehaviour
             Debug.Log($"Anonymous login success. UID: {user.UserId}");
 
             await FireStoreManager.Instance.InitAsync(user.UserId);
-            SceneManager.LoadScene("Scenes/Game Scene");
+            
+            Debug.Log("Firestore 초기화 및 시트 로드 완료");
+
+            StartCoroutine(WaitForDataLoad());
 
             Debug.Log("Firestore 초기화까지 완료");
         }
@@ -84,9 +89,21 @@ public class AuthManager : MonoBehaviour
         {
             Debug.LogError($"Anonymous login failed: {e}");
         }
-        GameManager.Data.LoadSheets();
+        
     }
-    
+    private IEnumerator WaitForDataLoad()
+    {
+        GameManager.Data.LoadSheets();
+
+        while (LocalDataAccess.Instance == null ||
+           LocalDataAccess.Instance.Game == null ||
+           !LocalDataAccess.Instance.Game.IsReady)
+        {
+            yield return null;
+        }
+
+        SceneManager.LoadScene("Scenes/Game Scene");
+    }
 
     public void FreshAnonymousLogin()
     {
