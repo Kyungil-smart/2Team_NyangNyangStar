@@ -55,16 +55,6 @@ public partial class ScratchingTimeManager
             return;
         }
 
-        // 도전 횟수 차감 (START 시점)
-        if (!_scratching.TryConsumeChallengeCount(_selectedStage, stageType))
-        {
-            DebugTool.Warning("남은 도전 횟수가 없어 스테이지를 시작할 수 없습니다.", DebugType.ScratchingTime);
-            RefreshSelectionInfo();
-            return;
-        }
-
-        SaveScratchingProgressToServer();
-
         _selectedStageType = stageType;
 
         int maxDurability = _scratching.GetMaxDurability(_selectedStage, _selectedStageType);
@@ -151,13 +141,20 @@ public partial class ScratchingTimeManager
 
 
     // 현재 스테이지를 클리어 처리
-    // 도전 횟수는 START 시점에 차감되며, 클리어 시 경험치와 클리어 기록만 갱신
+    // 도전 횟수는 클리어 성공 시점에만 차감하고, 이후 경험치와 클리어 기록을 갱신
     public void ShowStageClearResult()
     {
         if (!_isStarted)
             return;
 
         int clearExp = _scratching.GetClearExp(_selectedStage, _selectedStageType);
+
+        if (!_scratching.TryConsumeChallengeCount(_selectedStage, _selectedStageType))
+        {
+            DebugTool.Warning("남은 도전 횟수가 없어 클리어 보상을 처리할 수 없습니다.", DebugType.ScratchingTime);
+            RefreshSelectionInfo();
+            return;
+        }
 
         _scratching.RecordStageClear(_selectedStage, _selectedStageType);
         SaveScratchingProgressToServer();
@@ -174,7 +171,6 @@ public partial class ScratchingTimeManager
 
 
     // 현재 스테이지를 실패 처리
-    // 도전 횟수는 START 시점에 이미 차감된 상태
     public void ShowStageFailResult()
     {
         if (!_isStarted)
