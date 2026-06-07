@@ -1,5 +1,4 @@
-﻿using System.Collections;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Data.LibrarySystem;
 using UI.MergeBoard;
 using UnityEngine;
@@ -21,51 +20,96 @@ namespace Data.ScriptableObjects.MergeBoard
         private bool _isLoading;
         private bool _isLoaded;
 
-        private IEnumerator Start()
+        public bool IsLoading => _isLoading;
+        public bool IsLoaded => _isLoaded;
+
+        public async Task LoadAsync(bool forceReload = false)
         {
-            yield return WaitUntilReady();
-            yield return LoadFromServerRoutine();
+            if (_isLoading)
+                return;
+
+            if (_isLoaded && !forceReload)
+                return;
+
+            _isLoading = true;
+
+            try
+            {
+                await WaitUntilReadyAsync();
+                await LoadFromServerAsync();
+
+                _isLoaded = true;
+                DebugTool.Log("MergeBoard 서버 데이터 로드 완료", DebugType.Board, this);
+            }
+            catch (System.Exception exception)
+            {
+                _isLoaded = false;
+                Debug.LogException(exception, this);
+            }
+            finally
+            {
+                _isLoading = false;
+            }
         }
 
-        private IEnumerator WaitUntilReady()
+        public async Task ReloadAsync()
         {
+            await LoadAsync(true);
+        }
+
+        public void ResetLoadedState()
+        {
+            _isLoaded = false;
+        }
+
+        private async Task WaitUntilReadyAsync()
+        {
+            int delayMilliseconds = Mathf.Max(1, Mathf.RoundToInt(_checkInterval * 1000f));
+
+            ResolveReferences();
+
             while (_boardSystem == null || !_boardSystem.IsBoardReady)
-                yield return new WaitForSeconds(_checkInterval);
+            {
+                ResolveReferences();
+                await Task.Delay(delayMilliseconds);
+            }
 
             while (FireStoreManager.Instance == null || !FireStoreManager.Instance.IsInitialized)
-                yield return new WaitForSeconds(_checkInterval);
+                await Task.Delay(delayMilliseconds);
 
             while (LocalDataAccess.Instance == null ||
                    LocalDataAccess.Instance.Game == null ||
                    !LocalDataAccess.Instance.Game.IsReady)
             {
-                yield return new WaitForSeconds(_checkInterval);
+                await Task.Delay(delayMilliseconds);
             }
+
+            while (_specialItemBoardSystem != null && !_specialItemBoardSystem.IsBoardReady)
+                await Task.Delay(delayMilliseconds);
         }
 
-        private IEnumerator LoadFromServerRoutine()
+        private void ResolveReferences()
         {
-            if (_isLoading || _isLoaded)
-                yield break;
+            if (_boardSystem == null)
+                _boardSystem = GetComponentInChildren<BoardSystem>(true);
 
-            _isLoading = true;
+            if (_rewardQueue == null)
+                _rewardQueue = GetComponentInChildren<BoardRewardQueue>(true);
 
-            Task loadTask = LoadFromServerAsync();
-
-            while (!loadTask.IsCompleted)
-                yield return null;
-
-            if (loadTask.Exception != null)
-                Debug.LogException(loadTask.Exception);
-
-            _isLoading = false;
-            _isLoaded = true;
-
-            DebugTool.Log("MergeBoard 서버 데이터 로드 완료", DebugType.Board, this);
+            if (_specialItemBoardSystem == null)
+                _specialItemBoardSystem = GetComponentInChildren<SpecialItemBoardSystem>(true);
         }
 
         private async Task LoadFromServerAsync()
         {
+            ResolveReferences();
+
+            if (_boardSystem == null)
+            {
+                DebugTool.Warning("BoardSystem이 연결되지 않았습니다.", DebugType.Board, this);
+                return;
+            }
+
             await _boardSystem.LoadBoardFromServerAsync(_normalizeDocumentIds);
 
             if (_rewardQueue != null)

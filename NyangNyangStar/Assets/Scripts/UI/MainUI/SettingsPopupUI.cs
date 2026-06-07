@@ -82,6 +82,8 @@ public class SettingsPopupUI : UIPopup
         _panel.DOScale(Vector3.one * _popupScale, _popupScaleDuration)
             .SetEase(Ease.OutSine)
             .OnComplete(() => gameObject.SetActive(false));
+        
+        GameManager.Audio.PlaySfx("Main_SFX_Touch");
     }
 }
 

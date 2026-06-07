@@ -156,16 +156,16 @@ public class NyangstagramDMListUI : UIPopup
             .SetEase(Ease.OutSine).OnComplete(() => gameObject.SetActive(false));
 
     }
-}
 
-public enum NyangstagramDMListUIButton
-{
-    BackButton,
-    DMItem,
-    HomeButton,
-    TagButton,
-    AddPostButton,
-    NotificationButton,
-    ProfileButton,
-    NyangstagramCloseButton
+    public enum NyangstagramDMListUIButton
+    {
+        BackButton,
+        DMItem,
+        HomeButton,
+        TagButton,
+        AddPostButton,
+        NotificationButton,
+        ProfileButton,
+        NyangstagramCloseButton
+    }
 }

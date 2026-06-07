@@ -1,3 +1,4 @@
+using System;
 using UI;
 using UI.Base;
 using UnityEngine;
@@ -13,9 +14,9 @@ public class MainUISprite : UIBase
     {
         Bind<Image>(typeof(MainUIImages));
 
-        _spriteController = new UISpriteController[(int)MainUIImages.Count];
+        _spriteController = new UISpriteController[Enum.GetValues(typeof(MainUIImages)).Length];
 
-        for (int i = 0; i < (int)MainUIImages.Count; i++)
+        for (int i = 0; i < Enum.GetValues(typeof(MainUIImages)).Length; i++)
         {
             _spriteController[i] = new UISpriteController(GetImage(i));
         }
@@ -27,7 +28,7 @@ public class MainUISprite : UIBase
     {
         SetSprite(MainUIImages.Background, "Main_BG");
         SetSprite(MainUIImages.ShopButton, "Main_Btn_Shop");
-        SetSprite(MainUIImages.EventButton, "Main_Btn_Event_Scratching");
+        SetSprite(MainUIImages.ScratchingTimeButton, "Main_Btn_Event_Scratching");
         SetSprite(MainUIImages.DailyCheckInButton, "Main_Btn_Attendance");
         SetSprite(MainUIImages.MailButton, "Main_Btn_Mail");
         SetSprite(MainUIImages.SettingsButton, "Main_Btn_Settings");
@@ -67,7 +68,7 @@ public enum MainUIImages
 {
     Background,                // 배경
     ShopButton,                // 상점
-    EventButton,               // 시즌 이벤트
+    ScratchingTimeButton,      // 시즌 이벤트
     DailyCheckInButton,        // 출석 체크
     MailButton,                // 우편함
     SettingsButton,            // 설정
@@ -89,6 +90,4 @@ public enum MainUIImages
     Gem,                       // 보석 패널
     ProfileImage,              // 프로필 이미지
     ProfileFrame,              // 프로필 이미지 테두리
-
-    Count
 }

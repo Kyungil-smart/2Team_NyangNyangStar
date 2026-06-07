@@ -1,3 +1,4 @@
+using Core.Managers;
 using System;
 using DG.Tweening;
 using Services.Enums;
@@ -14,7 +15,7 @@ using UnityEngine.UI;
 public class ScratchingTimeController : UIBase
 {
     [Header("Close Button")]
-    [SerializeField] private Button _closeButton;
+    [SerializeField] public Button _closeButton;
 
     [Header("Close Animation")]
     [Tooltip("비우면 이 UI 루트 전체가 줄어듭니다. EventPopupPanel만 지정하면 배경은 그대로라 체감이 거의 없습니다.")]
@@ -230,6 +231,7 @@ public class ScratchingTimeController : UIBase
 
         ClearSelectedButton();
         OnCloseClicked?.Invoke();
+        GameManager.Audio.PlaySfx("Main_SFX_Touch");
     }
 
     // 단계 버튼 입력을 매니저에 전달

@@ -1,11 +1,7 @@
-using System;
-using System.Collections;
-using Data.Parsing;
-using Data.ScriptableObjects.ScratchingTimeSO;
 using Core.Managers;
-using Data.LibrarySystem;
+using Data.ScriptableObjects.ScratchingTimeSO;
+using DG.Tweening;
 using Services.Enums;
-using UI;
 using UI.Base;
 using UnityEngine;
 
@@ -33,6 +29,10 @@ public partial class ScratchingTimeManager : UIBase
     [SerializeField] private int _selectedStage;                              // 현재 선택된 단계 (1~4)
     [SerializeField] private StageType _selectedStageType = StageType.None;   // 일일/주간 중 진행 중인 타입
     [SerializeField] private bool _isStarted;                                 // 스테이지 전투 진행 중 여부
+
+    [Header("Canvas")]
+    [SerializeField] private Canvas _canvas;
+    [SerializeField] private RectTransform _rectTransform;
 
     private bool HasSelectedStage => _selectedStage > 0;
     private bool _isUiTransitioning;       // 화면 전환 애니메이션 중 중복 입력 방지
@@ -63,6 +63,7 @@ public partial class ScratchingTimeManager : UIBase
         if (_selectionController != null)
         {
             _selectionController.OnCloseClicked += CloseEventView;
+            _selectionController.OnCloseClicked += CloseScratchingTimeUI;
             _selectionController.OnStageSelected += SelectStage;
             _selectionController.OnStageStartClicked += StartStage;
         }
@@ -150,8 +151,26 @@ public partial class ScratchingTimeManager : UIBase
         _weeklyStageController?.Init();
         _resultPopupController?.Init();
         _moongchiStatController?.Init();
+        
+        _canvas = GetComponent<Canvas>();
+        _rectTransform = GetComponent<RectTransform>();
 
         _isInitialized = true;
+    }
+
+    public void OpenScratchingTimeUI()
+    {
+        _canvas.sortingOrder = 4;
+        if (_rectTransform == null) return;
+            _rectTransform.DOScale(Vector3.one, 0.2f).SetEase(Ease.InOutCubic);
+    }
+
+    public void CloseScratchingTimeUI()
+    {
+        GameManager.Audio.PlaySfx("Main_SFX_Touch");
+        if (_rectTransform == null) return;
+            _rectTransform.DOScale(Vector3.zero, 0.2f).SetEase(Ease.OutCirc);
+        _canvas.sortingOrder = 1;
     }
 
 
