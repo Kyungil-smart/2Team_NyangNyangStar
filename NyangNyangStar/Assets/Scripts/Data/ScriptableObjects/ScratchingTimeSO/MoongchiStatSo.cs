@@ -74,6 +74,7 @@ namespace Data.ScriptableObjects.ScratchingTimeSO
         public override void Init()
         {
             Level = 1;
+            _currentExp = 0;
             RefreshTotalStats();
         }
 
