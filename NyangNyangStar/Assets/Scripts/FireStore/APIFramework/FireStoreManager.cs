@@ -21,6 +21,7 @@ public class FireStoreManager : MonoBehaviour
     
     private void Awake()
     {
+        DontDestroyOnLoad(this);
         InitSingleton();
 
     }
