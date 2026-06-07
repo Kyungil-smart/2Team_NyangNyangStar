@@ -1281,8 +1281,8 @@ MonoBehaviour:
 
 '
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: c90db2b3195254149bff19a87306cbdd, type: 2}
-  m_sharedMaterial: {fileID: 6147925790400842072, guid: c90db2b3195254149bff19a87306cbdd, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 8861e437a2dfce34384b712662245679, type: 2}
+  m_sharedMaterial: {fileID: 1325368658670267007, guid: 8861e437a2dfce34384b712662245679, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -2226,6 +2226,7 @@ MonoBehaviour:
   _slotPrefab: {fileID: 4654962982405816070, guid: fe1e8143f020f9d468e4307655823519, type: 3}
   _grid: {fileID: 0}
   _itemSlots: []
+  _selectedSlotColor: {r: 1, g: 0.9, b: 0.6, a: 1}
   _mergeBoardFirestore: {fileID: 11400000, guid: e83d2b0ab54c59242b8fa1becca1283d, type: 2}
   _itemInfoPanel: {fileID: 5792808413531816249}
   _width: 7
@@ -2448,6 +2449,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _boardSystem: {fileID: 1933188620078206294}
   _specialItemBoardSystem: {fileID: 6520057897396630295}
+  _boardRewardQueue: {fileID: 0}
   _clearButton: {fileID: 7777621449505833426}
 --- !u!1 &6477769666532068826
 GameObject:
@@ -2995,8 +2997,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: 'Level : '
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: c90db2b3195254149bff19a87306cbdd, type: 2}
-  m_sharedMaterial: {fileID: 6147925790400842072, guid: c90db2b3195254149bff19a87306cbdd, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 8861e437a2dfce34384b712662245679, type: 2}
+  m_sharedMaterial: {fileID: 1325368658670267007, guid: 8861e437a2dfce34384b712662245679, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []

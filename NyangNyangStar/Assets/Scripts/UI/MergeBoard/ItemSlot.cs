@@ -1,4 +1,5 @@
 ﻿using Data.ScriptableObjects.MergeBoard;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -12,6 +13,9 @@ namespace UI.MergeBoard
 
         [Header("Item")]
         [SerializeField] private Image _item;
+        
+        [Header("BackGround Image")]
+        [SerializeField] private Image _backGroundImage;
 
         private BoardSystem _boardSystem;
         private RectTransform _itemRect;
@@ -22,11 +26,13 @@ namespace UI.MergeBoard
         private int _slotIndex;
         private bool _isDragging;
         private bool _ignoreClickOnce;
+        private Coroutine _resetIgnoreClickCoroutine;
 
         public int SlotNumber => _slotIndex;
         public RectTransform RectTransform => transform as RectTransform;
         public ItemData ItemData { get; private set; } = ItemData.Empty;
         public bool HasItem => ItemData != null && ItemData.HasItem;
+        
 
         public void Init(BoardSystem boardSystem, int slotIndex, ItemData itemData, int itemSize)
         {
@@ -137,6 +143,8 @@ namespace UI.MergeBoard
 
             if (_boardSystem != null)
                 _boardSystem.HandleDragEnd(this, eventData);
+
+            ResetIgnoreClickNextFrame();
         }
 
         public void OnPointerClick(PointerEventData eventData)
@@ -147,6 +155,13 @@ namespace UI.MergeBoard
             if (_ignoreClickOnce)
             {
                 _ignoreClickOnce = false;
+
+                if (_resetIgnoreClickCoroutine != null)
+                {
+                    StopCoroutine(_resetIgnoreClickCoroutine);
+                    _resetIgnoreClickCoroutine = null;
+                }
+
                 return;
             }
 
@@ -157,6 +172,47 @@ namespace UI.MergeBoard
                 return;
 
             _boardSystem.SelectSlot(this);
+        }
+
+        private void ResetIgnoreClickNextFrame()
+        {
+            if (!gameObject.activeInHierarchy)
+            {
+                _ignoreClickOnce = false;
+                return;
+            }
+
+            if (_resetIgnoreClickCoroutine != null)
+                StopCoroutine(_resetIgnoreClickCoroutine);
+
+            _resetIgnoreClickCoroutine = StartCoroutine(ResetIgnoreClickRoutine());
+        }
+
+        private IEnumerator ResetIgnoreClickRoutine()
+        {
+            yield return null;
+            _ignoreClickOnce = false;
+            _resetIgnoreClickCoroutine = null;
+        }
+
+        private void OnDisable()
+        {
+            _isDragging = false;
+            _ignoreClickOnce = false;
+
+            if (_resetIgnoreClickCoroutine != null)
+            {
+                StopCoroutine(_resetIgnoreClickCoroutine);
+                _resetIgnoreClickCoroutine = null;
+            }
+        }
+
+        public void ChangeBackgroundColor(Color color)
+        {
+            if (_backGroundImage == null)
+                return;
+
+            _backGroundImage.color = color;
         }
     }
 }
