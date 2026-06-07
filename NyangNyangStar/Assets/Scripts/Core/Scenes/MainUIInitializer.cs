@@ -21,6 +21,6 @@ public class MainUIInitializer : BaseScene
             yield return null;
         
         GameManager.UI.ShowSceneUI<UIScene>(KeyContainer.Prefabs.MainUI);
-        GameManager.Audio.PlayBgm("Test_BGM");
+        GameManager.Audio.PlayBgm("BGM_Main");
     }
 }
