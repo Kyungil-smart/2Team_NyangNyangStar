@@ -18,6 +18,7 @@ namespace Core.Managers
         {
             Time.timeScale = 1f;
             SceneManager.LoadScene(CurrentSceneIndex() + 1);
+            DebugTool.Log("다음 씬으로 이동", DebugType.Game);
         }
 
         public void LoadPreviousScene()

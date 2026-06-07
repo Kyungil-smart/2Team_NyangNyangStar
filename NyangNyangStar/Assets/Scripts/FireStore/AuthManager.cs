@@ -4,14 +4,18 @@ using Firebase;
 using Firebase.Auth;
 using Firebase.Extensions;
 using System.Collections;
+using UI;
+using UI.Login;
 using UnityEngine;
-using UnityEngine.SceneManagement;
+using Util;
 
 public class AuthManager : MonoBehaviour
 {
     private FirebaseAuth auth;
     private bool firebaseReady = false;
     private GameObject logInButton;
+    
+    private bool _mainUILoaded = false;
 
     private void Awake()
     {
@@ -20,6 +24,7 @@ public class AuthManager : MonoBehaviour
     }   
     private void Start()
     {
+        GameManager.Audio.PlayBgm("BGM_Main");
         logInButton = GameObject.Find("LogInButton");
         FirebaseApp.CheckAndFixDependenciesAsync().ContinueWithOnMainThread(async task =>
         {
@@ -101,8 +106,14 @@ public class AuthManager : MonoBehaviour
         {
             yield return null;
         }
-
-        SceneManager.LoadScene("Scenes/Game Scene");
+        
+        LogInUIController login = FindObjectOfType<LogInUIController>();
+        if(!_mainUILoaded)
+        {
+            GameManager.UI.ShowSceneUI<UIScene>(KeyContainer.Prefabs.MainUI);
+            _mainUILoaded = true;
+        }
+        login.DownImage();
     }
 
     public void FreshAnonymousLogin()
