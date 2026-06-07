@@ -1,3 +1,4 @@
+using Core.Managers;
 using System;
 using DG.Tweening;
 using Services.Enums;
@@ -84,6 +85,7 @@ public class ScratchingBattleController : UIBase
             return;
 
         EventSystem.current?.SetSelectedGameObject(null);
+        GameManager.Audio.PlaySfx("Main_SFX_Touch");
         OnCloseClicked?.Invoke();
     }
 

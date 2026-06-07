@@ -168,7 +168,9 @@ public partial class ScratchingTimeManager : UIBase
 
         if (_rectTransform == null)
             return;
-
+        
+        _canvas.sortingOrder = 4;
+        _rectTransform.localScale = Vector3.zero;
         _rectTransform.DOKill();
         _rectTransform.DOScale(Vector3.one, 0.2f).SetEase(Ease.InOutCubic);
     }

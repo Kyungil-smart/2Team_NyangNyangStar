@@ -140,6 +140,7 @@ public class MainUI : UIScene
         _scratchingTimeButton.onClick.AddListener(() =>
         {
             manager.OpenScratchingTimeUI();
+            GameManager.Audio.PlaySfx("Main_SFX_Touch");
         });
     }
     

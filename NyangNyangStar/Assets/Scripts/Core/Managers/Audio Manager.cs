@@ -23,7 +23,7 @@ namespace Core.Managers
 
         private const int DefaultState = 1;
 
-        private const float VolumeOn = -10f;
+        private const float VolumeOn = -5f;
         private const float VolumeOff = -80f;
 
         private bool _bgmOnOff = true;
