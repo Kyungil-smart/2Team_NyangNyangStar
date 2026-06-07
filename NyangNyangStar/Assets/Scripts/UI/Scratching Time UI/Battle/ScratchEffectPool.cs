@@ -94,7 +94,8 @@ public class ScratchEffectPool : MonoBehaviour
 
         image.sprite = sprite;
         image.color = Color.white;
-        image.SetNativeSize();
+        // image.SetNativeSize();
+        itemRect.sizeDelta = effectSize;
 
         itemRect.anchoredPosition = localPosition;
         itemRect.localRotation = Quaternion.Euler(0f, 0f, UnityEngine.Random.Range(-20f, 20f));
