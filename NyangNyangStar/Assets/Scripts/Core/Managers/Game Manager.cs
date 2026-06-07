@@ -22,6 +22,9 @@ namespace Core.Managers
         {
             get
             {
+                if (_isQuitting)
+                    return null;
+                
                 Init(); 
                 return _instance;
             } 
@@ -35,15 +38,24 @@ namespace Core.Managers
     
         // TODO : DataManager 추가
 
-        public static DataManager Data => Instance._dataManager;
-        public static AddressableManager Addressable => Instance._addressableManager;
-        public static GameSceneManager Scene => Instance._gameSceneManager;
-        public static AudioManager Audio => Instance._audioManager;
-        public static UiManager UI => Instance._uiManager;
+        public static DataManager Data => Instance == null ? null : Instance._dataManager;
+        public static AddressableManager Addressable => Instance == null ? null : Instance._addressableManager;
+        public static GameSceneManager Scene => Instance == null ? null : Instance._gameSceneManager;
+        public static AudioManager Audio => Instance == null ? null : Instance._audioManager;
+        public static UiManager UI => Instance == null ? null : Instance._uiManager;
+        
+        private static bool _isQuitting = false;
 
         private void OnDestroy()
         {
-            Clear();
+            if (_instance == this)
+                _instance = null;
+        }
+        
+        public void GameQuit()
+        {
+            GameManager.Clear();
+            Application.Quit();
         }
 
         public static void Init()
@@ -88,6 +100,11 @@ namespace Core.Managers
                 _instance._addressableManager.Clear();
             
             DebugTool.Log("모든 매니저 제거 완료 ", DebugType.Game);
+        }
+
+        private void OnApplicationQuit()
+        {
+            _isQuitting = true;
         }
     }
 }

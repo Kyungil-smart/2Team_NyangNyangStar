@@ -1,5 +1,6 @@
 ﻿using Core.Managers;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
 using UnityEngine.UI;
 
@@ -42,7 +43,9 @@ namespace UI
                 {
                     if (_disposed || currentRequestId != _requestId)
                     {
-                        GameManager.Addressable.Release(handle);
+                        if (handle.IsValid())
+                            Addressables.Release(handle);
+
                         return;
                     }
 
@@ -90,13 +93,13 @@ namespace UI
             if (!_handle.IsValid())
                 return;
 
-            GameManager.Addressable.Release(_handle);
+            Addressables.Release(_handle);
             _handle = default;
 
-            DebugTool.Log("기존 Sprite Release 완료", DebugType.Addressable);
+            // DebugTool.Log("기존 Sprite Release 완료", DebugType.Addressable);
         }
 
-        private void Dispose()
+        public void Dispose()
         {
             _disposed = true;
             ++_requestId;

@@ -1,4 +1,5 @@
-﻿using Data.ScriptableObjects.MergeBoard;
+﻿using Data.LibrarySystem;
+using Data.ScriptableObjects.MergeBoard;
 using Services.Enums;
 using System;
 using System.Collections.Generic;
@@ -19,12 +20,18 @@ namespace UI.MergeBoard
         [Header("Firestore")]
         [SerializeField] private MergeBoardFirestoreSo _mergeBoardFirestore;
 
+        [Header("아이템 정보 UI")]
+        [SerializeField] private BoardItemInfoPanel _itemInfoPanel;
+
         [Header("슬롯 설정")]
         [SerializeField] private int _slotCount = 2;
         [SerializeField] private int _slotSize = 135;
         [SerializeField] private int _slotSpacing = 5;
 
         private readonly Dictionary<int, SpecialItemSlotData> _specialSlotDict = new();
+        private SpecialItemSlotView _selectedSlot;
+        private bool _isSelling;
+        private bool _isClearingAllItems;
 
         public bool IsBoardReady { get; private set; }
         public bool IsServerDataLoaded { get; private set; }
@@ -53,6 +60,9 @@ namespace UI.MergeBoard
             Init();
             InitSlotData();
             GenerateSlots();
+
+            if (_itemInfoPanel == null)
+                _itemInfoPanel = FindFirstObjectByType<BoardItemInfoPanel>();
 
             IsBoardReady = true;
 
@@ -112,7 +122,7 @@ namespace UI.MergeBoard
                 }
 
                 _specialSlotViews.Add(slotView);
-                slotView.Init(slotNumber);
+                slotView.Init(this, slotNumber);
             }
         }
 
@@ -144,11 +154,140 @@ namespace UI.MergeBoard
 
             SpecialItemSlotData currentData = _specialSlotDict[slotNumber];
             int newCount = currentData.HasItem ? currentData.Count + safeCount : safeCount;
-            SpecialItemSlotData newSlotData = new SpecialItemSlotData(slotNumber, itemData, newCount);
+            SpecialItemSlotData newSlotData = new SpecialItemSlotData(slotNumber, CreateRuntimeItem(itemData), newCount);
 
             SetSlotData(slotNumber, newSlotData);
             await SaveSlotSafeAsync(slotNumber);
             return true;
+        }
+
+        public void SelectSlot(SpecialItemSlotView slotView)
+        {
+            if (slotView == null || !slotView.HasItem)
+            {
+                ClearSelectedSlot();
+                return;
+            }
+
+            _selectedSlot = slotView;
+
+            if (_itemInfoPanel == null)
+                _itemInfoPanel = FindFirstObjectByType<BoardItemInfoPanel>();
+
+            if (_itemInfoPanel != null)
+                _itemInfoPanel.Show(slotView.SlotData.ItemData, SellSelectedItemAsync);
+        }
+
+        public void ClearSelectedSlot()
+        {
+            _selectedSlot = null;
+
+            if (_itemInfoPanel != null)
+                _itemInfoPanel.Hide();
+        }
+
+        public async Task<bool> SellSelectedItemAsync()
+        {
+            if (_isSelling)
+                return false;
+
+            if (_selectedSlot == null || !_selectedSlot.HasItem)
+            {
+                DebugTool.Warning("판매할 특수 아이템이 선택되지 않았습니다.", DebugType.Board, this);
+                return false;
+            }
+
+            int slotNumber = _selectedSlot.SlotNumber;
+
+            if (!IsValidSlotNumber(slotNumber))
+                return false;
+
+            SpecialItemSlotData currentData = _specialSlotDict[slotNumber];
+
+            if (!currentData.HasItem)
+                return false;
+
+            _isSelling = true;
+
+            try
+            {
+                int newCount = currentData.Count - 1;
+                SpecialItemSlotData newSlotData = newCount <= 0
+                    ? SpecialItemSlotData.Empty(slotNumber)
+                    : new SpecialItemSlotData(slotNumber, currentData.ItemData, newCount);
+
+                SetSlotData(slotNumber, newSlotData);
+                await SaveSlotSafeAsync(slotNumber);
+
+                if (newSlotData.HasItem)
+                {
+                    if (_itemInfoPanel != null)
+                        _itemInfoPanel.Show(newSlotData.ItemData, SellSelectedItemAsync);
+                }
+                else
+                {
+                    ClearSelectedSlot();
+                }
+
+                return true;
+            }
+            finally
+            {
+                _isSelling = false;
+            }
+        }
+
+
+        public async Task<bool> ClearAllItemsAsync()
+        {
+            if (_isClearingAllItems)
+                return false;
+
+            if (!IsServerDataLoaded)
+            {
+                DebugTool.Warning("특수 아이템 보드 서버 데이터 로드 전에는 전체 삭제를 할 수 없습니다.", DebugType.Board, this);
+                return false;
+            }
+
+            if (_mergeBoardFirestore == null)
+            {
+                DebugTool.Warning("MergeBoardFirestoreSO가 연결되지 않아 특수 아이템 전체 삭제를 저장할 수 없습니다.", DebugType.Board, this);
+                return false;
+            }
+
+            Dictionary<int, SpecialItemSlotData> backupData = new Dictionary<int, SpecialItemSlotData>();
+            foreach (var pair in _specialSlotDict)
+                backupData[pair.Key] = pair.Value?.Clone() ?? SpecialItemSlotData.Empty(pair.Key);
+
+            _isClearingAllItems = true;
+
+            try
+            {
+                for (int slotNumber = 1; slotNumber <= SlotCount; slotNumber++)
+                    _specialSlotDict[slotNumber] = SpecialItemSlotData.Empty(slotNumber);
+
+                RefreshAllSlotUI();
+                ClearSelectedSlot();
+
+                await _mergeBoardFirestore.SaveSpecialBoardAsync(_specialSlotDict, SlotCount);
+
+                DebugTool.Log("특수 아이템 보드 전체 삭제 완료", DebugType.Board, this);
+                return true;
+            }
+            catch (Exception exception)
+            {
+                _specialSlotDict.Clear();
+                foreach (var pair in backupData)
+                    _specialSlotDict[pair.Key] = pair.Value?.Clone() ?? SpecialItemSlotData.Empty(pair.Key);
+
+                RefreshAllSlotUI();
+                Debug.LogError($"특수 아이템 보드 전체 삭제 저장 실패 : {exception.Message}", this);
+                return false;
+            }
+            finally
+            {
+                _isClearingAllItems = false;
+            }
         }
 
         public async Task LoadSpecialBoardFromServerAsync(bool normalizeDocumentIds = false)
@@ -218,11 +357,12 @@ namespace UI.MergeBoard
                     if (!IsValidSlotNumber(pair.Key))
                         continue;
 
-                    _specialSlotDict[pair.Key] = pair.Value?.Clone() ?? SpecialItemSlotData.Empty(pair.Key);
+                    _specialSlotDict[pair.Key] = CreateRuntimeSlotData(pair.Key, pair.Value);
                 }
             }
 
             RefreshAllSlotUI();
+            ClearSelectedSlot();
         }
 
         private void SetSlotData(int slotNumber, SpecialItemSlotData slotData)
@@ -230,7 +370,7 @@ namespace UI.MergeBoard
             if (!IsValidSlotNumber(slotNumber))
                 return;
 
-            SpecialItemSlotData safeSlotData = slotData?.Clone() ?? SpecialItemSlotData.Empty(slotNumber);
+            SpecialItemSlotData safeSlotData = CreateRuntimeSlotData(slotNumber, slotData);
             _specialSlotDict[slotNumber] = safeSlotData;
 
             SpecialItemSlotView slotView = GetSlot(slotNumber);
@@ -253,6 +393,28 @@ namespace UI.MergeBoard
 
                 slotView.SetSlotData(slotData);
             }
+        }
+
+        private SpecialItemSlotData CreateRuntimeSlotData(int slotNumber, SpecialItemSlotData slotData)
+        {
+            if (slotData == null || !slotData.HasItem)
+                return SpecialItemSlotData.Empty(slotNumber);
+
+            return new SpecialItemSlotData(slotNumber, CreateRuntimeItem(slotData.ItemData), slotData.Count);
+        }
+
+        private ItemData CreateRuntimeItem(ItemData itemData)
+        {
+            if (itemData == null || !itemData.HasItem)
+                return ItemData.Empty;
+
+            if (LocalDataAccess.Instance?.Game != null &&
+                LocalDataAccess.Instance.Game.TryCreateMergeBoardRuntimeItem(itemData, out ItemData runtimeData))
+            {
+                return runtimeData;
+            }
+
+            return itemData.Clone();
         }
 
         private SpecialItemSlotView GetSlot(int slotNumber)

@@ -1,4 +1,6 @@
+using System;
 using UI;
+using UI.Base;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -11,9 +13,9 @@ public class NyangNyangSnapSprite : UIBase
     {
         Bind<Image>(typeof(NyangNyangSnapImages));
 
-        _spriteController = new UISpriteController[(int)NyangNyangSnapImages.Count];
+        _spriteController = new UISpriteController[Enum.GetValues(typeof(NyangNyangSnapImages)).Length];
 
-        for (int i = 0; i < (int)NyangNyangSnapImages.Count; i++)
+        for (int i = 0; i < Enum.GetValues(typeof(NyangNyangSnapImages)).Length; i++)
         {
             _spriteController[i] = new UISpriteController(GetImage(i));
         }
@@ -30,12 +32,13 @@ public class NyangNyangSnapSprite : UIBase
 
     private void SetSprites()
     {
-        //SetSprite(NyangNyangSnapImages.BackButton, "");
-        //SetSprite(NyangNyangSnapImages.SnackPanelButton, "");
-        //SetSprite(NyangNyangSnapImages.ToyPanelButton, "");
-        //SetSprite(NyangNyangSnapImages.Photo, "");
-        //SetSprite(NyangNyangSnapImages.StartButton, "");
-        //SetSprite(NyangNyangSnapImages.SettingButton, "");
+        SetSprite(NyangNyangSnapImages.BackButton, "Btn_Back");
+        SetSprite(NyangNyangSnapImages.SnackPanelButton, "Snap_Btn_Pink");
+        SetSprite(NyangNyangSnapImages.ToyPanelButton, "Snap_Btn_White");
+        SetSprite(NyangNyangSnapImages.PhotoButton, "Snap_Btn_Red");
+        SetSprite(NyangNyangSnapImages.RemainingAttempts, "Snap_Btn_Gray");
+        SetSprite(NyangNyangSnapImages.StartButton, "Snap_Btn_Gray");
+        SetSprite(NyangNyangSnapImages.SettingsButton, "Main_Btn_Settings");
     }
 
     private void SetSprite(NyangNyangSnapImages image, string key)
@@ -52,17 +55,18 @@ public class NyangNyangSnapSprite : UIBase
             controller?.ReleaseSprite();
         }
     }
+
+    public enum NyangNyangSnapImages
+    {
+        BackPanel,
+        BackButton,
+        SnackPanelButton,
+        ToyPanelButton,
+        PhotoButton,
+        RemainingAttempts,
+        StartButton,
+        SettingsButton,
+    }
 }
 
-public enum NyangNyangSnapImages
-{
-    BackPanel,
-    BackButton,
-    SnackPanelButton,
-    ToyPanelButton,
-    Photo,
-    StartButton,
-    SettingButton,
 
-    Count
-}

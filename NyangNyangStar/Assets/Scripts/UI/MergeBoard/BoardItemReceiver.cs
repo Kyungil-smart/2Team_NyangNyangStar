@@ -1,6 +1,7 @@
 ﻿using Data.LibrarySystem;
 using Data.ScriptableObjects.MergeBoard;
 using Services.Enums;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -22,7 +23,8 @@ namespace UI.MergeBoard
         [Header("아이템 데이터베이스")]
         [SerializeField] private ItemDatabaseSo _itemDatabase;
 
-        [Header("테스트 버튼")]
+        [Header("테스트 아이템 생성")]
+        [SerializeField] private TMP_InputField _itemIdInputField;
         [SerializeField] private Button _testReceiveButton;
 
         private void Awake()
@@ -162,37 +164,88 @@ namespace UI.MergeBoard
 
         public void ReceiveRandomTestItem()
         {
-            if (FireStoreManager.Instance == null || !FireStoreManager.Instance.IsInitialized)
+            if (!CanReceiveTestItem())
+                return;
+
+            if (TryReadInputItemID(out int itemID, out bool hasInput))
             {
-                DebugTool.Warning("Firestore 초기화가 완료되지 않았습니다. 로그인 후 다시 시도하세요.", DebugType.Board, this);
+                ReceiveItemById(itemID);
                 return;
             }
 
-            if (_boardSystem != null && !_boardSystem.IsServerDataLoaded)
-            {
-                DebugTool.Warning("보드 서버 데이터 로드 완료 전입니다.", DebugType.Board, this);
+            if (hasInput)
                 return;
-            }
 
-            if (_rewardQueue != null && !_rewardQueue.IsLoaded)
-            {
-                DebugTool.Warning("보상 큐 서버 데이터 로드 완료 전입니다.", DebugType.Board, this);
-                return;
-            }
-
-            if (_itemDatabase == null)
-            {
-                DebugTool.Warning("ItemDatabaseSo가 연결되지 않았습니다.", DebugType.Board, this);
-                return;
-            }
-
-            if (!_itemDatabase.TryGetRandomItem(ItemType.Common, out ItemData itemData))
+            if (!TryGetRandomCommonItem(out ItemData itemData))
             {
                 DebugTool.Warning("생성 가능한 Common 아이템 데이터가 없습니다.", DebugType.Board, this);
                 return;
             }
 
             ReceiveItem(itemData);
+        }
+
+        private bool CanReceiveTestItem()
+        {
+            if (FireStoreManager.Instance == null || !FireStoreManager.Instance.IsInitialized)
+            {
+                DebugTool.Warning("Firestore 초기화가 완료되지 않았습니다. 로그인 후 다시 시도하세요.", DebugType.Board, this);
+                return false;
+            }
+
+            if (_boardSystem != null && !_boardSystem.IsServerDataLoaded)
+            {
+                DebugTool.Warning("보드 서버 데이터 로드 완료 전입니다.", DebugType.Board, this);
+                return false;
+            }
+
+            if (_rewardQueue != null && !_rewardQueue.IsLoaded)
+            {
+                DebugTool.Warning("보상 큐 서버 데이터 로드 완료 전입니다.", DebugType.Board, this);
+                return false;
+            }
+
+            return true;
+        }
+
+        private bool TryReadInputItemID(out int itemID, out bool hasInput)
+        {
+            itemID = 0;
+            hasInput = false;
+
+            if (_itemIdInputField == null)
+                return false;
+
+            string input = _itemIdInputField.text?.Trim();
+
+            if (string.IsNullOrEmpty(input))
+                return false;
+
+            hasInput = true;
+
+            if (!int.TryParse(input, out itemID) || itemID <= 0)
+            {
+                DebugTool.Warning($"아이템 ID 입력값이 올바르지 않습니다. 입력값: {input}", DebugType.Board, this);
+                return false;
+            }
+
+            return true;
+        }
+
+        private bool TryGetRandomCommonItem(out ItemData itemData)
+        {
+            itemData = null;
+
+            if (_itemDatabase != null && _itemDatabase.TryGetRandomItem(ItemType.Common, out itemData))
+                return true;
+
+            if (LocalDataAccess.Instance?.Game != null &&
+                LocalDataAccess.Instance.Game.TryGetRandomMergeBoardItem(ItemType.Common, out itemData))
+            {
+                return true;
+            }
+
+            return false;
         }
 
         private bool TryGetItemDataById(int itemID, out ItemData itemData)

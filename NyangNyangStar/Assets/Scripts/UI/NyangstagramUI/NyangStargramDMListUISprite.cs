@@ -1,6 +1,9 @@
+using System;
 using UI;
+using UI.Base;
 using UnityEngine;
 using UnityEngine.UI;
+using static NyangNyangSnapSprite;
 
 public class NyangStargramDMListUISprite : UIBase
 {
@@ -10,8 +13,9 @@ public class NyangStargramDMListUISprite : UIBase
     {
         Bind<Image>(typeof(NyangStargramDMListUIImages));
 
-        _spriteController = new UISpriteController[(int)NyangStargramDMListUIImages.Count];
-        for (int i = 0; i < (int)NyangStargramDMListUIImages.Count; i++)
+        _spriteController = new UISpriteController[Enum.GetValues(typeof(NyangStargramDMListUIImages)).Length];
+
+        for (int i = 0; i < Enum.GetValues(typeof(NyangStargramDMListUIImages)).Length; i++)
         {
             _spriteController[i] = new UISpriteController(GetImage(i));
         }
@@ -26,7 +30,7 @@ public class NyangStargramDMListUISprite : UIBase
 
         //view 패널
         SetSprite(NyangStargramDMListUIImages.HeaderPanel, "NYS_TopBar");
-        SetSprite(NyangStargramDMListUIImages.BackButton, "NYS_Btn_Back");
+        SetSprite(NyangStargramDMListUIImages.BackButton, "Btn_Back");
         SetSprite(NyangStargramDMListUIImages.Viewport, "NYS_Content");
         SetSprite(NyangStargramDMListUIImages.Image, "NYS_Btn_Profile", new Color32(0,0,0,255));
 
@@ -72,7 +76,7 @@ public enum NyangStargramDMListUIImages
     ProfileButton,
     NyangstagramCloseButton,
 
-    Count
+    
 
 
 }

@@ -1,17 +1,22 @@
+using System;
 using UI;
+using UI.Base;
+using UnityEngine;
 using UnityEngine.UI;
 
 public class NyangNyangSnapStagePopupSprite : UIBase
 {
+    [SerializeField] private Color _backgroundColor;
+
     private UISpriteController[] _spriteController;
 
     public override void Init()
     {
         Bind<Image>(typeof(NyangNyangSnapStagePopupImages));
 
-        _spriteController = new UISpriteController[(int)NyangNyangSnapStagePopupImages.Count];
+        _spriteController = new UISpriteController[Enum.GetValues(typeof(NyangNyangSnapStagePopupImages)).Length];
 
-        for (int i = 0; i < (int)NyangNyangSnapStagePopupImages.Count; i++)
+        for (int i = 0; i < Enum.GetValues(typeof(NyangNyangSnapStagePopupImages)).Length; i++)
         {
             _spriteController[i] = new UISpriteController(GetImage(i));
         }
@@ -21,15 +26,24 @@ public class NyangNyangSnapStagePopupSprite : UIBase
 
     private void SetSprites()
     {
-        //SetSprite(NyangNyangSnapStagePopupImages.Background, "");
-        //SetSprite(NyangNyangSnapStagePopupImages.Title, "");
-        //SetSprite(NyangNyangSnapStagePopupImages.Stage1Button, "");
-        //SetSprite(NyangNyangSnapStagePopupImages.Stage2Button, "");
-        //SetSprite(NyangNyangSnapStagePopupImages.CloseButton, "");
+        SetSprite(NyangNyangSnapStagePopupImages.Background, "Shape_Square", _backgroundColor);
+        SetSprite(NyangNyangSnapStagePopupImages.Pattern1, "BG_Tile_Cats");
+        SetSprite(NyangNyangSnapStagePopupImages.Pattern2, "BG_Tile_Cats");
+        SetSprite(NyangNyangSnapStagePopupImages.Pattern3, "BG_Tile_Cats");
+        SetSprite(NyangNyangSnapStagePopupImages.Pattern4, "BG_Tile_Cats");
+        SetSprite(NyangNyangSnapStagePopupImages.Stage1Button, "Snap_Btn_Gray");
+        SetSprite(NyangNyangSnapStagePopupImages.Stage2Button, "Snap_Btn_Gray");
+        SetSprite(NyangNyangSnapStagePopupImages.BackButton, "Btn_Back");
     }
 
     private void SetSprite(NyangNyangSnapStagePopupImages image, string key)
     {
+        _spriteController[(int)image].ChangeSprite(key);
+    }
+
+    private void SetSprite(NyangNyangSnapStagePopupImages image, string key, Color color)
+    {
+        _spriteController[(int)image].ChangeColor(color);
         _spriteController[(int)image].ChangeSprite(key);
     }
 
@@ -42,15 +56,16 @@ public class NyangNyangSnapStagePopupSprite : UIBase
             controller?.ReleaseSprite();
         }
     }
-}
 
-public enum NyangNyangSnapStagePopupImages
-{
-    Background,
-    Title,
-    Stage1Button,
-    Stage2Button,
-    CloseButton,
-
-    Count
+    public enum NyangNyangSnapStagePopupImages
+    {
+        Background,
+        Pattern1,
+        Pattern2,
+        Pattern3,
+        Pattern4,
+        Stage1Button,
+        Stage2Button,
+        BackButton,
+    }
 }

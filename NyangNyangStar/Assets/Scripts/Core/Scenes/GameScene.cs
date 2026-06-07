@@ -3,13 +3,8 @@ using UnityEngine;
 
 public class GameScene : BaseScene
 {
-    
-    private void Update()
+    private void Start()
     {
-        if (Input.GetKeyDown(KeyCode.D))
-        {
-            Debug.Log("D");
-            GameManager.Data.LoadSheets();
-        }
+        GameManager.Data.LoadSheets();
     }
 }

@@ -6,6 +6,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using Util;
 using System;
+using UI.Base;
 
 public class NyangStargramNotificationUI : UIPopup
 {

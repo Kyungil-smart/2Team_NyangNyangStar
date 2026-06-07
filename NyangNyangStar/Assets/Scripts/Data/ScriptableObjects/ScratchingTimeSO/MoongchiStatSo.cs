@@ -7,13 +7,11 @@ namespace Data.ScriptableObjects.ScratchingTimeSO
     [CreateAssetMenu(fileName = "MoongChiStat", menuName = "SO/Data/MoongChiStatSO", order = 0)]
     public class MoongchiStatSo : SoBase
     {
-        [Header("뭉치의 스텟")]
-        [SerializeField] private int _level = 1;
+        [Header("뭉치의 스텟")] [SerializeField] private int _level = 1;
 
-        /// <summary>
-        /// 뭉치의 현재 레벨을 반환하거나 설정합니다.
-        /// 레벨은 1부터 50 사이로 제한됩니다.
-        /// </summary>
+        
+        // 뭉치의 현재 레벨을 반환하거나 설정
+        // 레벨은 1부터 50 
         public int Level
         {
             get => Math.Clamp(_level, 1, 50);
@@ -45,11 +43,20 @@ namespace Data.ScriptableObjects.ScratchingTimeSO
             }
         }
 
-        [SerializeField] private int _baseSharpness = 8;
-        [SerializeField] private int _sharpnessIncreasePerLevel = 2;
-        [SerializeField] private int _totalSharpness;
-        [SerializeField] private int _baseCriticalChance = 5;
-        [SerializeField] private int _totalCriticalChance;
+        [Header("기본 예리도 (레벨 1)")] [SerializeField]
+        private int _baseSharpness = 8;
+
+        [Header("레벨당 예리도 증가량")] [SerializeField]
+        private int _sharpnessIncreasePerLevel = 2;
+
+        [Header("총 예리도 (자동 계산)")] [SerializeField]
+        private int _totalSharpness;
+
+        [Header("기본 힘껏 긁기 확률 %")] [SerializeField]
+        private int _baseCriticalChance = 5;
+
+        [Header("총 힘껏 긁기 확률 % (자동 계산)")] [SerializeField]
+        private int _totalCriticalChance;
 
         /// <summary>
         /// 레벨이 변경될 때 호출되는 이벤트입니다.
@@ -67,7 +74,17 @@ namespace Data.ScriptableObjects.ScratchingTimeSO
         public override void Init()
         {
             Level = 1;
+            _currentExp = 0;
             RefreshTotalStats();
+        }
+
+        public void SetProgressData(int level, int currentExp)
+        {
+            _level = Mathf.Clamp(level, 1, 50);
+            _currentExp = Math.Max(currentExp, 0);
+            RefreshTotalStats();
+            OnLevelChanged?.Invoke();
+            OnExpChanged?.Invoke();
         }
 
         /// <summary>
@@ -79,7 +96,7 @@ namespace Data.ScriptableObjects.ScratchingTimeSO
 
             Level++;
             RefreshTotalStats();
-            
+
             DebugTool.Log($"[Level Up] 레벨 : {Level} " +
                           $"| 공격력 : {_totalSharpness} " +
                           $"| 힘껏 긁기 확률(%) : {_totalCriticalChance}", DebugType.Data);

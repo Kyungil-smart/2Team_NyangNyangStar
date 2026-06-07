@@ -5,6 +5,7 @@ using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UI;
+using UI.Base;
 using UnityEngine;
 using UnityEngine.UI;
 using Util;
@@ -42,7 +43,6 @@ public class NyangStargramAddPostUI : UIPopup
         _albumDropdown = UIBase.FindChild<TMP_Dropdown>(gameObject, "Dropdown", true);
         _newPostImage = UIBase.FindChild<Image>(gameObject, "New Post Image", true);
         _albumButtonRoots = UIBase.FindChild<Transform>(gameObject, "AlbumContent", true);
-        _nyangstagramCloseButton = Get<Button>((int)NyangStargramAddPostUIButton.NewImageUploadButton);
 
         BindButtons();
         BindDropdown();

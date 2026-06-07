@@ -1,7 +1,8 @@
-﻿using UI;
+using UI;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using UI.Base;
 using UnityEngine;
 using UnityEngine.UI;
 using Object = UnityEngine.Object;
@@ -58,6 +59,19 @@ namespace Core.Managers
                 canvas.sortingOrder = 0;
         }
 
+        private void SetSortingOrder(GameObject go)
+        {
+            Canvas[] canvases = go.GetComponentsInChildren<Canvas>(true);
+
+            foreach (Canvas canvas in canvases)
+            {
+                canvas.overrideSorting = true;
+                canvas.sortingOrder = _order;
+            }
+
+            _order++;
+        }
+
         public void ShowSceneUI<T>(string name = null, Action<T> onLoaded = null) where T : UIScene
         {
             if (string.IsNullOrEmpty(name))
@@ -89,7 +103,7 @@ namespace Core.Managers
                 });
         }
 
-        public void ShowPopupUI<T>(string name = null, Action<T> onLoaded = null, bool setActive = true) where T : UIPopup
+        public void ShowPopupUI<T>(string name = null, Action<T> onLoaded = null, bool setActive = true, bool addCanvas = true) where T : UIPopup
         {
             if (string.IsNullOrEmpty(name))
                 name = typeof(T).Name;
@@ -106,7 +120,11 @@ namespace Core.Managers
 
                     uiPrefab.transform.SetParent(_root.transform, false);
                     
-                    SetCanvas(uiPrefab);
+                    if(addCanvas)
+                        SetCanvas(uiPrefab);
+                    else
+                        SetSortingOrder(uiPrefab);
+
                     popup.Init();
                     popup.SetAddressableKey(name);
                     

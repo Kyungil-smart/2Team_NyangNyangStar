@@ -35,6 +35,9 @@ namespace Util
             public const string NotebookPopupUI = "NotebookPopupUI";
             public const string RoulettePopupUI = "RoulettePopupUI";
             public const string AffinityPopupUI = "AffinityPopupUI";
+            
+            // 머지보드 UI 프리펩
+            public const string MergeBoard = "MergeBoard";
 
             //냥스타그램 UI 프리펩 NyangStargram
             public const string NyangStargramHomeProfile = "UINyangstagramHome & Profile";
@@ -49,9 +52,11 @@ namespace Util
             public const string NyangNyangSnapStagePopUpUI = "NyangNyangSnapStagePopupUI";
             public const string NyangNyangSnapSnackPopupUI = "NyangNyangSnapSnackCanvas";
             public const string NyangNyangSnapToyPopupUI = "NyangNyangSnapToyCanvas";
-            public const string NyangNyangSnapPopupUI = "NyangNyangSnapCanvas";
+            public const string NyangNyangSnapPopupUI = "NyangNyangSnapPopupUI";
+            public const string NyangNyangSnapResultPopupUI = "NyangNyangSnapResultCanvas";
 
-            public const string ScratchingTimeUI = "ScratchingTimeUI";
+
+            public const string ScratchingTime = "ScratchingTimeScreen";
         }
 
         public static void Register(KeyData data)
@@ -250,6 +255,8 @@ namespace Util
             PrefabKeyDict.Add(Prefabs.NotebookPopupUI, new List<GameObject>());
             PrefabKeyDict.Add(Prefabs.RoulettePopupUI, new List<GameObject>());
             PrefabKeyDict.Add(Prefabs.AffinityPopupUI, new List<GameObject>());
+            
+            PrefabKeyDict.Add(Prefabs.MergeBoard, new List<GameObject>());
 
             //냥스타 그램
             PrefabKeyDict.Add(Prefabs.NyangStargramHomeProfile, new List<GameObject>());
@@ -265,8 +272,9 @@ namespace Util
             PrefabKeyDict.Add(Prefabs.NyangNyangSnapSnackPopupUI, new List<GameObject>());
             PrefabKeyDict.Add(Prefabs.NyangNyangSnapToyPopupUI, new List<GameObject>());
             PrefabKeyDict.Add(Prefabs.NyangNyangSnapPopupUI, new List<GameObject>());
+            PrefabKeyDict.Add(Prefabs.NyangNyangSnapResultPopupUI, new List<GameObject>());
 
-            PrefabKeyDict.Add(Prefabs.ScratchingTimeUI, new List<GameObject>());
+            PrefabKeyDict.Add(Prefabs.ScratchingTime, new List<GameObject>());
         }
 
         public static void PrintKeys()

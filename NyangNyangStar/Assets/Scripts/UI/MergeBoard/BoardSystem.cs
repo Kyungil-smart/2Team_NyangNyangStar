@@ -1,10 +1,11 @@
-﻿using Data.ScriptableObjects.MergeBoard;
+﻿using Data.LibrarySystem;
+using Data.ScriptableObjects.MergeBoard;
 using Services.Enums;
 using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace UI.MergeBoard
@@ -16,9 +17,14 @@ namespace UI.MergeBoard
         [SerializeField] private GameObject _slotPrefab;
         [SerializeField] private GridLayoutGroup _grid;
         [SerializeField] private List<ItemSlot> _itemSlots = new();
+        [SerializeField] Color _selectedSlotColor = new (1f, 0.9f, 0.6f, 1);
+        private Color _baseColor = new (1f, 1f, 1f, 1);
 
         [Header("Firestore")]
         [SerializeField] private MergeBoardFirestoreSo _mergeBoardFirestore;
+
+        [Header("아이템 정보 UI")]
+        [SerializeField] private BoardItemInfoPanel _itemInfoPanel;
 
         [Header("보드 크기")]
         [SerializeField] private int _width = 7;
@@ -35,6 +41,9 @@ namespace UI.MergeBoard
         public bool IsServerDataLoaded { get; private set; }
 
         private readonly Dictionary<int, ItemData> _slotItemDict = new();
+        private ItemSlot _selectedSlot;
+        private bool _isMovingItem;
+        private bool _isClearingAllItems;
 
         public int SlotCount => _width * _height;
         public IReadOnlyDictionary<int, ItemData> SlotItemDict => _slotItemDict;
@@ -62,6 +71,14 @@ namespace UI.MergeBoard
             Init();
             InitSlotData();
             GenerateSlot();
+
+            if (_itemInfoPanel == null)
+                _itemInfoPanel = FindFirstObjectByType<BoardItemInfoPanel>();
+
+            if (_itemInfoPanel != null)
+                _itemInfoPanel.Init(this);
+
+            ClearSelectedSlot();
 
             IsBoardReady = true;
 
@@ -95,11 +112,13 @@ namespace UI.MergeBoard
         {
             _itemSlots.Clear();
 
+            if (_slotPrefab == null)
+            {
+                DebugTool.Warning("Slot Prefab이 연결되지 않았습니다.", DebugType.Board, this);
+                return;
+            }
+
             int itemSize = _slotSize - _itemSpacing;
-            StringBuilder log = new StringBuilder();
-
-            log.AppendLine("[보드 슬롯 생성]");
-
             for (int slotNumber = 1; slotNumber <= SlotCount; slotNumber++)
             {
                 GameObject slot = Instantiate(_slotPrefab, _slotRoot.transform, false);
@@ -115,12 +134,9 @@ namespace UI.MergeBoard
 
                 _itemSlots.Add(itemSlot);
                 itemSlot.Init(this, slotNumber, ItemData.Empty, itemSize);
-
-                log.AppendLine($"{slotNumber} 번 슬롯 생성");
             }
 
-            log.AppendLine("슬롯 생성 완료");
-            DebugTool.Log($"{log}", DebugType.Board, this);
+            DebugTool.Log($"보드 슬롯 생성 완료 / 총 {_itemSlots.Count}개", DebugType.Board, this);
         }
 
         public bool TryAddItem(ItemData itemData)
@@ -135,13 +151,24 @@ namespace UI.MergeBoard
 
         public async Task<bool> TryAddItemFromQueueAsync(ItemData itemData)
         {
+            ItemSlot addedSlot = await TryAddItemFromQueueAndSelectAsync(itemData);
+            return addedSlot != null;
+        }
+
+        public async Task<ItemSlot> TryAddItemFromQueueAndSelectAsync(ItemData itemData)
+        {
             bool result = TryAddItemInternal(itemData, out int changedSlotNumber);
 
             if (!result)
-                return false;
+                return null;
 
             await SaveSlotSafeAsync(changedSlotNumber);
-            return true;
+
+            ItemSlot addedSlot = GetSlot(changedSlotNumber);
+            if (addedSlot != null)
+                SelectSlot(addedSlot);
+
+            return addedSlot;
         }
 
         public Task<bool> TryAddItemAsync(ItemData itemData)
@@ -195,36 +222,114 @@ namespace UI.MergeBoard
             return -1;
         }
 
+        public void HandleDragEnd(ItemSlot fromSlot, PointerEventData eventData)
+        {
+            if (fromSlot == null || eventData == null)
+                return;
+
+            if (!TryFindNearestSlot(eventData.position, eventData.pressEventCamera, out ItemSlot targetSlot))
+                return;
+
+            MoveOrSwapItem(fromSlot, targetSlot);
+        }
+
         public async void MoveOrSwapItem(ItemSlot fromSlot, ItemSlot toSlot)
         {
+            await MoveOrSwapItemAsync(fromSlot, toSlot);
+        }
+
+        private async Task<bool> MoveOrSwapItemAsync(ItemSlot fromSlot, ItemSlot toSlot)
+        {
+            if (_isMovingItem)
+                return false;
+
             if (fromSlot == null || toSlot == null)
-                return;
+                return false;
 
             if (fromSlot == toSlot)
-                return;
+                return false;
 
             if (!fromSlot.HasItem)
-                return;
+                return false;
 
             int fromSlotNumber = fromSlot.SlotNumber;
             int toSlotNumber = toSlot.SlotNumber;
 
             if (!IsValidSlotNumber(fromSlotNumber) || !IsValidSlotNumber(toSlotNumber))
-                return;
+                return false;
 
-            ItemData fromData = fromSlot.ItemData.Clone();
-            ItemData toData = toSlot.HasItem ? toSlot.ItemData.Clone() : ItemData.Empty;
+            _isMovingItem = true;
 
-            SetSlotData(toSlotNumber, fromData);
-            SetSlotData(fromSlotNumber, toData);
-
-            Dictionary<int, ItemData> changedSlots = new Dictionary<int, ItemData>
+            try
             {
-                { fromSlotNumber, _slotItemDict[fromSlotNumber].Clone() },
-                { toSlotNumber, _slotItemDict[toSlotNumber].Clone() }
-            };
+                ItemData fromData = fromSlot.ItemData.Clone();
+                ItemData toData = toSlot.HasItem ? toSlot.ItemData.Clone() : ItemData.Empty;
 
-            await SaveSlotsSafeAsync(changedSlots);
+                SetSlotData(toSlotNumber, fromData);
+                SetSlotData(fromSlotNumber, toData);
+
+                Dictionary<int, ItemData> changedSlots = new Dictionary<int, ItemData>
+                {
+                    { fromSlotNumber, _slotItemDict[fromSlotNumber].Clone() },
+                    { toSlotNumber, _slotItemDict[toSlotNumber].Clone() }
+                };
+
+                UpdateSelectionAfterMove(toSlot);
+                await SaveSlotsSafeAsync(changedSlots);
+                return true;
+            }
+            finally
+            {
+                _isMovingItem = false;
+            }
+        }
+
+        private void UpdateSelectionAfterMove(ItemSlot movedSlot)
+        {
+            SelectSlot(movedSlot);
+        }
+
+        private bool TryFindNearestSlot(Vector2 screenPosition, Camera eventCamera, out ItemSlot nearestSlot)
+        {
+            nearestSlot = null;
+
+            RectTransform rootRect = _slotRoot != null
+                ? _slotRoot.transform as RectTransform
+                : null;
+
+            if (rootRect == null)
+                return false;
+
+            if (!RectTransformUtility.RectangleContainsScreenPoint(rootRect, screenPosition, eventCamera))
+                return false;
+
+            float nearestDistance = float.MaxValue;
+
+            for (int i = 0; i < _itemSlots.Count; i++)
+            {
+                ItemSlot slot = _itemSlots[i];
+
+                if (slot == null || slot.RectTransform == null)
+                    continue;
+
+                if (RectTransformUtility.RectangleContainsScreenPoint(slot.RectTransform, screenPosition, eventCamera))
+                {
+                    nearestSlot = slot;
+                    return true;
+                }
+
+                Vector3 worldCenter = slot.RectTransform.TransformPoint(slot.RectTransform.rect.center);
+                Vector2 screenCenter = RectTransformUtility.WorldToScreenPoint(eventCamera, worldCenter);
+                float distance = (screenCenter - screenPosition).sqrMagnitude;
+
+                if (distance < nearestDistance)
+                {
+                    nearestDistance = distance;
+                    nearestSlot = slot;
+                }
+            }
+
+            return nearestSlot != null;
         }
 
         public async Task<bool> ClearSlotAsync(int slotNumber)
@@ -234,6 +339,10 @@ namespace UI.MergeBoard
 
             SetSlotData(slotNumber, ItemData.Empty);
             await SaveSlotSafeAsync(slotNumber);
+
+            if (_selectedSlot != null && _selectedSlot.SlotNumber == slotNumber)
+                ClearSelectedSlot();
+
             return true;
         }
 
@@ -245,6 +354,112 @@ namespace UI.MergeBoard
             return _slotItemDict.TryGetValue(slotNumber, out ItemData itemData)
                 ? itemData.Clone()
                 : ItemData.Empty;
+        }
+
+        public void SelectSlot(ItemSlot itemSlot)
+        {
+            if (itemSlot == null || !itemSlot.HasItem)
+            {
+                ClearSelectedSlot();
+                return;
+            }
+
+            if(_selectedSlot != null)
+                _selectedSlot.ChangeBackgroundColor(_baseColor);
+
+            _selectedSlot = itemSlot;
+            
+            _selectedSlot.ChangeBackgroundColor(_selectedSlotColor);
+
+            if (_itemInfoPanel == null)
+                _itemInfoPanel = FindFirstObjectByType<BoardItemInfoPanel>();
+
+            if (_itemInfoPanel != null)
+                _itemInfoPanel.Show(itemSlot.ItemData);
+        }
+
+        public void ClearSelectedSlot()
+        {
+            if (_selectedSlot != null)
+                _selectedSlot.ChangeBackgroundColor(_baseColor);
+
+            _selectedSlot = null;
+
+            if (_itemInfoPanel != null)
+                _itemInfoPanel.Hide();
+        }
+
+        public async Task<bool> SellSelectedItemAsync()
+        {
+            if (_selectedSlot == null || !_selectedSlot.HasItem)
+            {
+                DebugTool.Warning("판매할 아이템이 선택되지 않았습니다.", DebugType.Board, this);
+                return false;
+            }
+
+            int slotNumber = _selectedSlot.SlotNumber;
+
+            if (!IsValidSlotNumber(slotNumber))
+                return false;
+
+            SetSlotData(slotNumber, ItemData.Empty);
+            await SaveSlotSafeAsync(slotNumber);
+            ClearSelectedSlot();
+
+            return true;
+        }
+
+
+        public async Task<bool> ClearAllItemsAsync()
+        {
+            if (_isClearingAllItems)
+                return false;
+
+            if (!IsServerDataLoaded)
+            {
+                DebugTool.Warning("보드 서버 데이터 로드 전에는 전체 삭제를 할 수 없습니다.", DebugType.Board, this);
+                return false;
+            }
+
+            if (_mergeBoardFirestore == null)
+            {
+                DebugTool.Warning("MergeBoardFirestoreSO가 연결되지 않아 보드 전체 삭제를 저장할 수 없습니다.", DebugType.Board, this);
+                return false;
+            }
+
+            Dictionary<int, ItemData> backupData = new Dictionary<int, ItemData>();
+            foreach (var pair in _slotItemDict)
+                backupData[pair.Key] = pair.Value?.Clone() ?? ItemData.Empty;
+
+            _isClearingAllItems = true;
+
+            try
+            {
+                for (int slotNumber = 1; slotNumber <= SlotCount; slotNumber++)
+                    _slotItemDict[slotNumber] = ItemData.Empty;
+
+                RefreshAllSlotUI();
+                ClearSelectedSlot();
+
+                await _mergeBoardFirestore.SaveBoardAsync(_slotItemDict);
+
+                DebugTool.Log("일반 보드 전체 아이템 삭제 완료", DebugType.Board, this);
+                return true;
+            }
+            catch (Exception exception)
+            {
+                _slotItemDict.Clear();
+                foreach (var pair in backupData)
+                    _slotItemDict[pair.Key] = pair.Value?.Clone() ?? ItemData.Empty;
+
+                RefreshAllSlotUI();
+                Debug.LogError($"일반 보드 전체 아이템 삭제 저장 실패 : {exception.Message}", this);
+                return false;
+            }
+            finally
+            {
+                _isClearingAllItems = false;
+            }
         }
 
         public async Task LoadBoardFromServerAsync(bool normalizeDocumentIds = false)
@@ -295,11 +510,14 @@ namespace UI.MergeBoard
                     if (!IsValidSlotNumber(pair.Key))
                         continue;
 
-                    _slotItemDict[pair.Key] = pair.Value?.Clone() ?? ItemData.Empty;
+                    _slotItemDict[pair.Key] = CreateRuntimeItem(pair.Value);
                 }
             }
 
             RefreshAllSlotUI();
+            ClearSelectedSlot();
+
+            LogBoardDataSummary();
         }
 
         private void SetSlotData(int slotNumber, ItemData itemData)
@@ -307,7 +525,7 @@ namespace UI.MergeBoard
             if (!IsValidSlotNumber(slotNumber))
                 return;
 
-            ItemData safeItemData = itemData?.Clone() ?? ItemData.Empty;
+            ItemData safeItemData = CreateRuntimeItem(itemData);
             _slotItemDict[slotNumber] = safeItemData;
 
             ItemSlot itemSlot = GetSlot(slotNumber);
@@ -330,6 +548,20 @@ namespace UI.MergeBoard
 
                 itemSlot.SetItemData(itemData);
             }
+        }
+
+        private ItemData CreateRuntimeItem(ItemData itemData)
+        {
+            if (itemData == null || !itemData.HasItem)
+                return ItemData.Empty;
+
+            if (LocalDataAccess.Instance?.Game != null &&
+                LocalDataAccess.Instance.Game.TryCreateMergeBoardRuntimeItem(itemData, out ItemData runtimeData))
+            {
+                return runtimeData;
+            }
+
+            return itemData.Clone();
         }
 
         private ItemSlot GetSlot(int slotNumber)
@@ -375,6 +607,34 @@ namespace UI.MergeBoard
             {
                 Debug.LogError($"보드 슬롯 저장 실패 : {exception.Message}", this);
             }
+        }
+        
+        private void LogBoardDataSummary()
+        {
+            int totalSlotCount = _width * _height;
+            int itemCount = 0;
+            int spriteLoadedCount = 0;
+            int missingSpriteCount = 0;
+
+            foreach (var pair in _slotItemDict)
+            {
+                ItemData itemData = pair.Value;
+
+                if (itemData == null || !itemData.HasItem)
+                    continue;
+
+                itemCount++;
+
+                if (itemData.ItemSprite != null)
+                    spriteLoadedCount++;
+                else
+                    missingSpriteCount++;
+            }
+
+            DebugTool.Log(
+                $"보드 데이터 적용 완료 / 전체 슬롯:{totalSlotCount}, 아이템:{itemCount}, Sprite 있음:{spriteLoadedCount}, Sprite 없음:{missingSpriteCount}",
+                DebugType.Board,
+                this);
         }
     }
 }

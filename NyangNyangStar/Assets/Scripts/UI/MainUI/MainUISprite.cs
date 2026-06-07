@@ -1,4 +1,6 @@
+using System;
 using UI;
+using UI.Base;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -12,9 +14,9 @@ public class MainUISprite : UIBase
     {
         Bind<Image>(typeof(MainUIImages));
 
-        _spriteController = new UISpriteController[(int)MainUIImages.Count];
+        _spriteController = new UISpriteController[Enum.GetValues(typeof(MainUIImages)).Length];
 
-        for (int i = 0; i < (int)MainUIImages.Count; i++)
+        for (int i = 0; i < Enum.GetValues(typeof(MainUIImages)).Length; i++)
         {
             _spriteController[i] = new UISpriteController(GetImage(i));
         }
@@ -24,8 +26,9 @@ public class MainUISprite : UIBase
 
     private void SetSprites()
     {
+        SetSprite(MainUIImages.Background, "Main_BG");
         SetSprite(MainUIImages.ShopButton, "Main_Btn_Shop");
-        SetSprite(MainUIImages.EventButton, "Main_Btn_Event_Scratching");
+        SetSprite(MainUIImages.ScratchingTimeButton, "Main_Btn_Event_Scratching");
         SetSprite(MainUIImages.DailyCheckInButton, "Main_Btn_Attendance");
         SetSprite(MainUIImages.MailButton, "Main_Btn_Mail");
         SetSprite(MainUIImages.SettingsButton, "Main_Btn_Settings");
@@ -34,8 +37,8 @@ public class MainUISprite : UIBase
         SetSprite(MainUIImages.NotebookButton, "Main_Btn_FosterDiary");
         SetSprite(MainUIImages.RouletteButton, "Main_Btn_Roulette");
         SetSprite(MainUIImages.AffinityButton, "Main_Btn_Interact");
-        SetSprite(MainUIImages.NyangNyangSnapButton, "Main_Btn_Camera");
-        SetSprite(MainUIImages.MeowMeowStarButton, "Main_Btn_Nyangstagram");
+        SetSprite(MainUIImages.NyangNyangSnapButton, "Btn_Camera");
+        SetSprite(MainUIImages.MeowMeowStarButton, "Btn_Nyangstagram");
         SetSprite(MainUIImages.WorkshopMergeBoardButton, "Main_Btn_Mergeboard", _workshopMergeBoardColor);
         SetSprite(MainUIImages.MainMergeBoardButton, "Main_Btn_Mergeboard", _mainMergeBoardColor);
         SetSprite(MainUIImages.CoinImage, "Main_Icon_Coin");
@@ -63,8 +66,9 @@ public class MainUISprite : UIBase
 
 public enum MainUIImages
 {
+    Background,                // 배경
     ShopButton,                // 상점
-    EventButton,               // 시즌 이벤트
+    ScratchingTimeButton,      // 시즌 이벤트
     DailyCheckInButton,        // 출석 체크
     MailButton,                // 우편함
     SettingsButton,            // 설정
@@ -86,6 +90,4 @@ public enum MainUIImages
     Gem,                       // 보석 패널
     ProfileImage,              // 프로필 이미지
     ProfileFrame,              // 프로필 이미지 테두리
-
-    Count
 }

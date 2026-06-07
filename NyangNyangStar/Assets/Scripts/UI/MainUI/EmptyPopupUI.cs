@@ -1,5 +1,6 @@
+using Core.Managers;
 using DG.Tweening;
-using UI;
+using UI.Base;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -51,6 +52,8 @@ public class EmptyPopupUI : UIPopup
         _panel.DOScale(Vector3.one * _popupScale, _popupScaleDuration)
             .SetEase(Ease.OutSine)
             .OnComplete(() => gameObject.SetActive(false));
+        
+        GameManager.Audio.PlaySfx("Main_SFX_Touch");
     }
 }
 

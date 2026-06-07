@@ -38,13 +38,6 @@ namespace Core.Managers
             SceneManager.LoadScene((int)SceneIndex.TitleScene);
         }
 
-        public void GameQuit()
-        {
-            GameManager.Clear();
-            Application.Quit();
-        }
-
-
         public void Init()
         {
             _root = GameObject.Find("@Scene");

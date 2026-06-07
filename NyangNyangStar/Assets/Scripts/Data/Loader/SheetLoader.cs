@@ -1,4 +1,4 @@
-using Core.Managers;
+﻿using Core.Managers;
 using System;
 using Data.Parsing;
 using Data.LibrarySystem;
@@ -33,6 +33,11 @@ namespace Data.Loader
         [SerializeField] private SheetData mergeBoardItemURL;
         [SerializeField] private ItemDatabaseSo itemDatabaseSo;
 
+        [Space(8)]
+        [Header("냥냥스냅 포즈")]
+        [SerializeField] private SheetData nyangNyangSnapPoseURL;
+        [SerializeField] private NyangNyangSnapPoseSO nyangNyangSnapPoseSo;
+
         [Space(8)] [SerializeField] private int _pendingSheetCount;
         public int PendingSheetCount => _pendingSheetCount;
 
@@ -48,8 +53,10 @@ namespace Data.Loader
                 return;
             }
 
+            LocalDataAccess.Instance.Game.MarkNotReady();
+
             StopAllCoroutines();
-            _pendingSheetCount = 4;
+            _pendingSheetCount = 0;
 
             LoadKeyContainerData(keyCotainerURL, keySo, _keyContainerDict, onComplete: () =>
             {
@@ -63,10 +70,15 @@ namespace Data.Loader
                     }
                     so.RegisterAll();
                 }
-                OnSheetCompleted();
-                
+
                 KeyContainer.PrintKeys();
+                LoadContentSheets();
             });
+        }
+
+        private void LoadContentSheets()
+        {
+            _pendingSheetCount = 4;
             
             LoadSheetData(scratchingURL, scratchingSo, 1, () =>
                 {
@@ -83,14 +95,24 @@ namespace Data.Loader
 
             LoadSheetData(mergeBoardItemURL, itemDatabaseSo, 1, () =>
                 {
-                    if (itemDatabaseSo != null)
+                    if (itemDatabaseSo == null)
+                    {
+                        OnSheetCompleted();
+                        return;
+                    }
+
+                    StartCoroutine(itemDatabaseSo.LoadItemSpritesCoroutine(() =>
                     {
                         LocalDataAccess.Instance.Game.RegisterMergeBoardItemDatabase(itemDatabaseSo);
                         itemDatabaseSo.PrintData();
-                    }
-
-                    OnSheetCompleted();
+                        OnSheetCompleted();
+                    }));
                 });
+            LoadSheetData(nyangNyangSnapPoseURL, nyangNyangSnapPoseSo, 3, () =>
+            {
+                OnSheetCompleted();
+                nyangNyangSnapPoseSo.PrintData();
+            });
         }
 
         private void OnSheetCompleted()
@@ -354,6 +376,8 @@ namespace Data.Loader
                         return AddressableGroupType.Nyangstagram;
                     case "Scratching" :
                         return AddressableGroupType.Scratching;
+                    case "Snap" :
+                        return AddressableGroupType.Snap;
                     default:
                         return AddressableGroupType.None;
                 }

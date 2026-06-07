@@ -1,15 +1,21 @@
 ﻿using Data.ScriptableObjects.MergeBoard;
-using TMPro;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace UI.MergeBoard
 {
-    public class ItemSlot : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler, IDropHandler
+    public class ItemSlot : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler, IPointerClickHandler
     {
+        [Header("Raycast")]
+        [SerializeField] private Image _slotRaycastImage;
+
+        [Header("Item")]
         [SerializeField] private Image _item;
-        [SerializeField] private TMP_Text _number;
+        
+        [Header("BackGround Image")]
+        [SerializeField] private Image _backGroundImage;
 
         private BoardSystem _boardSystem;
         private RectTransform _itemRect;
@@ -19,25 +25,25 @@ namespace UI.MergeBoard
 
         private int _slotIndex;
         private bool _isDragging;
+        private bool _ignoreClickOnce;
+        private Coroutine _resetIgnoreClickCoroutine;
 
         public int SlotNumber => _slotIndex;
+        public RectTransform RectTransform => transform as RectTransform;
         public ItemData ItemData { get; private set; } = ItemData.Empty;
         public bool HasItem => ItemData != null && ItemData.HasItem;
+        
 
         public void Init(BoardSystem boardSystem, int slotIndex, ItemData itemData, int itemSize)
         {
             _boardSystem = boardSystem;
             _slotIndex = slotIndex;
 
+            SetupRaycastImage();
+
             if (_item == null)
             {
                 Debug.LogError($"{name} : _item이 연결되지 않았습니다.", this);
-                return;
-            }
-
-            if (_number == null)
-            {
-                Debug.LogError($"{name} : _number가 연결되지 않았습니다.", this);
                 return;
             }
 
@@ -58,8 +64,22 @@ namespace UI.MergeBoard
             if (_canvasGroup == null)
                 _canvasGroup = _item.gameObject.AddComponent<CanvasGroup>();
 
+            _item.raycastTarget = false;
             SetItemData(itemData);
-            ResetSiblingOrder();
+        }
+
+        private void SetupRaycastImage()
+        {
+            if (_slotRaycastImage == null)
+                _slotRaycastImage = GetComponent<Image>();
+
+            if (_slotRaycastImage == null)
+            {
+                _slotRaycastImage = gameObject.AddComponent<Image>();
+                _slotRaycastImage.color = new Color(1f, 1f, 1f, 0f);
+            }
+
+            _slotRaycastImage.raycastTarget = true;
         }
 
         public void SetItemData(ItemData itemData)
@@ -68,20 +88,13 @@ namespace UI.MergeBoard
 
             bool hasItem = ItemData.HasItem;
 
-            if (_item != null)
-            {
-                _item.gameObject.SetActive(hasItem);
-                _item.sprite = hasItem ? ItemData.ItemSprite : null;
-            }
+            if (_item == null)
+                return;
 
-            if (_number != null)
-            {
-                _number.text = hasItem
-                    ? $"#{ItemData.ItemID}"
-                    : string.Empty;
-            }
-
-            ResetSiblingOrder();
+            _item.gameObject.SetActive(hasItem);
+            _item.enabled = hasItem;
+            _item.sprite = hasItem ? ItemData.ItemSprite : null;
+            _item.raycastTarget = false;
         }
 
         public void ClearItem()
@@ -95,6 +108,7 @@ namespace UI.MergeBoard
                 return;
 
             _isDragging = true;
+            _ignoreClickOnce = true;
 
             _canvasGroup.blocksRaycasts = false;
             _itemRect.SetParent(_canvas.transform, true);
@@ -127,29 +141,78 @@ namespace UI.MergeBoard
             _itemRect.SetParent(transform, false);
             _itemRect.anchoredPosition = Vector2.zero;
 
-            ResetSiblingOrder();
+            if (_boardSystem != null)
+                _boardSystem.HandleDragEnd(this, eventData);
+
+            ResetIgnoreClickNextFrame();
         }
 
-        public void OnDrop(PointerEventData eventData)
+        public void OnPointerClick(PointerEventData eventData)
         {
-            if (eventData.pointerDrag == null)
+            if (_isDragging)
                 return;
 
-            ItemSlot fromSlot = eventData.pointerDrag.GetComponent<ItemSlot>();
+            if (_ignoreClickOnce)
+            {
+                _ignoreClickOnce = false;
 
-            if (fromSlot == null)
+                if (_resetIgnoreClickCoroutine != null)
+                {
+                    StopCoroutine(_resetIgnoreClickCoroutine);
+                    _resetIgnoreClickCoroutine = null;
+                }
+
+                return;
+            }
+
+            if (_boardSystem == null)
                 return;
 
-            _boardSystem.MoveOrSwapItem(fromSlot, this);
+            if (!HasItem)
+                return;
+
+            _boardSystem.SelectSlot(this);
         }
 
-        private void ResetSiblingOrder()
+        private void ResetIgnoreClickNextFrame()
         {
-            if (_item != null)
-                _item.transform.SetSiblingIndex(0);
+            if (!gameObject.activeInHierarchy)
+            {
+                _ignoreClickOnce = false;
+                return;
+            }
 
-            if (_number != null)
-                _number.transform.SetAsLastSibling();
+            if (_resetIgnoreClickCoroutine != null)
+                StopCoroutine(_resetIgnoreClickCoroutine);
+
+            _resetIgnoreClickCoroutine = StartCoroutine(ResetIgnoreClickRoutine());
+        }
+
+        private IEnumerator ResetIgnoreClickRoutine()
+        {
+            yield return null;
+            _ignoreClickOnce = false;
+            _resetIgnoreClickCoroutine = null;
+        }
+
+        private void OnDisable()
+        {
+            _isDragging = false;
+            _ignoreClickOnce = false;
+
+            if (_resetIgnoreClickCoroutine != null)
+            {
+                StopCoroutine(_resetIgnoreClickCoroutine);
+                _resetIgnoreClickCoroutine = null;
+            }
+        }
+
+        public void ChangeBackgroundColor(Color color)
+        {
+            if (_backGroundImage == null)
+                return;
+
+            _backGroundImage.color = color;
         }
     }
 }

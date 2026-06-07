@@ -1,4 +1,5 @@
-﻿using Data.ScriptableObjects.MergeBoard;
+﻿using Data.LibrarySystem;
+using Data.ScriptableObjects.MergeBoard;
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -19,6 +20,7 @@ namespace UI.MergeBoard
         [SerializeField] private float _alertDuration = 1.5f;
 
         private Coroutine _alertCoroutine;
+        private bool _isProcessing;
 
         private readonly Queue<ItemData> _rewardQueue = new();
 
@@ -70,8 +72,16 @@ namespace UI.MergeBoard
 
             int safeCount = Mathf.Max(1, count);
 
+            ItemData runtimeItem = CreateRuntimeItem(itemData);
+
+            if (runtimeItem == null || !runtimeItem.HasItem)
+            {
+                DebugTool.Warning("보상 큐에 추가할 런타임 아이템 데이터를 만들 수 없습니다.", DebugType.Board, this);
+                return false;
+            }
+
             for (int i = 0; i < safeCount; i++)
-                _rewardQueue.Enqueue(itemData.Clone());
+                _rewardQueue.Enqueue(runtimeItem.Clone());
 
             RefreshView();
 
@@ -83,6 +93,9 @@ namespace UI.MergeBoard
 
         public async void TryMoveTopItemToBoard()
         {
+            if (_isProcessing)
+                return;
+
             if (!IsLoaded)
             {
                 DebugTool.Warning("보상 큐 서버 데이터 로드 전에는 아이템을 꺼낼 수 없습니다.", DebugType.Board, this);
@@ -100,20 +113,29 @@ namespace UI.MergeBoard
 
             ItemData itemData = _rewardQueue.Peek();
 
-            bool result = await _boardSystem.TryAddItemAsync(itemData);
+            _isProcessing = true;
 
-            if (!result)
+            try
             {
-                ShowAlert("보드판 공간이 부족합니다.");
-                return;
+                ItemSlot addedSlot = await _boardSystem.TryAddItemFromQueueAndSelectAsync(itemData);
+
+                if (addedSlot == null)
+                {
+                    ShowAlert("보드판 공간이 부족합니다.");
+                    return;
+                }
+
+                _rewardQueue.Dequeue();
+
+                RefreshView();
+
+                if (_mergeBoardFirestore != null)
+                    await _mergeBoardFirestore.SaveRewardQueueAsync(_rewardQueue);
             }
-
-            _rewardQueue.Dequeue();
-
-            RefreshView();
-
-            if (_mergeBoardFirestore != null)
-                await _mergeBoardFirestore.SaveRewardQueueAsync(_rewardQueue);
+            finally
+            {
+                _isProcessing = false;
+            }
         }
 
         public async Task LoadQueueFromServerAsync(bool normalizeDocumentIds = false)
@@ -143,7 +165,12 @@ namespace UI.MergeBoard
                 if (itemData == null || !itemData.HasItem)
                     continue;
 
-                _rewardQueue.Enqueue(itemData.Clone());
+                ItemData runtimeItem = CreateRuntimeItem(itemData);
+
+                if (runtimeItem == null || !runtimeItem.HasItem)
+                    continue;
+
+                _rewardQueue.Enqueue(runtimeItem);
             }
 
             RefreshView();
@@ -155,7 +182,21 @@ namespace UI.MergeBoard
             DebugTool.Log("보상 큐 서버 데이터 로드 완료", DebugType.Board, this);
         }
 
-        private void ShowAlert(string message)
+        private ItemData CreateRuntimeItem(ItemData itemData)
+        {
+            if (itemData == null || !itemData.HasItem)
+                return ItemData.Empty;
+
+            if (LocalDataAccess.Instance?.Game != null &&
+                LocalDataAccess.Instance.Game.TryCreateMergeBoardRuntimeItem(itemData, out ItemData runtimeData))
+            {
+                return runtimeData;
+            }
+
+            return itemData.Clone();
+        }
+
+        public void ShowAlert(string message)
         {
             if (_alertText == null)
             {

@@ -4,6 +4,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UI;
+using UI.Base;
 using UnityEngine;
 using UnityEngine.UI;
 using Util;
@@ -155,16 +156,16 @@ public class NyangstagramDMListUI : UIPopup
             .SetEase(Ease.OutSine).OnComplete(() => gameObject.SetActive(false));
 
     }
-}
 
-public enum NyangstagramDMListUIButton
-{
-    BackButton,
-    DMItem,
-    HomeButton,
-    TagButton,
-    AddPostButton,
-    NotificationButton,
-    ProfileButton,
-    NyangstagramCloseButton
+    public enum NyangstagramDMListUIButton
+    {
+        BackButton,
+        DMItem,
+        HomeButton,
+        TagButton,
+        AddPostButton,
+        NotificationButton,
+        ProfileButton,
+        NyangstagramCloseButton
+    }
 }

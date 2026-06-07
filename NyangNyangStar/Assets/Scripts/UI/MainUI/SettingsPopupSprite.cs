@@ -1,4 +1,6 @@
+using System;
 using UI;
+using UI.Base;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -15,9 +17,9 @@ public class SettingsPopupSprite : UIBase
     {
         Bind<Image>(typeof(SettingsPopupImages));
 
-        _spriteController = new UISpriteController[(int)SettingsPopupImages.Count];
+        _spriteController = new UISpriteController[Enum.GetValues(typeof(SettingsPopupImages)).Length];
 
-        for (int i = 0; i < (int)SettingsPopupImages.Count; i++)
+        for (int i = 0; i < Enum.GetValues(typeof(SettingsPopupImages)).Length; i++)
         {
             _spriteController[i] = new UISpriteController(GetImage(i));
         }
@@ -37,6 +39,8 @@ public class SettingsPopupSprite : UIBase
         SetSprite(SettingsPopupImages.SFXIcon, "Main_Btn_Sound");
         SetSprite(SettingsPopupImages.BGMIcon, "Main_Btn_Music");
         SetSprite(SettingsPopupImages.CloseButton, "Btn_Close");
+        SetSprite(SettingsPopupImages.Panel, "Shape_Rectangle");
+        SetSprite(SettingsPopupImages.Header, "Main_Panel_Settings_Header");
     }
 
     private void SetSprite(SettingsPopupImages image, string key)
@@ -54,11 +58,12 @@ public class SettingsPopupSprite : UIBase
 
     private void OnDestroy()
     {
-        if (_spriteController == null) return;
+        if (_spriteController == null)
+            return;
 
         foreach (UISpriteController controller in _spriteController)
         {
-            controller?.ReleaseSprite();
+            controller?.Dispose();
         }
     }
 }
@@ -70,8 +75,6 @@ public enum SettingsPopupImages
     SFXIcon,
     BGMIcon,
     CloseButton,
-    //Panel,
-    //Title,
-
-    Count
+    Panel,
+    Header,
 }

@@ -22,7 +22,7 @@ public class UsersSO : BaseFireStore
     [SerializeField] public int lastLogout = 0;
 
 
-    [SerializeField] private List<BaseFireStore> subCollections;
+    // subCollections 는 이제 BaseFireStore 가 기본 제공 (기존 에셋 데이터는 이름 매칭으로 유지됨)
 
 
     public override async Task CreateNew(FirebaseFirestore database, string userId)

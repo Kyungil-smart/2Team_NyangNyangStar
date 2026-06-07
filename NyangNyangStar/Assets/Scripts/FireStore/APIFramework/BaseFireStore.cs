@@ -12,6 +12,22 @@ public abstract class BaseFireStore : ScriptableObject
     [SerializeField] private DataType m_EnumType;
     public DataType EnumType => m_EnumType;
 
+    // 서브컬렉션 SO 목록 (인스펙터에서 추가). 모든 SO가 자동으로 갖는다.
+    // ※ 필드명은 기존 파생 클래스 선언과 동일한 'subCollections'를 유지해야
+    //    기존 .asset의 직렬화 데이터가 이름 매칭으로 그대로 이어진다.
+    [SerializeField] private List<BaseFireStore> subCollections = new List<BaseFireStore>();
+
+    // 베이스 리스트 + 파생 클래스가 직접 선언한 서브컬렉션 필드(리플렉션)를 합쳐 중복 없이 순회.
+    // (FirestoreMapper의 필드 열거는 BaseFireStore 자신의 필드를 보지 않으므로 베이스 리스트는 직접 순회해야 한다.)
+    private IEnumerable<BaseFireStore> AllSubCollections()
+    {
+        var seen = new HashSet<BaseFireStore>();
+        foreach (var s in subCollections)
+            if (s != null && seen.Add(s)) yield return s;
+        foreach (var s in FirestoreMapper.GetSubCollections(this))
+            if (s != null && seen.Add(s)) yield return s;
+    }
+
 
     protected FirebaseFirestore db;
     protected string m_UserId;
@@ -44,7 +60,7 @@ public abstract class BaseFireStore : ScriptableObject
         this.db = database;
         this.m_UserId = userId;
 
-        foreach (var sub in FirestoreMapper.GetSubCollections(this))
+        foreach (var sub in AllSubCollections())
             await sub.CreateNew(database, userId);
 
         await SetDataAsync(ToFirestoreDictionary());
@@ -60,7 +76,7 @@ public abstract class BaseFireStore : ScriptableObject
         this.db = database;
         this.m_UserId = userId;
 
-        foreach (var sub in FirestoreMapper.GetSubCollections(this))
+        foreach (var sub in AllSubCollections())
             sub.InitDataBase(database, userId);
     }
 
@@ -76,7 +92,7 @@ public abstract class BaseFireStore : ScriptableObject
         ApplyFromSnapshot(snap);
 
         if (updateAll)
-            foreach (var sub in FirestoreMapper.GetSubCollections(this))
+            foreach (var sub in AllSubCollections())
                 await sub.UpdateFromServerAsync(true);
 
         return snap;
@@ -91,8 +107,16 @@ public abstract class BaseFireStore : ScriptableObject
 
     public virtual async Task SaveAllToServerAsync()
     {
-        await UpdateDataAsync();                  
-        foreach (var sub in FirestoreMapper.GetSubCollections(this))
-            await sub.SaveAllToServerAsync();         
+        await UpdateDataAsync();
+        foreach (var sub in AllSubCollections())
+            await sub.SaveAllToServerAsync();
     }
+
+#if UNITY_EDITOR
+    // 에디터에서 인스펙터 편집 시 동적 맵의 중복 키를 미리 경고한다.
+    protected virtual void OnValidate()
+    {
+        FirestoreMapper.ValidateMapKeys(this);
+    }
+#endif
 }
