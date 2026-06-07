@@ -1,4 +1,5 @@
-﻿using DG.Tweening;
+﻿using Core.Managers;
+using DG.Tweening;
 using UI.MergeBoard;
 using UnityEngine;
 
@@ -20,6 +21,7 @@ namespace UI.MainUI
 
         private void Start()
         {
+            EnterGameScene();
             _upDownScreenCanvas.overrideSorting = true;
             _upDownScreenCanvas.sortingOrder = 3;
         }
@@ -47,6 +49,19 @@ namespace UI.MainUI
                 _mainUICanvas.sortingOrder = 2;
             
             _rectTransfom.DOAnchorPos(new Vector2(0, 1920f), 0.15f).SetDelay(0.3f).SetEase(Ease.OutSine);
+        }
+
+        public void EnterGameScene()
+        {
+            _rectTransfom.anchoredPosition = new Vector2(0, 0);
+            _rectTransfom.DOAnchorPos(new Vector2(0, 1920f), 0.25f).SetDelay(0.5f).SetEase(Ease.OutSine);
+        }
+
+        public void ExitGameScene()
+        {
+            _rectTransfom.anchoredPosition = new Vector2(0, 1920f);
+            _rectTransfom.DOAnchorPos(Vector2.zero, 0.5f).
+                SetEase(Ease.OutQuad).OnComplete(() => GameManager.Scene.LoadPreviousScene());
         }
     }
 }

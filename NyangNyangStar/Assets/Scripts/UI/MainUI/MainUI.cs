@@ -111,6 +111,7 @@ public class MainUI : UIScene
                 }
                 
                 boardCon.OpenBoard();
+                DontDestroyOnLoad(onLoaded);
             },
             onFailed =>
         {
@@ -134,6 +135,7 @@ public class MainUI : UIScene
                 
                 if (manager == null)
                     DebugTool.Warning($"{onLoaded.name}의 스크래칭 타임 매니저를 찾을 수 없습니다.", DebugType.Board);
+                DontDestroyOnLoad(onLoaded);
             },
             onFailed =>
             {
@@ -159,7 +161,7 @@ public class MainUI : UIScene
         }
         
         auth.Logout();
-        GameManager.Scene.LoadPreviousScene();
+        _upDownCon.ExitGameScene();
     }
     
     private void InitPopup(string key, Button button)
