@@ -236,6 +236,8 @@ namespace Util
             Sprites.Clear();
             Audios.Clear();
             
+            Audios.Add("BGM_Main");
+            
             PrintKeys();
         }
 
