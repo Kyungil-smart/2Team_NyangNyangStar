@@ -1,4 +1,6 @@
 using Data.ScriptableObjects.ScratchingTimeSO;
+using Firebase.Firestore;
+using System.Threading.Tasks;
 using UnityEngine;
 
 [FirestorePath("Users/{userId}/Moongchi/{docId}")]
@@ -10,6 +12,12 @@ public class MoongchiProgressSO : BaseFireStore
 
     public int Level => _level;
     public int CurrentExp => _currentExp;
+
+    public override async Task CreateNew(FirebaseFirestore database, string userId)
+    {
+        ResetToDefault();
+        await base.CreateNew(database, userId);
+    }
 
     public void ApplyTo(MoongchiStatSo moongchiStat)
     {
@@ -26,5 +34,11 @@ public class MoongchiProgressSO : BaseFireStore
 
         _level = moongchiStat.Level;
         _currentExp = moongchiStat.GetCurrentExp();
+    }
+
+    private void ResetToDefault()
+    {
+        _level = 1;
+        _currentExp = 0;
     }
 }

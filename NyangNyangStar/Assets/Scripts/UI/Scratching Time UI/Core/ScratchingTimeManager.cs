@@ -160,6 +160,7 @@ public partial class ScratchingTimeManager : UIBase
 
     public void OpenScratchingTimeUI()
     {
+        _moongchiStatController?.ReloadMoongchiProgressForSession();
         _canvas.sortingOrder = 4;
         if (_rectTransform == null) return;
             _rectTransform.DOScale(Vector3.one, 0.2f).SetEase(Ease.InOutCubic);

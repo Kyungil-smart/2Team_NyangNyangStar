@@ -27,7 +27,7 @@ public class MoongchiStatController : UIBase
     [SerializeField]
     private Image _expAmountImage;
 
-    [SerializeField] private bool _isFirstTime = true;
+    private int _moongchiProgressLoadVersion;
 
     private void Awake()
     {
@@ -57,14 +57,17 @@ public class MoongchiStatController : UIBase
         if (_moongchiStat == null)
             return;
 
-        if (_isFirstTime)
-        {
-            _moongchiStat.Init();
-            _isFirstTime = false;
-        }
+        ReloadMoongchiProgressForSession();
+    }
 
-        LoadMoongchiProgressFromServer();
+    public void ReloadMoongchiProgressForSession()
+    {
+        if (_moongchiStat == null)
+            return;
+
+        _moongchiStat.SetProgressData(1, 0);
         PrintMoongchiStat();
+        LoadMoongchiProgressFromServer(++_moongchiProgressLoadVersion);
     }
 
     public void IncreaseExp(int exp)
@@ -79,14 +82,20 @@ public class MoongchiStatController : UIBase
     }
 
 
-    private async void LoadMoongchiProgressFromServer()
+    private async void LoadMoongchiProgressFromServer(int loadVersion)
     {
         if (_moongchiProgress == null || _moongchiStat == null)
             return;
 
+        _moongchiProgress.CaptureFrom(_moongchiStat);
+
         try
         {
             await _moongchiProgress.UpdateFromServerAsync(false);
+
+            if (loadVersion != _moongchiProgressLoadVersion)
+                return;
+
             _moongchiProgress.ApplyTo(_moongchiStat);
             PrintMoongchiStat();
         }
