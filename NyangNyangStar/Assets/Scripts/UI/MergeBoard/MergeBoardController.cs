@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using Core.Managers;
+using System.Threading.Tasks;
 using Data.ScriptableObjects.MergeBoard;
 using UI.MainUI;
 using UnityEngine;
@@ -82,6 +83,7 @@ namespace UI.MergeBoard
             if(_upDownCon == null)
                 _upDownCon = FindObjectOfType<UpDownScreenController>();
             _upDownCon.DownAnimation();
+            GameManager.Audio.PlaySfx("Main_SFX_Touch");
         }
 
         public void ForceReloadOnNextOpen()

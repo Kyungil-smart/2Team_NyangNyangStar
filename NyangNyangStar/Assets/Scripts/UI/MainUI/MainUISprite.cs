@@ -28,7 +28,7 @@ public class MainUISprite : UIBase
     {
         SetSprite(MainUIImages.Background, "Main_BG");
         SetSprite(MainUIImages.ShopButton, "Main_Btn_Shop");
-        SetSprite(MainUIImages.EventButton, "Main_Btn_Event_Scratching");
+        SetSprite(MainUIImages.ScratchingTimeButton, "Main_Btn_Event_Scratching");
         SetSprite(MainUIImages.DailyCheckInButton, "Main_Btn_Attendance");
         SetSprite(MainUIImages.MailButton, "Main_Btn_Mail");
         SetSprite(MainUIImages.SettingsButton, "Main_Btn_Settings");
@@ -68,7 +68,7 @@ public enum MainUIImages
 {
     Background,                // 배경
     ShopButton,                // 상점
-    EventButton,               // 시즌 이벤트
+    ScratchingTimeButton,      // 시즌 이벤트
     DailyCheckInButton,        // 출석 체크
     MailButton,                // 우편함
     SettingsButton,            // 설정
