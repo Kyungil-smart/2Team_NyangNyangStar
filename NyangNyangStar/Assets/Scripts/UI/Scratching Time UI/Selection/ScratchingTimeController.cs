@@ -238,6 +238,7 @@ public class ScratchingTimeController : UIBase
     private void SelectStage(int stage)
     {
         ClearSelectedButton();
+        GameManager.Audio.PlaySfx("Main_SFX_Touch");
         OnStageSelected?.Invoke(stage);
     }
 

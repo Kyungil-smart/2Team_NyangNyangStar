@@ -1,3 +1,4 @@
+using Core.Managers;
 using Services.Enums;
 using UnityEngine;
 
@@ -24,7 +25,6 @@ public partial class ScratchingTimeManager
             DebugTool.Warning("스크래칭 타임 시트 데이터 로드 중입니다.", DebugType.ScratchingTime);
             return;
         }
-
         _selectionController?.HideErrorPanel();
         _selectedStage = stage;
         _selectedStageType = StageType.None;
@@ -78,6 +78,7 @@ public partial class ScratchingTimeManager
 
         RefreshBattleInfo();
 
+        GameManager.Audio.PlaySfx("Main_SFX_Touch");
         DebugTool.Log($"스테이지 시작 : {_selectedStage} / {_selectedStageType}", DebugType.ScratchingTime);
     }
 
@@ -103,6 +104,11 @@ public partial class ScratchingTimeManager
         {
             damage = _moongchiStatController.MoongchiAttack(out isCritical);
             CurrentBattleController?.ScratchEffectPool?.SpawnEffect(screenPosition, isCritical);
+
+            if (isCritical)
+                GameManager.Audio.PlaySfx("ST_SFX_Critical");
+            else
+                GameManager.Audio.PlaySfx("ST_SFX_Normal");
         }
 
         if (damage <= 0)
@@ -165,7 +171,8 @@ public partial class ScratchingTimeManager
 
         bool canRetry = CanStart(_selectedStageType);
         _resultPopupController?.ShowResultPopup(true, canRetry);
-
+        
+        GameManager.Audio.PlaySfx("ST_SFX_Clear");
         DebugTool.Log($"스테이지 클리어 : {_selectedStage} / {_selectedStageType} / EXP {clearExp}", DebugType.ScratchingTime);
     }
 
@@ -182,6 +189,7 @@ public partial class ScratchingTimeManager
         bool canRetry = CanStart(_selectedStageType);
         _resultPopupController?.ShowResultPopup(false, canRetry);
 
+        GameManager.Audio.PlaySfx("ST_SFX_Fail");
         DebugTool.Log($"스테이지 실패 : {_selectedStage} / {_selectedStageType}", DebugType.ScratchingTime);
     }
 }
