@@ -51,8 +51,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 19cbdc5a87f5480dad48067a1fcf6045, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _slotRaycastImage: {fileID: 0}
   _item: {fileID: 3486171734101744669}
-  _number: {fileID: 0}
+  _backGroundImage: {fileID: 8558255653331348131}
 --- !u!222 &4564326143236267726
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -108,7 +109,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &5079509807059952741
 RectTransform:
   m_ObjectHideFlags: 0
@@ -156,7 +157,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: f809d782224d0a5449821ad49495fdf0, type: 3}
+  m_Sprite: {fileID: 0}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
