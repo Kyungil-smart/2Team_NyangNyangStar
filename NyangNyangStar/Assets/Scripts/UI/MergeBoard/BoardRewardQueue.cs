@@ -196,7 +196,7 @@ namespace UI.MergeBoard
             return itemData.Clone();
         }
 
-        private void ShowAlert(string message)
+        public void ShowAlert(string message)
         {
             if (_alertText == null)
             {

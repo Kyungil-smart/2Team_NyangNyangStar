@@ -17,6 +17,8 @@ namespace UI.MergeBoard
         [SerializeField] private GameObject _slotPrefab;
         [SerializeField] private GridLayoutGroup _grid;
         [SerializeField] private List<ItemSlot> _itemSlots = new();
+        [SerializeField] Color _selectedSlotColor = new (1f, 0.9f, 0.6f, 1);
+        private Color _baseColor = new (1f, 1f, 1f, 1);
 
         [Header("Firestore")]
         [SerializeField] private MergeBoardFirestoreSo _mergeBoardFirestore;
@@ -272,8 +274,8 @@ namespace UI.MergeBoard
                     { toSlotNumber, _slotItemDict[toSlotNumber].Clone() }
                 };
 
+                UpdateSelectionAfterMove(toSlot);
                 await SaveSlotsSafeAsync(changedSlots);
-                UpdateSelectionAfterMove(fromSlot, toSlot, toData);
                 return true;
             }
             finally
@@ -282,24 +284,9 @@ namespace UI.MergeBoard
             }
         }
 
-        private void UpdateSelectionAfterMove(ItemSlot fromSlot, ItemSlot toSlot, ItemData previousToData)
+        private void UpdateSelectionAfterMove(ItemSlot movedSlot)
         {
-            if (_selectedSlot == null)
-                return;
-
-            if (_selectedSlot == fromSlot)
-            {
-                SelectSlot(toSlot);
-                return;
-            }
-
-            if (_selectedSlot == toSlot)
-            {
-                if (previousToData != null && previousToData.HasItem)
-                    SelectSlot(fromSlot);
-                else
-                    SelectSlot(toSlot);
-            }
+            SelectSlot(movedSlot);
         }
 
         private bool TryFindNearestSlot(Vector2 screenPosition, Camera eventCamera, out ItemSlot nearestSlot)
@@ -377,7 +364,12 @@ namespace UI.MergeBoard
                 return;
             }
 
+            if(_selectedSlot != null)
+                _selectedSlot.ChangeBackgroundColor(_baseColor);
+
             _selectedSlot = itemSlot;
+            
+            _selectedSlot.ChangeBackgroundColor(_selectedSlotColor);
 
             if (_itemInfoPanel == null)
                 _itemInfoPanel = FindFirstObjectByType<BoardItemInfoPanel>();
@@ -388,6 +380,9 @@ namespace UI.MergeBoard
 
         public void ClearSelectedSlot()
         {
+            if (_selectedSlot != null)
+                _selectedSlot.ChangeBackgroundColor(_baseColor);
+
             _selectedSlot = null;
 
             if (_itemInfoPanel != null)

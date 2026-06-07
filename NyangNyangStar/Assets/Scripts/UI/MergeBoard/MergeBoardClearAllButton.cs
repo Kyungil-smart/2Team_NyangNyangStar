@@ -9,6 +9,7 @@ namespace UI.MergeBoard
         [Header("대상 보드")]
         [SerializeField] private BoardSystem _boardSystem;
         [SerializeField] private SpecialItemBoardSystem _specialItemBoardSystem;
+        [SerializeField] private BoardRewardQueue _boardRewardQueue;
 
         [Header("버튼")]
         [SerializeField] private Button _clearButton;
@@ -61,6 +62,9 @@ namespace UI.MergeBoard
             if (_specialItemBoardSystem == null)
                 _specialItemBoardSystem = FindFirstObjectByType<SpecialItemBoardSystem>();
 
+            if (_boardRewardQueue == null)
+                _boardRewardQueue = FindFirstObjectByType<BoardRewardQueue>();
+
             bool boardResult = true;
             bool specialResult = true;
 
@@ -75,7 +79,14 @@ namespace UI.MergeBoard
                 DebugTool.Warning("SpecialItemBoardSystem이 연결되지 않아 특수 아이템 보드 전체 삭제를 건너뜁니다.", DebugType.Board, this);
 
             if (boardResult && specialResult)
+            {
                 DebugTool.Log("일반 보드와 특수 아이템 보드 전체 삭제 완료", DebugType.Board, this);
+
+                if (_boardRewardQueue != null)
+                    _boardRewardQueue.ShowAlert("모든 아이템 삭제됨");
+                else
+                    DebugTool.Warning("모든 아이템 삭제됨", DebugType.Board, this);
+            }
         }
     }
 }
