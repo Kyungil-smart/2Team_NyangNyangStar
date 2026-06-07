@@ -4611,8 +4611,8 @@ MonoBehaviour:
   effectRoot: {fileID: 5535654470780644500}
   touchArea: {fileID: 8157616864578332185}
   initialPoolSize: 10
-  effectSize: {x: 250, y: 250}
-  effectDisplaySeconds: 0.8
+  effectSize: {x: 200, y: 200}
+  effectDisplaySeconds: 0.2
 --- !u!1 &3121073918187599844
 GameObject:
   m_ObjectHideFlags: 0
@@ -6355,8 +6355,8 @@ MonoBehaviour:
   effectRoot: {fileID: 346811889252979425}
   touchArea: {fileID: 2460400304811484629}
   initialPoolSize: 10
-  effectSize: {x: 250, y: 250}
-  effectDisplaySeconds: 0.8
+  effectSize: {x: 200, y: 200}
+  effectDisplaySeconds: 0.2
 --- !u!1 &4260216287203834038
 GameObject:
   m_ObjectHideFlags: 0
