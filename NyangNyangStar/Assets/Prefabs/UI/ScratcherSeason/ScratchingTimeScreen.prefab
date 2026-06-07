@@ -2028,7 +2028,6 @@ MonoBehaviour:
   _maxExpText: {fileID: 0}
   _expSlider: {fileID: 0}
   _expAmountImage: {fileID: 0}
-  _isFirstTime: 1
 --- !u!1 &1487531589927503320
 GameObject:
   m_ObjectHideFlags: 0
@@ -4612,7 +4611,7 @@ MonoBehaviour:
   effectRoot: {fileID: 5535654470780644500}
   touchArea: {fileID: 8157616864578332185}
   initialPoolSize: 10
-  effectSize: {x: 100, y: 100}
+  effectSize: {x: 250, y: 250}
   effectDisplaySeconds: 0.8
 --- !u!1 &3121073918187599844
 GameObject:
@@ -6356,7 +6355,7 @@ MonoBehaviour:
   effectRoot: {fileID: 346811889252979425}
   touchArea: {fileID: 2460400304811484629}
   initialPoolSize: 10
-  effectSize: {x: 100, y: 100}
+  effectSize: {x: 250, y: 250}
   effectDisplaySeconds: 0.8
 --- !u!1 &4260216287203834038
 GameObject:
@@ -13635,6 +13634,7 @@ GameObject:
   - component: {fileID: 884010001000100001}
   - component: {fileID: 5990588258860867098}
   - component: {fileID: 926318897902771828}
+  - component: {fileID: 8394221799734757911}
   m_Layer: 5
   m_Name: ScratchingTimeScreen
   m_TagString: Untagged
@@ -13776,6 +13776,23 @@ MonoBehaviour:
   m_DefaultSpriteDPI: 96
   m_DynamicPixelsPerUnit: 1
   m_PresetInfoIsWorld: 0
+--- !u!114 &8394221799734757911
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9011317212103751508}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dc42784cf147c0c48a680349fa168899, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_IgnoreReversedGraphics: 1
+  m_BlockingObjects: 0
+  m_BlockingMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
 --- !u!1 &9029162853753521205
 GameObject:
   m_ObjectHideFlags: 0

@@ -92,6 +92,7 @@ public partial class ScratchingTimeManager : UIBase
         if (_selectionController != null)
         {
             _selectionController.OnCloseClicked -= CloseEventView;
+            _selectionController.OnCloseClicked -= CloseScratchingTimeUI;
             _selectionController.OnStageSelected -= SelectStage;
             _selectionController.OnStageStartClicked -= StartStage;
         }
@@ -160,17 +161,54 @@ public partial class ScratchingTimeManager : UIBase
 
     public void OpenScratchingTimeUI()
     {
-        _canvas.sortingOrder = 4;
-        if (_rectTransform == null) return;
-            _rectTransform.DOScale(Vector3.one, 0.2f).SetEase(Ease.InOutCubic);
+        gameObject.SetActive(true);
+        _moongchiStatController?.ReloadMoongchiProgressForSession();
+        BringScratchingTimeToFront();
+        ResetAllState();
+
+        if (_rectTransform == null)
+            return;
+
+        _rectTransform.DOKill();
+        _rectTransform.DOScale(Vector3.one, 0.2f).SetEase(Ease.InOutCubic);
     }
 
     public void CloseScratchingTimeUI()
     {
-        GameManager.Audio.PlaySfx("Main_SFX_Touch");
-        if (_rectTransform == null) return;
-            _rectTransform.DOScale(Vector3.zero, 0.2f).SetEase(Ease.OutCirc);
-        _canvas.sortingOrder = 1;
+        if (_rectTransform == null)
+            return;
+
+        _rectTransform.DOKill();
+        _rectTransform
+            .DOScale(Vector3.zero, 0.2f)
+            .SetEase(Ease.OutCirc)
+            .OnComplete(SendScratchingTimeBehindMainUI);
+    }
+
+    private void BringScratchingTimeToFront()
+    {
+        if (_canvas == null)
+            _canvas = GetComponent<Canvas>();
+
+        if (_canvas != null)
+        {
+            _canvas.overrideSorting = true;
+            _canvas.sortingOrder = 4;
+        }
+
+        transform.SetAsLastSibling();
+    }
+
+    private void SendScratchingTimeBehindMainUI()
+    {
+        if (_canvas == null)
+            _canvas = GetComponent<Canvas>();
+
+        if (_canvas != null)
+        {
+            _canvas.overrideSorting = true;
+            _canvas.sortingOrder = 1;
+        }
     }
 
 

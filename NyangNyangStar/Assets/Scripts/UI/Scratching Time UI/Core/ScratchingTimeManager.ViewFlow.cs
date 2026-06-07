@@ -11,7 +11,6 @@ public partial class ScratchingTimeManager
         ResetAllState();
     }
 
-
     // 스크래칭 타임 이벤트 UI 전체를 닫고 선택 상태를 초기화
     private void CloseEventView()
     {
@@ -26,26 +25,18 @@ public partial class ScratchingTimeManager
 
         _resultPopupController?.HidePopup();
         HideBattleScreens();
-
-        // 선택 화면이 보이는 경우 닫기 애니메이션 후 비활성화
-        if (_selectionController != null && _selectionController.gameObject.activeInHierarchy)
-        {
-            _selectionController.Hide(FinishCloseEventView);
-            return;
-        }
-
         FinishCloseEventView();
     }
 
-
-    // 닫기 애니메이션 완료 후 매니저 오브젝트 비활성화
+    // 닫기 처리 후 매니저 오브젝트는 비활성화하지 않고 앞 레이어를 유지함
     private void FinishCloseEventView()
     {
-        _selectionController?.Hide();
+        _selectionController?.Show();
+        _selectionController?.InitView();
+        RefreshStageButtonUnlockState();
         _isUiTransitioning = false;
-        gameObject.SetActive(false);
+        BringScratchingTimeToFront();
     }
-
 
     // 결과 팝업에서 같은 단계와 타입으로 다시 시작
     private void RetryStage()
@@ -59,7 +50,6 @@ public partial class ScratchingTimeManager
 
         _resultPopupController?.HidePopup(() => StartStage(_selectedStageType));
     }
-
 
     // 선택된 단계를 유지한 채 선택 화면으로 돌아감
     // 결과 팝업 돌아가기,전투 Exit 버튼 모두 이 메서드로 처리
@@ -88,7 +78,6 @@ public partial class ScratchingTimeManager
         });
     }
 
-
     // 전투 화면 닫힌 뒤 선택 화면 표시 및 카드 정보 갱신
     private void ShowSelectionAfterBattleClosed()
     {
@@ -105,7 +94,6 @@ public partial class ScratchingTimeManager
 
         _isUiTransitioning = false;
     }
-
 
     // 선택 화면의 일일 / 주간 카드 정보를 현재 선택 단계 기준으로 갱신
     private void RefreshSelectionInfo()
@@ -132,7 +120,6 @@ public partial class ScratchingTimeManager
             canStartWeekly);
     }
 
-
     // 전투 화면의 스테이지 제목과 내구도 게이지를 갱신
     private void RefreshBattleInfo()
     {
@@ -143,7 +130,6 @@ public partial class ScratchingTimeManager
         CurrentBattleController?.SetDurabilityAmount(currentDurability, maxDurability);
     }
 
-
     // 외부 전투 로직에서 내구도 UI만 다시 그릴 때 사용
     public void RefreshDurabilityView()
     {
@@ -153,13 +139,11 @@ public partial class ScratchingTimeManager
         RefreshBattleInfo();
     }
 
-
     // 외부 흥미도 로직에서 흥미도 게이지 UI만 갱신할 때 사용
     public void SetInterestView(float currentInterest, float maxInterest)
     {
         CurrentBattleController?.SetInterestAmount(currentInterest, maxInterest);
     }
-
 
     // 잠긴 단계도 에러 패널을 띄울 수 있도록 단계 버튼 입력은 유지
     private void RefreshStageButtonUnlockState()
@@ -168,13 +152,11 @@ public partial class ScratchingTimeManager
             _selectionController?.SetStageButtonInteractable(stage, true);
     }
 
-
     // 스테이지 시작 가능 여부를 확인 (도전 횟수,개방 여부)
     private bool CanStart(StageType stageType)
     {
         return HasSelectedStage && stageType != StageType.None && _scratching.CanChallenge(_selectedStage, stageType);
     }
-
 
     // 스크래칭 타임을 최초 선택 화면 상태로 되돌림
     // 스크래칭 타임을 새로 열 때 사용하며, 선택된 단계도 초기화
