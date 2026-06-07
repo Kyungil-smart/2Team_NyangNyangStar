@@ -54,7 +54,7 @@ namespace Core.Managers
         
         public void GameQuit()
         {
-            GameManager.Clear();
+            Clear();
             Application.Quit();
         }
 

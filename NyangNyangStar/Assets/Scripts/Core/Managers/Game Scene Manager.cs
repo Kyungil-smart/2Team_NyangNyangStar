@@ -14,10 +14,16 @@ namespace Core.Managers
             SceneManager.LoadScene((int)index);
         }
 
-        public void LoadNextStage()
+        public void LoadNextScene()
         {
             Time.timeScale = 1f;
             SceneManager.LoadScene(CurrentSceneIndex() + 1);
+        }
+
+        public void LoadPreviousScene()
+        {
+            Time.timeScale = 1f;
+            SceneManager.LoadScene(CurrentSceneIndex() - 1);
         }
 
         // 씬 재시작
@@ -28,7 +34,6 @@ namespace Core.Managers
 
         public int CurrentSceneIndex()
         {
-            DebugTool.Log($"{SceneManager.GetActiveScene().buildIndex}", DebugType.Game);
             return SceneManager.GetActiveScene().buildIndex;
         }
     

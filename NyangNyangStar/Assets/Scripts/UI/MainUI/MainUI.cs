@@ -26,6 +26,7 @@ public class MainUI : UIScene
     [Tooltip("냥스타그램")][SerializeField] private Button _meowMeowStarButton;
     [Tooltip("공방 머지 보드판")][SerializeField] private Button _workshopMergeBoardButton;
     [Tooltip("기본 머지 보드판")][SerializeField] private Button _mainMergeBoardButton;
+    [Tooltip("로그 아웃")] [SerializeField] private Button _logOutButton;
 
     [Space(10)] [Header("이미지")]
     [SerializeField] private UpDownScreenController _upDownCon;
@@ -50,6 +51,7 @@ public class MainUI : UIScene
         _meowMeowStarButton = Get<Button>((int)MainUIButtons.MeowMeowStarButton);
         _workshopMergeBoardButton = Get<Button>((int)MainUIButtons.WorkshopMergeBoardButton);
         _mainMergeBoardButton = Get<Button>((int)MainUIButtons.MainMergeBoardButton);
+        _logOutButton = Get<Button>((int)MainUIButtons.LogOutButton);
 
         InitPopups();
         
@@ -73,6 +75,7 @@ public class MainUI : UIScene
         InitPopup(KeyContainer.Prefabs.AffinityPopupUI, _affinityButton);
         InitPopup(KeyContainer.Prefabs.NyangNyangSnapStagePopUpUI, _nyangNyangSnapButton);
         InitPopup(KeyContainer.Prefabs.NyangStargramHomeProfile, _meowMeowStarButton);
+        _logOutButton.onClick.AddListener(LogOutButton);
         LoadMergeBoard();
         LoadScratchingTime();
     }
@@ -144,6 +147,21 @@ public class MainUI : UIScene
         });
     }
     
+
+    private void LogOutButton()
+    {
+        AuthManager auth = FindObjectOfType<AuthManager>();
+
+        if (auth == null)
+        {
+            DebugTool.Warning("AuthManager 를 찾을 수 없습니다.", DebugType.Network);
+            return;
+        }
+        
+        auth.Logout();
+        GameManager.Scene.LoadPreviousScene();
+    }
+    
     private void InitPopup(string key, Button button)
     {
         GameManager.UI.ShowPopupUI<UIPopup>(key, onLoaded => AddPopupButton(button, onLoaded), false);
@@ -188,5 +206,6 @@ public enum MainUIButtons
     NyangNyangSnapButton,
     MeowMeowStarButton,
     WorkshopMergeBoardButton,
-    MainMergeBoardButton
+    MainMergeBoardButton,
+    LogOutButton,
 }
