@@ -58,11 +58,12 @@ public class SettingsPopupSprite : UIBase
 
     private void OnDestroy()
     {
-        if (_spriteController == null) return;
+        if (_spriteController == null)
+            return;
 
         foreach (UISpriteController controller in _spriteController)
         {
-            controller?.ReleaseSprite();
+            controller?.Dispose();
         }
     }
 }
