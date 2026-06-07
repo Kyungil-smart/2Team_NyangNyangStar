@@ -1478,7 +1478,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _mainUICanvas: {fileID: 1190982140423008927}
   _shopButton: {fileID: 0}
-  _eventButton: {fileID: 0}
+  _scratchingTimeButton: {fileID: 0}
   _dailyCheckInButton: {fileID: 0}
   _mailButton: {fileID: 0}
   _settingsButton: {fileID: 0}
@@ -1504,7 +1504,7 @@ GameObject:
   - component: {fileID: 4870504827751462882}
   - component: {fileID: 1777476806456621088}
   - component: {fileID: 1309715116149449525}
-  m_Layer: 5
+  m_Layer: 0
   m_Name: Direction Canvas
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1818,7 +1818,7 @@ GameObject:
   - component: {fileID: 5385065559516220825}
   - component: {fileID: 4165142960163685617}
   m_Layer: 0
-  m_Name: EventButton
+  m_Name: ScratchingTimeButton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2014,7 +2014,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6eaa4877f3004d29a5601c24baa7dbef, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _mergeBoardCon: {fileID: 0}
   _rectTransfom: {fileID: 0}
+  _upDownScreenCanvas: {fileID: 0}
 --- !u!1 &3669715374461577137
 GameObject:
   m_ObjectHideFlags: 0
