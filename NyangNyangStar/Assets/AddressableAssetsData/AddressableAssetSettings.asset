@@ -97,8 +97,6 @@ MonoBehaviour:
   m_LabelTable:
     m_LabelNames:
     - Sprite
-    - BGM
-    - SFX
     - Audio
   m_SchemaTemplates: []
   m_GroupTemplateObjects:
