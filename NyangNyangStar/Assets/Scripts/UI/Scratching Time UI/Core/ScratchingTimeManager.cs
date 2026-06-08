@@ -137,9 +137,6 @@ public partial class ScratchingTimeManager : UIBase
         if (_isInitialized)
             return;
 
-        // ScratchingTimeUI Addressables 스프라이트 적용
-        GetOrAddController<ScratchingTimeUISprite>("ScratchingTimeUI")?.Init();
-
         _selectionController ??= GetOrAddController<ScratchingTimeController>("ScratchingTimeUI");
         _dailyStageController ??= GetOrAddController<ScratchingBattleController>("ScratchingDailyStageUI");
         _weeklyStageController ??= GetOrAddController<ScratchingBattleController>("ScratchingWeekStageUI");
@@ -147,7 +144,9 @@ public partial class ScratchingTimeManager : UIBase
         _resultPopupController ??= GetOrAddController<ResultPopupController>("ResultPopup");
         _moongchiStatController ??= GetOrAddController<MoongchiStatController>("ScratchingTimeUI");
 
+        // ExitButton 레이아웃 정리 후 Addressables 스프라이트 적용
         _selectionController?.Init();
+        GetOrAddController<ScratchingTimeUISprite>("ScratchingTimeUI")?.Init();
         _dailyStageController?.Init();
         _weeklyStageController?.Init();
         _resultPopupController?.Init();

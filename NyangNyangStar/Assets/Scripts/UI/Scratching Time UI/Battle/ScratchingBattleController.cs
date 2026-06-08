@@ -11,7 +11,7 @@ using UnityEngine.UI;
 
 
 // 스크래칭 타임 전투 화면 UI를 관리
-// 흥미도와 스크래쳐 내구도는 Filled 타입 Image의 fillAmount로 표시
+// 흥미도와 스크래쳐 내구도는 Shape_Rectangle(Sliced) Fill + Slider value로 표시
 
 public class ScratchingBattleController : UIBase
 {
@@ -33,9 +33,7 @@ public class ScratchingBattleController : UIBase
     [SerializeField] private TMP_Text _battleStageText;
 
     [Header("전투 게이지 이미지")]
-    [Tooltip("스크래쳐 내구도 게이지로 사용할 Filled 타입 Image입니다.")]
     [SerializeField] private Image _durabilityAmountImage;
-    [Tooltip("흥미도 게이지로 사용할 Filled 타입 Image입니다.")]
     [SerializeField] private Image _interestAmountImage;
     [SerializeField] private Slider _durabilitySlider;
     [SerializeField] private Slider _interestSlider;
@@ -173,9 +171,6 @@ public class ScratchingBattleController : UIBase
 
         if (_interestSlider != null)
             _interestSlider.value = ratio;
-
-        if (_interestAmountImage != null)
-            _interestAmountImage.fillAmount = ratio;
     }
     /// <summary>
     /// 내구도 게이지 이미지를 현재/최대 비율로 표시합니다.
@@ -188,9 +183,6 @@ public class ScratchingBattleController : UIBase
 
         if (_durabilitySlider != null)
             _durabilitySlider.value = ratio;
-
-        if (_durabilityAmountImage != null)
-            _durabilityAmountImage.fillAmount = ratio;
     }
     /// <summary>
     /// 현재/최대 값으로 UI 게이지 비율을 계산합니다.
@@ -231,6 +223,8 @@ public class ScratchingBattleController : UIBase
         _interestAmountImage ??= FindFillImage("InterestSlider");
         _scratchEffectPool ??= GetComponentInChildren<ScratchEffectPool>(true);
         _interestController ??= GetComponentInChildren<ScratchingInterestController>(true);
+        ScratchingGaugeFillSetup.Apply(_durabilitySlider);
+        ScratchingGaugeFillSetup.Apply(_interestSlider);
         EnsureCloseTweenTargets();
     }
 
