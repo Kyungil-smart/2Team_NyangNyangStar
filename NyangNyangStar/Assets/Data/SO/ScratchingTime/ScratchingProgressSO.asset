@@ -13,7 +13,8 @@ MonoBehaviour:
   m_Name: ScratchingProgressSO
   m_EditorClassIdentifier: 
   m_DocumentId: Progress
-  m_EnumType: 0
+  m_EnumType: 3
+  subCollections: []
   _remainingDailyChallengeCount: 4
   _remainingWeeklyChallengeCount: 1
   _openedStageBySchedule: 1

@@ -31,4 +31,9 @@ public class UsersSO : BaseFireStore
         nickname = "New User";
         await base.CreateNew(database, userId);
     }
+    
+    public string GetUserId()
+    {
+        return userId;
+    }
 }
