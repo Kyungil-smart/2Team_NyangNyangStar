@@ -165,7 +165,7 @@ public class MoongchiStatController : UIBase
             DebugTool.Log("MoongchiProgressSO 연결 완료", DebugType.ScratchingTime, this);
         }
 
-        return false;
+        return true;
     }
 
     public int MoongchiAttack()

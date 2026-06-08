@@ -386,7 +386,7 @@ public partial class ScratchingTimeManager
             DebugTool.Log("ScratchingProgressSO 연결 완료", DebugType.ScratchingTime, this);
         }
 
-        return false;
+        return true;
     }
 
 
