@@ -53,9 +53,9 @@ namespace Core.Managers
             if (canvasScaler == null)
                 canvasScaler = go.AddComponent<CanvasScaler>();
 
-            canvasScaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-            canvasScaler.referenceResolution = new Vector2(1080, 1920);
-            canvasScaler.matchWidthOrHeight = 0.5f;
+            // canvasScaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            // canvasScaler.referenceResolution = new Vector2(1080, 1920);
+            // canvasScaler.matchWidthOrHeight = 0.5f;
 
             if (sort)
             {
