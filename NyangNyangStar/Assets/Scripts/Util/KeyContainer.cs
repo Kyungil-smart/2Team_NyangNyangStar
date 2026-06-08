@@ -210,13 +210,7 @@ namespace Util
             if (!PrefabKeyDict.ContainsKey(key))
                 return false;
 
-            if (PrefabKeyDict[key].Contains(go))
-            {
-                DebugTool.Log("이미 로드한 프리펩입니다.", DebugType.Addressable);
-                return false;
-            }
-
-            return true;
+            return PrefabKeyDict[key].Contains(go);
         }
 
         public static void InitKeys()
@@ -235,6 +229,8 @@ namespace Util
             
             Sprites.Clear();
             Audios.Clear();
+            
+            Audios.Add("BGM_Main");
             
             PrintKeys();
         }

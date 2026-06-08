@@ -1,3 +1,4 @@
+using System;
 using Data.Loader;
 using UnityEngine;
 using Util;
@@ -9,26 +10,29 @@ namespace Core.Managers
     {
         private GameObject _root;
         private SheetLoader _sheetLoader;
+
         private bool _loadSheetsWhenReady;
         private bool _isLoadingSheetLoader;
-    
+        private bool _isCleared;
+        private int _sessionVersion;
+
+        public event Action<float, string> OnDataLoadProgressChanged;
+
         public void Init()
         {
-            _root = GameObject.Find("@Data");
-            
-            if (_root == null)
-            {
-                _root = new GameObject { name = "@Data" };
-                Object.DontDestroyOnLoad(_root);
-            }
-
-            GetSheetLoaderPrefab();
+            _isCleared = false;
+            CreateRoot();
 
             DebugTool.Log("데이터 매니저 초기화 완료", DebugType.Game);
         }
 
         public void LoadSheets()
         {
+            if (_isCleared)
+                return;
+
+            CreateRoot();
+
             if (_sheetLoader == null)
             {
                 _loadSheetsWhenReady = true;
@@ -38,42 +42,76 @@ namespace Core.Managers
             }
 
             _loadSheetsWhenReady = false;
+            ReportDataLoadProgress(0f, "시트 로드 시작");
             _sheetLoader.DataLoad();
         }
 
         public void ClearSheets()
         {
             _loadSheetsWhenReady = false;
-            
+
             if (_sheetLoader != null)
                 _sheetLoader.ClearDatas();
         }
 
-        public void GetSheetLoaderPrefab()
+        private void CreateRoot()
+        {
+            if (_root != null)
+                return;
+
+            _root = new GameObject("@Data");
+            Object.DontDestroyOnLoad(_root);
+        }
+
+        private void GetSheetLoaderPrefab()
         {
             if (_sheetLoader != null || _isLoadingSheetLoader)
                 return;
 
+            CreateRoot();
+
             _isLoadingSheetLoader = true;
-            
+            int requestVersion = _sessionVersion;
+
             GameManager.Addressable.LoadPrefab(KeyContainer.Prefabs.SheetLoader,
                 loadPrefab =>
                 {
                     _isLoadingSheetLoader = false;
+
+                    if (_isCleared || requestVersion != _sessionVersion)
+                    {
+                        if (loadPrefab != null)
+                            Object.Destroy(loadPrefab);
+
+                        return;
+                    }
+
+                    CreateRoot();
 
                     if (loadPrefab == null)
                     {
                         DebugTool.Warning($"{KeyContainer.Prefabs.SheetLoader} : 로드된 SheetLoader 인스턴스가 없습니다.", DebugType.Missing);
                         return;
                     }
-                    
+
+                    if (_root == null)
+                    {
+                        Object.Destroy(loadPrefab);
+                        return;
+                    }
+
                     _sheetLoader = loadPrefab.GetComponent<SheetLoader>();
+
                     if (_sheetLoader == null)
                     {
                         DebugTool.Warning($"{loadPrefab.name}에 시트 로더 컴포넌트가 없습니다.", DebugType.Missing);
+                        Object.Destroy(loadPrefab);
                         return;
                     }
-                    
+
+                    _sheetLoader.OnSheetLoadProgressChanged -= HandleSheetLoadProgress;
+                    _sheetLoader.OnSheetLoadProgressChanged += HandleSheetLoadProgress;
+
                     loadPrefab.transform.SetParent(_root.transform, false);
                     DebugTool.Log($"{loadPrefab.name} : 시트 로더 로드 완료", DebugType.Data);
 
@@ -87,18 +125,40 @@ namespace Core.Managers
                 });
         }
 
+        private void HandleSheetLoadProgress(float progress, string message)
+        {
+            ReportDataLoadProgress(progress, message);
+        }
+
+        private void ReportDataLoadProgress(float progress, string message)
+        {
+            OnDataLoadProgressChanged?.Invoke(Mathf.Clamp01(progress), message);
+        }
+
         public void Clear()
         {
-            if (_root == null) 
-                return;
+            _isCleared = true;
+            _sessionVersion++;
 
-            ClearSheets();
-            
-            Object.Destroy(_root);
-            _root = null;
-            _sheetLoader = null;
+            _loadSheetsWhenReady = false;
             _isLoadingSheetLoader = false;
-            
+
+            if (_sheetLoader != null)
+            {
+                _sheetLoader.OnSheetLoadProgressChanged -= HandleSheetLoadProgress;
+                _sheetLoader.ClearDatas();
+                Object.Destroy(_sheetLoader.gameObject);
+                _sheetLoader = null;
+            }
+
+            if (_root != null)
+            {
+                Object.Destroy(_root);
+                _root = null;
+            }
+
+            OnDataLoadProgressChanged = null;
+
             DebugTool.Log("데이터 매니저 제거 완료", DebugType.Game);
         }
     }

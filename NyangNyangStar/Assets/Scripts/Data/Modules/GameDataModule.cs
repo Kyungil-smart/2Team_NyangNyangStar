@@ -10,18 +10,9 @@ namespace Data.Modules
     {
         private Dictionary<int, KeyContainerSo> _keyContainerDict = new();
         private ItemDatabaseSo _mergeBoardItemDatabase;
-        //private WaveSpawnTableSO                   _waveSpawnTable;
-        //private PlayerUpgradeTableSO               _playerUpgradeTable;
-        //private TeamUpgradeTableSO                 _teamUpgradeTable;
-        
-        // ─── 상태 ────────────────────────────────────────────────
+
         public bool IsReady { get; private set; }
 
-        public void MarkNotReady()
-        {
-            IsReady = false;
-        }
-        
         private event Action _onReady;
 
         public event Action OnReady
@@ -34,11 +25,15 @@ namespace Data.Modules
             remove { _onReady -= value; }
         }
 
-        // ─── 등록 (DataManager가 호출) ────────────────────────────
+        public void MarkNotReady()
+        {
+            IsReady = false;
+        }
+
         public void RegisterKeyContainers(Dictionary<int, KeyContainerSo> dict)
         {
-            _keyContainerDict = dict;
-            DebugTool.Log($"[GameDataModule] KeyContainer 등록 ({dict?.Count ?? 0}개)", DebugType.Data);
+            _keyContainerDict = dict ?? new Dictionary<int, KeyContainerSo>();
+            DebugTool.Log($"[GameDataModule] KeyContainer 등록 ({_keyContainerDict.Count}개)", DebugType.Data);
         }
 
         public void RegisterMergeBoardItemDatabase(ItemDatabaseSo itemDatabase)
@@ -110,17 +105,30 @@ namespace Data.Modules
                 DebugTool.Warning("[GameDataModule] 이미 Ready 상태에서 MarkReady() 재호출", DebugType.Data);
                 return;
             }
+
             IsReady = true;
             DebugTool.Log("[GameDataModule] 모든 데이터 준비 완료 (IsReady = true)", DebugType.Data);
             _onReady?.Invoke();
         }
+
         private bool CheckReady(string methodName, int id)
         {
             if (IsReady) return true;
+
             DebugTool.Warning(
                 $"[GameDataModule] 미준비 상태에서 {methodName}({id}) 호출",
                 DebugType.Data);
             return false;
+        }
+
+        public void Clear()
+        {
+            IsReady = false;
+            _onReady = null;
+            _mergeBoardItemDatabase = null;
+            _keyContainerDict.Clear();
+
+            DebugTool.Log("[GameDataModule] 데이터 초기화 완료", DebugType.Data);
         }
 
         public void ClearEvent()

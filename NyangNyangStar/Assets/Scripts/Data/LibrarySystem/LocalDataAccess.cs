@@ -19,12 +19,21 @@ namespace Data.LibrarySystem
                 Destroy(gameObject);
                 return;
             }
+
             Instance = this;
             DontDestroyOnLoad(gameObject);
 
             Game = new GameDataModule();
 
             DebugTool.Log("[LocalDataAccess] 초기화 완료", DebugType.Data, this);
+        }
+
+        public void ClearSession()
+        {
+            Game?.Clear();
+            Game = new GameDataModule();
+
+            DebugTool.Log("[LocalDataAccess] 세션 데이터 초기화 완료", DebugType.Data, this);
         }
 
         private void OnDestroy()
