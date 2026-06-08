@@ -42,6 +42,7 @@ public class NyangNyangSnapStagePopupUI : UIPopup
         GameManager.UI.ShowPopupUI<NyangNyangSnapUI>(KeyContainer.Prefabs.NyangNyangSnapPopupUI,
             onLoaded =>
             {
+                onLoaded.SetStagePopup(this);
                 AddNyangNyangSnapPopupButton(_stage1Button, onLoaded, 1);
                 AddNyangNyangSnapPopupButton(_stage2Button, onLoaded, 2);
             }, false, false);

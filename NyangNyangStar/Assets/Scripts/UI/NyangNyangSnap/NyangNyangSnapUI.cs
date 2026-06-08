@@ -53,6 +53,7 @@ public class NyangNyangSnapUI : UIPopup
 
     private GameObject _snapCatObject;
     private NyangNyangSnapSprite _sprite;
+    private NyangNyangSnapStagePopupUI _stagePopup;
     private bool _isCapturing;
 
     public override void Init()
@@ -286,8 +287,9 @@ public class NyangNyangSnapUI : UIPopup
                     return;
                 }
 
+                resultUI.SetSnapUI(this);
                 resultUI.gameObject.SetActive(true);
-                resultUI.SetResult(bestRecord);
+                resultUI.SetResult(bestRecord, _captureRecorder.Records);
                 resultUI.PlayOpenAnimation();
 
                 DebugTool.Log(
@@ -449,6 +451,37 @@ public class NyangNyangSnapUI : UIPopup
         _isCapturing = false;
         SetPhotoButtonInteractable(false);
         UpdateCaptureCountText();
+    }
+
+    public void RetrySnap()
+    {
+        gameObject.SetActive(true);
+
+        _startPanel.SetActive(true);
+        _startButton.SetActive(true);
+
+        SetSnapCatActive(false);
+
+        AutoAssignCaptureComponents();
+
+        if (_captureRecorder != null)
+            _captureRecorder.ClearRecords();
+
+        _isCapturing = false;
+        SetPhotoButtonInteractable(false);
+        UpdateCaptureCountText();
+    }
+
+    public void SetStagePopup(NyangNyangSnapStagePopupUI stagePopup)
+    {
+        _stagePopup = stagePopup;
+    }
+
+    public void BackToMain()
+    {
+        _stagePopup.gameObject.SetActive(false);
+
+        gameObject.SetActive(false);
     }
 
     public void StartSnapCat()
