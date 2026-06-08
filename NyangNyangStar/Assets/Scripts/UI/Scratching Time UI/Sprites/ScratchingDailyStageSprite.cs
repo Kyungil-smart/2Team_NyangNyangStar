@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using Core.Managers;
 using Data.LibrarySystem;
@@ -32,6 +33,15 @@ public class ScratchingDailyStageSprite : UIBase
 
         if (LocalDataAccess.Instance != null && !LocalDataAccess.Instance.Game.IsReady)
             GameManager.Data.LoadSheets();
+
+        StartCoroutine(ReapplyGaugeFillAfterSprites());
+    }
+
+    private IEnumerator ReapplyGaugeFillAfterSprites()
+    {
+        // Shape_Rectangle 비동기 로드 이후 Fill 레이아웃을 다시 맞춤
+        yield return null;
+        ApplyGaugeFillSetup();
     }
 
     public override void Init()
@@ -43,6 +53,7 @@ public class ScratchingDailyStageSprite : UIBase
         _initialized = true;
         BindImages();
         SetSprites();
+        ApplyGaugeFillSetup();
     }
 
     private static void EnsureLocalDataAccess()
@@ -164,6 +175,12 @@ public class ScratchingDailyStageSprite : UIBase
             return null;
 
         return FindChild<Image>(parent, childName, false);
+    }
+
+    private void ApplyGaugeFillSetup()
+    {
+        ScratchingGaugeFillSetup.Apply(FindChild(gameObject, "DurabilitySlider", true));
+        ScratchingGaugeFillSetup.Apply(FindChild(gameObject, "InterestSlider", true));
     }
 
     private static Image FindSliderFillImage(GameObject sliderRoot)

@@ -6,6 +6,7 @@ using Data.LibrarySystem;
 using Data.ScriptableObjects.KeyContainerSO;
 using Services.Enums;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
 using UnityEngine.UI;
 using Util;
@@ -303,12 +304,13 @@ public class ScratchEffectPool : MonoBehaviour
 
 
     // 유효한 Addressables 핸들만 Release 후 초기화
+    // OnDestroy는 GameManager보다 늦게/먼저 파괴될 수 있어 Addressables를 직접 호출함
     private static void ReleaseHandle(ref AsyncOperationHandle<Sprite> handle)
     {
         if (!handle.IsValid())
             return;
 
-        GameManager.Addressable.Release(handle);
+        Addressables.Release(handle);
         handle = default;
     }
 

@@ -11,12 +11,16 @@ public class ScratchingInterestController : MonoBehaviour
     private const float FinalPhaseDuration = 3f;
 
     [SerializeField] private Slider _interestSlider;
+    [SerializeField] private Image _interestFillImage;
+    [SerializeField] private Color _finalPhaseFillColor = new(0.9098039f, 0.3529412f, 0.3529412f, 1f);
 
     private float _drainDuration = DefaultDrainDuration;
 
     private float _interest = MaxInterest;
     private float _elapsedDrainTime;
     private bool _isDraining;
+    private Color _defaultFillColor = Color.white;
+    private bool _defaultFillColorReady;
 
     public float CurrentInterest => _interest;
     public bool IsDraining => _isDraining;
@@ -36,6 +40,14 @@ public class ScratchingInterestController : MonoBehaviour
     // 흥미도가 0이 되었을 때 발생 -> 스테이지 실패
     public event Action OnDepleted;
 
+    private void Awake()
+    {
+        EnsureGaugeFillConfigured();
+        EnsureFillImageResolved();
+        CaptureDefaultFillColor();
+        DisableSliderColorTint();
+    }
+
     private void OnEnable()
     {
         ResetInterest();
@@ -48,6 +60,7 @@ public class ScratchingInterestController : MonoBehaviour
         _elapsedDrainTime = 0f;
         _isDraining = false;
         UpdateSlider();
+        ApplyFillColor();
     }
 
     // 첫 터치 시 호출 TOUCH! 안내가 사라진 직후 흥미도 감소를 시작
@@ -56,8 +69,12 @@ public class ScratchingInterestController : MonoBehaviour
         if (_isDraining || _interest <= 0f)
             return;
 
+        EnsureFillImageResolved();
+        CaptureDefaultFillColor();
+
         _isDraining = true;
         _elapsedDrainTime = 0f;
+        ApplyFillColor();
     }
 
     public void StopInterestDrain()
@@ -81,6 +98,14 @@ public class ScratchingInterestController : MonoBehaviour
         UpdateSlider();
         _isDraining = false;
         OnDepleted?.Invoke();
+    }
+
+    private void LateUpdate()
+    {
+        if (!_isDraining)
+            return;
+
+        ApplyFillColor();
     }
 
     // 1구간 : (TimeLimit -> 3초) 동안 100 -> 0 선형
@@ -112,5 +137,76 @@ public class ScratchingInterestController : MonoBehaviour
             return;
 
         _interestSlider.value = _interest / MaxInterest;
+    }
+
+    private void EnsureGaugeFillConfigured()
+    {
+        if (_interestSlider == null)
+            return;
+
+        ScratchingGaugeFillSetup.Apply(_interestSlider);
+        DisableSliderColorTint();
+    }
+
+    private void DisableSliderColorTint()
+    {
+        if (_interestSlider == null)
+            return;
+
+        // Fill Image가 Target Graphic이면 Disabled ColorTint가 색 변경을 덮어씀
+        _interestSlider.transition = Selectable.Transition.None;
+    }
+
+    private void EnsureFillImageResolved()
+    {
+        if (_interestFillImage != null || _interestSlider == null)
+            return;
+
+        RectTransform fillRect = _interestSlider.fillRect;
+        if (fillRect != null)
+        {
+            _interestFillImage = fillRect.GetComponent<Image>();
+            if (_interestFillImage != null)
+                return;
+        }
+
+        Transform fillArea = _interestSlider.transform.Find("Background/Fill Area")
+                           ?? _interestSlider.transform.Find("Fill Area");
+        if (fillArea == null)
+            return;
+
+        Transform fill = fillArea.Find("Fill");
+        if (fill != null)
+            _interestFillImage = fill.GetComponent<Image>();
+    }
+
+    private void CaptureDefaultFillColor()
+    {
+        EnsureFillImageResolved();
+        if (_interestFillImage == null || _defaultFillColorReady)
+            return;
+
+        _defaultFillColor = _interestFillImage.color;
+        _defaultFillColorReady = true;
+    }
+
+    private bool IsInFinalPhase()
+    {
+        return _isDraining
+               && _elapsedDrainTime >= MainPhaseDuration
+               && _elapsedDrainTime < _drainDuration;
+    }
+
+    private void ApplyFillColor()
+    {
+        EnsureFillImageResolved();
+
+        if (_interestFillImage == null)
+            return;
+
+        if (!_defaultFillColorReady)
+            CaptureDefaultFillColor();
+
+        _interestFillImage.color = IsInFinalPhase() ? _finalPhaseFillColor : _defaultFillColor;
     }
 }

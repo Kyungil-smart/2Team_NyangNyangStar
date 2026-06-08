@@ -28,10 +28,12 @@ public class ScratchingTimeUISprite : UIBase
     {
         ["Background"] = ShapeRectangle,
         ["Background/Outline"] = ShapeRectangleOutline,
+        ["Background/Background"] = TileCats,
         ["Background/Image"] = TileCats,
         ["Background/LeftCloudImage"] = CloudLeft,
         ["EventPopupPanel"] = NysContent,
         ["EventPopupPanel/HeaderPanel/ExitButton"] = CloseButton,
+        ["EventPopupPanel/ExitButton"] = CloseButton,
         ["EventPopupPanel/LevelSection/LevelRow/Panel/Background"] = ShapeRectangle,
         ["EventPopupPanel/LevelSection/LevelRow/Panel/Background/Image"] = CloudFace,
         ["EventPopupPanel/LevelSection/LevelRow/Panel/Background/Outline"] = ShapeRectangleOutline,
@@ -90,7 +92,7 @@ public class ScratchingTimeUISprite : UIBase
         RegisterSpriteKeyIfMissing(HighlightCurved, AddressableGroupType.Scratching);
         RegisterSpriteKeyIfMissing(CloudFace, AddressableGroupType.Scratching);
         RegisterSpriteKeyIfMissing(CloudLeft, AddressableGroupType.Scratching);
-        RegisterSpriteKeyIfMissing(TileCats, AddressableGroupType.Scratching);
+        RegisterSpriteKeyIfMissing(TileCats, AddressableGroupType.Common);
     }
 
     private static void RegisterSpriteKeyIfMissing(string key, AddressableGroupType groupType)
