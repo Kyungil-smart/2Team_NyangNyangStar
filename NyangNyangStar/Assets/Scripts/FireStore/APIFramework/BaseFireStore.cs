@@ -57,13 +57,15 @@ public abstract class BaseFireStore : ScriptableObject
 
     public virtual async Task CreateNew(FirebaseFirestore database, string userId)
     {
-        this.db = database;
-        this.m_UserId = userId;
-
-        foreach (var sub in AllSubCollections())
-            await sub.CreateNew(database, userId);
+        db = database;
+        m_UserId = userId;
 
         await SetDataAsync(ToFirestoreDictionary());
+
+        foreach (BaseFireStore sub in AllSubCollections())
+        {
+            await sub.CreateNew(database, userId);
+        }
     }
 
     public virtual void InitDataBase(FirebaseFirestore database)

@@ -9,7 +9,9 @@ public enum DataType
 {
     None,
     Users,
-    MergeBoard
+    MergeBoard,
+    ScratchingTime,
+    MoongchiProgress,
 }
 
 public class FireStoreManager : MonoBehaviour
@@ -114,9 +116,12 @@ public class FireStoreManager : MonoBehaviour
     private async Task CreateNew(string userId)
     {
         foreach (BaseFireStore item in m_Data)
+        {
+            Debug.Log($"[FireStoreManager] CreateNew 시작: {item.name} / {item.EnumType}");
             await item.CreateNew(db, userId);
+            Debug.Log($"[FireStoreManager] CreateNew 완료: {item.name} / {item.EnumType}");
+        }
     }
-
     private void BindClass(string userId)
     {
         foreach (BaseFireStore item in m_Data)

@@ -49,10 +49,17 @@ namespace UI.MergeBoard
 
         private void Start()
         {
+            Debug.Log($"[BoardItemReceiver] Start / Button 연결 여부: {_testReceiveButton != null}");
+
             if (_testReceiveButton != null)
+            {
+                _testReceiveButton.onClick.RemoveListener(ReceiveRandomTestItem);
                 _testReceiveButton.onClick.AddListener(ReceiveRandomTestItem);
+            }
             else
+            {
                 DebugTool.Warning("테스트 아이템 생성 버튼이 연결되지 않았습니다.", DebugType.Board, this);
+            }
         }
 
         public void RegisterBoardSystem(BoardSystem boardSystem)
@@ -164,6 +171,8 @@ namespace UI.MergeBoard
 
         public void ReceiveRandomTestItem()
         {
+            Debug.Log("[BoardItemReceiver] 아이템 생성 버튼 클릭됨");
+
             if (!CanReceiveTestItem())
                 return;
 

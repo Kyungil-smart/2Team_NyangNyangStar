@@ -348,14 +348,21 @@ namespace Data.ScriptableObjects.MergeBoard
             switch (trimmedValue)
             {
                 case "일반":
+                case "일반 아이템":
+                case "Common":
                 case "common":
+                case "General":
+                case "general":
                     return ItemType.Common;
 
                 case "특수":
+                case "특수 아이템":
+                case "Special":
                 case "special":
                     return ItemType.Special;
 
                 case "없음":
+                case "None":
                 case "none":
                     return ItemType.None;
 

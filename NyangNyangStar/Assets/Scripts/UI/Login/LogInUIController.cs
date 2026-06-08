@@ -84,6 +84,8 @@ namespace UI.Login
                 {
                     if (AuthManager.Instance != null)
                         AuthManager.Instance.Logout();
+                    
+                    GameManager.ClearSession();
                 });
             }
         }

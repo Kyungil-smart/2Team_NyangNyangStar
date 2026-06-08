@@ -121,7 +121,7 @@ public class MoongchiStatController : UIBase
 
         try
         {
-            await _moongchiProgress.UpdateDataAsync();
+            await _moongchiProgress.SetDataAsync(_moongchiProgress.ToFirestoreDictionary());
         }
         catch (Exception e)
         {

@@ -1,4 +1,5 @@
 using Core.Managers;
+using TMPro;
 using UI;
 using UI.Base;
 using UI.MergeBoard;
@@ -31,8 +32,16 @@ public class MainUI : UIScene
     private MainUISprite _mainUISprite;
     private MergeBoardController _mergeBoardController;
     private ScratchingTimeManager _scratchingTimeManager;
+    
+    [SerializeField] private UsersSO _usersSO;
+    [SerializeField] private TMP_Text _uidText;
 
     public static MainUI Instance { get; private set; }
+
+    private void Start()
+    {
+        _uidText.text = _usersSO.GetUserId();
+    }
 
     public override void Init()
     {
@@ -157,6 +166,8 @@ public class MainUI : UIScene
             return;
         }
 
+        _scratchingTimeManager?.HideImmediately();
+
         if (ScreenTransitionManager.Instance == null)
         {
             SetMergeBoardVisible(true);
@@ -194,7 +205,7 @@ public class MainUI : UIScene
 
     private void SetMergeBoardVisible(bool isOpen)
     {
-        _mergeBoardController.IsOpen = isOpen;
+        _mergeBoardController.SetVisible(isOpen);
 
         if (_mainUICanvas != null)
             _mainUICanvas.sortingOrder = isOpen ? 0 : 2;
@@ -208,7 +219,12 @@ public class MainUI : UIScene
                 _scratchingTimeManager = onLoaded.GetComponent<ScratchingTimeManager>();
 
                 if (_scratchingTimeManager == null)
+                {
                     DebugTool.Warning($"{onLoaded.name}의 스크래칭 타임 매니저를 찾을 수 없습니다.", DebugType.Board);
+                    return;
+                }
+
+                _scratchingTimeManager.HideImmediately();
             },
             onFailed =>
             {

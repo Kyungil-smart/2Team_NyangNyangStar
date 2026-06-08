@@ -214,6 +214,17 @@ public partial class ScratchingTimeManager : UIBase
         }
     }
 
+    public void HideImmediately()
+    {
+        if (_rectTransform != null)
+        {
+            _rectTransform.DOKill();
+            _rectTransform.localScale = Vector3.zero;
+        }
+
+        SendScratchingTimeBehindMainUI();
+        gameObject.SetActive(false);
+    }
 
     // 자식 Transform에서 컴포넌트를 찾고, 없으면 새로 추가
     private T GetOrAddController<T>(string childName) where T : Component

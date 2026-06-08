@@ -23,6 +23,14 @@ namespace UI.MergeBoard
             if (_closeButton != null)
                 _closeButton.onClick.AddListener(CloseBoard);
         }
+        
+        public void SetVisible(bool isOpen)
+        {
+            IsOpen = isOpen;
+
+            if (_boardRoot != null)
+                _boardRoot.SetActive(isOpen);
+        }
 
         private void OnDisable()
         {
