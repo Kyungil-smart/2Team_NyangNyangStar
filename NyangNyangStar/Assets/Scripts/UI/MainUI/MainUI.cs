@@ -1,8 +1,8 @@
 using Core.Managers;
 using UI;
 using UI.Base;
-using UI.MainUI;
 using UI.MergeBoard;
+using UI.Transition;
 using UnityEngine;
 using UnityEngine.UI;
 using Util;
@@ -10,7 +10,7 @@ using Util;
 public class MainUI : UIScene
 {
     [SerializeField] private Canvas _mainUICanvas;
-    
+
     [Header("버튼")]
     [Tooltip("상점")][SerializeField] private Button _shopButton;
     [Tooltip("스크래칭 타임")][SerializeField] private Button _scratchingTimeButton;
@@ -26,15 +26,18 @@ public class MainUI : UIScene
     [Tooltip("냥스타그램")][SerializeField] private Button _meowMeowStarButton;
     [Tooltip("공방 머지 보드판")][SerializeField] private Button _workshopMergeBoardButton;
     [Tooltip("기본 머지 보드판")][SerializeField] private Button _mainMergeBoardButton;
-    [Tooltip("로그 아웃")] [SerializeField] private Button _logOutButton;
-
-    [Space(10)] [Header("이미지")]
-    [SerializeField] private UpDownScreenController _upDownCon;
+    [Tooltip("로그 아웃")][SerializeField] private Button _logOutButton;
 
     private MainUISprite _mainUISprite;
+    private MergeBoardController _mergeBoardController;
+    private ScratchingTimeManager _scratchingTimeManager;
+
+    public static MainUI Instance { get; private set; }
 
     public override void Init()
     {
+        Instance = this;
+
         Bind<Button>(typeof(MainUIButtons));
 
         _shopButton = Get<Button>((int)MainUIButtons.ShopButton);
@@ -53,13 +56,16 @@ public class MainUI : UIScene
         _mainMergeBoardButton = Get<Button>((int)MainUIButtons.MainMergeBoardButton);
         _logOutButton = Get<Button>((int)MainUIButtons.LogOutButton);
 
-        InitPopups();
-        
-        _mainUICanvas.overrideSorting = true;
-        _mainUICanvas.sortingOrder = 2;
+        if (_mainUICanvas != null)
+        {
+            _mainUICanvas.overrideSorting = true;
+            _mainUICanvas.sortingOrder = 2;
+        }
 
         _mainUISprite = GetComponent<MainUISprite>();
-        _mainUISprite.Init();
+        _mainUISprite?.Init();
+
+        InitPopups();
     }
 
     private void InitPopups()
@@ -75,7 +81,10 @@ public class MainUI : UIScene
         InitPopup(KeyContainer.Prefabs.AffinityPopupUI, _affinityButton);
         InitPopup(KeyContainer.Prefabs.NyangNyangSnapStagePopUpUI, _nyangNyangSnapButton);
         InitPopup(KeyContainer.Prefabs.NyangStargramHomeProfile, _meowMeowStarButton);
-        _logOutButton.onClick.AddListener(LogOutButton);
+
+        if (_logOutButton != null)
+            _logOutButton.onClick.AddListener(LogOutButton);
+
         LoadMergeBoard();
         LoadScratchingTime();
     }
@@ -93,8 +102,24 @@ public class MainUI : UIScene
         RemovePopupButton(_affinityButton);
         RemovePopupButton(_nyangNyangSnapButton);
         RemovePopupButton(_meowMeowStarButton);
-        _mainMergeBoardButton.onClick.RemoveAllListeners();
-        _scratchingTimeButton.onClick.RemoveAllListeners();
+
+        if (_mainMergeBoardButton != null)
+            _mainMergeBoardButton.onClick.RemoveAllListeners();
+
+        if (_workshopMergeBoardButton != null)
+            _workshopMergeBoardButton.onClick.RemoveAllListeners();
+
+        if (_scratchingTimeButton != null)
+            _scratchingTimeButton.onClick.RemoveAllListeners();
+
+        if (_logOutButton != null)
+            _logOutButton.onClick.RemoveAllListeners();
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance == this)
+            Instance = null;
     }
 
     private void LoadMergeBoard()
@@ -102,68 +127,132 @@ public class MainUI : UIScene
         GameManager.Addressable.LoadPrefab(KeyContainer.Prefabs.MergeBoard,
             onLoaded =>
             {
-                MergeBoardController boardCon = onLoaded.GetComponentInChildren<MergeBoardController>();
+                _mergeBoardController = onLoaded.GetComponentInChildren<MergeBoardController>(true);
 
-                if (boardCon == null)
+                if (_mergeBoardController == null)
                 {
                     DebugTool.Warning($"{onLoaded.name}의 머지보드 컨트롤러를 찾을 수 없습니다.", DebugType.Board);
                     return;
                 }
-                
-                boardCon.OpenBoard();
-                DontDestroyOnLoad(onLoaded);
-            },
-            onFailed =>
-        {
-            DebugTool.Warning($"{onFailed} 를 불러올 수 없습니다.", DebugType.Addressable);
-        });
-        
-        _mainMergeBoardButton.onClick.AddListener(() =>
-        {
-            _upDownCon.DownAnimation(_mainUICanvas);
-            GameManager.Audio.PlaySfx("Main_SFX_Touch");
-        });
-    }
-    
-    private void LoadScratchingTime()
-    {
-        ScratchingTimeManager manager = null;
-        GameManager.Addressable.LoadPrefab(KeyContainer.Prefabs.ScratchingTime,
-            onLoaded =>
-            {
-                manager = onLoaded.GetComponent<ScratchingTimeManager>();
-                
-                if (manager == null)
-                    DebugTool.Warning($"{onLoaded.name}의 스크래칭 타임 매니저를 찾을 수 없습니다.", DebugType.Board);
-                DontDestroyOnLoad(onLoaded);
+
+                _mergeBoardController.OpenBoard();
             },
             onFailed =>
             {
                 DebugTool.Warning($"{onFailed} 를 불러올 수 없습니다.", DebugType.Addressable);
             });
-        
-        _scratchingTimeButton.onClick.AddListener(() =>
-        {
-            manager.OpenScratchingTimeUI();
-            GameManager.Audio.PlaySfx("Main_SFX_Touch");
-        });
+
+        if (_mainMergeBoardButton != null)
+            _mainMergeBoardButton.onClick.AddListener(OpenMergeBoard);
+
+        if (_workshopMergeBoardButton != null)
+            _workshopMergeBoardButton.onClick.AddListener(OpenMergeBoard);
     }
-    
+
+    private void OpenMergeBoard()
+    {
+        if (_mergeBoardController == null)
+        {
+            DebugTool.Warning("MergeBoardController가 아직 로드되지 않았습니다.", DebugType.Board);
+            return;
+        }
+
+        if (ScreenTransitionManager.Instance == null)
+        {
+            SetMergeBoardVisible(true);
+            return;
+        }
+
+        ScreenTransitionManager.Instance.Cover(() =>
+        {
+            SetMergeBoardVisible(true);
+            ScreenTransitionManager.Instance.Reveal();
+        });
+
+        GameManager.Audio.PlaySfx("Main_SFX_Touch");
+    }
+
+    public void CloseMergeBoard()
+    {
+        if (_mergeBoardController == null)
+            return;
+
+        if (ScreenTransitionManager.Instance == null)
+        {
+            SetMergeBoardVisible(false);
+            return;
+        }
+
+        ScreenTransitionManager.Instance.Cover(() =>
+        {
+            SetMergeBoardVisible(false);
+            ScreenTransitionManager.Instance.Reveal();
+        });
+
+        GameManager.Audio.PlaySfx("Main_SFX_Touch");
+    }
+
+    private void SetMergeBoardVisible(bool isOpen)
+    {
+        _mergeBoardController.IsOpen = isOpen;
+
+        if (_mainUICanvas != null)
+            _mainUICanvas.sortingOrder = isOpen ? 0 : 2;
+    }
+
+    private void LoadScratchingTime()
+    {
+        GameManager.Addressable.LoadPrefab(KeyContainer.Prefabs.ScratchingTime,
+            onLoaded =>
+            {
+                _scratchingTimeManager = onLoaded.GetComponent<ScratchingTimeManager>();
+
+                if (_scratchingTimeManager == null)
+                    DebugTool.Warning($"{onLoaded.name}의 스크래칭 타임 매니저를 찾을 수 없습니다.", DebugType.Board);
+            },
+            onFailed =>
+            {
+                DebugTool.Warning($"{onFailed} 를 불러올 수 없습니다.", DebugType.Addressable);
+            });
+
+        if (_scratchingTimeButton != null)
+        {
+            _scratchingTimeButton.onClick.AddListener(() =>
+            {
+                if (_scratchingTimeManager == null)
+                {
+                    DebugTool.Warning("ScratchingTimeManager가 아직 로드되지 않았습니다.", DebugType.UI);
+                    return;
+                }
+
+                _scratchingTimeManager.OpenScratchingTimeUI();
+                GameManager.Audio.PlaySfx("Main_SFX_Touch");
+            });
+        }
+    }
 
     private void LogOutButton()
     {
-        AuthManager auth = FindObjectOfType<AuthManager>();
-
-        if (auth == null)
+        if (ScreenTransitionManager.Instance == null)
         {
-            DebugTool.Warning("AuthManager 를 찾을 수 없습니다.", DebugType.Network);
+            LogoutProcess();
             return;
         }
-        
-        auth.Logout();
-        _upDownCon.ExitGameScene();
+
+        ScreenTransitionManager.Instance.Cover(LogoutProcess);
     }
-    
+
+    private void LogoutProcess()
+    {
+        AuthManager auth = AuthManager.Instance;
+
+        if (auth != null)
+            auth.Logout();
+
+        GameManager.ClearSession();
+        GameManager.Scene.LoadPreviousScene();
+    }
+
     private void InitPopup(string key, Button button)
     {
         GameManager.UI.ShowPopupUI<UIPopup>(key, onLoaded => AddPopupButton(button, onLoaded), false);
@@ -171,9 +260,11 @@ public class MainUI : UIScene
 
     private void AddPopupButton(Button button, UIPopup popup)
     {
-        if (button == null) return;
-        button.onClick.AddListener(() => 
-        { 
+        if (button == null)
+            return;
+
+        button.onClick.AddListener(() =>
+        {
             popup.gameObject.SetActive(true);
             PlayPopupOpenAnimation(popup);
             GameManager.Audio.PlaySfx("Main_SFX_Touch");
@@ -182,13 +273,17 @@ public class MainUI : UIScene
 
     private void RemovePopupButton(Button button)
     {
-        if (button == null) return;
+        if (button == null)
+            return;
+
         button.onClick.RemoveAllListeners();
     }
 
     private void PlayPopupOpenAnimation(UIPopup popup)
     {
-        if (popup == null) return;
+        if (popup == null)
+            return;
+
         popup.PlayOpenAnimation();
     }
 }

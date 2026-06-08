@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Firebase;
-using Firebase.Extensions;
 using Firebase.Firestore;
 using UnityEngine;
 
@@ -12,20 +11,33 @@ public enum DataType
     Users,
     MergeBoard
 }
+
 public class FireStoreManager : MonoBehaviour
 {
     private FirebaseFirestore db;
     public static FireStoreManager Instance { get; private set; }
+
     [SerializeField] private List<BaseFireStore> m_Data;
     private Dictionary<DataType, BaseFireStore> m_DataDictionary;
-    
+
+    public bool IsInitialized { get; private set; }
+
     private void Awake()
     {
-        DontDestroyOnLoad(this);
         InitSingleton();
-
+        DontDestroyOnLoad(gameObject);
     }
-    public bool IsInitialized { get; private set; }
+
+    private void InitSingleton()
+    {
+        if (Instance == null)
+        {
+            Instance = this;
+            return;
+        }
+
+        Destroy(gameObject);
+    }
 
     public async Task InitAsync(string userId = "testUserId")
     {
@@ -70,18 +82,6 @@ public class FireStoreManager : MonoBehaviour
         await InitAsync(userId);
     }
 
-    private void InitSingleton()
-    {
-
-        if (Instance == null)
-        {
-            Instance = this;
-        }
-        else
-        {
-            Destroy(this.gameObject);
-        }
-    }
     private async Task InitFirebase(string userId)
     {
         DependencyStatus status = await FirebaseApp.CheckAndFixDependenciesAsync();
@@ -97,14 +97,14 @@ public class FireStoreManager : MonoBehaviour
         if (exists)
         {
             Debug.Log($"UserID {userId} exists in Firestore.");
-            BindClass(userId);          // db 바인딩(동기)
-            await LoadClass();          // 기존 유저: 서버 데이터 로드(비동기, await로 완료 보장)
+            BindClass(userId);
+            await LoadClass();
             Debug.Log("기존 유저 데이터 로드 완료");
         }
         else
         {
             Debug.Log($"UserID {userId} does NOT exist in Firestore.");
-            await CreateNew(userId);    // 신규 유저: 생성 + db 바인딩 (서버 재읽기 없음)
+            await CreateNew(userId);
             BindClass(userId);
         }
 
@@ -113,31 +113,24 @@ public class FireStoreManager : MonoBehaviour
 
     private async Task CreateNew(string userId)
     {
-        foreach (BaseFireStore item in m_Data)// m_Data 는 BaseFireStore를 상속하는 SO 스크립트 오브젝트
-        {
+        foreach (BaseFireStore item in m_Data)
             await item.CreateNew(db, userId);
-        }
     }
 
     private void BindClass(string userId)
     {
-        foreach (BaseFireStore item in m_Data)// m_Data 는 BaseFireStore를 상속하는 SO 스크립트 오브젝트
-        {
+        foreach (BaseFireStore item in m_Data)
             item.InitDataBase(db, userId);
-
-        }
     }
 
     private async Task LoadClass()
     {
-        foreach (BaseFireStore item in m_Data)// m_Data 는 BaseFireStore를 상속하는 SO 스크립트 오브젝트
-        {
+        foreach (BaseFireStore item in m_Data)
             await item.UpdateFromServerAsync(true);
-        }
     }
+
     public async Task<bool> ExistsAsync(string userId)
     {
-        // Users 컬렉션에서 UserID 필드 == uid 인 문서가 있는지 조회
         Query query = db.Collection("Users").WhereEqualTo("UserID", userId);
         QuerySnapshot snapshot = await query.GetSnapshotAsync();
 
@@ -150,14 +143,8 @@ public class FireStoreManager : MonoBehaviour
     {
         m_DataDictionary = new Dictionary<DataType, BaseFireStore>();
 
-        foreach (BaseFireStore data in m_Data)
+        foreach (BaseFireStore data in m_Data.Where(data => data != null))
         {
-            if (data == null)
-            {
-                Debug.LogError("[FireStoreManager] null 데이터가 있습니다.");
-                continue;
-            }
-
             if (data.EnumType == DataType.None)
             {
                 Debug.LogError($"[FireStoreManager] {data.name}의 EnumType이 None입니다.");
@@ -176,11 +163,15 @@ public class FireStoreManager : MonoBehaviour
 
     public FirestoreRequestContext DocumentType(DataType type)
     {
-        // 해당 데이터를 처리할 컨텍스트를 새로 생성해서 반환 (동시성 문제 해결)
         return new FirestoreRequestContext(m_DataDictionary[type]);
     }
 
-    // [ContextMenu("Download")]
-    //
-    // [ContextMenu("Upload")]
+    public void ClearSession()
+    {
+        IsInitialized = false;
+        m_DataDictionary = null;
+        db = null;
+
+        Debug.Log("[FireStoreManager] 세션 초기화 완료");
+    }
 }
