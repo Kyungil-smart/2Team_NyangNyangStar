@@ -7,7 +7,7 @@ using UnityEngine;
 public static class UIPanelCloseTween
 {
     
-    // 패널 닫기 트윈을 재생. content·fade 대상이 모두 없으면 즉시 완료
+    // 패널 닫기 트윈을 재생. content, fade 대상이 모두 없으면 즉시 완료
     public static Sequence Play(
         Transform contentPanel,
         CanvasGroup fadeTarget,
