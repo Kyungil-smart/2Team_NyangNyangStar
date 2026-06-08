@@ -9,28 +9,35 @@ using Object = UnityEngine.Object;
 
 namespace Core.Managers
 {
-    public class UiManager: ISubManager
+    public class UiManager : ISubManager
     {
         private const int PopupStartorder = 10;
         private int _order = PopupStartorder;
-        
+
         private Stack<UIPopup> _popupStack = new();
-        
         private UIScene _uiScene;
-        
         private GameObject _root;
-        
+
+        private bool _isCleared;
+        private int _sessionVersion;
+
         public void Init()
         {
+            _isCleared = false;
+            EnsureRoot();
+
+            DebugTool.Log("UI 매니저 초기화 완료", DebugType.Game);
+        }
+
+        private void EnsureRoot()
+        {
+            if (_root != null)
+                return;
+
             _root = GameObject.Find("@UI_Root");
 
             if (_root == null)
-            {
                 _root = new GameObject { name = "@UI_Root" };
-                Object.DontDestroyOnLoad(_root);
-            }
-            
-            DebugTool.Log("UI 매니저 초기화 완료", DebugType.Game);
         }
 
         public void SetCanvas(GameObject go, bool sort = true)
@@ -38,14 +45,14 @@ namespace Core.Managers
             Canvas canvas = go.GetComponent<Canvas>();
             if (canvas == null)
                 canvas = go.AddComponent<Canvas>();
-            
+
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
             canvas.overrideSorting = sort;
-            
+
             CanvasScaler canvasScaler = canvas.GetComponent<CanvasScaler>();
-            if(canvasScaler == null)
+            if (canvasScaler == null)
                 canvasScaler = go.AddComponent<CanvasScaler>();
-            
+
             canvasScaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
             canvasScaler.referenceResolution = new Vector2(1080, 1920);
             canvasScaler.matchWidthOrHeight = 0.5f;
@@ -56,7 +63,9 @@ namespace Core.Managers
                 _order++;
             }
             else
+            {
                 canvas.sortingOrder = 0;
+            }
         }
 
         private void SetSortingOrder(GameObject go)
@@ -74,12 +83,29 @@ namespace Core.Managers
 
         public void ShowSceneUI<T>(string name = null, Action<T> onLoaded = null) where T : UIScene
         {
+            EnsureRoot();
+
             if (string.IsNullOrEmpty(name))
                 name = typeof(T).Name;
+
+            int requestVersion = _sessionVersion;
 
             GameManager.Addressable.LoadPrefab(name,
                 uiPrefab =>
                 {
+                    if (_isCleared || requestVersion != _sessionVersion)
+                    {
+                        if (uiPrefab != null)
+                            Object.Destroy(uiPrefab);
+
+                        return;
+                    }
+
+                    EnsureRoot();
+
+                    if (uiPrefab == null || _root == null)
+                        return;
+
                     T uiScene = uiPrefab.GetComponent<T>();
 
                     if (uiScene == null)
@@ -105,29 +131,46 @@ namespace Core.Managers
 
         public void ShowPopupUI<T>(string name = null, Action<T> onLoaded = null, bool setActive = true, bool addCanvas = true) where T : UIPopup
         {
+            EnsureRoot();
+
             if (string.IsNullOrEmpty(name))
                 name = typeof(T).Name;
+
+            int requestVersion = _sessionVersion;
 
             GameManager.Addressable.LoadPrefab(name,
                 uiPrefab =>
                 {
+                    if (_isCleared || requestVersion != _sessionVersion)
+                    {
+                        if (uiPrefab != null)
+                            Object.Destroy(uiPrefab);
+
+                        return;
+                    }
+
+                    EnsureRoot();
+
+                    if (uiPrefab == null || _root == null)
+                        return;
+
                     T popup = uiPrefab.GetComponent<T>();
-                    
+
                     if (popup == null)
                         popup = uiPrefab.AddComponent<T>();
 
                     _popupStack.Push(popup);
 
                     uiPrefab.transform.SetParent(_root.transform, false);
-                    
-                    if(addCanvas)
+
+                    if (addCanvas)
                         SetCanvas(uiPrefab);
                     else
                         SetSortingOrder(uiPrefab);
 
                     popup.Init();
                     popup.SetAddressableKey(name);
-                    
+
                     popup.gameObject.SetActive(setActive);
 
                     DebugTool.Log($"{popup.name} : 팝업 창 열림 / 현재 팝업 수 : {_popupStack.Count}", DebugType.UI);
@@ -144,7 +187,7 @@ namespace Core.Managers
         {
             if (_popupStack.Count == 0)
                 return false;
-            
+
             return ClosePopupUI(_popupStack.Peek());
         }
 
@@ -155,7 +198,7 @@ namespace Core.Managers
 
             if (_popupStack.Count == 0)
                 return false;
-            
+
             List<UIPopup> popups = new(_popupStack);
 
             UIPopup targetPopup = null;
@@ -171,7 +214,8 @@ namespace Core.Managers
                     break;
                 }
             }
-            if(targetPopup == null)
+
+            if (targetPopup == null)
             {
                 DebugTool.Warning($"{key} : 팝업 스택에 존재하지 않습니다.", DebugType.UI);
                 return false;
@@ -184,12 +228,12 @@ namespace Core.Managers
         {
             if (popup == null)
                 return false;
-            
+
             if (_popupStack.Count == 0)
                 return false;
 
             List<UIPopup> popups = _popupStack.ToList();
-            
+
             int index = popups.FindIndex(target => ReferenceEquals(target, popup));
 
             if (index < 0)
@@ -207,16 +251,16 @@ namespace Core.Managers
                 DebugTool.Warning($"{key} : 해당 UI를 닫을 수 없습니다.", DebugType.UI);
                 return false;
             }
-            
+
             popups.RemoveAt(index);
             _popupStack.Clear();
 
             for (int i = popups.Count - 1; i >= 0; i--)
             {
-                if(popups[i] != null)
+                if (popups[i] != null)
                     _popupStack.Push(popups[i]);
             }
-            
+
             RefreshPopupSortingOrder();
             DebugTool.Log($"{popupName} : 팝업 창 닫힘 / 현재 팝업 수 : {_popupStack.Count}", DebugType.UI);
             return true;
@@ -232,7 +276,7 @@ namespace Core.Managers
 
                 if (popup == null)
                     continue;
-                
+
                 Canvas canvas = popup.GetComponentInParent<Canvas>();
 
                 if (canvas == null)
@@ -241,17 +285,26 @@ namespace Core.Managers
                 int orderIndex = popups.Length - 1 - i;
                 canvas.sortingOrder = PopupStartorder + orderIndex;
             }
-            
+
             _order = PopupStartorder + _popupStack.Count;
         }
 
         public void Clear()
         {
-            if (_root == null) return;
-            
-            Object.DestroyImmediate(_root);
-            _root = null;
-            
+            _isCleared = true;
+            _sessionVersion++;
+
+            _popupStack.Clear();
+            _uiScene = null;
+
+            if (_root != null)
+            {
+                Object.Destroy(_root);
+                _root = null;
+            }
+
+            _order = PopupStartorder;
+
             DebugTool.Log("UI 매니저 제거 완료", DebugType.Game);
         }
     }

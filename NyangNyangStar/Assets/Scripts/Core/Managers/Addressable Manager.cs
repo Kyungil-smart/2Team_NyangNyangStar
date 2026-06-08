@@ -28,7 +28,7 @@ namespace Core.Managers
             DebugTool.Log("어드레서블 매니저 초기화 완료", DebugType.Game);
         }
 
-        public void LoadPrefab(string key, Action<GameObject> onLoaded,  Action<string> onFailed = null,  bool dontDestroy = false)
+        public void LoadPrefab(string key, Action<GameObject> onLoaded = null,  Action<string> onFailed = null,  bool dontDestroy = false)
         {
             
             if (!KeyContainer.ContainsPrefabsKey(key))
