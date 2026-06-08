@@ -2075,6 +2075,7 @@ GameObject:
   - component: {fileID: 243454556618024955}
   - component: {fileID: 6559699095680926799}
   - component: {fileID: 1982347974392319822}
+  - component: {fileID: 9067596294768668264}
   m_Layer: 5
   m_Name: StartButton
   m_TagString: Untagged
@@ -2184,6 +2185,18 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
+      - m_Target: {fileID: 9067596294768668264}
+        m_TargetAssemblyTypeName: UIButtonClickSfx, Assembly-CSharp
+        m_MethodName: Play
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
       - m_Target: {fileID: 347808340170128123}
         m_TargetAssemblyTypeName: UnityEngine.GameObject, UnityEngine
         m_MethodName: SetActive
@@ -2220,6 +2233,18 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
+--- !u!114 &9067596294768668264
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4190648384709987434}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2abfb60d5a87d23499d70304c2faf1a8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &4242200704287474845
 GameObject:
   m_ObjectHideFlags: 0
@@ -2474,6 +2499,7 @@ MonoBehaviour:
   _compositionCalculator: {fileID: -7232552080694976061}
   _captureRecorder: {fileID: 1308053347534607216}
   _poseSO: {fileID: 11400000, guid: 2d506e23c35a91140a7555d9a210a339, type: 2}
+  _toolSO: {fileID: 11400000, guid: 2522bd42372e16c43984c7db3cb8a73a, type: 2}
   _reactionRate: 0.6
   _captureCountTextName: CaptureCountText
   _captureCountText: {fileID: 7740484312729834847}

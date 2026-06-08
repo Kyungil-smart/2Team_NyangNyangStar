@@ -3732,11 +3732,11 @@ MonoBehaviour:
   _compositionCalculator: {fileID: -1945374663925400894}
   _captureRecorder: {fileID: 3134731110001830919}
   _poseSO: {fileID: 11400000, guid: 2d506e23c35a91140a7555d9a210a339, type: 2}
+  _toolSO: {fileID: 11400000, guid: 2522bd42372e16c43984c7db3cb8a73a, type: 2}
   _reactionRate: 0.6
   _captureCountTextName: CaptureCountText
   _captureCountText: {fileID: 7764182801614246657}
   _catObjectName: goods 1
-  _resultPopupKey: NyangNyangSnapResultCanvas
 --- !u!114 &5077266957889570623
 MonoBehaviour:
   m_ObjectHideFlags: 0
