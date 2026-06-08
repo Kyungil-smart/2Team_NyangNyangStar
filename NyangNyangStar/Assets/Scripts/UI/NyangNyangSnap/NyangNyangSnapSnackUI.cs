@@ -61,6 +61,7 @@ public class NyangNyangSnapSnackUI : UIPopup
     }
     private void ClosePopup()
     {
+        GameManager.Audio.PlaySfx("Main_SFX_Touch");
         gameObject.SetActive(false);
     }
 

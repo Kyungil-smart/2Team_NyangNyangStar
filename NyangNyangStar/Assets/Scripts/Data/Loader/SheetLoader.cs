@@ -1,4 +1,4 @@
-﻿using Core.Managers;
+using Core.Managers;
 using System;
 using Data.Parsing;
 using Data.LibrarySystem;
@@ -37,6 +37,11 @@ namespace Data.Loader
         [SerializeField] private SheetData nyangNyangSnapPoseURL;
         [SerializeField] private NyangNyangSnapPoseSO nyangNyangSnapPoseSo;
 
+        [Space(8)]
+        [Header("냥냥스냅 도구")]
+        [SerializeField] private SheetData nyangNyangSnapToolURL;
+        [SerializeField] private NyangNyangSnapToolSO nyangNyangSnapToolSo;
+
         [Space(8)] [SerializeField] private int _pendingSheetCount;
         public int PendingSheetCount => _pendingSheetCount;
 
@@ -63,7 +68,7 @@ namespace Data.Loader
             StopAllCoroutines();
             _pendingSheetCount = 0;
             _completedLoadStepCount = 0;
-            _totalLoadStepCount = Mathf.Max(1, (keyCotainerURL?.Count ?? 0) + 4);
+            _totalLoadStepCount = Mathf.Max(1, (keyCotainerURL?.Count ?? 0) + 5);
 
             ReportSheetProgress("시트 로드 시작");
 
@@ -92,7 +97,7 @@ namespace Data.Loader
 
         private void LoadContentSheets()
         {
-            _pendingSheetCount = 4;
+            _pendingSheetCount = 5;
 
             LoadSheetData(scratchingURL, scratchingSo, 1, () =>
             {
@@ -126,6 +131,12 @@ namespace Data.Loader
             {
                 OnSheetCompleted("냥냥스냅 포즈 시트 로드 완료");
                 nyangNyangSnapPoseSo?.PrintData();
+            });
+
+            LoadSheetData(nyangNyangSnapToolURL, nyangNyangSnapToolSo, 3, () =>
+            {
+                OnSheetCompleted("냥냥스냅 포즈 시트 로드 완료");
+                nyangNyangSnapToolSo?.PrintData();
             });
         }
 

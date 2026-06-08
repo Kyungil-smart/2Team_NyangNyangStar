@@ -30,6 +30,9 @@ public class NyangNyangSnapUI : UIPopup
     [Tooltip("포즈 데이터 SO")]
     [SerializeField] private NyangNyangSnapPoseSO _poseSO;
 
+    [Tooltip("도구 데이터SO")]
+    [SerializeField] private NyangNyangSnapToolSO _toolSO;
+
     [Tooltip("데모용 반응 점수 비율")]
     [Range(0f, 1f)]
     [SerializeField] private float _reactionRate = 0.6f;
@@ -44,10 +47,6 @@ public class NyangNyangSnapUI : UIPopup
     [Header("데모 고양이 UI")]
     [Tooltip("PhotoFrame 안에 배치한 고양이 UI Image 오브젝트 이름")]
     [SerializeField] private string _catObjectName = "goods 1";
-
-    [Header("결과 UI")]
-    [Tooltip("결과 팝업 Addressables Key")]
-    [SerializeField] private string _resultPopupKey = "NyangNyangSnapResultCanvas";
 
     private readonly NyangNyangSnapScoreCalculator _scoreCalculator = new();
 
@@ -113,16 +112,10 @@ public class NyangNyangSnapUI : UIPopup
 
         button.onClick.AddListener(() =>
         {
+            GameManager.Audio.PlaySfx("Main_SFX_Touch");
             popup.gameObject.SetActive(true);
             PlayPopupOpenAnimation(popup);
         });
-    }
-
-    private void RemovePopupButton(Button button)
-    {
-        if (button == null) return;
-
-        button.onClick.RemoveAllListeners();
     }
 
     private void PlayPopupOpenAnimation(UIPopup popup)
@@ -138,6 +131,7 @@ public class NyangNyangSnapUI : UIPopup
 
         button.onClick.AddListener(() =>
         {
+            GameManager.Audio.PlaySfx("Main_SFX_Touch");
             gameObject.SetActive(false);
         });
     }
@@ -146,8 +140,13 @@ public class NyangNyangSnapUI : UIPopup
     {
         if (button == null) return;
 
+
         button.onClick.RemoveListener(OnClickPhotoButton);
-        button.onClick.AddListener(OnClickPhotoButton);
+        button.onClick.AddListener(() =>
+        {
+            GameManager.Audio.PlaySfx("Main_SFX_Touch");
+            OnClickPhotoButton();
+        });
     }
 
     private void OnClickPhotoButton()
@@ -175,12 +174,6 @@ public class NyangNyangSnapUI : UIPopup
         if (_captureRecorder == null)
         {
             DebugTool.Warning("[NyangNyangSnapUI] CaptureRecorder가 없습니다.", DebugType.UI, this);
-            return;
-        }
-
-        if (_poseSO == null)
-        {
-            DebugTool.Warning("[NyangNyangSnapUI] PoseSO가 연결되지 않았습니다.", DebugType.UI, this);
             return;
         }
 
@@ -217,11 +210,15 @@ public class NyangNyangSnapUI : UIPopup
                 return;
             }
 
-            NyangNyangSnapPoseData randomPoseData = _poseSO.GetRandomPoseData();
+            NyangNyangSnapPoseData randomPoseData = GetRandomPoseByRandomTool();
 
             if (randomPoseData == null)
             {
-                DebugTool.Warning("[NyangNyangSnapUI] 랜덤 포즈 데이터를 가져오지 못했습니다.", DebugType.UI, this);
+                DebugTool.Warning("[NyangNyangSnapUI] 도구 기반 포즈 데이터를 가져오지 못했습니다.", DebugType.UI, this);
+
+                Destroy(capturedSprite.texture);
+                Destroy(capturedSprite);
+
                 SetPhotoButtonInteractable(true);
                 return;
             }
@@ -267,6 +264,56 @@ public class NyangNyangSnapUI : UIPopup
 
             SetPhotoButtonInteractable(true);
         });
+    }
+
+    private NyangNyangSnapPoseData GetRandomPoseByRandomTool()
+    {
+        if (_toolSO == null)
+        {
+            DebugTool.Warning("[NyangNyangSnapUI] ToolSO가 연결되지 않았습니다.", DebugType.UI, this);
+            return null;
+        }
+
+        if (_poseSO == null)
+        {
+            DebugTool.Warning("[NyangNyangSnapUI] PoseSO가 연결되지 않았습니다.", DebugType.UI, this);
+            return null;
+        }
+
+        NyangNyangSnapToolData randomToolData = _toolSO.GetRandomToolData();
+
+        if (randomToolData == null)
+        {
+            DebugTool.Warning("[NyangNyangSnapUI] 랜덤 도구 데이터를 가져오지 못했습니다.", DebugType.UI, this);
+            return null;
+        }
+
+        DebugTool.Log(
+            $"[NyangNyangSnapUI] 랜덤 도구 선택 완료 / ToolID:{randomToolData.ID}, ItemID:{randomToolData.ItemID}, Type:{randomToolData.ItemToolType}",
+            DebugType.UI,
+            this
+        );
+
+        NyangNyangSnapPoseData randomPoseData = _poseSO.GetRandomPoseByTool(randomToolData.ID);
+
+        if (randomPoseData == null)
+        {
+            DebugTool.Warning(
+                $"[NyangNyangSnapUI] 선택된 도구에 연결된 포즈가 없습니다. ToolID:{randomToolData.ID}, ItemID:{randomToolData.ItemID}",
+                DebugType.UI,
+                this
+            );
+
+            return null;
+        }
+
+        DebugTool.Log(
+            $"[NyangNyangSnapUI] 도구 기반 포즈 선택 완료 / ToolID:{randomToolData.ID}, Pose:{randomPoseData.PoseName}",
+            DebugType.UI,
+            this
+        );
+
+        return randomPoseData;
     }
     private void OpenResultUI(NyangNyangSnapCaptureRecord bestRecord)
     {
