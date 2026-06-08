@@ -464,8 +464,10 @@ public class ScratchingTimeController : UIBase
 
     private void GetButtons()
     {
-        // HeaderPanel ExitButton 우선, 없으면 CloseButton 이름 폴백임
-        _closeButton ??= FindButtonInChild("HeaderPanel", "ExitButton") ?? FindButton("CloseButton");
+        _closeButton ??= FindButton("ExitButton") ?? FindButton("CloseButton");
+        if (_closeButton != null)
+            EnsureCloseButtonOnTop();
+
         _stageButtons[0] ??= FindButton("StageTab_1");
         _stageButtons[1] ??= FindButton("StageTab_2");
         _stageButtons[2] ??= FindButton("StageTab_3");
@@ -528,6 +530,25 @@ public class ScratchingTimeController : UIBase
     private Button FindButton(string childName)
     {
         return UIBase.FindChild<Button>(gameObject, childName, true);
+    }
+
+    private void EnsureCloseButtonOnTop()
+    {
+        Transform eventPanel = UIBase.FindChild<Transform>(gameObject, "EventPopupPanel", true);
+        if (eventPanel == null || _closeButton == null)
+            return;
+
+        if (_closeButton.transform.parent != eventPanel)
+            _closeButton.transform.SetParent(eventPanel, false);
+
+        RectTransform rect = _closeButton.transform as RectTransform;
+        rect.anchorMin = new Vector2(1f, 1f);
+        rect.anchorMax = new Vector2(1f, 1f);
+        rect.pivot = new Vector2(1f, 1f);
+        rect.anchoredPosition = new Vector2(-19f, -88.82507f);
+        rect.sizeDelta = new Vector2(100f, 100f);
+
+        _closeButton.transform.SetAsLastSibling();
     }
 
     private void BindErrorPanel()
