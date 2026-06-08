@@ -1,4 +1,3 @@
-﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -8,18 +7,17 @@ using UnityEngine;
 
 public enum DataType
 {
-    None = 0,
-    Users = 1,
-    MergeBoard = 2,
-    ScratchingTime = 3,
-    MoongchiProgess = 4
+    None,
+    Users,
+    MergeBoard,
+    ScratchingTime,
+    MoongchiProgess,
 }
 
 public class FireStoreManager : MonoBehaviour
 {
-    private const int FirestoreTimeoutMs = 5000;
-
     private FirebaseFirestore db;
+    private int _sessionVersion;
     public static FireStoreManager Instance { get; private set; }
 
     [SerializeField] private List<BaseFireStore> m_Data;
@@ -46,6 +44,7 @@ public class FireStoreManager : MonoBehaviour
 
     public async Task InitAsync(string userId = "testUserId")
     {
+        int sessionVersion = ++_sessionVersion;
         IsInitialized = false;
 
         Debug.Log($"[FireStoreManager] InitAsync 시작 / userId: {userId}");
@@ -70,12 +69,18 @@ public class FireStoreManager : MonoBehaviour
         try
         {
             InitDictionary();
-            await InitFirebase(userId);
+            await InitFirebase(userId, sessionVersion);
+
+            if (!IsCurrentSession(sessionVersion))
+            {
+                Debug.Log("[FireStoreManager] 오래된 InitAsync 결과 무시");
+                return;
+            }
 
             IsInitialized = true;
             Debug.Log("[FireStoreManager] InitAsync 완료");
         }
-        catch (Exception e)
+        catch (System.Exception e)
         {
             IsInitialized = false;
             Debug.LogError($"[FireStoreManager] InitAsync 실패: {e}");
@@ -87,9 +92,12 @@ public class FireStoreManager : MonoBehaviour
         await InitAsync(userId);
     }
 
-    private async Task InitFirebase(string userId)
+    private async Task InitFirebase(string userId, int sessionVersion)
     {
         DependencyStatus status = await FirebaseApp.CheckAndFixDependenciesAsync();
+        if (!IsCurrentSession(sessionVersion))
+            return;
+
         if (status != DependencyStatus.Available)
         {
             Debug.LogError($"Firebase 초기화 실패: {status}");
@@ -98,20 +106,33 @@ public class FireStoreManager : MonoBehaviour
 
         db = FirebaseFirestore.DefaultInstance;
 
-        bool exists = await ExistsAsync(userId);
-
+        // SO 참조를 먼저 현재 로그인 유저 기준으로 바인딩한다.
+        // 신규 유저 생성 과정에서 하위 SO가 직접 사용되더라도 db/userId가 비어 있지 않게 한다.
         BindClass(userId);
+
+        bool exists = await ExistsAsync(userId);
+        if (!IsCurrentSession(sessionVersion))
+            return;
 
         if (exists)
         {
             Debug.Log($"UserID {userId} exists in Firestore.");
             await LoadClass();
+            if (!IsCurrentSession(sessionVersion))
+                return;
+
             Debug.Log("기존 유저 데이터 로드 완료");
         }
         else
         {
             Debug.Log($"UserID {userId} does NOT exist in Firestore.");
+
+            // 기존 구조처럼 UsersSO.CreateNew()를 타면 UsersSO 하위에 연결된 MergeBoard/Scratching SO까지
+            // 한 번에 생성하면서 모바일에서 로그인 진행이 멈출 수 있다.
+            // 로그인 단계에서는 Users/{uid} 루트 문서만 만든다.
             await CreateNew(userId);
+            if (!IsCurrentSession(sessionVersion))
+                return;
         }
 
         Debug.Log("Firebase 초기화 성공");
@@ -120,67 +141,67 @@ public class FireStoreManager : MonoBehaviour
     private async Task CreateNew(string userId)
     {
         Debug.Log($"[FireStoreManager] 신규 유저 루트 문서 생성 시작: {userId}");
+        await CreateUserRootDocumentAsync(userId);
+        Debug.Log($"[FireStoreManager] 신규 유저 루트 문서 생성 완료: {userId}");
+    }
 
-        Dictionary<string, object> userData = new Dictionary<string, object>
+    private async Task CreateUserRootDocumentAsync(string userId)
+    {
+        Dictionary<string, object> data = new Dictionary<string, object>
         {
             { "UserID", userId },
-            { "CreatedAt", Timestamp.GetCurrentTimestamp() },
-            { "LastLoginAt", Timestamp.GetCurrentTimestamp() }
+            { "UpdatedAt", FieldValue.ServerTimestamp }
         };
 
-        DocumentReference userRef = db.Collection("Users").Document(userId);
-        Task writeTask = userRef.SetAsync(userData, SetOptions.MergeAll);
-
-        Task finishedTask = await Task.WhenAny(writeTask, Task.Delay(FirestoreTimeoutMs));
-
-        if (finishedTask != writeTask)
+        BaseFireStore usersStore = GetData<BaseFireStore>(DataType.Users);
+        if (usersStore != null)
         {
-            Debug.LogWarning($"[FireStoreManager] 신규 유저 루트 문서 생성 대기 시간 초과. 초기화는 계속 진행합니다. userId: {userId}");
-            WatchTask(writeTask, "[FireStoreManager] 신규 유저 루트 문서 생성");
-            return;
+            try
+            {
+                Dictionary<string, object> userDefaultData = usersStore.ToFirestoreDictionary();
+                if (userDefaultData != null)
+                {
+                    foreach (KeyValuePair<string, object> pair in userDefaultData)
+                        data[pair.Key] = pair.Value;
+                }
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogWarning($"[FireStoreManager] UsersSO 기본값 변환 실패, 최소 유저 문서만 생성합니다: {e.Message}");
+            }
         }
 
-        await writeTask;
+        data["UserID"] = userId;
+        data["UpdatedAt"] = FieldValue.ServerTimestamp;
 
-        Debug.Log("[FireStoreManager] 신규 유저 루트 문서 생성 완료");
+        DocumentReference userDoc = db.Collection("Users").Document(userId);
+        await userDoc.SetAsync(data, SetOptions.MergeAll);
     }
 
     private void BindClass(string userId)
     {
-        foreach (BaseFireStore item in m_Data.Where(item => item != null))
+        foreach (BaseFireStore item in m_Data)
             item.InitDataBase(db, userId);
     }
 
     private async Task LoadClass()
     {
-        foreach (BaseFireStore item in m_Data.Where(item => item != null))
+        foreach (BaseFireStore item in m_Data)
         {
             try
             {
-                Task loadTask = item.UpdateFromServerAsync(true);
-                Task finishedTask = await Task.WhenAny(loadTask, Task.Delay(FirestoreTimeoutMs));
-
-                if (finishedTask != loadTask)
-                {
-                    Debug.LogWarning($"[FireStoreManager] 데이터 로드 시간 초과: {item.name} / Type: {item.EnumType}");
-                    WatchTask(loadTask, $"[FireStoreManager] 데이터 로드: {item.name}");
-                    continue;
-                }
-
-                await loadTask;
-                Debug.Log($"[FireStoreManager] 데이터 로드 완료: {item.name} / Type: {item.EnumType}");
+                await item.UpdateFromServerAsync(true);
             }
-            catch (Exception e)
+            catch (System.Exception e)
             {
-                Debug.LogWarning($"[FireStoreManager] 데이터 로드 실패: {item.name} / Type: {item.EnumType} / {e.Message}");
+                Debug.LogWarning($"[FireStoreManager] {item.name} 서버 데이터 로드 실패: {e.Message}");
             }
         }
     }
 
     public async Task<bool> ExistsAsync(string userId)
     {
-        DocumentReference userRef = db.Collection("Users").Document(userId);
-        DocumentSnapshot snapshot = await userRef.GetSnapshotAsync();
+        DocumentSnapshot snapshot = await db.Collection("Users").Document(userId).GetSnapshotAsync();
 
         bool exists = snapshot.Exists;
         Debug.Log($"[ExistsAsync] UserID={userId} 문서 존재여부: {exists}");
@@ -212,39 +233,34 @@ public class FireStoreManager : MonoBehaviour
     public T GetData<T>(DataType type) where T : BaseFireStore
     {
         if (m_DataDictionary == null)
-            InitDictionary();
+            return null;
 
-        if (m_DataDictionary != null && m_DataDictionary.TryGetValue(type, out BaseFireStore data))
+        if (m_DataDictionary.TryGetValue(type, out BaseFireStore data))
             return data as T;
 
-        Debug.LogWarning($"[FireStoreManager] DataType을 찾을 수 없습니다: {type}");
         return null;
+    }
+
+    private bool IsCurrentSession(int sessionVersion)
+    {
+        return _sessionVersion == sessionVersion;
     }
 
     public FirestoreRequestContext DocumentType(DataType type)
     {
+        if (m_DataDictionary == null)
+            throw new System.InvalidOperationException("FireStoreManager가 아직 초기화되지 않았습니다.");
+
         return new FirestoreRequestContext(m_DataDictionary[type]);
     }
 
     public void ClearSession()
     {
+        _sessionVersion++;
         IsInitialized = false;
         m_DataDictionary = null;
         db = null;
 
         Debug.Log("[FireStoreManager] 세션 초기화 완료");
-    }
-
-    private async void WatchTask(Task task, string label)
-    {
-        try
-        {
-            await task;
-            Debug.Log($"{label} 지연 완료");
-        }
-        catch (Exception e)
-        {
-            Debug.LogError($"{label} 지연 실패: {e}");
-        }
     }
 }

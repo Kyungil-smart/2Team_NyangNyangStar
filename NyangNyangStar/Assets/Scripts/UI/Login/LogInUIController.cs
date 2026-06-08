@@ -83,9 +83,9 @@ namespace UI.Login
                 _logoutButton.onClick.AddListener(() =>
                 {
                     if (AuthManager.Instance != null)
-                        AuthManager.Instance.Logout();
-                    
-                    GameManager.ClearSession();
+                        AuthManager.Instance.LogoutAndClearSession();
+                    else
+                        GameManager.ClearSession();
                 });
             }
         }

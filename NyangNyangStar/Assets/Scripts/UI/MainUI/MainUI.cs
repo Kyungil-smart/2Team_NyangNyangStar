@@ -40,7 +40,13 @@ public class MainUI : UIScene
 
     private void Start()
     {
-        _uidText.text = _usersSO.GetUserId();
+        UpdateUidText();
+    }
+
+    private void OnEnable()
+    {
+        SubscribeUserIdChanged();
+        UpdateUidText();
     }
 
     public override void Init()
@@ -75,6 +81,8 @@ public class MainUI : UIScene
         _mainUISprite?.Init();
 
         InitPopups();
+        SubscribeUserIdChanged();
+        UpdateUidText();
     }
 
     private void InitPopups()
@@ -100,6 +108,8 @@ public class MainUI : UIScene
 
     private void OnDisable()
     {
+        UnsubscribeUserIdChanged();
+
         RemovePopupButton(_shopButton);
         RemovePopupButton(_dailyCheckInButton);
         RemovePopupButton(_mailButton);
@@ -247,6 +257,42 @@ public class MainUI : UIScene
         }
     }
 
+
+    private void SubscribeUserIdChanged()
+    {
+        if (AuthManager.Instance == null)
+            return;
+
+        AuthManager.Instance.OnUserIdChanged -= HandleUserIdChanged;
+        AuthManager.Instance.OnUserIdChanged += HandleUserIdChanged;
+    }
+
+    private void UnsubscribeUserIdChanged()
+    {
+        if (AuthManager.Instance == null)
+            return;
+
+        AuthManager.Instance.OnUserIdChanged -= HandleUserIdChanged;
+    }
+
+    private void HandleUserIdChanged(string userId)
+    {
+        UpdateUidText();
+    }
+
+    private void UpdateUidText()
+    {
+        if (_uidText == null)
+            return;
+
+        string userId = AuthManager.Instance != null ? AuthManager.Instance.CurrentUserId : string.Empty;
+
+        if (string.IsNullOrEmpty(userId) && _usersSO != null)
+            userId = _usersSO.GetUserId();
+
+        _uidText.text = string.IsNullOrEmpty(userId) ? "-" : userId;
+    }
+
     private void LogOutButton()
     {
         if (ScreenTransitionManager.Instance == null)
@@ -263,9 +309,10 @@ public class MainUI : UIScene
         AuthManager auth = AuthManager.Instance;
 
         if (auth != null)
-            auth.Logout();
+            auth.LogoutAndClearSession();
+        else
+            GameManager.ClearSession();
 
-        GameManager.ClearSession();
         GameManager.Scene.LoadPreviousScene();
     }
 
