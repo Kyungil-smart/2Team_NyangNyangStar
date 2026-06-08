@@ -78,6 +78,10 @@ MonoBehaviour:
     <URL>k__BackingField: https://docs.google.com/spreadsheets/d/1hD2NCEzCWr2aml-_aqHsHZu_8HeZ0xCLpMDt_A9NfoU/edit?gid=1224660622#gid=1224660622
     <Type>k__BackingField: 2
   nyangNyangSnapPoseSo: {fileID: 11400000, guid: 2d506e23c35a91140a7555d9a210a339, type: 2}
+  nyangNyangSnapToolURL:
+    <URL>k__BackingField: https://docs.google.com/spreadsheets/d/1hD2NCEzCWr2aml-_aqHsHZu_8HeZ0xCLpMDt_A9NfoU/edit?gid=1454821850#gid=1454821850
+    <Type>k__BackingField: 2
+  nyangNyangSnapToolSo: {fileID: 11400000, guid: 2522bd42372e16c43984c7db3cb8a73a, type: 2}
   _pendingSheetCount: 0
 --- !u!114 &7187299137341658617
 MonoBehaviour:

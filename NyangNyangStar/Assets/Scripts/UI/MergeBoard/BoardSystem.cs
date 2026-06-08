@@ -1,4 +1,4 @@
-﻿using Data.LibrarySystem;
+using Data.LibrarySystem;
 using Data.ScriptableObjects.MergeBoard;
 using Services.Enums;
 using System;
@@ -155,20 +155,23 @@ namespace UI.MergeBoard
             return addedSlot != null;
         }
 
-        public async Task<ItemSlot> TryAddItemFromQueueAndSelectAsync(ItemData itemData)
+        public Task<ItemSlot> TryAddItemFromQueueAndSelectAsync(ItemData itemData)
         {
             bool result = TryAddItemInternal(itemData, out int changedSlotNumber);
 
             if (!result)
-                return null;
-
-            await SaveSlotSafeAsync(changedSlotNumber);
+                return Task.FromResult<ItemSlot>(null);
 
             ItemSlot addedSlot = GetSlot(changedSlotNumber);
             if (addedSlot != null)
                 SelectSlot(addedSlot);
 
-            return addedSlot;
+            // 큐 아이템을 보드에 넣는 순간 로컬 보드 상태는 이미 변경되었다.
+            // Firestore 저장을 기다리면 모바일에서 SaveSlotAsync가 지연될 때
+            // BoardRewardQueue의 Dequeue까지 도달하지 못해 큐가 Pop되지 않는 문제가 발생한다.
+            SaveSlotFireAndForget(changedSlotNumber);
+
+            return Task.FromResult(addedSlot);
         }
 
         public Task<bool> TryAddItemAsync(ItemData itemData)
@@ -421,7 +424,7 @@ namespace UI.MergeBoard
                 return false;
             }
 
-            if (_mergeBoardFirestore == null)
+            if (!ResolveMergeBoardFirestore())
             {
                 DebugTool.Warning("MergeBoardFirestoreSO가 연결되지 않아 보드 전체 삭제를 저장할 수 없습니다.", DebugType.Board, this);
                 return false;
@@ -466,17 +469,8 @@ namespace UI.MergeBoard
         {
             IsServerDataLoaded = false;
 
-            if (_mergeBoardFirestore == null)
-            {
-                DebugTool.Warning("MergeBoardFirestoreSO가 연결되지 않았습니다.", DebugType.Board, this);
+            if (!ResolveMergeBoardFirestore())
                 return;
-            }
-
-            if (!_mergeBoardFirestore.IsReady)
-            {
-                DebugTool.Warning("Firestore가 초기화되지 않아 보드 데이터를 불러올 수 없습니다.", DebugType.Board, this);
-                return;
-            }
 
             Dictionary<int, ItemData> loadedData = await _mergeBoardFirestore.LoadBoardAsync();
             ApplyBoardData(loadedData);
@@ -490,13 +484,45 @@ namespace UI.MergeBoard
 
         public async Task CreateEmptyBoardOnServerAsync()
         {
-            if (_mergeBoardFirestore == null)
-            {
-                DebugTool.Warning("MergeBoardFirestoreSO가 연결되지 않았습니다.", DebugType.Board, this);
+            if (!ResolveMergeBoardFirestore())
                 return;
-            }
 
             await _mergeBoardFirestore.CreateEmptyBoardAsync();
+        }
+
+        private bool ResolveMergeBoardFirestore()
+        {
+            if (_mergeBoardFirestore != null && _mergeBoardFirestore.IsReady)
+                return true;
+
+            if (FireStoreManager.Instance == null)
+            {
+                DebugTool.Warning("FireStoreManager.Instance가 없습니다.", DebugType.Board, this);
+                return false;
+            }
+
+            if (!FireStoreManager.Instance.IsInitialized)
+            {
+                DebugTool.Warning("FireStoreManager 초기화가 완료되지 않았습니다.", DebugType.Board, this);
+                return false;
+            }
+
+            _mergeBoardFirestore = FireStoreManager.Instance.GetData<MergeBoardFirestoreSo>(DataType.MergeBoard);
+
+            if (_mergeBoardFirestore == null)
+            {
+                DebugTool.Warning("FireStoreManager에서 MergeBoardFirestoreSO를 찾을 수 없습니다.", DebugType.Board, this);
+                return false;
+            }
+
+            if (!_mergeBoardFirestore.IsReady)
+            {
+                DebugTool.Warning("MergeBoardFirestoreSO가 아직 준비되지 않았습니다.", DebugType.Board, this);
+                return false;
+            }
+
+            DebugTool.Log("MergeBoardFirestoreSO 연결 완료", DebugType.Board, this);
+            return true;
         }
 
         private void ApplyBoardData(Dictionary<int, ItemData> boardData)
@@ -579,14 +605,24 @@ namespace UI.MergeBoard
             return slotNumber >= 1 && slotNumber <= SlotCount;
         }
 
+        private void SaveSlotFireAndForget(int slotNumber)
+        {
+            _ = SaveSlotSafeAsync(slotNumber);
+        }
+
         private async Task SaveSlotSafeAsync(int slotNumber)
         {
-            if (_mergeBoardFirestore == null)
+            if (!ResolveMergeBoardFirestore())
                 return;
+
+            if (!_slotItemDict.TryGetValue(slotNumber, out ItemData itemData))
+                return;
+
+            ItemData saveData = itemData?.Clone() ?? ItemData.Empty;
 
             try
             {
-                await _mergeBoardFirestore.SaveSlotAsync(slotNumber, _slotItemDict[slotNumber]);
+                await _mergeBoardFirestore.SaveSlotAsync(slotNumber, saveData);
             }
             catch (Exception exception)
             {
@@ -596,7 +632,7 @@ namespace UI.MergeBoard
 
         private async Task SaveSlotsSafeAsync(Dictionary<int, ItemData> changedSlots)
         {
-            if (_mergeBoardFirestore == null)
+            if (!ResolveMergeBoardFirestore())
                 return;
 
             try

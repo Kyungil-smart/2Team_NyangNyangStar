@@ -176,7 +176,7 @@ public partial class ScratchingTimeManager
 
         ResetAllState();
 
-        LoadScratchingProgressFromServer();
+        ReloadScratchingProgressForSession();
 
         _moongchiStatController?.PrintMoongchiStat();
 
@@ -320,40 +320,73 @@ public partial class ScratchingTimeManager
 
 
 
-    // 서버에서 ScratchingProgressSO를 불러와 ScratchingSo에 반영
-
-    private async void LoadScratchingProgressFromServer()
-
+    // Firestore 진행도를 서버에서 불러와 ScratchingSo에 반영
+    private void ReloadScratchingProgressForSession()
     {
-
-        if (_scratchingProgress == null || _scratching == null)
-
+        if (_scratching == null)
             return;
 
+        LoadScratchingProgressFromServer(++_scratchingProgressLoadVersion);
+    }
 
+    // 서버에서 ScratchingProgressSO를 불러와 ScratchingSo에 반영
+    private async void LoadScratchingProgressFromServer(int loadVersion)
+    {
+        if (_scratching == null)
+            return;
+
+        if (!ResolveScratchingProgress())
+            return;
 
         try
-
         {
-
             await _scratchingProgress.UpdateFromServerAsync(false);
 
+            if (loadVersion != _scratchingProgressLoadVersion)
+                return;
+
             _scratchingProgress.ApplyTo(_scratching);
-
             RefreshStageButtonUnlockState();
-
             RefreshInitialSelectionInfo();
-
         }
-
         catch (Exception e)
-
         {
-
             DebugTool.Warning($"ScratchingProgressSO 불러오기 실패: {e.Message}", DebugType.ScratchingTime);
+        }
+    }
 
+
+
+    private bool ResolveScratchingProgress()
+    {
+        if (FireStoreManager.Instance == null)
+        {
+            DebugTool.Warning("FireStoreManager.Instance가 없어 스크래칭 진행도를 불러올 수 없습니다.", DebugType.ScratchingTime, this);
+            return false;
         }
 
+        if (!FireStoreManager.Instance.IsInitialized)
+        {
+            DebugTool.Warning("Firestore 초기화 완료 전에는 스크래칭 진행도를 불러올 수 없습니다.", DebugType.ScratchingTime, this);
+            return false;
+        }
+
+        ScratchingProgressSO resolvedProgress =
+            FireStoreManager.Instance.GetData<ScratchingProgressSO>(DataType.ScratchingTime);
+
+        if (resolvedProgress == null)
+        {
+            DebugTool.Warning("FireStoreManager에서 ScratchingProgressSO를 찾을 수 없습니다.", DebugType.ScratchingTime, this);
+            return false;
+        }
+
+        if (!ReferenceEquals(_scratchingProgress, resolvedProgress))
+        {
+            _scratchingProgress = resolvedProgress;
+            DebugTool.Log("ScratchingProgressSO 연결 완료", DebugType.ScratchingTime, this);
+        }
+
+        return true;
     }
 
 
@@ -366,7 +399,11 @@ public partial class ScratchingTimeManager
 
     {
 
-        if (_scratchingProgress == null || _scratching == null)
+        if (_scratching == null)
+
+            return;
+
+        if (!ResolveScratchingProgress())
 
             return;
 
@@ -380,7 +417,7 @@ public partial class ScratchingTimeManager
 
         {
 
-            await _scratchingProgress.UpdateDataAsync();
+            await _scratchingProgress.SetDataAsync(_scratchingProgress.ToFirestoreDictionary());
 
         }
 

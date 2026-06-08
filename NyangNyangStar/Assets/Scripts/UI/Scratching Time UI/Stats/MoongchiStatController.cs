@@ -28,6 +28,7 @@ public class MoongchiStatController : UIBase
     private Image _expAmountImage;
 
     private int _moongchiProgressLoadVersion;
+    private bool _isProgressReady;
 
     private void Awake()
     {
@@ -65,7 +66,8 @@ public class MoongchiStatController : UIBase
         if (_moongchiStat == null)
             return;
 
-        _moongchiStat.SetProgressData(1, 0);
+        _isProgressReady = false;
+        _moongchiStat.Init();
         PrintMoongchiStat();
         LoadMoongchiProgressFromServer(++_moongchiProgressLoadVersion);
     }
@@ -74,6 +76,12 @@ public class MoongchiStatController : UIBase
     {
         if (_moongchiStat == null)
             return;
+
+        if (!_isProgressReady)
+        {
+            DebugTool.Warning("뭉치 진행도 로드 전에는 경험치를 지급할 수 없습니다.", DebugType.ScratchingTime);
+            return;
+        }
 
         _moongchiStat.IncreaseExp(exp);
         SaveMoongchiProgressToServer();
@@ -84,10 +92,11 @@ public class MoongchiStatController : UIBase
 
     private async void LoadMoongchiProgressFromServer(int loadVersion)
     {
-        if (_moongchiProgress == null || _moongchiStat == null)
+        if (_moongchiStat == null)
             return;
 
-        _moongchiProgress.CaptureFrom(_moongchiStat);
+        if (!ResolveMoongchiProgress())
+            return;
 
         try
         {
@@ -97,6 +106,7 @@ public class MoongchiStatController : UIBase
                 return;
 
             _moongchiProgress.ApplyTo(_moongchiStat);
+            _isProgressReady = true;
             PrintMoongchiStat();
         }
         catch (Exception e)
@@ -107,19 +117,55 @@ public class MoongchiStatController : UIBase
 
     private async void SaveMoongchiProgressToServer()
     {
-        if (_moongchiProgress == null || _moongchiStat == null)
+        if (_moongchiStat == null || !_isProgressReady)
+            return;
+
+        if (!ResolveMoongchiProgress())
             return;
 
         _moongchiProgress.CaptureFrom(_moongchiStat);
 
         try
         {
-            await _moongchiProgress.UpdateDataAsync();
+            await _moongchiProgress.SetDataAsync(_moongchiProgress.ToFirestoreDictionary());
         }
         catch (Exception e)
         {
             DebugTool.Warning($"MoongchiProgressSO 저장 실패: {e.Message}", DebugType.ScratchingTime);
         }
+    }
+
+
+    private bool ResolveMoongchiProgress()
+    {
+        if (FireStoreManager.Instance == null)
+        {
+            DebugTool.Warning("FireStoreManager.Instance가 없어 뭉치 진행도를 불러올 수 없습니다.", DebugType.ScratchingTime, this);
+            return false;
+        }
+
+        if (!FireStoreManager.Instance.IsInitialized)
+        {
+            DebugTool.Warning("Firestore 초기화 완료 전에는 뭉치 진행도를 불러올 수 없습니다.", DebugType.ScratchingTime, this);
+            return false;
+        }
+
+        MoongchiProgressSO resolvedProgress =
+            FireStoreManager.Instance.GetData<MoongchiProgressSO>(DataType.MoongchiProgess);
+
+        if (resolvedProgress == null)
+        {
+            DebugTool.Warning("FireStoreManager에서 MoongchiProgressSO를 찾을 수 없습니다.", DebugType.ScratchingTime, this);
+            return false;
+        }
+
+        if (!ReferenceEquals(_moongchiProgress, resolvedProgress))
+        {
+            _moongchiProgress = resolvedProgress;
+            DebugTool.Log("MoongchiProgressSO 연결 완료", DebugType.ScratchingTime, this);
+        }
+
+        return true;
     }
 
     public int MoongchiAttack()

@@ -39,6 +39,7 @@ public partial class ScratchingTimeManager : UIBase
     private bool _isInitialized;             // Init() 1회 실행 여부
     private bool _isWaitingForDataReady;     // LocalDataAccess.OnReady 구독 중 여부
     private Coroutine _scratchingDataLoadCoroutine; // 시트 직접 로드 코루틴
+    private int _scratchingProgressLoadVersion;     // 비동기 진행도 로드 경합 방지
 
     private const int ScratchingSheetHeaderRowCount = 1; // 시트 헤더 행 수 (파싱 시 스킵)
 
@@ -162,6 +163,7 @@ public partial class ScratchingTimeManager : UIBase
     {
         gameObject.SetActive(true);
         _moongchiStatController?.ReloadMoongchiProgressForSession();
+        ReloadScratchingProgressForSession();
         BringScratchingTimeToFront();
         ResetAllState();
 
@@ -212,6 +214,17 @@ public partial class ScratchingTimeManager : UIBase
         }
     }
 
+    public void HideImmediately()
+    {
+        if (_rectTransform != null)
+        {
+            _rectTransform.DOKill();
+            _rectTransform.localScale = Vector3.zero;
+        }
+
+        SendScratchingTimeBehindMainUI();
+        gameObject.SetActive(false);
+    }
 
     // 자식 Transform에서 컴포넌트를 찾고, 없으면 새로 추가
     private T GetOrAddController<T>(string childName) where T : Component

@@ -17,8 +17,6 @@ public class NyangNyangSnapPoseSO : SoBase, ISheetParsable
     [SerializeField]private Dictionary<int, NyangNyangSnapPoseData> _poseDataDic = new();
     [SerializeField]private Dictionary<int, List<NyangNyangSnapPoseData>> _toolPoseDataDic = new();
 
-    public int DataCount => _poseData.Count;
-
     public override void Init() => ClearData();
 
     public void ClearData()

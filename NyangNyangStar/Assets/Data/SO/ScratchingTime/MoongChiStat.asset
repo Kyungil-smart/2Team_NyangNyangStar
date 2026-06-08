@@ -12,11 +12,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6cd2d540d1d04b7f926d461eae04b135, type: 3}
   m_Name: MoongChiStat
   m_EditorClassIdentifier: 
-  _level: 1
   MaxExp: 1000
+  _level: 1
   _currentExp: 0
   _baseSharpness: 8
   _sharpnessIncreasePerLevel: 2
-  _totalSharpness: 52
-  _baseCriticalChance: 20
-  _totalCriticalChance: 20
+  _totalSharpness: 10
+  _baseCriticalChance: 5
+  _criticalChanceIncreasePerFiveLevels: 5
+  _totalCriticalChance: 5
