@@ -1,7 +1,6 @@
 ﻿using Core.Managers;
-using System.Threading.Tasks;
 using Data.ScriptableObjects.MergeBoard;
-using UI.MainUI;
+using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -17,23 +16,18 @@ namespace UI.MergeBoard
         [Header("옵션")]
         [SerializeField] private bool _reloadOnOpen;
 
-        private UpDownScreenController _upDownCon;
-
         public bool IsOpen;
 
         private void OnEnable()
         {
-            _closeButton.onClick.AddListener(CloseBoard);
-        }
-
-        private void Start()
-        {
-            _upDownCon = FindObjectOfType<UpDownScreenController>();
+            if (_closeButton != null)
+                _closeButton.onClick.AddListener(CloseBoard);
         }
 
         private void OnDisable()
         {
-            _closeButton.onClick.RemoveListener(CloseBoard);
+            if (_closeButton != null)
+                _closeButton.onClick.RemoveListener(CloseBoard);
         }
 
         public async void OpenBoard()
@@ -43,16 +37,11 @@ namespace UI.MergeBoard
 
         private async Task OpenBoardAsync()
         {
-            if (IsOpen)
-                return;
-
             if (_boardRoot == null)
             {
                 DebugTool.Warning("보드 창 Root가 연결되지 않았습니다.", DebugType.Board, this);
                 return;
             }
-
-            IsOpen = false;
 
             try
             {
@@ -77,13 +66,13 @@ namespace UI.MergeBoard
 
         public void CloseBoard()
         {
-            if (_boardRoot == null)
+            if (global::MainUI.Instance == null)
+            {
+                DebugTool.Warning("MainUI Instance를 찾을 수 없습니다.", DebugType.UI, this);
                 return;
-            
-            if(_upDownCon == null)
-                _upDownCon = FindObjectOfType<UpDownScreenController>();
-            _upDownCon.DownAnimation();
-            GameManager.Audio.PlaySfx("Main_SFX_Touch");
+            }
+
+            global::MainUI.Instance.CloseMergeBoard();
         }
 
         public void ForceReloadOnNextOpen()
