@@ -10,16 +10,22 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
-  m_Name: Default Local Group
+  m_Name: BGM
   m_EditorClassIdentifier: 
-  m_GroupName: Default Local Group
+  m_GroupName: BGM
   m_Data:
     m_SerializedData: []
-  m_GUID: a7874cae04e2d6a419f40c21a9d3a738
-  m_SerializeEntries: []
+  m_GUID: 47ed5fd21483bc143bba125f4f060e74
+  m_SerializeEntries:
+  - m_GUID: 10144e2e41a819b40957b4ec714ddcd7
+    m_Address: BGM_Main
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Audio
+    FlaggedDuringContentUpdateRestriction: 0
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: 567802e293b80b747b23153796443c26, type: 2}
   m_SchemaSet:
     m_Schemas:
-    - {fileID: 11400000, guid: e224299717949bb46be23bbc6b67f5ce, type: 2}
-    - {fileID: 11400000, guid: a5d957a6778ebd249940533eb4e5c692, type: 2}
+    - {fileID: 11400000, guid: 68b2a5e61c019c148ae889ebfc37b1aa, type: 2}
+    - {fileID: 11400000, guid: b7ad8f72e48da4343a21a6473b4dacec, type: 2}
