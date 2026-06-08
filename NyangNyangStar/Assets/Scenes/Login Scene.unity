@@ -180,6 +180,22 @@ PrefabInstance:
       propertyPath: m_Name
       value: BackEndManager
       objectReference: {fileID: 0}
+    - target: {fileID: 3984831075584569406, guid: 3282864492be8c144887d0bc2f486bef, type: 3}
+      propertyPath: m_Data.Array.size
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 3984831075584569406, guid: 3282864492be8c144887d0bc2f486bef, type: 3}
+      propertyPath: m_Data.Array.data[1]
+      value: 
+      objectReference: {fileID: 11400000, guid: e83d2b0ab54c59242b8fa1becca1283d, type: 2}
+    - target: {fileID: 3984831075584569406, guid: 3282864492be8c144887d0bc2f486bef, type: 3}
+      propertyPath: m_Data.Array.data[2]
+      value: 
+      objectReference: {fileID: 11400000, guid: f854c7e7a87af9c428d7d7b34076304d, type: 2}
+    - target: {fileID: 3984831075584569406, guid: 3282864492be8c144887d0bc2f486bef, type: 3}
+      propertyPath: m_Data.Array.data[3]
+      value: 
+      objectReference: {fileID: 11400000, guid: 4f6d6359379f32249aa736a67b698dae, type: 2}
     - target: {fileID: 5365935347489691788, guid: 3282864492be8c144887d0bc2f486bef, type: 3}
       propertyPath: m_LocalPosition.x
       value: 264.38742
