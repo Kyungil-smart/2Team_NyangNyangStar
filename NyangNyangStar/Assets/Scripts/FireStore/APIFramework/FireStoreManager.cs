@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Firebase;
 using Firebase.Firestore;
+using Firebase.Extensions;
 using UnityEngine;
 
 public enum DataType
@@ -141,8 +142,46 @@ public class FireStoreManager : MonoBehaviour
     private async Task CreateNew(string userId)
     {
         Debug.Log($"[FireStoreManager] 신규 유저 루트 문서 생성 시작: {userId}");
-        await CreateUserRootDocumentAsync(userId);
-        Debug.Log($"[FireStoreManager] 신규 유저 루트 문서 생성 완료: {userId}");
+
+        bool completed = await CreateUserRootDocumentWithTimeoutAsync(userId, 3f);
+
+        if (completed)
+            Debug.Log($"[FireStoreManager] 신규 유저 루트 문서 생성 완료: {userId}");
+        else
+            Debug.LogWarning($"[FireStoreManager] 신규 유저 루트 문서 생성 대기 시간 초과. 초기화는 계속 진행합니다. / userId: {userId}");
+    }
+
+    private async Task<bool> CreateUserRootDocumentWithTimeoutAsync(string userId, float timeoutSeconds)
+    {
+        Task writeTask = CreateUserRootDocumentAsync(userId);
+        Task timeoutTask = Task.Delay(Mathf.RoundToInt(timeoutSeconds * 1000f));
+
+        Task completedTask = await Task.WhenAny(writeTask, timeoutTask);
+
+        if (completedTask == writeTask)
+        {
+            await writeTask;
+            return true;
+        }
+
+        writeTask.ContinueWithOnMainThread(task =>
+        {
+            if (task.IsCanceled)
+            {
+                Debug.LogWarning($"[FireStoreManager] 신규 유저 루트 문서 생성 취소: {userId}");
+                return;
+            }
+
+            if (task.IsFaulted)
+            {
+                Debug.LogWarning($"[FireStoreManager] 신규 유저 루트 문서 생성 실패: {userId} / {task.Exception?.GetBaseException().Message}");
+                return;
+            }
+
+            Debug.Log($"[FireStoreManager] 신규 유저 루트 문서 백그라운드 생성 완료: {userId}");
+        });
+
+        return false;
     }
 
     private async Task CreateUserRootDocumentAsync(string userId)
