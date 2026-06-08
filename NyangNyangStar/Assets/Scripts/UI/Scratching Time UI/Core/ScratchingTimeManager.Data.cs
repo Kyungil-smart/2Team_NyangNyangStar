@@ -332,7 +332,10 @@ public partial class ScratchingTimeManager
     // 서버에서 ScratchingProgressSO를 불러와 ScratchingSo에 반영
     private async void LoadScratchingProgressFromServer(int loadVersion)
     {
-        if (_scratchingProgress == null || _scratching == null)
+        if (_scratching == null)
+            return;
+
+        if (!ResolveScratchingProgress())
             return;
 
         try
@@ -354,6 +357,40 @@ public partial class ScratchingTimeManager
 
 
 
+    private bool ResolveScratchingProgress()
+    {
+        if (FireStoreManager.Instance == null)
+        {
+            DebugTool.Warning("FireStoreManager.Instance가 없어 스크래칭 진행도를 불러올 수 없습니다.", DebugType.ScratchingTime, this);
+            return false;
+        }
+
+        if (!FireStoreManager.Instance.IsInitialized)
+        {
+            DebugTool.Warning("Firestore 초기화 완료 전에는 스크래칭 진행도를 불러올 수 없습니다.", DebugType.ScratchingTime, this);
+            return false;
+        }
+
+        ScratchingProgressSO resolvedProgress =
+            FireStoreManager.Instance.GetData<ScratchingProgressSO>(DataType.ScratchingTime);
+
+        if (resolvedProgress == null)
+        {
+            DebugTool.Warning("FireStoreManager에서 ScratchingProgressSO를 찾을 수 없습니다.", DebugType.ScratchingTime, this);
+            return false;
+        }
+
+        if (!ReferenceEquals(_scratchingProgress, resolvedProgress))
+        {
+            _scratchingProgress = resolvedProgress;
+            DebugTool.Log("ScratchingProgressSO 연결 완료", DebugType.ScratchingTime, this);
+        }
+
+        return false;
+    }
+
+
+
 
 
     // ScratchingSo 진행 상태를 ScratchingProgressSO에 담아 서버에 저장
@@ -362,7 +399,11 @@ public partial class ScratchingTimeManager
 
     {
 
-        if (_scratchingProgress == null || _scratching == null)
+        if (_scratching == null)
+
+            return;
+
+        if (!ResolveScratchingProgress())
 
             return;
 
@@ -376,7 +417,7 @@ public partial class ScratchingTimeManager
 
         {
 
-            await _scratchingProgress.UpdateDataAsync();
+            await _scratchingProgress.SetDataAsync(_scratchingProgress.ToFirestoreDictionary());
 
         }
 
