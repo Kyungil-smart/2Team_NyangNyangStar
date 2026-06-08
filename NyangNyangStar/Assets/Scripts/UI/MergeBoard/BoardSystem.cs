@@ -155,20 +155,23 @@ namespace UI.MergeBoard
             return addedSlot != null;
         }
 
-        public async Task<ItemSlot> TryAddItemFromQueueAndSelectAsync(ItemData itemData)
+        public Task<ItemSlot> TryAddItemFromQueueAndSelectAsync(ItemData itemData)
         {
             bool result = TryAddItemInternal(itemData, out int changedSlotNumber);
 
             if (!result)
-                return null;
-
-            await SaveSlotSafeAsync(changedSlotNumber);
+                return Task.FromResult<ItemSlot>(null);
 
             ItemSlot addedSlot = GetSlot(changedSlotNumber);
             if (addedSlot != null)
                 SelectSlot(addedSlot);
 
-            return addedSlot;
+            // 큐 아이템을 보드에 넣는 순간 로컬 보드 상태는 이미 변경되었다.
+            // Firestore 저장을 기다리면 모바일에서 SaveSlotAsync가 지연될 때
+            // BoardRewardQueue의 Dequeue까지 도달하지 못해 큐가 Pop되지 않는 문제가 발생한다.
+            SaveSlotFireAndForget(changedSlotNumber);
+
+            return Task.FromResult(addedSlot);
         }
 
         public Task<bool> TryAddItemAsync(ItemData itemData)
@@ -602,14 +605,24 @@ namespace UI.MergeBoard
             return slotNumber >= 1 && slotNumber <= SlotCount;
         }
 
+        private void SaveSlotFireAndForget(int slotNumber)
+        {
+            _ = SaveSlotSafeAsync(slotNumber);
+        }
+
         private async Task SaveSlotSafeAsync(int slotNumber)
         {
             if (!ResolveMergeBoardFirestore())
                 return;
 
+            if (!_slotItemDict.TryGetValue(slotNumber, out ItemData itemData))
+                return;
+
+            ItemData saveData = itemData?.Clone() ?? ItemData.Empty;
+
             try
             {
-                await _mergeBoardFirestore.SaveSlotAsync(slotNumber, _slotItemDict[slotNumber]);
+                await _mergeBoardFirestore.SaveSlotAsync(slotNumber, saveData);
             }
             catch (Exception exception)
             {

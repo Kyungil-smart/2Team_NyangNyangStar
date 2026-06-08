@@ -21,6 +21,8 @@ namespace UI.MergeBoard
 
         private Coroutine _alertCoroutine;
         private bool _isProcessing;
+        private bool _isSavingQueue;
+        private bool _queueSaveRequested;
 
         private readonly Queue<ItemData> _rewardQueue = new();
 
@@ -128,9 +130,9 @@ namespace UI.MergeBoard
                 _rewardQueue.Dequeue();
 
                 RefreshView();
+                RequestSaveQueue();
 
-                if (_mergeBoardFirestore != null)
-                    await _mergeBoardFirestore.SaveRewardQueueAsync(_rewardQueue);
+                DebugTool.Log($"보상 큐 Pop 완료 / 남은 개수: {_rewardQueue.Count}", DebugType.Board, this);
             }
             finally
             {
@@ -220,6 +222,43 @@ namespace UI.MergeBoard
             }
 
             return itemData.Clone();
+        }
+
+        private void RequestSaveQueue()
+        {
+            _queueSaveRequested = true;
+
+            if (_isSavingQueue)
+                return;
+
+            _ = SaveQueueLoopAsync();
+        }
+
+        private async Task SaveQueueLoopAsync()
+        {
+            _isSavingQueue = true;
+
+            try
+            {
+                while (_queueSaveRequested)
+                {
+                    _queueSaveRequested = false;
+
+                    if (!ResolveMergeBoardFirestore())
+                        continue;
+
+                    List<ItemData> snapshot = new List<ItemData>(_rewardQueue);
+                    await _mergeBoardFirestore.SaveRewardQueueAsync(snapshot);
+                }
+            }
+            catch (System.Exception exception)
+            {
+                Debug.LogError($"보상 큐 저장 실패 : {exception.Message}", this);
+            }
+            finally
+            {
+                _isSavingQueue = false;
+            }
         }
 
         public void ShowAlert(string message)
