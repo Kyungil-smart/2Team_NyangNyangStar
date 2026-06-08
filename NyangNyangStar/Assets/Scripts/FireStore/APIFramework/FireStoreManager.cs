@@ -9,9 +9,7 @@ public enum DataType
 {
     None,
     Users,
-    MergeBoard,
-    ScratchingTime,
-    MoongchiProgress,
+    MergeBoard
 }
 
 public class FireStoreManager : MonoBehaviour
@@ -116,12 +114,9 @@ public class FireStoreManager : MonoBehaviour
     private async Task CreateNew(string userId)
     {
         foreach (BaseFireStore item in m_Data)
-        {
-            Debug.Log($"[FireStoreManager] CreateNew 시작: {item.name} / {item.EnumType}");
             await item.CreateNew(db, userId);
-            Debug.Log($"[FireStoreManager] CreateNew 완료: {item.name} / {item.EnumType}");
-        }
     }
+
     private void BindClass(string userId)
     {
         foreach (BaseFireStore item in m_Data)
@@ -164,6 +159,35 @@ public class FireStoreManager : MonoBehaviour
 
             m_DataDictionary.Add(data.EnumType, data);
         }
+    }
+
+
+    public BaseFireStore GetData(DataType type)
+    {
+        if (m_DataDictionary == null)
+        {
+            Debug.LogWarning("[FireStoreManager] 데이터 딕셔너리가 초기화되지 않았습니다.");
+            return null;
+        }
+
+        if (!m_DataDictionary.TryGetValue(type, out BaseFireStore data))
+        {
+            Debug.LogWarning($"[FireStoreManager] 등록되지 않은 DataType입니다. Type: {type}");
+            return null;
+        }
+
+        return data;
+    }
+
+    public T GetData<T>(DataType type) where T : BaseFireStore
+    {
+        return GetData(type) as T;
+    }
+
+    public bool TryGetData<T>(DataType type, out T data) where T : BaseFireStore
+    {
+        data = GetData<T>(type);
+        return data != null;
     }
 
     public FirestoreRequestContext DocumentType(DataType type)

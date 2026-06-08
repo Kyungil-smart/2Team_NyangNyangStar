@@ -1,4 +1,4 @@
-﻿using System.Threading.Tasks;
+using System.Threading.Tasks;
 using Data.LibrarySystem;
 using UI.MergeBoard;
 using UnityEngine;
@@ -36,7 +36,15 @@ namespace Data.ScriptableObjects.MergeBoard
             try
             {
                 await WaitUntilReadyAsync();
-                await LoadFromServerAsync();
+
+                bool loaded = await LoadFromServerAsync();
+
+                if (!loaded)
+                {
+                    _isLoaded = false;
+                    DebugTool.Warning("MergeBoard 서버 데이터 로드 실패", DebugType.Board, this);
+                    return;
+                }
 
                 _isLoaded = true;
                 DebugTool.Log("MergeBoard 서버 데이터 로드 완료", DebugType.Board, this);
@@ -100,23 +108,33 @@ namespace Data.ScriptableObjects.MergeBoard
                 _specialItemBoardSystem = GetComponentInChildren<SpecialItemBoardSystem>(true);
         }
 
-        private async Task LoadFromServerAsync()
+        private async Task<bool> LoadFromServerAsync()
         {
             ResolveReferences();
 
             if (_boardSystem == null)
             {
                 DebugTool.Warning("BoardSystem이 연결되지 않았습니다.", DebugType.Board, this);
-                return;
+                return false;
             }
 
             await _boardSystem.LoadBoardFromServerAsync(_normalizeDocumentIds);
 
+            bool loaded = _boardSystem.IsServerDataLoaded;
+
             if (_rewardQueue != null)
+            {
                 await _rewardQueue.LoadQueueFromServerAsync(_normalizeDocumentIds);
+                loaded &= _rewardQueue.IsLoaded;
+            }
 
             if (_specialItemBoardSystem != null)
+            {
                 await _specialItemBoardSystem.LoadSpecialBoardFromServerAsync(_normalizeDocumentIds);
+                loaded &= _specialItemBoardSystem.IsServerDataLoaded;
+            }
+
+            return loaded;
         }
     }
 }

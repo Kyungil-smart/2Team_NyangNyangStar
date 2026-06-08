@@ -56,6 +56,7 @@ public static class DebugTool
     }
 
     [Conditional("UNITY_EDITOR")]
+    [Conditional("DEVELOPMENT_BUILD")]
     public static void Error(
         string text,
         DebugType type,
@@ -68,6 +69,7 @@ public static class DebugTool
     }
 
     [Conditional("UNITY_EDITOR")]
+    [Conditional("DEVELOPMENT_BUILD")]
     public static void MissingComponent(
         string text = null,
         Object context = null,

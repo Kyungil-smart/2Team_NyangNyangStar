@@ -1,4 +1,4 @@
-﻿using Data.LibrarySystem;
+using Data.LibrarySystem;
 using Data.ScriptableObjects.MergeBoard;
 using Services.Enums;
 using TMPro;
@@ -49,8 +49,6 @@ namespace UI.MergeBoard
 
         private void Start()
         {
-            Debug.Log($"[BoardItemReceiver] Start / Button 연결 여부: {_testReceiveButton != null}");
-
             if (_testReceiveButton != null)
             {
                 _testReceiveButton.onClick.RemoveListener(ReceiveRandomTestItem);
@@ -171,7 +169,7 @@ namespace UI.MergeBoard
 
         public void ReceiveRandomTestItem()
         {
-            Debug.Log("[BoardItemReceiver] 아이템 생성 버튼 클릭됨");
+            DebugTool.Log("아이템 생성 버튼 클릭됨", DebugType.Board, this);
 
             if (!CanReceiveTestItem())
                 return;
@@ -196,6 +194,8 @@ namespace UI.MergeBoard
 
         private bool CanReceiveTestItem()
         {
+            ResolveReferences();
+
             if (FireStoreManager.Instance == null || !FireStoreManager.Instance.IsInitialized)
             {
                 DebugTool.Warning("Firestore 초기화가 완료되지 않았습니다. 로그인 후 다시 시도하세요.", DebugType.Board, this);
@@ -215,6 +215,18 @@ namespace UI.MergeBoard
             }
 
             return true;
+        }
+
+        private void ResolveReferences()
+        {
+            if (_boardSystem == null)
+                _boardSystem = FindFirstObjectByType<BoardSystem>();
+
+            if (_specialItemBoardSystem == null)
+                _specialItemBoardSystem = FindFirstObjectByType<SpecialItemBoardSystem>();
+
+            if (_rewardQueue == null)
+                _rewardQueue = FindFirstObjectByType<BoardRewardQueue>();
         }
 
         private bool TryReadInputItemID(out int itemID, out bool hasInput)

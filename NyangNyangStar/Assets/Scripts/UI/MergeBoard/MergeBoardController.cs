@@ -1,4 +1,4 @@
-﻿using Core.Managers;
+using Core.Managers;
 using Data.ScriptableObjects.MergeBoard;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -23,14 +23,6 @@ namespace UI.MergeBoard
             if (_closeButton != null)
                 _closeButton.onClick.AddListener(CloseBoard);
         }
-        
-        public void SetVisible(bool isOpen)
-        {
-            IsOpen = isOpen;
-
-            if (_boardRoot != null)
-                _boardRoot.SetActive(isOpen);
-        }
 
         private void OnDisable()
         {
@@ -51,25 +43,21 @@ namespace UI.MergeBoard
                 return;
             }
 
-            try
+            _boardRoot.SetActive(true);
+            IsOpen = true;
+
+            await Task.Yield();
+
+            if (_mergeBoardLoader == null)
+                _mergeBoardLoader = _boardRoot.GetComponentInChildren<MergeBoardLoader>(true);
+
+            if (_mergeBoardLoader == null)
             {
-                await Task.Yield();
-
-                if (_mergeBoardLoader == null)
-                    _mergeBoardLoader = _boardRoot.GetComponentInChildren<MergeBoardLoader>(true);
-
-                if (_mergeBoardLoader == null)
-                {
-                    DebugTool.Warning("MergeBoardLoader가 연결되지 않았습니다.", DebugType.Board, this);
-                    return;
-                }
-
-                await _mergeBoardLoader.LoadAsync(_reloadOnOpen);
+                DebugTool.Warning("MergeBoardLoader가 연결되지 않았습니다.", DebugType.Board, this);
+                return;
             }
-            finally
-            {
-                IsOpen = false;
-            }
+
+            await _mergeBoardLoader.LoadAsync(_reloadOnOpen);
         }
 
         public void CloseBoard()
@@ -81,6 +69,14 @@ namespace UI.MergeBoard
             }
 
             global::MainUI.Instance.CloseMergeBoard();
+        }
+        
+        public void SetVisible(bool isOpen)
+        {
+            IsOpen = isOpen;
+
+            if (_boardRoot != null)
+                _boardRoot.SetActive(isOpen);
         }
 
         public void ForceReloadOnNextOpen()

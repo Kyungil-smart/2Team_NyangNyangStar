@@ -1,4 +1,4 @@
-﻿using Data.LibrarySystem;
+using Data.LibrarySystem;
 using Data.ScriptableObjects.MergeBoard;
 using System.Collections;
 using System.Collections.Generic;
@@ -85,7 +85,7 @@ namespace UI.MergeBoard
 
             RefreshView();
 
-            if (_mergeBoardFirestore != null)
+            if (ResolveMergeBoardFirestore())
                 await _mergeBoardFirestore.SaveRewardQueueAsync(_rewardQueue);
 
             return true;
@@ -142,17 +142,8 @@ namespace UI.MergeBoard
         {
             IsLoaded = false;
 
-            if (_mergeBoardFirestore == null)
-            {
-                DebugTool.Warning("MergeBoardFirestoreSO가 연결되지 않았습니다.", DebugType.Board, this);
+            if (!ResolveMergeBoardFirestore())
                 return;
-            }
-
-            if (!_mergeBoardFirestore.IsReady)
-            {
-                DebugTool.Warning("Firestore가 초기화되지 않아 보상 큐를 불러올 수 없습니다.", DebugType.Board, this);
-                return;
-            }
 
             List<ItemData> loadedItems = await _mergeBoardFirestore.LoadRewardQueueAsync();
 
@@ -180,6 +171,41 @@ namespace UI.MergeBoard
 
             IsLoaded = true;
             DebugTool.Log("보상 큐 서버 데이터 로드 완료", DebugType.Board, this);
+        }
+
+        private bool ResolveMergeBoardFirestore()
+        {
+            if (_mergeBoardFirestore != null && _mergeBoardFirestore.IsReady)
+                return true;
+
+            if (FireStoreManager.Instance == null)
+            {
+                DebugTool.Warning("FireStoreManager.Instance가 없습니다.", DebugType.Board, this);
+                return false;
+            }
+
+            if (!FireStoreManager.Instance.IsInitialized)
+            {
+                DebugTool.Warning("FireStoreManager 초기화가 완료되지 않았습니다.", DebugType.Board, this);
+                return false;
+            }
+
+            _mergeBoardFirestore = FireStoreManager.Instance.GetData<MergeBoardFirestoreSo>(DataType.MergeBoard);
+
+            if (_mergeBoardFirestore == null)
+            {
+                DebugTool.Warning("FireStoreManager에서 MergeBoardFirestoreSO를 찾을 수 없습니다.", DebugType.Board, this);
+                return false;
+            }
+
+            if (!_mergeBoardFirestore.IsReady)
+            {
+                DebugTool.Warning("MergeBoardFirestoreSO가 아직 준비되지 않았습니다.", DebugType.Board, this);
+                return false;
+            }
+
+            DebugTool.Log("MergeBoardFirestoreSO 연결 완료", DebugType.Board, this);
+            return true;
         }
 
         private ItemData CreateRuntimeItem(ItemData itemData)
