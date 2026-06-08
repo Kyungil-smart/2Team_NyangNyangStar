@@ -52,6 +52,7 @@ public class NyangNyangSnapStagePopupUI : UIPopup
         if (button == null) return;
         button.onClick.AddListener(() =>
         {
+            GameManager.Audio.PlaySfx("Main_SFX_Touch");
             popup.OpenPopup(stage);
             popup.gameObject.SetActive(true);
             PlayPopupOpenAnimation(popup);
@@ -72,6 +73,7 @@ public class NyangNyangSnapStagePopupUI : UIPopup
 
     private void CloseNyangNyangSnapStagePopup()
     {
+        GameManager.Audio.PlaySfx("Main_SFX_Touch");
         gameObject.SetActive(false);
     }
 }
