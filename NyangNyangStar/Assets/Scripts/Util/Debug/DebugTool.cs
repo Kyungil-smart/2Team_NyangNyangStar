@@ -14,6 +14,7 @@ using Object = UnityEngine.Object;
 public static class DebugTool
 {
     [Conditional("UNITY_EDITOR")]
+    [Conditional("DEVELOPMENT_BUILD")]
     public static void Log(
         string text,
         DebugType type,
@@ -26,6 +27,7 @@ public static class DebugTool
     }
 
     [Conditional("UNITY_EDITOR")]
+    [Conditional("DEVELOPMENT_BUILD")]
     public static void Warning(
         string text,
         DebugType type,
@@ -41,6 +43,7 @@ public static class DebugTool
     /// 기존 코드의 오타 호출을 깨지 않기 위한 호환용 메서드이다.
     /// </summary>
     [Conditional("UNITY_EDITOR")]
+    [Conditional("DEVELOPMENT_BUILD")]
     public static void Warnning(
         string text,
         DebugType type,
