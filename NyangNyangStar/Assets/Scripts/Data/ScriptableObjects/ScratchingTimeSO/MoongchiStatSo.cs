@@ -55,6 +55,9 @@ namespace Data.ScriptableObjects.ScratchingTimeSO
         [Header("기본 힘껏 긁기 확률 %")] [SerializeField]
         private int _baseCriticalChance = 5;
 
+        [Header("5레벨마다 힘껏 긁기 확률 증가량 %")] [SerializeField]
+        private int _criticalChanceIncreasePerFiveLevels = 5;
+
         [Header("총 힘껏 긁기 확률 % (자동 계산)")] [SerializeField]
         private int _totalCriticalChance;
 
@@ -125,7 +128,7 @@ namespace Data.ScriptableObjects.ScratchingTimeSO
         private void RefreshTotalStats()
         {
             _totalSharpness = _baseSharpness + (_runtimeLevel * _sharpnessIncreasePerLevel);
-            _totalCriticalChance = _baseCriticalChance + (_runtimeLevel / 5 * _baseCriticalChance);
+            _totalCriticalChance = _baseCriticalChance + (_runtimeLevel / 5 * _criticalChanceIncreasePerFiveLevels);
         }
 
         // 인스pector 표시용 직렬화 필드를 런타임 진행도와 맞춤 (플레이 중 수동 수정값은 계산에 반영되지 않음)
