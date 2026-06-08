@@ -1,5 +1,7 @@
 using Data.ScriptableObjects.ScratchingTimeSO;
+using Firebase.Firestore;
 using Services.Enums;
+using System.Threading.Tasks;
 using UnityEngine;
 
 [FirestorePath("Users/{userId}/ScratchingTime/{docId}")]
@@ -27,6 +29,12 @@ public class ScratchingProgressSO : BaseFireStore
     public int HighestClearedDailyStage => _highestClearedDailyStage;
     public int HighestClearedWeeklyStage => _highestClearedWeeklyStage;
 
+    public override async Task CreateNew(FirebaseFirestore database, string userId)
+    {
+        ResetToDefault();
+        await base.CreateNew(database, userId);
+    }
+
     public void ApplyTo(ScratchingSo scratching)
     {
         if (scratching == null)
@@ -50,5 +58,14 @@ public class ScratchingProgressSO : BaseFireStore
         _remainingWeeklyChallengeCount = scratching.GetRemainingChallengeCount(StageType.Weekly);
         _highestClearedDailyStage = scratching.GetHighestClearedStage(StageType.Daily);
         _highestClearedWeeklyStage = scratching.GetHighestClearedStage(StageType.Weekly);
+    }
+
+    private void ResetToDefault()
+    {
+        _remainingDailyChallengeCount = 4;
+        _remainingWeeklyChallengeCount = 1;
+        _openedStageBySchedule = 1;
+        _highestClearedDailyStage = 0;
+        _highestClearedWeeklyStage = 0;
     }
 }

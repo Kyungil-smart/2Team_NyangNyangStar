@@ -176,7 +176,7 @@ public partial class ScratchingTimeManager
 
         ResetAllState();
 
-        LoadScratchingProgressFromServer();
+        ReloadScratchingProgressForSession();
 
         _moongchiStatController?.PrintMoongchiStat();
 
@@ -320,40 +320,36 @@ public partial class ScratchingTimeManager
 
 
 
-    // 서버에서 ScratchingProgressSO를 불러와 ScratchingSo에 반영
-
-    private async void LoadScratchingProgressFromServer()
-
+    // Firestore 진행도를 서버에서 불러와 ScratchingSo에 반영
+    private void ReloadScratchingProgressForSession()
     {
-
-        if (_scratchingProgress == null || _scratching == null)
-
+        if (_scratching == null)
             return;
 
+        LoadScratchingProgressFromServer(++_scratchingProgressLoadVersion);
+    }
 
+    // 서버에서 ScratchingProgressSO를 불러와 ScratchingSo에 반영
+    private async void LoadScratchingProgressFromServer(int loadVersion)
+    {
+        if (_scratchingProgress == null || _scratching == null)
+            return;
 
         try
-
         {
-
             await _scratchingProgress.UpdateFromServerAsync(false);
 
+            if (loadVersion != _scratchingProgressLoadVersion)
+                return;
+
             _scratchingProgress.ApplyTo(_scratching);
-
             RefreshStageButtonUnlockState();
-
             RefreshInitialSelectionInfo();
-
         }
-
         catch (Exception e)
-
         {
-
             DebugTool.Warning($"ScratchingProgressSO 불러오기 실패: {e.Message}", DebugType.ScratchingTime);
-
         }
-
     }
 
 
