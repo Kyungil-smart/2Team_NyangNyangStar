@@ -25,6 +25,10 @@ public partial class ScratchingTimeManager : UIBase
     [SerializeField] private ResultPopupController _resultPopupController;     // 클리어/실패 결과 팝업
     [SerializeField] private MoongchiStatController _moongchiStatController;   // 뭉치 스탯,공격 처리
 
+    
+    [Header("Rewards")]
+    [SerializeField] private ScratchingTimeReward _scratchingReward;
+    
     [Header("Current Stage State")]
     [SerializeField] private int _selectedStage;                              // 현재 선택된 단계 (1~4)
     [SerializeField] private StageType _selectedStageType = StageType.None;   // 일일/주간 중 진행 중인 타입
@@ -144,6 +148,7 @@ public partial class ScratchingTimeManager : UIBase
         _battleController ??= _dailyStageController;
         _resultPopupController ??= GetOrAddController<ResultPopupController>("ResultPopup");
         _moongchiStatController ??= GetOrAddController<MoongchiStatController>("ScratchingTimeUI");
+        _scratchingReward ??= GetComponentInChildren<ScratchingTimeReward>(true);
 
         // ExitButton 레이아웃 정리 후 Addressables 스프라이트 적용
         _selectionController?.Init();

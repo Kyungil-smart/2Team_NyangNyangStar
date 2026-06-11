@@ -13639,6 +13639,7 @@ GameObject:
   - component: {fileID: 5990588258860867098}
   - component: {fileID: 926318897902771828}
   - component: {fileID: 8394221799734757911}
+  - component: {fileID: 4344765007287792349}
   m_Layer: 5
   m_Name: ScratchingTimeScreen
   m_TagString: Untagged
@@ -13729,6 +13730,7 @@ MonoBehaviour:
   _weeklyStageController: {fileID: 0}
   _resultPopupController: {fileID: 0}
   _moongchiStatController: {fileID: 0}
+  _scratchingReward: {fileID: 0}
   _selectedStage: 0
   _selectedStageType: 0
   _isStarted: 0
@@ -13797,6 +13799,25 @@ MonoBehaviour:
   m_BlockingMask:
     serializedVersion: 2
     m_Bits: 4294967295
+--- !u!114 &4344765007287792349
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9011317212103751508}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d2731cd3449c64f45afd4c8b0e793ebe, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _weeklyRewards:
+  - _stage: 1
+    _rewards:
+    - _itemID: 10001
+      _count: 1
+    - _itemID: 10002
+      _count: 1
 --- !u!1 &9029162853753521205
 GameObject:
   m_ObjectHideFlags: 0
