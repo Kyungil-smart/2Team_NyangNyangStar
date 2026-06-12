@@ -45,6 +45,11 @@ MonoBehaviour:
     m_SerializedLabels:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 430b975e8c419304389a0d18a5f2c954
+    m_Address: NotebookPopupUI
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 5bc47388ba43c4f448a39529228b8a81
     m_Address: NyangNyangSnapResultCanvas
     m_ReadOnly: 0
