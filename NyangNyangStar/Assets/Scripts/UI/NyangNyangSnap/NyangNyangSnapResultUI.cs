@@ -1,37 +1,28 @@
 using DG.Tweening;
+using System.Collections.Generic;
 using TMPro;
-using UI;
 using UI.Base;
 using UnityEngine;
 using UnityEngine.UI;
-using Util;
 
 public class NyangNyangSnapResultUI : UIPopup
 {
+    [Header("결과/보상 패널")]
+    [SerializeField] private GameObject _resultCollectionPanel;
+    [SerializeField] private GameObject _rewardPanel;
+
     [Header("버튼")]
+    [Tooltip("사진 선택 버튼")][SerializeField] private Button _selectPhotosButton;
+    [Tooltip("사진 저장 버튼")][SerializeField] private Button _saveButton;
     [Tooltip("다시 시도 버튼")][SerializeField] private Button _retryButton;
-    [Tooltip("SNS 버튼")][SerializeField] private Button _snsButton;
+    [Tooltip("메인화면 버튼")][SerializeField] private Button _mainButton;
 
     [Header("점수 텍스트")]
-    [Tooltip("총점 Text 이름")]
-    [SerializeField] private string _totalScoreTextName = "TotalScoreText";
-    [SerializeField] private TMP_Text _totalScoreText;
-
-    [Tooltip("포즈 점수 Text 이름")]
-    [SerializeField] private string _poseScoreTextName = "PoseScoreText";
-    [SerializeField] private TMP_Text _poseScoreText;
-
-    [Tooltip("구도 점수 Text 이름")]
-    [SerializeField] private string _compositionScoreTextName = "CompositionScoreText";
-    [SerializeField] private TMP_Text _compositionScoreText;
-
-    [Tooltip("반응 점수 Text 이름")]
-    [SerializeField] private string _reactionScoreTextName = "ReactionScoreText";
-    [SerializeField] private TMP_Text _reactionScoreText;
-
-    [Tooltip("포즈 이름 Text 이름")]
-    [SerializeField] private string _poseNameTextName = "PoseNameText";
     [SerializeField] private TMP_Text _poseNameText;
+    [SerializeField] private TMP_Text _poseScoreText;
+    [SerializeField] private TMP_Text _compositionScoreText;
+    [SerializeField] private TMP_Text _reactionScoreText;
+    [SerializeField] private TMP_Text _totalScoreText;
 
     [Header("결과 연출")]
     [Tooltip("사진 페이드 시간")]
@@ -49,32 +40,45 @@ public class NyangNyangSnapResultUI : UIPopup
     [Tooltip("별 하나가 차오르는 시간")]
     [SerializeField] private float _starFillDuration = 0.15f;
 
-    private NyangNyangSnapResultUISprite _sprite;
+    private NyangNyangSnapResultUISprite _resultSprite;
+    private ResultCollectionPanelSprite _collectionSprite;
+    private RewardPanelSprite _rewardSprite;
     private NyangNyangSnapCaptureRecord _currentRecord;
+    private IReadOnlyList<NyangNyangSnapCaptureRecord> _records;
     private Sequence _resultSequence;
+    private NyangNyangSnapUI _snapUI;
 
     public override void Init()
     {
         Bind<Button>(typeof(NyangNyangSnapResultButton));
 
         _retryButton = Get<Button>((int)NyangNyangSnapResultButton.RetryButton);
-        _snsButton = Get<Button>((int)NyangNyangSnapResultButton.SnsButton);
+        _mainButton = Get<Button>((int)NyangNyangSnapResultButton.MainButton);
+        _selectPhotosButton = Get<Button>((int)NyangNyangSnapResultButton.SelectPhotosButton);
+        _saveButton = Get<Button>((int)NyangNyangSnapResultButton.SaveButton);
 
-        _sprite = GetComponent<NyangNyangSnapResultUISprite>();
+        _resultSprite = GetComponent<NyangNyangSnapResultUISprite>();
+        _collectionSprite = GetComponent<ResultCollectionPanelSprite>();
+        _rewardSprite = GetComponent<RewardPanelSprite>();
 
-        if (_sprite != null)
-            _sprite.Init();
+        if (_resultSprite != null)
+            _resultSprite.Init();
         else
             DebugTool.Warning("[NyangNyangSnapResultUI] NyangNyangSnapResultUISprite가 없습니다.", DebugType.UI, this);
 
-        AutoAssignTexts();
+        if (_collectionSprite != null) _collectionSprite.Init();
+
+        if (_rewardSprite != null) _rewardSprite.Init();
+
         InitPopups();
     }
 
     private void InitPopups()
     {
+        AddSelectPhotosButton(_selectPhotosButton);
+        AddSaveButton(_saveButton);
         AddRetryButton(_retryButton);
-        AddSnsButton(_snsButton);
+        AddMainButton(_mainButton);
     }
 
     private void OnDisable()
@@ -82,39 +86,81 @@ public class NyangNyangSnapResultUI : UIPopup
         KillResultSequence();
     }
 
-    private void AddRetryButton(Button button)
+    private void OnDestroy()
+    {
+        if (_selectPhotosButton != null) _selectPhotosButton.onClick.RemoveAllListeners();
+        if (_saveButton != null) _saveButton.onClick.RemoveAllListeners();
+        if (_retryButton != null) _retryButton.onClick.RemoveAllListeners();
+        if (_mainButton != null) _mainButton.onClick.RemoveAllListeners();
+    }
+
+    private void AddSelectPhotosButton(Button button)
     {
         if (button == null) return;
 
-        button.onClick.RemoveAllListeners();
         button.onClick.AddListener(() =>
         {
             KillResultSequence();
-
-            gameObject.SetActive(false);
+            _resultCollectionPanel.SetActive(true);
+            _collectionSprite.SetPhotoCollection(_records);
+            button.gameObject.SetActive(false);
 
             DebugTool.Log(
-                "[NyangNyangSnapResultUI] Retry 클릭 - 결과창 비활성화",
+                "[NyangNyangSnapResultUI] 사진 선택 버튼 클릭 - 결과창 사진 모음 활성화",
                 DebugType.UI,
                 this
             );
         });
     }
 
-    private void AddSnsButton(Button button)
+    private void AddSaveButton(Button button)
     {
         if (button == null) return;
 
-        button.onClick.RemoveAllListeners();
         button.onClick.AddListener(() =>
         {
-            DebugTool.Log("[NyangNyangSnapResultUI] SNS 버튼 클릭 - 추후 업로드 기능 연결", DebugType.UI, this);
+            // TODO : 사진 저장하기 
+            _resultCollectionPanel.SetActive(false);
+            _rewardPanel.SetActive(true);
+
+            DebugTool.Log("[NyangNyangSnapResultUI] 사진 저장 버튼 클릭", DebugType.UI, this);
         });
     }
 
-    public void SetResult(NyangNyangSnapCaptureRecord record)
+    private void AddRetryButton(Button button)
+    {
+        if (button == null) return;
+
+        button.onClick.AddListener(() =>
+        {
+            KillResultSequence();
+
+            _snapUI.RetrySnap();
+            gameObject.SetActive(false);
+
+            DebugTool.Log("[NyangNyangSnapResultUI] Retry 클릭", DebugType.UI, this);
+        });
+    }
+
+    private void AddMainButton(Button button)
+    {
+        if (button == null) return;
+
+        button.onClick.AddListener(() =>
+        {
+            KillResultSequence();
+
+            _snapUI.BackToMain();
+            gameObject.SetActive(false);
+
+            DebugTool.Log("[NyangNyangSnapResultUI] Main 클릭 - 메인으로 이동", DebugType.UI, this);
+        });
+    }
+
+    public void SetResult(NyangNyangSnapCaptureRecord record, IReadOnlyList<NyangNyangSnapCaptureRecord> records)
     {
         _currentRecord = record;
+        _records = records;
 
         if (_currentRecord == null)
         {
@@ -122,17 +168,15 @@ public class NyangNyangSnapResultUI : UIPopup
             return;
         }
 
-        if (_sprite == null)
+        if (_resultSprite == null)
         {
-            _sprite = GetComponent<NyangNyangSnapResultUISprite>();
+            _resultSprite = GetComponent<NyangNyangSnapResultUISprite>();
 
-            if (_sprite != null)
-                _sprite.Init();
+            if (_resultSprite != null)
+                _resultSprite.Init();
         }
 
-        AutoAssignTexts();
-
-        if (_sprite == null)
+        if (_resultSprite == null)
         {
             DebugTool.Warning("[NyangNyangSnapResultUI] ResultUISprite가 없습니다.", DebugType.UI, this);
             return;
@@ -151,7 +195,7 @@ public class NyangNyangSnapResultUI : UIPopup
         }
 
         SetInitialResultView();
-        _sprite.SetResultPhoto(_currentRecord.CapturedSprite);
+        _resultSprite.SetResultPhoto(_currentRecord.CapturedSprite);
         PlayResultSequence(_currentRecord.ScoreResult, _currentRecord.PoseData);
 
         DebugTool.Log(
@@ -165,8 +209,12 @@ public class NyangNyangSnapResultUI : UIPopup
     {
         KillResultSequence();
 
-        if (_sprite != null)
-            _sprite.ResetRuntimeImages();
+        _resultCollectionPanel.SetActive(false);
+        _rewardPanel.SetActive(false);
+        _selectPhotosButton.gameObject.SetActive(true);
+
+        if (_resultSprite != null)
+            _resultSprite.ResetRuntimeImages();
 
         if (_totalScoreText != null) _totalScoreText.text = "0";
         if (_poseScoreText != null) _poseScoreText.text = "0";
@@ -181,10 +229,10 @@ public class NyangNyangSnapResultUI : UIPopup
 
         _resultSequence = DOTween.Sequence();
 
-        _resultSequence.Append(_sprite.CreateStarFillSequence(scoreResult.TotalScore, _starFillDuration));
+        _resultSequence.Append(_resultSprite.CreateStarFillSequence(scoreResult.TotalScore, _starFillDuration));
         _resultSequence.AppendInterval(_sequenceInterval);
 
-        _resultSequence.Append(_sprite.CreatePhotoFadeTween(1f, _photoFadeDuration));
+        _resultSequence.Append(_resultSprite.CreatePhotoFadeTween(1f, _photoFadeDuration));
         _resultSequence.AppendInterval(_sequenceInterval);
 
         _resultSequence.AppendCallback(() =>
@@ -195,17 +243,17 @@ public class NyangNyangSnapResultUI : UIPopup
 
         _resultSequence.AppendInterval(_sequenceInterval);
 
-        _resultSequence.Append(_sprite.CreatePoseGaugeTween(scoreResult.PoseGaugeValue, _gaugeFillDuration));
+        _resultSequence.Append(_resultSprite.CreatePoseGaugeTween(scoreResult.PoseGaugeValue, _gaugeFillDuration));
         _resultSequence.Join(CreateIntTextTween(_poseScoreText, 0, scoreResult.PoseScore, _gaugeFillDuration));
 
         _resultSequence.AppendInterval(_sequenceInterval);
 
-        _resultSequence.Append(_sprite.CreateCompositionGaugeTween(scoreResult.CompositionGaugeValue, _gaugeFillDuration));
+        _resultSequence.Append(_resultSprite.CreateCompositionGaugeTween(scoreResult.CompositionGaugeValue, _gaugeFillDuration));
         _resultSequence.Join(CreateIntTextTween(_compositionScoreText, 0, scoreResult.CompositionScore, _gaugeFillDuration));
 
         _resultSequence.AppendInterval(_sequenceInterval);
 
-        _resultSequence.Append(_sprite.CreateReactionGaugeTween(scoreResult.ReactionGaugeValue, _gaugeFillDuration));
+        _resultSequence.Append(_resultSprite.CreateReactionGaugeTween(scoreResult.ReactionGaugeValue, _gaugeFillDuration));
         _resultSequence.Join(CreateIntTextTween(_reactionScoreText, 0, scoreResult.ReactionScore, _gaugeFillDuration));
 
         _resultSequence.AppendInterval(_sequenceInterval);
@@ -241,78 +289,16 @@ public class NyangNyangSnapResultUI : UIPopup
         _resultSequence = null;
     }
 
-    private void AutoAssignTexts()
+    public void SetSnapUI(NyangNyangSnapUI snapUI)
     {
-        if (_totalScoreText == null)
-            _totalScoreText = FindTMPTextByNameInCanvas(_totalScoreTextName);
-
-        if (_poseScoreText == null)
-            _poseScoreText = FindTMPTextByNameInCanvas(_poseScoreTextName);
-
-        if (_compositionScoreText == null)
-            _compositionScoreText = FindTMPTextByNameInCanvas(_compositionScoreTextName);
-
-        if (_reactionScoreText == null)
-            _reactionScoreText = FindTMPTextByNameInCanvas(_reactionScoreTextName);
-
-        if (_poseNameText == null)
-            _poseNameText = FindTMPTextByNameInCanvas(_poseNameTextName);
-
-        LogTextAutoAssignResult(_totalScoreText, _totalScoreTextName);
-        LogTextAutoAssignResult(_poseScoreText, _poseScoreTextName);
-        LogTextAutoAssignResult(_compositionScoreText, _compositionScoreTextName);
-        LogTextAutoAssignResult(_reactionScoreText, _reactionScoreTextName);
-        LogTextAutoAssignResult(_poseNameText, _poseNameTextName);
-    }
-
-    private void LogTextAutoAssignResult(TMP_Text targetText, string targetName)
-    {
-        if (targetText != null)
-        {
-            DebugTool.Log(
-                $"[NyangNyangSnapResultUI] Text 자동 연결 완료: {targetName}",
-                DebugType.UI,
-                this
-            );
-            return;
-        }
-
-        DebugTool.Warning(
-            $"[NyangNyangSnapResultUI] Text 자동 연결 실패. 이름: {targetName}",
-            DebugType.UI,
-            this
-        );
-    }
-
-    private TMP_Text FindTMPTextByNameInCanvas(string objectName)
-    {
-        Transform target = FindTransformByNameInCanvas(objectName);
-
-        if (target == null)
-            return null;
-
-        return target.GetComponent<TMP_Text>();
-    }
-
-    private Transform FindTransformByNameInCanvas(string objectName)
-    {
-        Canvas canvas = GetComponentInParent<Canvas>();
-        Transform searchRoot = canvas != null ? canvas.transform : transform;
-
-        Transform[] children = searchRoot.GetComponentsInChildren<Transform>(true);
-
-        foreach (Transform child in children)
-        {
-            if (child.name == objectName)
-                return child;
-        }
-
-        return null;
+        _snapUI = snapUI;
     }
 }
 
 public enum NyangNyangSnapResultButton
 {
     RetryButton,
-    SnsButton
+    MainButton,
+    SelectPhotosButton,
+    SaveButton,
 }

@@ -16,6 +16,7 @@ public class NyangNyangSnapCaptureRecorder : MonoBehaviour
     public int MaxCaptureCount => _maxCaptureCount;
     public bool IsCaptureComplete => CurrentCaptureCount >= _maxCaptureCount;
     public NyangNyangSnapCaptureRecord BestRecord => _bestRecord;
+    public IReadOnlyList<NyangNyangSnapCaptureRecord> Records => _records;
 
     public void ClearRecords()
     {
