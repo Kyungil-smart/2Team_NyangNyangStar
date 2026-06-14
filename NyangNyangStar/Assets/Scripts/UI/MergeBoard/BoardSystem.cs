@@ -82,8 +82,8 @@ namespace UI.MergeBoard
 
             IsBoardReady = true;
 
-            if (BoardItemReceiver.Instance != null)
-                BoardItemReceiver.Instance.RegisterBoardSystem(this);
+            if (MergeBoardItemService.Instance != null)
+                MergeBoardItemService.Instance.RegisterBoardSystem(this);
         }
 
         private void Init()
@@ -357,6 +357,75 @@ namespace UI.MergeBoard
             return _slotItemDict.TryGetValue(slotNumber, out ItemData itemData)
                 ? itemData.Clone()
                 : ItemData.Empty;
+        }
+
+
+        public int GetItemCountById(int itemID)
+        {
+            if (itemID <= 0)
+                return 0;
+
+            int count = 0;
+
+            foreach (var pair in _slotItemDict)
+            {
+                ItemData itemData = pair.Value;
+
+                if (itemData != null && itemData.HasItem && itemData.ItemID == itemID)
+                    count++;
+            }
+
+            return count;
+        }
+
+        public async Task<int> ConsumeItemsByIdAsync(int itemID, int count = 1)
+        {
+            if (!IsServerDataLoaded)
+            {
+                DebugTool.Warning("보드 서버 데이터 로드 전에는 아이템을 소비할 수 없습니다.", DebugType.Board, this);
+                return 0;
+            }
+
+            if (itemID <= 0)
+                return 0;
+
+            int safeCount = Mathf.Max(1, count);
+            int availableCount = GetItemCountById(itemID);
+
+            if (availableCount < safeCount)
+            {
+                DebugTool.Warning($"보드에 소비할 아이템 수량이 부족합니다. ID:{itemID}, 필요:{safeCount}, 보유:{availableCount}", DebugType.Board, this);
+                return 0;
+            }
+
+            Dictionary<int, ItemData> changedSlots = new Dictionary<int, ItemData>();
+            int consumedCount = 0;
+            bool selectedSlotConsumed = false;
+
+            for (int slotNumber = 1; slotNumber <= SlotCount && consumedCount < safeCount; slotNumber++)
+            {
+                if (!_slotItemDict.TryGetValue(slotNumber, out ItemData itemData))
+                    continue;
+
+                if (itemData == null || !itemData.HasItem || itemData.ItemID != itemID)
+                    continue;
+
+                if (_selectedSlot != null && _selectedSlot.SlotNumber == slotNumber)
+                    selectedSlotConsumed = true;
+
+                SetSlotData(slotNumber, ItemData.Empty);
+                changedSlots[slotNumber] = ItemData.Empty;
+                consumedCount++;
+            }
+
+            if (changedSlots.Count > 0)
+                await SaveSlotsSafeAsync(changedSlots);
+
+            if (selectedSlotConsumed)
+                ClearSelectedSlot();
+
+            DebugTool.Log($"보드 아이템 소비 완료 / ID:{itemID}, Count:{consumedCount}", DebugType.Board, this);
+            return consumedCount;
         }
 
         public void SelectSlot(ItemSlot itemSlot)

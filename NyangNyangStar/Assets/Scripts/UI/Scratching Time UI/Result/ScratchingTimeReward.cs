@@ -41,11 +41,13 @@ public class ScratchingTimeReward : MonoBehaviour
         if (stageReward == null)
         {
             DebugTool.Warning($"{stage} 단계 주간 보상 데이터가 없습니다.", DebugType.ScratchingTime, this);
+            return;
         }
 
-        if (BoardItemReceiver.Instance == null)
+        if (MergeBoardItemService.Instance == null)
         {
-            DebugTool.Warning("BoardItemReceiver 가 없어 스크래칭 타임 보상을 지급할 수 없습니다.", DebugType.ScratchingTime, this);
+            DebugTool.Warning("MergeBoardItemService가 없어 스크래칭 타임 보상을 지급할 수 없습니다.", DebugType.ScratchingTime, this);
+            return;
         }
 
 
@@ -56,9 +58,9 @@ public class ScratchingTimeReward : MonoBehaviour
                 continue;
             }
 
-            BoardItemReceiver.Instance.ReceiveItemById(reward.ItemID, reward.Count);
+            MergeBoardItemService.Instance.AddItemById(reward.ItemID, reward.Count);
         }
 
-        DebugTool.Log($"{stage}단계 주간 보상 지금 완료", DebugType.ScratchingTime, this);
+        DebugTool.Log($"{stage}단계 주간 보상 지급 완료", DebugType.ScratchingTime, this);
     }
 }
