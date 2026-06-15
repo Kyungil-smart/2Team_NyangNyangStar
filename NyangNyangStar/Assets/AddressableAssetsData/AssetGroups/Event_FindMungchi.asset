@@ -35,8 +35,14 @@ MonoBehaviour:
     m_SerializedLabels:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 19bfbb793a8095148a9fc1e02cb1bf50
+    m_Address: FM_Panel_ItemList
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 32ec5017a26650f4ba63afc4a59b8d80
-    m_Address: FM_MainImage
+    m_Address: FM_Img_Main
     m_ReadOnly: 0
     m_SerializedLabels:
     - Sprite
@@ -49,6 +55,12 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 36c4f1c4653cc204094d8f16f3749cf3
     m_Address: FM_Target_Keys
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3724dd1065f20294fb56e570b223a1e0
+    m_Address: FM_Panel_Minigame
     m_ReadOnly: 0
     m_SerializedLabels:
     - Sprite
@@ -71,6 +83,12 @@ MonoBehaviour:
     m_SerializedLabels:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6b9b3dc6f17f85c49b41497062aebcc8
+    m_Address: FM_Icon_Coin
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 6bf40d1caa9bc2e459689d9f6549150b
     m_Address: FM_Target_NailClipper
     m_ReadOnly: 0
@@ -89,6 +107,12 @@ MonoBehaviour:
     m_SerializedLabels:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 826aad36096914d4386c60412830930b
+    m_Address: FM_Btn_Back
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 858d1a93e1f1c2a4e96b60c65308b0a5
     m_Address: FM_Target_Socks
     m_ReadOnly: 0
@@ -97,6 +121,30 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 8a2d371e13144bf47870fa2acd5b7b11
     m_Address: FM_Target_Mungchi
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8c5d23fb91619ab4ca4162e69ee50bfa
+    m_Address: FM_Btn_Help
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8f31f7c63daaa8c41b4b9e40aee052b4
+    m_Address: FM_Icon_Timer
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8f6ad64cac7b80046b405869dc36cd43
+    m_Address: FM_Panel_Mission
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9982987d247360f43b064a96019674c1
+    m_Address: FM_Icon_Correct
     m_ReadOnly: 0
     m_SerializedLabels:
     - Sprite
@@ -119,8 +167,20 @@ MonoBehaviour:
     m_SerializedLabels:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ab360e37a318a25429413b0a33a4060d
+    m_Address: FM_BG_GameBoard
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: abb855a6ee397ef4587adf1cfb1f5bf8
     m_Address: FM_Target_Glasses
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: af9b186767677324bbaf4564db6ff381
+    m_Address: FM_Icon_Check
     m_ReadOnly: 0
     m_SerializedLabels:
     - Sprite
@@ -155,8 +215,26 @@ MonoBehaviour:
     m_SerializedLabels:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: cdae5a9f6fa4da84d9dd3a639db190bb
+    m_Address: FM_Panel_TargetText
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: ce83d4984e220e44ca60b89c48b54c50
     m_Address: FM_Target_ChargingCable
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d781238faf46c7a429413fa24e491795
+    m_Address: FM_Slot_Mission
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d7cb310346d589d418970b77e8836f8f
+    m_Address: FM_Tile
     m_ReadOnly: 0
     m_SerializedLabels:
     - Sprite
@@ -169,6 +247,12 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: e106ef8ab8869e74da28ada1e7da32e9
     m_Address: FM_Target_Earbuds
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f65c4ba9da6c9694e8f208a6c713230d
+    m_Address: FM_Panel_Info
     m_ReadOnly: 0
     m_SerializedLabels:
     - Sprite
