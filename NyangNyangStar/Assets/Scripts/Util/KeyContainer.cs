@@ -57,6 +57,7 @@ namespace Util
             // 임시보호 수첩(냥냥 스냅 사진 도감) UI 프리팹
             public const string NotebookPopupUI = "NotebookPopupUI";
             public const string SelectedCatPopupUI = "SelectedCatPopupUI";
+            public const string PhotoCollectionPopupUI = "PhotoCollectionPopupUI";
 
             // 스크래칭 타임 UI 프리팹
             public const string ScratchingTime = "ScratchingTimeScreen";
@@ -275,6 +276,7 @@ namespace Util
             // 임시보호 수첩
             PrefabKeyDict.Add(Prefabs.NotebookPopupUI, new List<GameObject>());
             PrefabKeyDict.Add(Prefabs.SelectedCatPopupUI, new List<GameObject>());
+            PrefabKeyDict.Add(Prefabs.PhotoCollectionPopupUI, new List<GameObject>());
 
             // 스크래칭 타임
             PrefabKeyDict.Add(Prefabs.ScratchingTime, new List<GameObject>());

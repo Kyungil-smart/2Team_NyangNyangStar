@@ -33,8 +33,8 @@ public class NotebookPopupUI : UIPopup
 
     private void BindButtons()
     {
-        if (_closeButton != null) _closeButton.onClick.AddListener(CloseEmptyPopup);
-        if (_background != null) _background.onClick.AddListener(CloseEmptyPopup);
+        if (_closeButton != null) _closeButton.onClick.AddListener(CloseNotebookPopup);
+        if (_background != null) _background.onClick.AddListener(CloseNotebookPopup);
     }
 
     private void OnDestroy()
@@ -46,7 +46,12 @@ public class NotebookPopupUI : UIPopup
 
     private void InitPopup(string key, Button button)
     {
-        GameManager.UI.ShowPopupUI<UIPopup>(key, onLoaded => AddPopupButton(button, onLoaded), false);
+        GameManager.UI.ShowPopupUI<SelectedCatPopupUI>(key, onLoaded => 
+        {
+            onLoaded.SetNotebookPopup(this);
+            AddPopupButton(button, onLoaded); 
+        }, 
+        false);
     }
 
     private void AddPopupButton(Button button, UIPopup popup)
@@ -78,7 +83,7 @@ public class NotebookPopupUI : UIPopup
             .SetEase(Ease.OutSine);
     }
 
-    private void CloseEmptyPopup()
+    private void CloseNotebookPopup()
     {
         if (_panel == null) return;
         _panel.DOScale(Vector3.one * _popupScale, _popupScaleDuration)
@@ -87,6 +92,8 @@ public class NotebookPopupUI : UIPopup
 
         GameManager.Audio.PlaySfx("Main_SFX_Touch");
     }
+
+    public void HideNotebookPopup() => gameObject.SetActive(false);
 }
 
 public enum NotebookPopupButtons

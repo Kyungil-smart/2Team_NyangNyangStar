@@ -193,7 +193,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0, b: 0, a: 0.74509805}
+  m_Color: {r: 0, g: 0, b: 0, a: 0}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -2303,7 +2303,7 @@ MonoBehaviour:
   m_Content: {fileID: 5931669843565679454}
   m_Horizontal: 1
   m_Vertical: 0
-  m_MovementType: 1
+  m_MovementType: 2
   m_Elasticity: 0.1
   m_Inertia: 1
   m_DecelerationRate: 0.135
@@ -4534,6 +4534,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3550874904481577897}
+  - component: {fileID: 268055776032906479}
   m_Layer: 0
   m_Name: SelectedCatPopupUI
   m_TagString: Untagged
@@ -4557,6 +4558,28 @@ Transform:
   - {fileID: 6923397184061838038}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &268055776032906479
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6730168203059807491}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 146e47b9b23838b4fb780afe4b1e42bf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _backButton: {fileID: 0}
+  _closeButton: {fileID: 0}
+  _background: {fileID: 0}
+  _infoButton: {fileID: 0}
+  _memoButton: {fileID: 0}
+  _statsButton: {fileID: 0}
+  _infoPanel: {fileID: 0}
+  _memoPanel: {fileID: 0}
+  _statsPanel: {fileID: 0}
+  _collectionButton: {fileID: 0}
 --- !u!1 &6813054242985064480
 GameObject:
   m_ObjectHideFlags: 0
@@ -5509,7 +5532,7 @@ MonoBehaviour:
   m_Content: {fileID: 3789024271652000579}
   m_Horizontal: 1
   m_Vertical: 0
-  m_MovementType: 1
+  m_MovementType: 2
   m_Elasticity: 0.1
   m_Inertia: 1
   m_DecelerationRate: 0.135
