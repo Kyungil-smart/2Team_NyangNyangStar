@@ -78,7 +78,12 @@ public class SelectedCatPopupUI : UIPopup
 
     private void InitPopup(string key, Button button)
     {
-        GameManager.UI.ShowPopupUI<UIPopup>(key, onLoaded => AddPopupButton(button, onLoaded), false);
+        GameManager.UI.ShowPopupUI<PhotoCollectionPopupUI>(key, onLoaded => 
+        {
+            onLoaded.SetSelectedCatPopup(this);
+            AddPopupButton(button, onLoaded); 
+        }, 
+        false);
     }
 
     private void AddPopupButton(Button button, UIPopup popup)
@@ -119,10 +124,15 @@ public class SelectedCatPopupUI : UIPopup
 
     private void CloseAllPopups()
     {
-        _notebookPopup.HideNotebookPopup();
-        gameObject.SetActive(false);
+        HideSelectedCatPopup();
 
         GameManager.Audio.PlaySfx("Main_SFX_Touch");
+    }
+
+    public void HideSelectedCatPopup()
+    {
+        _notebookPopup.HideNotebookPopup();
+        gameObject.SetActive(false);
     }
 }
 
