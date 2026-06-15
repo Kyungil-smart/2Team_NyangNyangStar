@@ -926,7 +926,7 @@ GameObject:
   - component: {fileID: 1655019080049442865}
   - component: {fileID: 8513535521960537915}
   m_Layer: 0
-  m_Name: CatBackground
+  m_Name: CatBackground2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2958,7 +2958,7 @@ GameObject:
   - component: {fileID: 6647274961487080091}
   - component: {fileID: 4780496564047438091}
   m_Layer: 0
-  m_Name: CatBackground
+  m_Name: CatBackground3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -4915,7 +4915,7 @@ GameObject:
   - component: {fileID: 7987355358270790160}
   - component: {fileID: 6739089476012855208}
   m_Layer: 0
-  m_Name: CatBackground
+  m_Name: CatBackground9
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -6300,7 +6300,7 @@ GameObject:
   - component: {fileID: 4639526573957769364}
   - component: {fileID: 590215156344510477}
   m_Layer: 0
-  m_Name: CatBackground
+  m_Name: CatBackground6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -6420,6 +6420,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3647679743254461382}
+  - component: {fileID: 8402055634605390996}
   m_Layer: 0
   m_Name: NotebookPopupUI
   m_TagString: Untagged
@@ -6443,6 +6444,24 @@ Transform:
   - {fileID: 119699477416892042}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8402055634605390996
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5756248180855339879}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 40665dcf218f9da4b8485456f8ac9cf6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _panel: {fileID: 6712368587801233207}
+  _popupScale: 0.85
+  _popupScaleDuration: 0.1
+  _closeButton: {fileID: 0}
+  _background: {fileID: 0}
+  _catBackground: {fileID: 0}
 --- !u!1 &5879432198138340501
 GameObject:
   m_ObjectHideFlags: 0
@@ -6817,7 +6836,7 @@ GameObject:
   - component: {fileID: 5805173123871454180}
   - component: {fileID: 4170152966811710832}
   m_Layer: 0
-  m_Name: CatBackground
+  m_Name: CatBackground4
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -7301,7 +7320,7 @@ GameObject:
   - component: {fileID: 4473731155278566696}
   - component: {fileID: 2683886715833163699}
   m_Layer: 0
-  m_Name: CatBackground
+  m_Name: CatBackground7
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -7652,7 +7671,7 @@ GameObject:
   - component: {fileID: 7134892873805546709}
   - component: {fileID: 7765567243944299304}
   m_Layer: 0
-  m_Name: CatBackground
+  m_Name: CatBackground12
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -7910,7 +7929,7 @@ GameObject:
   - component: {fileID: 2739375766169146927}
   - component: {fileID: 2799353159740091169}
   m_Layer: 0
-  m_Name: CatBackground
+  m_Name: CatBackground11
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -8453,7 +8472,7 @@ GameObject:
   - component: {fileID: 5026952180777197991}
   - component: {fileID: 8954133079206947350}
   m_Layer: 0
-  m_Name: CatBackground
+  m_Name: CatBackground1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -9117,7 +9136,7 @@ GameObject:
   - component: {fileID: 3429573961713381490}
   - component: {fileID: 356487800318687335}
   m_Layer: 0
-  m_Name: CatBackground
+  m_Name: CatBackground8
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -9468,7 +9487,7 @@ GameObject:
   - component: {fileID: 6468278938030604491}
   - component: {fileID: 1878045457994522516}
   m_Layer: 0
-  m_Name: CatBackground
+  m_Name: CatBackground5
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -9667,7 +9686,7 @@ GameObject:
   - component: {fileID: 2140341422156086807}
   - component: {fileID: 4668709825893616871}
   m_Layer: 0
-  m_Name: CatBackground
+  m_Name: CatBackground10
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
