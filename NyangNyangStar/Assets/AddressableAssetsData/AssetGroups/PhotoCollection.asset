@@ -22,6 +22,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 76d311ee5565fdb4981fef6c80bedf5d
+    m_Address: PhotoCollectionPopupUI
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 8110fff2a40dd3d41a8e3af3a1deb4de
     m_Address: SelectedCatPopupUI
     m_ReadOnly: 0
