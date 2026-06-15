@@ -1,0 +1,7 @@
+<linker>
+  <!-- Firestore 런타임이 IL2CPP 스트리핑에 제거되지 않도록 보존 -->
+  <assembly fullname="Firebase.Firestore" preserve="all"/>
+
+  <!-- 데이터 모델/매퍼/어트리뷰트가 리플렉션으로만 접근되므로 전체 보존 -->
+  <assembly fullname="Assembly-CSharp" preserve="all"/>
+</linker>
