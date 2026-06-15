@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
+  m_Name: PhotoCollection
+  m_EditorClassIdentifier: 
+  m_GroupName: PhotoCollection
+  m_Data:
+    m_SerializedData: []
+  m_GUID: d2672accd36062543870f7a801544d9d
+  m_SerializeEntries:
+  - m_GUID: 430b975e8c419304389a0d18a5f2c954
+    m_Address: NotebookPopupUI
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8110fff2a40dd3d41a8e3af3a1deb4de
+    m_Address: SelectedCatPopupUI
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  m_ReadOnly: 0
+  m_Settings: {fileID: 11400000, guid: 567802e293b80b747b23153796443c26, type: 2}
+  m_SchemaSet:
+    m_Schemas:
+    - {fileID: 11400000, guid: 0ab2c23662fa18c42a6a421025ccaf38, type: 2}
+    - {fileID: 11400000, guid: fcf5cce811832cd46b1184c61d414b94, type: 2}
