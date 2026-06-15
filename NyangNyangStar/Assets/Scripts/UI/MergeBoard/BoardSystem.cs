@@ -82,8 +82,8 @@ namespace UI.MergeBoard
 
             IsBoardReady = true;
 
-            if (BoardItemReceiver.Instance != null)
-                BoardItemReceiver.Instance.RegisterBoardSystem(this);
+            if (MergeBoardItemService.Instance != null)
+                MergeBoardItemService.Instance.RegisterBoardSystem(this);
         }
 
         private void Init()
@@ -155,20 +155,23 @@ namespace UI.MergeBoard
             return addedSlot != null;
         }
 
-        public async Task<ItemSlot> TryAddItemFromQueueAndSelectAsync(ItemData itemData)
+        public Task<ItemSlot> TryAddItemFromQueueAndSelectAsync(ItemData itemData)
         {
             bool result = TryAddItemInternal(itemData, out int changedSlotNumber);
 
             if (!result)
-                return null;
-
-            await SaveSlotSafeAsync(changedSlotNumber);
+                return Task.FromResult<ItemSlot>(null);
 
             ItemSlot addedSlot = GetSlot(changedSlotNumber);
             if (addedSlot != null)
                 SelectSlot(addedSlot);
 
-            return addedSlot;
+            // 큐 아이템을 보드에 넣는 순간 로컬 보드 상태는 이미 변경되었다.
+            // Firestore 저장을 기다리면 모바일에서 SaveSlotAsync가 지연될 때
+            // BoardRewardQueue의 Dequeue까지 도달하지 못해 큐가 Pop되지 않는 문제가 발생한다.
+            SaveSlotFireAndForget(changedSlotNumber);
+
+            return Task.FromResult(addedSlot);
         }
 
         public Task<bool> TryAddItemAsync(ItemData itemData)
@@ -354,6 +357,75 @@ namespace UI.MergeBoard
             return _slotItemDict.TryGetValue(slotNumber, out ItemData itemData)
                 ? itemData.Clone()
                 : ItemData.Empty;
+        }
+
+
+        public int GetItemCountById(int itemID)
+        {
+            if (itemID <= 0)
+                return 0;
+
+            int count = 0;
+
+            foreach (var pair in _slotItemDict)
+            {
+                ItemData itemData = pair.Value;
+
+                if (itemData != null && itemData.HasItem && itemData.ItemID == itemID)
+                    count++;
+            }
+
+            return count;
+        }
+
+        public async Task<int> ConsumeItemsByIdAsync(int itemID, int count = 1)
+        {
+            if (!IsServerDataLoaded)
+            {
+                DebugTool.Warning("보드 서버 데이터 로드 전에는 아이템을 소비할 수 없습니다.", DebugType.Board, this);
+                return 0;
+            }
+
+            if (itemID <= 0)
+                return 0;
+
+            int safeCount = Mathf.Max(1, count);
+            int availableCount = GetItemCountById(itemID);
+
+            if (availableCount < safeCount)
+            {
+                DebugTool.Warning($"보드에 소비할 아이템 수량이 부족합니다. ID:{itemID}, 필요:{safeCount}, 보유:{availableCount}", DebugType.Board, this);
+                return 0;
+            }
+
+            Dictionary<int, ItemData> changedSlots = new Dictionary<int, ItemData>();
+            int consumedCount = 0;
+            bool selectedSlotConsumed = false;
+
+            for (int slotNumber = 1; slotNumber <= SlotCount && consumedCount < safeCount; slotNumber++)
+            {
+                if (!_slotItemDict.TryGetValue(slotNumber, out ItemData itemData))
+                    continue;
+
+                if (itemData == null || !itemData.HasItem || itemData.ItemID != itemID)
+                    continue;
+
+                if (_selectedSlot != null && _selectedSlot.SlotNumber == slotNumber)
+                    selectedSlotConsumed = true;
+
+                SetSlotData(slotNumber, ItemData.Empty);
+                changedSlots[slotNumber] = ItemData.Empty;
+                consumedCount++;
+            }
+
+            if (changedSlots.Count > 0)
+                await SaveSlotsSafeAsync(changedSlots);
+
+            if (selectedSlotConsumed)
+                ClearSelectedSlot();
+
+            DebugTool.Log($"보드 아이템 소비 완료 / ID:{itemID}, Count:{consumedCount}", DebugType.Board, this);
+            return consumedCount;
         }
 
         public void SelectSlot(ItemSlot itemSlot)
@@ -602,14 +674,24 @@ namespace UI.MergeBoard
             return slotNumber >= 1 && slotNumber <= SlotCount;
         }
 
+        private void SaveSlotFireAndForget(int slotNumber)
+        {
+            _ = SaveSlotSafeAsync(slotNumber);
+        }
+
         private async Task SaveSlotSafeAsync(int slotNumber)
         {
             if (!ResolveMergeBoardFirestore())
                 return;
 
+            if (!_slotItemDict.TryGetValue(slotNumber, out ItemData itemData))
+                return;
+
+            ItemData saveData = itemData?.Clone() ?? ItemData.Empty;
+
             try
             {
-                await _mergeBoardFirestore.SaveSlotAsync(slotNumber, _slotItemDict[slotNumber]);
+                await _mergeBoardFirestore.SaveSlotAsync(slotNumber, saveData);
             }
             catch (Exception exception)
             {

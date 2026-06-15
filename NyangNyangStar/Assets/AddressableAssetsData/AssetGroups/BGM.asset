@@ -20,7 +20,8 @@ MonoBehaviour:
   - m_GUID: 10144e2e41a819b40957b4ec714ddcd7
     m_Address: BGM_Main
     m_ReadOnly: 0
-    m_SerializedLabels: []
+    m_SerializedLabels:
+    - Audio
     FlaggedDuringContentUpdateRestriction: 0
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: 567802e293b80b747b23153796443c26, type: 2}

@@ -21,6 +21,8 @@ namespace UI.MergeBoard
 
         private Coroutine _alertCoroutine;
         private bool _isProcessing;
+        private bool _isSavingQueue;
+        private bool _queueSaveRequested;
 
         private readonly Queue<ItemData> _rewardQueue = new();
 
@@ -44,8 +46,8 @@ namespace UI.MergeBoard
 
             RefreshView();
 
-            if (BoardItemReceiver.Instance != null)
-                BoardItemReceiver.Instance.RegisterRewardQueue(this);
+            if (MergeBoardItemService.Instance != null)
+                MergeBoardItemService.Instance.RegisterRewardQueue(this);
         }
 
         public Task<bool> EnqueueItemAsync(ItemData itemData)
@@ -128,9 +130,9 @@ namespace UI.MergeBoard
                 _rewardQueue.Dequeue();
 
                 RefreshView();
+                RequestSaveQueue();
 
-                if (_mergeBoardFirestore != null)
-                    await _mergeBoardFirestore.SaveRewardQueueAsync(_rewardQueue);
+                DebugTool.Log($"보상 큐 Pop 완료 / 남은 개수: {_rewardQueue.Count}", DebugType.Board, this);
             }
             finally
             {
@@ -220,6 +222,111 @@ namespace UI.MergeBoard
             }
 
             return itemData.Clone();
+        }
+
+        private void RequestSaveQueue()
+        {
+            _queueSaveRequested = true;
+
+            if (_isSavingQueue)
+                return;
+
+            _ = SaveQueueLoopAsync();
+        }
+
+        private async Task SaveQueueLoopAsync()
+        {
+            _isSavingQueue = true;
+
+            try
+            {
+                while (_queueSaveRequested)
+                {
+                    _queueSaveRequested = false;
+
+                    if (!ResolveMergeBoardFirestore())
+                        continue;
+
+                    List<ItemData> snapshot = new List<ItemData>(_rewardQueue);
+                    await _mergeBoardFirestore.SaveRewardQueueAsync(snapshot);
+                }
+            }
+            catch (System.Exception exception)
+            {
+                Debug.LogError($"보상 큐 저장 실패 : {exception.Message}", this);
+            }
+            finally
+            {
+                _isSavingQueue = false;
+            }
+        }
+
+
+        public int GetItemCountById(int itemID)
+        {
+            if (itemID <= 0)
+                return 0;
+
+            int count = 0;
+
+            foreach (ItemData itemData in _rewardQueue)
+            {
+                if (itemData != null && itemData.HasItem && itemData.ItemID == itemID)
+                    count++;
+            }
+
+            return count;
+        }
+
+        public async Task<int> ConsumeItemsByIdAsync(int itemID, int count = 1)
+        {
+            if (!IsLoaded)
+            {
+                DebugTool.Warning("보상 큐 서버 데이터 로드 전에는 아이템을 소비할 수 없습니다.", DebugType.Board, this);
+                return 0;
+            }
+
+            if (itemID <= 0)
+                return 0;
+
+            int safeCount = Mathf.Max(1, count);
+            int availableCount = GetItemCountById(itemID);
+
+            if (availableCount < safeCount)
+            {
+                DebugTool.Warning($"보상 큐에 소비할 아이템 수량이 부족합니다. ID:{itemID}, 필요:{safeCount}, 보유:{availableCount}", DebugType.Board, this);
+                return 0;
+            }
+
+            Queue<ItemData> newQueue = new Queue<ItemData>();
+            int consumedCount = 0;
+
+            while (_rewardQueue.Count > 0)
+            {
+                ItemData itemData = _rewardQueue.Dequeue();
+
+                if (consumedCount < safeCount && itemData != null && itemData.HasItem && itemData.ItemID == itemID)
+                {
+                    consumedCount++;
+                    continue;
+                }
+
+                newQueue.Enqueue(itemData);
+            }
+
+            while (newQueue.Count > 0)
+                _rewardQueue.Enqueue(newQueue.Dequeue());
+
+            RefreshView();
+
+            if (ResolveMergeBoardFirestore())
+            {
+                List<ItemData> snapshot = new List<ItemData>(_rewardQueue);
+                await _mergeBoardFirestore.SaveRewardQueueAsync(snapshot);
+            }
+
+            DebugTool.Log($"보상 큐 아이템 소비 완료 / ID:{itemID}, Count:{consumedCount}", DebugType.Board, this);
+            return consumedCount;
         }
 
         public void ShowAlert(string message)

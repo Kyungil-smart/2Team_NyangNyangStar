@@ -94,6 +94,7 @@ namespace Core.Managers
 
             _instance._addressableManager.Init();
             _instance._dataManager.Init();
+            _instance._uiManager.Init();
 
             DebugTool.Log("세션 데이터 초기화 완료", DebugType.Game);
         }

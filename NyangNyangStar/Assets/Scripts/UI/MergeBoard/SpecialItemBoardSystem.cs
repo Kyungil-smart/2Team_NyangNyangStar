@@ -66,8 +66,8 @@ namespace UI.MergeBoard
 
             IsBoardReady = true;
 
-            if (BoardItemReceiver.Instance != null)
-                BoardItemReceiver.Instance.RegisterSpecialItemBoardSystem(this);
+            if (MergeBoardItemService.Instance != null)
+                MergeBoardItemService.Instance.RegisterSpecialItemBoardSystem(this);
         }
 
         private void Init()
@@ -159,6 +159,76 @@ namespace UI.MergeBoard
             SetSlotData(slotNumber, newSlotData);
             await SaveSlotSafeAsync(slotNumber);
             return true;
+        }
+
+
+        public int GetItemCountById(int itemID)
+        {
+            if (itemID <= 0)
+                return 0;
+
+            foreach (var pair in _specialSlotDict)
+            {
+                SpecialItemSlotData slotData = pair.Value;
+
+                if (slotData != null && slotData.HasItem && slotData.ItemData.ItemID == itemID)
+                    return slotData.Count;
+            }
+
+            return 0;
+        }
+
+        public async Task<int> ConsumeItemsByIdAsync(int itemID, int count = 1)
+        {
+            if (!IsServerDataLoaded)
+            {
+                DebugTool.Warning("특수 아이템 보드 서버 데이터 로드 전에는 아이템을 소비할 수 없습니다.", DebugType.Board, this);
+                return 0;
+            }
+
+            if (itemID <= 0)
+                return 0;
+
+            int safeCount = Mathf.Max(1, count);
+            int slotNumber = FindSlotNumberForExistingItem(itemID);
+
+            if (slotNumber == -1)
+            {
+                DebugTool.Warning($"소비할 특수 아이템을 찾을 수 없습니다. ID:{itemID}", DebugType.Board, this);
+                return 0;
+            }
+
+            SpecialItemSlotData currentData = _specialSlotDict[slotNumber];
+
+            if (currentData.Count < safeCount)
+            {
+                DebugTool.Warning($"특수 아이템 수량이 부족합니다. ID:{itemID}, 필요:{safeCount}, 보유:{currentData.Count}", DebugType.Board, this);
+                return 0;
+            }
+
+            int newCount = currentData.Count - safeCount;
+            SpecialItemSlotData newSlotData = newCount <= 0
+                ? SpecialItemSlotData.Empty(slotNumber)
+                : new SpecialItemSlotData(slotNumber, currentData.ItemData, newCount);
+
+            SetSlotData(slotNumber, newSlotData);
+            await SaveSlotSafeAsync(slotNumber);
+
+            if (_selectedSlot != null && _selectedSlot.SlotNumber == slotNumber)
+            {
+                if (newSlotData.HasItem)
+                {
+                    if (_itemInfoPanel != null)
+                        _itemInfoPanel.Show(newSlotData.ItemData, SellSelectedItemAsync);
+                }
+                else
+                {
+                    ClearSelectedSlot();
+                }
+            }
+
+            DebugTool.Log($"특수 아이템 소비 완료 / ID:{itemID}, Count:{safeCount}", DebugType.Board, this);
+            return safeCount;
         }
 
         public void SelectSlot(SpecialItemSlotView slotView)
@@ -367,6 +437,21 @@ namespace UI.MergeBoard
             }
 
             return emptySlotNumber;
+        }
+
+
+        private int FindSlotNumberForExistingItem(int itemID)
+        {
+            for (int slotNumber = 1; slotNumber <= SlotCount; slotNumber++)
+            {
+                if (!_specialSlotDict.TryGetValue(slotNumber, out SpecialItemSlotData slotData))
+                    continue;
+
+                if (slotData.HasItem && slotData.ItemData.ItemID == itemID)
+                    return slotNumber;
+            }
+
+            return -1;
         }
 
         private void ApplySpecialBoardData(Dictionary<int, SpecialItemSlotData> specialBoardData)

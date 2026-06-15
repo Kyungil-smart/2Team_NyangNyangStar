@@ -62,8 +62,47 @@ public class ScratchEffectPool : MonoBehaviour
     }
 
 
+    // 멀티터치 
+    private void OnEnable()
+    {
+        Input.multiTouchEnabled = true;
+    }
+
+
     // 터치 영역 내 클릭 시 스크래치 입력 이벤트 발생
+    // 모바일에서는 여러 손가락의 동시 / 연속 터치를 각각 공격으로 처리
     private void Update()
+    {
+        if (Input.touchCount > 0)
+        {
+            HandleTouchInput();
+            return;
+        }
+
+        // 에디터 / PC 폴백 : 터치가 없을 때만 마우스 입력 처리
+        HandleMouseInput();
+    }
+
+
+    // 손가락별 첫 접촉 마다 스크래치 입력 이벤트 발생
+    private void HandleTouchInput()
+    {
+        int touchCount = Input.touchCount;
+        for (int i = 0; i < touchCount; i++)
+        {
+            Touch touch = Input.GetTouch(i);
+            if (touch.phase != TouchPhase.Began)
+                continue;
+
+            if (!IsInsideTouchArea(touch.position))
+                continue;
+
+            OnScratchClicked?.Invoke(touch.position);
+        }
+    }
+
+
+    private void HandleMouseInput()
     {
         if (!Input.GetMouseButtonDown(0) || !IsInsideTouchArea(Input.mousePosition))
             return;

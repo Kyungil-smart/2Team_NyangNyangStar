@@ -166,6 +166,8 @@ public partial class ScratchingTimeManager
         SaveScratchingProgressToServer();
         _moongchiStatController?.IncreaseExp(clearExp);
 
+        _scratchingReward?.GiveReward(_selectedStage, _selectedStageType);
+
         _isStarted = false;
         StopBattleInterestDrain();
 

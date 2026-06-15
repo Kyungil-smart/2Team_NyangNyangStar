@@ -15,16 +15,19 @@ public class AuthManager : MonoBehaviour
 
     private FirebaseAuth auth;
     private bool firebaseReady;
+    private int _loginFlowVersion;
 
     public bool IsFirebaseReady => firebaseReady;
     public bool HasCurrentUser => auth != null && auth.CurrentUser != null;
     public bool IsSigningIn { get; private set; }
     public bool IsLoginFlowRunning { get; private set; }
+    public string CurrentUserId { get; private set; } = string.Empty;
 
     public float CurrentProgress { get; private set; }
     public string CurrentProgressMessage { get; private set; } = "로그인 대기 중";
 
     public event Action<float, string> OnLoginProgressChanged;
+    public event Action<string> OnUserIdChanged;
 
     private void Awake()
     {
@@ -61,6 +64,7 @@ public class AuthManager : MonoBehaviour
 
             auth = FirebaseAuth.DefaultInstance;
             firebaseReady = true;
+            SetCurrentUserId(auth.CurrentUser != null ? auth.CurrentUser.UserId : string.Empty);
 
             Debug.Log("Firebase Authentication initialized successfully.");
 
@@ -95,16 +99,22 @@ public class AuthManager : MonoBehaviour
             return;
         }
 
+        int flowVersion = BeginLoginFlow();
+
         try
         {
-            IsLoginFlowRunning = true;
             IsSigningIn = true;
 
             ReportLoginProgress(0.1f, "로그인 준비 중");
             ReportLoginProgress(0.25f, "익명 로그인 중");
 
             AuthResult result = await auth.SignInAnonymouslyAsync();
+
+            if (!IsValidLoginFlow(flowVersion))
+                return;
+
             FirebaseUser user = result.User;
+            SetCurrentUserId(user.UserId);
 
             Debug.Log($"Anonymous login success. UID: {user.UserId}");
 
@@ -113,13 +123,19 @@ public class AuthManager : MonoBehaviour
 
             await FireStoreManager.Instance.InitAsync(user.UserId);
 
+            if (!IsValidLoginFlow(flowVersion))
+                return;
+
             Debug.Log("Firestore 초기화 완료");
 
             ReportLoginProgress(0.55f, "시트 데이터 로드 중");
-            StartCoroutine(WaitForDataLoad());
+            StartCoroutine(WaitForDataLoad(flowVersion));
         }
         catch (Exception e)
         {
+            if (!IsValidLoginFlow(flowVersion))
+                return;
+
             IsSigningIn = false;
             IsLoginFlowRunning = false;
             ReportLoginProgress(0f, "로그인 실패");
@@ -135,31 +151,42 @@ public class AuthManager : MonoBehaviour
             return;
         }
 
+        int flowVersion = BeginLoginFlow();
+
         try
         {
-            IsLoginFlowRunning = true;
             IsSigningIn = false;
+            SetCurrentUserId(user.UserId);
 
             ReportLoginProgress(0.1f, "기존 로그인 정보 확인 중");
             ReportLoginProgress(0.4f, "Firestore 초기화 중");
 
             await FireStoreManager.Instance.InitAsync(user.UserId);
 
+            if (!IsValidLoginFlow(flowVersion))
+                return;
+
             Debug.Log("Cached user Firestore 초기화 완료");
 
             ReportLoginProgress(0.55f, "시트 데이터 로드 중");
-            StartCoroutine(WaitForDataLoad());
+            StartCoroutine(WaitForDataLoad(flowVersion));
         }
         catch (Exception e)
         {
+            if (!IsValidLoginFlow(flowVersion))
+                return;
+
             IsLoginFlowRunning = false;
             ReportLoginProgress(0f, "자동 로그인 실패");
             Debug.LogError($"Cached user login failed: {e}");
         }
     }
 
-    private IEnumerator WaitForDataLoad()
+    private IEnumerator WaitForDataLoad(int flowVersion)
     {
+        if (!IsValidLoginFlow(flowVersion))
+            yield break;
+
         if (GameManager.Data != null)
         {
             GameManager.Data.OnDataLoadProgressChanged -= HandleDataLoadProgress;
@@ -172,8 +199,19 @@ public class AuthManager : MonoBehaviour
                LocalDataAccess.Instance.Game == null ||
                !LocalDataAccess.Instance.Game.IsReady)
         {
+            if (!IsValidLoginFlow(flowVersion))
+            {
+                if (GameManager.Data != null)
+                    GameManager.Data.OnDataLoadProgressChanged -= HandleDataLoadProgress;
+
+                yield break;
+            }
+
             yield return null;
         }
+
+        if (!IsValidLoginFlow(flowVersion))
+            yield break;
 
         if (GameManager.Data != null)
             GameManager.Data.OnDataLoadProgressChanged -= HandleDataLoadProgress;
@@ -205,21 +243,20 @@ public class AuthManager : MonoBehaviour
             return;
         }
 
-        if (auth.CurrentUser != null)
-        {
-            Debug.Log($"Cached user found. Sign out first: {auth.CurrentUser.UserId}");
-            auth.SignOut();
-        }
-
+        Logout();
         Login();
     }
 
     [ContextMenu("Logout")]
     public void Logout()
     {
+        CancelLoginFlow();
+
         if (!firebaseReady || auth == null)
         {
             Debug.LogWarning("Firebase is not ready yet.");
+            SetCurrentUserId(string.Empty);
+            ReportLoginProgress(0f, "로그인 대기 중");
             return;
         }
 
@@ -227,12 +264,51 @@ public class AuthManager : MonoBehaviour
             Debug.Log($"Signing out user: {auth.CurrentUser.UserId}");
 
         auth.SignOut();
-
-        IsSigningIn = false;
-        IsLoginFlowRunning = false;
+        SetCurrentUserId(string.Empty);
         ReportLoginProgress(0f, "로그인 대기 중");
 
         Debug.Log("Signed out.");
+    }
+
+    public void LogoutAndClearSession()
+    {
+        Logout();
+        GameManager.ClearSession();
+    }
+
+    private int BeginLoginFlow()
+    {
+        _loginFlowVersion++;
+        IsLoginFlowRunning = true;
+        IsSigningIn = false;
+        return _loginFlowVersion;
+    }
+
+    private void CancelLoginFlow()
+    {
+        _loginFlowVersion++;
+        StopAllCoroutines();
+        IsSigningIn = false;
+        IsLoginFlowRunning = false;
+
+        if (GameManager.Data != null)
+            GameManager.Data.OnDataLoadProgressChanged -= HandleDataLoadProgress;
+    }
+
+    private bool IsValidLoginFlow(int flowVersion)
+    {
+        return IsLoginFlowRunning && flowVersion == _loginFlowVersion;
+    }
+
+    private void SetCurrentUserId(string userId)
+    {
+        userId ??= string.Empty;
+
+        if (CurrentUserId == userId)
+            return;
+
+        CurrentUserId = userId;
+        OnUserIdChanged?.Invoke(CurrentUserId);
     }
 
     private void ReportLoginProgress(float progress, string message)
