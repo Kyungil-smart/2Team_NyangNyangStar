@@ -148,11 +148,6 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: a66bb77bd248a20418a50ee3ee98fdaf
-    m_Address: NotebookPopupUI
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: ad6b79f89b06dd64bbc98ee20a751f88
     m_Address: Main_Btn_Mergeboard
     m_ReadOnly: 0
