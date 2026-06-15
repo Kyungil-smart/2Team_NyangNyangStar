@@ -42,8 +42,12 @@ public class SelectedCatPopupUI : UIPopup
         _statsPanel = GetObject((int)SelectedCatPopupObjects.StatsTextPanel);
 
         BindButtons();
-        OpenTab(_infoPanel);
         InitPopup(KeyContainer.Prefabs.PhotoCollectionPopupUI, _collectionButton);
+    }
+
+    private void OnEnable()
+    {
+        OpenTab(_infoPanel);
     }
 
     public void SetNotebookPopup(NotebookPopupUI popup)
