@@ -64,6 +64,12 @@ MonoBehaviour:
     m_SerializedLabels:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 225de473c08735348827b2949f99d5d5
+    m_Address: Main_Btn_Home
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 24e64e53a59dd8444b27d491af32a533
     m_Address: Main_Btn_Storybook
     m_ReadOnly: 0
@@ -225,6 +231,12 @@ MonoBehaviour:
     m_Address: RoulettePopupUI
     m_ReadOnly: 0
     m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: eda95428e19fdaa4dafc6276cfb7d274
+    m_Address: Main_Btn_Event_FindMungchi
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
     FlaggedDuringContentUpdateRestriction: 0
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: 567802e293b80b747b23153796443c26, type: 2}
