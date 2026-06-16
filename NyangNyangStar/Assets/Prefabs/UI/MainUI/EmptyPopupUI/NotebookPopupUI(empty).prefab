@@ -114,7 +114,7 @@ GameObject:
   - component: {fileID: 3710152666770174435}
   - component: {fileID: 5336955309358211071}
   m_Layer: 0
-  m_Name: NotebookPopupUI
+  m_Name: NotebookPopupUI(empty)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
