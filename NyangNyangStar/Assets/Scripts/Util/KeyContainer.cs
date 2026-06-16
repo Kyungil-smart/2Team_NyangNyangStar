@@ -32,7 +32,6 @@ namespace Util
             public const string SettingsPopupUI = "SettingsPopupUI";
             public const string CollectionPopupUI = "CollectionPopupUI";
             public const string StoryBookPopupUI = "StoryBookPopupUI";
-            public const string NotebookPopupUI = "NotebookPopupUI";
             public const string RoulettePopupUI = "RoulettePopupUI";
             public const string AffinityPopupUI = "AffinityPopupUI";
             
@@ -55,7 +54,12 @@ namespace Util
             public const string NyangNyangSnapPopupUI = "NyangNyangSnapPopupUI";
             public const string NyangNyangSnapResultPopupUI = "NyangNyangSnapResultCanvas";
 
+            // 임시보호 수첩(냥냥 스냅 사진 도감) UI 프리팹
+            public const string NotebookPopupUI = "NotebookPopupUI";
+            public const string SelectedCatPopupUI = "SelectedCatPopupUI";
+            public const string PhotoCollectionPopupUI = "PhotoCollectionPopupUI";
 
+            // 스크래칭 타임 UI 프리팹
             public const string ScratchingTime = "ScratchingTimeScreen";
         }
 
@@ -248,7 +252,6 @@ namespace Util
             PrefabKeyDict.Add(Prefabs.SettingsPopupUI, new List<GameObject>());
             PrefabKeyDict.Add(Prefabs.CollectionPopupUI, new List<GameObject>());
             PrefabKeyDict.Add(Prefabs.StoryBookPopupUI, new List<GameObject>());
-            PrefabKeyDict.Add(Prefabs.NotebookPopupUI, new List<GameObject>());
             PrefabKeyDict.Add(Prefabs.RoulettePopupUI, new List<GameObject>());
             PrefabKeyDict.Add(Prefabs.AffinityPopupUI, new List<GameObject>());
             
@@ -270,6 +273,12 @@ namespace Util
             PrefabKeyDict.Add(Prefabs.NyangNyangSnapPopupUI, new List<GameObject>());
             PrefabKeyDict.Add(Prefabs.NyangNyangSnapResultPopupUI, new List<GameObject>());
 
+            // 임시보호 수첩
+            PrefabKeyDict.Add(Prefabs.NotebookPopupUI, new List<GameObject>());
+            PrefabKeyDict.Add(Prefabs.SelectedCatPopupUI, new List<GameObject>());
+            PrefabKeyDict.Add(Prefabs.PhotoCollectionPopupUI, new List<GameObject>());
+
+            // 스크래칭 타임
             PrefabKeyDict.Add(Prefabs.ScratchingTime, new List<GameObject>());
         }
 
