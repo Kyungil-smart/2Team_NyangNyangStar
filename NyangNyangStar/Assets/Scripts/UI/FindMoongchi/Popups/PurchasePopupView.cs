@@ -34,6 +34,7 @@ namespace UI.FindMoongchi
 
         public void Open(FindMoongchiShopViewData data, int maxCount, Action<FindMoongchiShopViewData, int> onPurchaseConfirmed)
         {
+            DebugTool.Log($"[PurchasePopupView] 구매 팝업 열기: ShopItemId={data?.ShopItemId}, MaxCount={maxCount}", DebugType.FindMoongchi, this);
             _data = data;
             _onPurchaseConfirmed = onPurchaseConfirmed;
             _maxCount = Mathf.Max(0, maxCount);
@@ -54,6 +55,9 @@ namespace UI.FindMoongchi
 
         public void Close()
         {
+            if (gameObject.activeSelf)
+                DebugTool.Log("[PurchasePopupView] 구매 팝업 닫기", DebugType.FindMoongchi, this);
+
             gameObject.SetActive(false);
             _data = null;
             _onPurchaseConfirmed = null;
@@ -108,6 +112,8 @@ namespace UI.FindMoongchi
         {
             if (_data == null || _count <= 0)
                 return;
+
+            DebugTool.Log($"[PurchasePopupView] 구매 버튼 클릭: ShopItemId={_data.ShopItemId}, Count={_count}", DebugType.FindMoongchi, this);
 
             _onPurchaseConfirmed?.Invoke(_data, _count);
         }

@@ -74,7 +74,10 @@ namespace UI.FindMoongchi
         public void OnBeginDrag(PointerEventData eventData)
         {
             if (!IsUsable)
+            {
+                DebugTool.Log($"[FindMoongchiToolSlotView] 사용 불가 도구 드래그 차단: ToolId={ToolItemId}, Count={Count}", DebugType.FindMoongchi, this);
                 return;
+            }
 
             SetSelected(true);
             OnBeginDragTool?.Invoke(this, eventData);

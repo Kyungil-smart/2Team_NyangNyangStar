@@ -24,15 +24,36 @@ namespace UI.FindMoongchi
             BindButton(_closeButton, HandleCloseButtonClicked);
         }
 
-        private void HandleGameButtonClicked() => OnGameButtonClicked?.Invoke();
-        private void HandleMissionButtonClicked() => OnMissionButtonClicked?.Invoke();
-        private void HandleShopButtonClicked() => OnShopButtonClicked?.Invoke();
-        private void HandleCloseButtonClicked() => OnCloseButtonClicked?.Invoke();
+        private void HandleGameButtonClicked()
+        {
+            DebugTool.Log("[FindMoongchiMainPanel] 게임 버튼 클릭", DebugType.FindMoongchi, this);
+            OnGameButtonClicked?.Invoke();
+        }
+
+        private void HandleMissionButtonClicked()
+        {
+            DebugTool.Log("[FindMoongchiMainPanel] 미션 버튼 클릭", DebugType.FindMoongchi, this);
+            OnMissionButtonClicked?.Invoke();
+        }
+
+        private void HandleShopButtonClicked()
+        {
+            DebugTool.Log("[FindMoongchiMainPanel] 상점 버튼 클릭", DebugType.FindMoongchi, this);
+            OnShopButtonClicked?.Invoke();
+        }
+        private void HandleCloseButtonClicked()
+        {
+            DebugTool.Log("[FindMoongchiMainPanel] 닫기 버튼 클릭", DebugType.FindMoongchi, this);
+            OnCloseButtonClicked?.Invoke();
+        }
 
         private static void BindButton(Button button, UnityEngine.Events.UnityAction action)
         {
             if (button == null)
+            {
+                DebugTool.Warning("[FindMoongchiMainPanel] 버튼 연결이 비어있습니다.", DebugType.FindMoongchi);
                 return;
+            }
 
             button.onClick.RemoveListener(action);
             button.onClick.AddListener(action);

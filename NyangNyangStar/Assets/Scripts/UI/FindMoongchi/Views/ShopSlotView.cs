@@ -40,7 +40,7 @@ namespace UI.FindMoongchi
 
             if (_button != null)
             {
-                _button.interactable = !data.IsSoldOut;
+                _button.interactable = true;
                 _button.onClick.RemoveListener(HandleClicked);
                 _button.onClick.AddListener(HandleClicked);
             }
@@ -50,6 +50,8 @@ namespace UI.FindMoongchi
         {
             if (_data == null)
                 return;
+
+            DebugTool.Log($"[ShopSlotView] 슬롯 클릭: ShopItemId={_data.ShopItemId}, SoldOut={_data.IsSoldOut}, Cost={_data.CostAmount}", DebugType.FindMoongchi, this);
 
             _onClicked?.Invoke(_data);
         }

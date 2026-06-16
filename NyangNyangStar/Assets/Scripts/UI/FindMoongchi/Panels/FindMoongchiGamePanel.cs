@@ -40,6 +40,8 @@ namespace UI.FindMoongchi
 
         public void Init()
         {
+            DebugTool.Log("[FindMoongchiGamePanel] 초기화 시작", DebugType.FindMoongchi, this);
+
             if (_backButton != null)
             {
                 _backButton.onClick.RemoveListener(HandleBackButtonClicked);
@@ -49,12 +51,19 @@ namespace UI.FindMoongchi
             ResolveTiles();
             ResolveToolSlots();
             BindToolSlots();
+
+            DebugTool.Log($"[FindMoongchiGamePanel] 초기화 완료: 타일={_tileViews.Count}, 도구슬롯={_toolSlots.Count}, 힌트={_targetHints.Count}", DebugType.FindMoongchi, this);
         }
 
         public void SetData(FindMoongchiGameViewData data)
         {
             if (data == null)
+            {
+                DebugTool.Warning("[FindMoongchiGamePanel] SetData 데이터가 null입니다.", DebugType.FindMoongchi, this);
                 return;
+            }
+
+            DebugTool.Log($"[FindMoongchiGamePanel] 데이터 적용: 주차={data.CurrentWeek}, 탐색기회={data.SearchChance}, 공개타일={data.RevealedTileIndices.Count}, 도구={data.Tools.Count}, 힌트={data.TargetHints.Count}", DebugType.FindMoongchi, this);
 
             SetText(_weekText, $"{data.CurrentWeek}주차");
             SetText(_remainTimeText, data.RemainTimeText);
@@ -74,7 +83,10 @@ namespace UI.FindMoongchi
         public void RevealTiles(IEnumerable<int> tileIndices)
         {
             if (tileIndices == null)
+            {
+                DebugTool.Warning("[FindMoongchiGamePanel] 공개할 타일 목록이 null입니다.", DebugType.FindMoongchi, this);
                 return;
+            }
 
             foreach (int tileIndex in tileIndices)
             {
@@ -97,7 +109,10 @@ namespace UI.FindMoongchi
             _tileViews.Clear();
 
             if (_tileRoot == null)
+            {
+                DebugTool.Warning("[FindMoongchiGamePanel] TileRoot가 연결되지 않았습니다.", DebugType.FindMoongchi, this);
                 return;
+            }
 
             for (int i = 0; i < _tileRoot.childCount; i++)
             {
@@ -111,19 +126,29 @@ namespace UI.FindMoongchi
                 tileView.SetRevealed(_revealedTiles.Contains(i));
                 _tileViews.Add(tileView);
             }
+
+            if (_tileViews.Count != FindMoongchiConstants.TileCount)
+                DebugTool.Warning($"[FindMoongchiGamePanel] 타일 개수 확인 필요: 현재={_tileViews.Count}, 기대={FindMoongchiConstants.TileCount}", DebugType.FindMoongchi, this);
+            else
+                DebugTool.Log($"[FindMoongchiGamePanel] 타일 조회 완료: {_tileViews.Count}개", DebugType.FindMoongchi, this);
         }
 
         private void ResolveToolSlots()
         {
             if (_toolSlots.Count > 0)
+            {
+                DebugTool.Log($"[FindMoongchiGamePanel] 인스펙터 도구 슬롯 사용: {_toolSlots.Count}개", DebugType.FindMoongchi, this);
                 return;
+            }
 
             FindMoongchiToolSlotView[] foundSlots = GetComponentsInChildren<FindMoongchiToolSlotView>(true);
             _toolSlots.AddRange(foundSlots);
+            DebugTool.Log($"[FindMoongchiGamePanel] 자동 검색 도구 슬롯: {_toolSlots.Count}개", DebugType.FindMoongchi, this);
         }
 
         private void BindToolSlots()
         {
+            int bindCount = 0;
             foreach (FindMoongchiToolSlotView slot in _toolSlots)
             {
                 if (slot == null)
@@ -136,13 +161,18 @@ namespace UI.FindMoongchi
                 slot.OnBeginDragTool += HandleBeginDragTool;
                 slot.OnDragTool += HandleDragTool;
                 slot.OnEndDragTool += HandleEndDragTool;
+                bindCount++;
             }
+
+            DebugTool.Log($"[FindMoongchiGamePanel] 도구 슬롯 이벤트 바인딩 완료: {bindCount}개", DebugType.FindMoongchi, this);
         }
 
         private void RefreshTiles()
         {
             for (int i = 0; i < _tileViews.Count; i++)
                 _tileViews[i].SetRevealed(_revealedTiles.Contains(i));
+
+            DebugTool.Log($"[FindMoongchiGamePanel] 타일 상태 갱신: 전체={_tileViews.Count}, 공개={_revealedTiles.Count}", DebugType.FindMoongchi, this);
         }
 
         private void RefreshTools(IReadOnlyList<FindMoongchiToolViewData> tools)
@@ -165,11 +195,13 @@ namespace UI.FindMoongchi
 
         private void HandleBackButtonClicked()
         {
+            DebugTool.Log("[FindMoongchiGamePanel] 뒤로가기 버튼 클릭", DebugType.FindMoongchi, this);
             OnBackButtonClicked?.Invoke();
         }
 
         private void HandleBeginDragTool(FindMoongchiToolSlotView slot, PointerEventData eventData)
         {
+            DebugTool.Log($"[FindMoongchiGamePanel] 도구 드래그 시작: ToolId={slot?.ToolItemId}, Count={slot?.Count}", DebugType.FindMoongchi, this);
             _currentToolSlot = slot;
             _currentPreviewTileIndex = -1;
         }
@@ -202,8 +234,12 @@ namespace UI.FindMoongchi
                 return;
 
             if (!TryGetTileIndex(eventData, out int tileIndex))
+            {
+                DebugTool.Log($"[FindMoongchiGamePanel] 보드 밖 드롭 취소: ToolId={slot.ToolItemId}", DebugType.FindMoongchi, this);
                 return;
+            }
 
+            DebugTool.Log($"[FindMoongchiGamePanel] 도구 드롭 완료: ToolId={slot.ToolItemId}, Tile={tileIndex}", DebugType.FindMoongchi, this);
             OnToolDropped?.Invoke(slot.ToolItemId, tileIndex);
         }
 
@@ -326,6 +362,7 @@ namespace UI.FindMoongchi
 
         private void EnsureHighlightImageCount(int count)
         {
+            int beforeCount = _highlightImages.Count;
             while (_highlightImages.Count < count)
             {
                 GameObject go = new GameObject($"Highlight_{_highlightImages.Count}", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
@@ -335,6 +372,9 @@ namespace UI.FindMoongchi
                 image.raycastTarget = false;
                 _highlightImages.Add(image);
             }
+
+            if (_highlightImages.Count > beforeCount)
+                DebugTool.Log($"[FindMoongchiGamePanel] 하이라이트 풀 확장: {beforeCount} → {_highlightImages.Count}", DebugType.FindMoongchi, this);
         }
 
         private void ClearHighlight()

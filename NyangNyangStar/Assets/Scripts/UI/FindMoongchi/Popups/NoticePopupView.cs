@@ -22,6 +22,8 @@ namespace UI.FindMoongchi
 
         public void Open(string message)
         {
+            DebugTool.Log($"[NoticePopupView] 열기: {message}", DebugType.FindMoongchi, this);
+
             if (_noticeText != null)
                 _noticeText.text = message;
 
@@ -30,6 +32,9 @@ namespace UI.FindMoongchi
 
         public void Close()
         {
+            if (gameObject.activeSelf)
+                DebugTool.Log("[NoticePopupView] 닫기", DebugType.FindMoongchi, this);
+
             gameObject.SetActive(false);
         }
 

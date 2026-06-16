@@ -23,6 +23,8 @@ namespace UI.FindMoongchi
 
         public void Open(string message, int errorCode = 0)
         {
+            DebugTool.Warning($"[ErrorPopupView] 열기: {message}, Code={errorCode}", DebugType.FindMoongchi, this);
+
             if (_noticeText != null)
                 _noticeText.text = message;
 
@@ -34,6 +36,9 @@ namespace UI.FindMoongchi
 
         public void Close()
         {
+            if (gameObject.activeSelf)
+                DebugTool.Log("[ErrorPopupView] 닫기", DebugType.FindMoongchi, this);
+
             gameObject.SetActive(false);
         }
 
