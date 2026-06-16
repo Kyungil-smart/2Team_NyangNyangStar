@@ -7,25 +7,21 @@
     <package>com.google.firebase:firebase-auth-unity:13.12.0</package>
     <package>com.google.firebase:firebase-common:22.0.1</package>
     <package>com.google.firebase:firebase-database:22.0.1</package>
-    <package>com.google.firebase:firebase-database-unity:13.11.0</package>
+    <package>com.google.firebase:firebase-database-unity:13.12.0</package>
     <package>com.google.firebase:firebase-firestore:26.3.0</package>
-    <package>com.google.firebase:firebase-firestore-unity:13.11.0</package>
+    <package>com.google.firebase:firebase-firestore-unity:13.12.0</package>
     <package>com.google.firebase:firebase-storage:22.0.1</package>
     <package>com.google.firebase:firebase-storage-unity:13.12.0</package>
   </packages>
   <files>
-    <file>Assets/GeneratedLocalRepo/Firebase/m2repository/com/google/firebase/firebase-app-unity/13.11.0/firebase-app-unity-13.11.0.aar</file>
-    <file>Assets/GeneratedLocalRepo/Firebase/m2repository/com/google/firebase/firebase-app-unity/13.11.0/firebase-app-unity-13.11.0.pom</file>
     <file>Assets/GeneratedLocalRepo/Firebase/m2repository/com/google/firebase/firebase-app-unity/13.12.0/firebase-app-unity-13.12.0.aar</file>
     <file>Assets/GeneratedLocalRepo/Firebase/m2repository/com/google/firebase/firebase-app-unity/13.12.0/firebase-app-unity-13.12.0.pom</file>
-    <file>Assets/GeneratedLocalRepo/Firebase/m2repository/com/google/firebase/firebase-auth-unity/13.11.0/firebase-auth-unity-13.11.0.aar</file>
-    <file>Assets/GeneratedLocalRepo/Firebase/m2repository/com/google/firebase/firebase-auth-unity/13.11.0/firebase-auth-unity-13.11.0.pom</file>
     <file>Assets/GeneratedLocalRepo/Firebase/m2repository/com/google/firebase/firebase-auth-unity/13.12.0/firebase-auth-unity-13.12.0.aar</file>
     <file>Assets/GeneratedLocalRepo/Firebase/m2repository/com/google/firebase/firebase-auth-unity/13.12.0/firebase-auth-unity-13.12.0.pom</file>
-    <file>Assets/GeneratedLocalRepo/Firebase/m2repository/com/google/firebase/firebase-database-unity/13.11.0/firebase-database-unity-13.11.0.aar</file>
-    <file>Assets/GeneratedLocalRepo/Firebase/m2repository/com/google/firebase/firebase-database-unity/13.11.0/firebase-database-unity-13.11.0.pom</file>
-    <file>Assets/GeneratedLocalRepo/Firebase/m2repository/com/google/firebase/firebase-firestore-unity/13.11.0/firebase-firestore-unity-13.11.0.aar</file>
-    <file>Assets/GeneratedLocalRepo/Firebase/m2repository/com/google/firebase/firebase-firestore-unity/13.11.0/firebase-firestore-unity-13.11.0.pom</file>
+    <file>Assets/GeneratedLocalRepo/Firebase/m2repository/com/google/firebase/firebase-database-unity/13.12.0/firebase-database-unity-13.12.0.aar</file>
+    <file>Assets/GeneratedLocalRepo/Firebase/m2repository/com/google/firebase/firebase-database-unity/13.12.0/firebase-database-unity-13.12.0.pom</file>
+    <file>Assets/GeneratedLocalRepo/Firebase/m2repository/com/google/firebase/firebase-firestore-unity/13.12.0/firebase-firestore-unity-13.12.0.aar</file>
+    <file>Assets/GeneratedLocalRepo/Firebase/m2repository/com/google/firebase/firebase-firestore-unity/13.12.0/firebase-firestore-unity-13.12.0.pom</file>
     <file>Assets/GeneratedLocalRepo/Firebase/m2repository/com/google/firebase/firebase-storage-unity/13.12.0/firebase-storage-unity-13.12.0.aar</file>
     <file>Assets/GeneratedLocalRepo/Firebase/m2repository/com/google/firebase/firebase-storage-unity/13.12.0/firebase-storage-unity-13.12.0.pom</file>
   </files>

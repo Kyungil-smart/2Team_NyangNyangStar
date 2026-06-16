@@ -122,52 +122,6 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
---- !u!1 &251804869
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 251804871}
-  - component: {fileID: 251804870}
-  m_Layer: 0
-  m_Name: Test
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &251804870
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 251804869}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6fcfefa0607095d4e9cc9e2cd628ada2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  resourcesSO: {fileID: 11400000, guid: 8b1517c2c8fd42b41a195195545b6c9f, type: 2}
-  workShopStorageSO: {fileID: 0}
---- !u!4 &251804871
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 251804869}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 562.0771, y: 873.86755, z: 7.3606844}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &300748276
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -196,6 +150,14 @@ PrefabInstance:
       propertyPath: m_Data.Array.data[3]
       value: 
       objectReference: {fileID: 11400000, guid: 4f6d6359379f32249aa736a67b698dae, type: 2}
+    - target: {fileID: 3984831075584569406, guid: 3282864492be8c144887d0bc2f486bef, type: 3}
+      propertyPath: m_Data.Array.data[4]
+      value: 
+      objectReference: {fileID: 11400000, guid: 57dc979a21601044686517dde60c7179, type: 2}
+    - target: {fileID: 3984831075584569406, guid: 3282864492be8c144887d0bc2f486bef, type: 3}
+      propertyPath: m_Data.Array.data[5]
+      value: 
+      objectReference: {fileID: 11400000, guid: 54e72ad161355974eb958354bf8d6fc5, type: 2}
     - target: {fileID: 5365935347489691788, guid: 3282864492be8c144887d0bc2f486bef, type: 3}
       propertyPath: m_LocalPosition.x
       value: 264.38742
@@ -696,7 +658,6 @@ SceneRoots:
   - {fileID: 2012658070}
   - {fileID: 5701018584656070746}
   - {fileID: 1047068746123816842}
-  - {fileID: 251804871}
   - {fileID: 2022450067}
   - {fileID: 300748276}
   - {fileID: 1365055853}
