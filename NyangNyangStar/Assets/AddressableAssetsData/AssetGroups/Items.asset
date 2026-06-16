@@ -23,6 +23,18 @@ MonoBehaviour:
     m_SerializedLabels:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 0867cfe3685f136469ebaec83fbfbb05
+    m_Address: Item_Sand_Tofu
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 0ecb3aa8bf696bc4f98a6ceb340ae471
+    m_Address: Item_Sand_Pile
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 1b31e64b1031716468a5ba57915b48b5
     m_Address: Item_Food_FishPouch
     m_ReadOnly: 0
@@ -125,6 +137,12 @@ MonoBehaviour:
     m_SerializedLabels:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 83881af1dbff05246b73554326f3f8f6
+    m_Address: Item_Sand_Bentonite
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 83af6f82ad515b449b87c900485e07ce
     m_Address: Item_Toy_BellWand
     m_ReadOnly: 0
@@ -151,6 +169,12 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 97ca79e8513a1b8498966344d31f2eb1
     m_Address: Item_Treat_Slice
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9ac959a6dd5c05b4e839eb1bf46861ed
+    m_Address: Item_Sand_Cassava
     m_ReadOnly: 0
     m_SerializedLabels:
     - Sprite
