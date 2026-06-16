@@ -6,6 +6,8 @@ namespace UI.FindMoongchi
 {
     public sealed class FindMoongchiGameViewData
     {
+        public int BoardWidth = FindMoongchiConstants.BoardWidth;
+        public int BoardHeight = FindMoongchiConstants.BoardHeight;
         public int CurrentWeek;
         public string RemainTimeText;
         public int SearchChance;
