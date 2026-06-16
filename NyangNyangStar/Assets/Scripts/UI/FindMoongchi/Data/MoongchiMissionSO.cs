@@ -4,23 +4,23 @@ using System.Text;
 using Data.ScriptableObjects;
 using UnityEngine;
 
-namespace Data.ScriptableObjects.HideAndSeekSO
+namespace Data.ScriptableObjects.MoongchiSO
 {
 
     // 뭉치를 찾아라 일일/주간 미션 마스터 데이터입니다.
     // 일일 미션은 EVENT_COIN + ENERGY 보상, 주간 미션은 EVENT_COIN 보상을 기준으로 합니다.
 
-    [CreateAssetMenu(fileName = "HideAndSeekMissionSO", menuName = "SO/FindMoongchi/HideAndSeekMissionSO", order = 1)]
-    public class HideAndSeekMissionSO : SoBase, ISheetParsable
+    [CreateAssetMenu(fileName = "MoongchiMissionSO", menuName = "SO/FindMoongchi/MoongchiMissionSO", order = 1)]
+    public class MoongchiMissionSO : SoBase, ISheetParsable
     {
         [Header("뭉치를 찾아라 미션 데이터")]
-        [SerializeField] private List<HideAndSeekMissionData> _missions = new();
+        [SerializeField] private List<MoongchiMissionData> _missions = new();
 
         // 미션 ID 기반 조회 캐시입니다.
-        private readonly Dictionary<int, HideAndSeekMissionData> _missionByID = new();
+        private readonly Dictionary<int, MoongchiMissionData> _missionByID = new();
 
         // 외부에서는 읽기만 가능하게 열어둠
-        public IReadOnlyList<HideAndSeekMissionData> Missions => _missions;
+        public IReadOnlyList<MoongchiMissionData> Missions => _missions;
 
         private void OnEnable()
         {
@@ -53,22 +53,22 @@ namespace Data.ScriptableObjects.HideAndSeekSO
             if (!TryParseInt(GetColumn(cols, 0), out int id) || id <= 0)
                 return;
 
-            // 1번째 칸을 가져와서 HideAndSeekMissionType enum으로 변환
-            HideAndSeekMissionType missionType = ParseEnum(GetColumn(cols, 1), HideAndSeekMissionType.None);
+            // 1번째 칸을 가져와서 MoongchiMissionType enum으로 변환
+            MoongchiMissionType missionType = ParseEnum(GetColumn(cols, 1), MoongchiMissionType.None);
             string missionContent = GetColumn(cols, 2);
             int targetAmount = ParseIntOrDefault(GetColumn(cols, 3));
 
 
             // cols.length >= 9 이면 두 번째 보상도 만들어야함
-            HideAndSeekRewardData reward1 = CreateReward(GetColumn(cols, 4), GetColumn(cols, 5));
-            HideAndSeekRewardData reward2 = cols.Length >= 8
+            MoongchiRewardData reward1 = CreateReward(GetColumn(cols, 4), GetColumn(cols, 5));
+            MoongchiRewardData reward2 = cols.Length >= 8
                 ? CreateReward(GetColumn(cols, 6), GetColumn(cols, 7))
                 : null;
 
-            if (missionType == HideAndSeekMissionType.None || string.IsNullOrEmpty(missionContent) || !reward1.IsValid)
+            if (missionType == MoongchiMissionType.None || string.IsNullOrEmpty(missionContent) || !reward1.IsValid)
                 return;
 
-            HideAndSeekMissionData data = new HideAndSeekMissionData(
+            MoongchiMissionData data = new MoongchiMissionData(
                 id,
                 missionType,
                 missionContent,
@@ -79,19 +79,19 @@ namespace Data.ScriptableObjects.HideAndSeekSO
             AddOrUpdate(data);
         }
 
-        public bool TryGetMission(int id, out HideAndSeekMissionData data)
+        public bool TryGetMission(int id, out MoongchiMissionData data)
         {
             // id로 미션 하나 빠르게 찾기
             RebuildDictionaryIfNeeded();
             return _missionByID.TryGetValue(id, out data);
         }
 
-        public List<HideAndSeekMissionData> GetMissionsByType(HideAndSeekMissionType missionType)
+        public List<MoongchiMissionData> GetMissionsByType(MoongchiMissionType missionType)
         {
             // 일일, 주간 같은 타입 기준으로 미션 묶어서 가져오기
-            List<HideAndSeekMissionData> result = new List<HideAndSeekMissionData>();
+            List<MoongchiMissionData> result = new List<MoongchiMissionData>();
 
-            foreach (HideAndSeekMissionData mission in _missions)
+            foreach (MoongchiMissionData mission in _missions)
             {
                 if (mission.MissionType == missionType)
                     result.Add(mission);
@@ -104,9 +104,9 @@ namespace Data.ScriptableObjects.HideAndSeekSO
         {
             // 로드된 미션 데이터 확인용 로그
             StringBuilder builder = new StringBuilder();
-            builder.AppendLine($"[HideAndSeekMissionSO] 로드된 미션 데이터: {_missions.Count}");
+            builder.AppendLine($"[MoongchiMissionSO] 로드된 미션 데이터: {_missions.Count}");
 
-            foreach (HideAndSeekMissionData data in _missions)
+            foreach (MoongchiMissionData data in _missions)
             {
                 string reward2Text = data.HasReward2
                     ? $", Reward2:{data.Reward2.RewardType} {data.Reward2.RewardAmount}"
@@ -120,7 +120,7 @@ namespace Data.ScriptableObjects.HideAndSeekSO
             DebugTool.Log(builder.ToString(), DebugType.Data, this);
         }
 
-        private void AddOrUpdate(HideAndSeekMissionData data)
+        private void AddOrUpdate(MoongchiMissionData data)
         {
             // 같은 id가 있으면 교체하고, 없으면 새로 추가
             RebuildDictionaryIfNeeded();
@@ -156,7 +156,7 @@ namespace Data.ScriptableObjects.HideAndSeekSO
             // 미션 id로 바로 찾을 수 있게 캐시 재구성
             _missionByID.Clear();
 
-            foreach (HideAndSeekMissionData data in _missions)
+            foreach (MoongchiMissionData data in _missions)
             {
                 if (data == null || data.ID <= 0)
                     continue;
@@ -165,13 +165,13 @@ namespace Data.ScriptableObjects.HideAndSeekSO
             }
         }
 
-        private static HideAndSeekRewardData CreateReward(string rewardTypeText, string rewardAmountText)
+        private static MoongchiRewardData CreateReward(string rewardTypeText, string rewardAmountText)
         {
             // 보상 타입과 수량 텍스트를 실제 보상 데이터로 변환
-            HideAndSeekCurrencyType rewardType = ParseEnum(rewardTypeText, HideAndSeekCurrencyType.None);
+            MoongchiCurrencyType rewardType = ParseEnum(rewardTypeText, MoongchiCurrencyType.None);
             int rewardAmount = ParseIntOrDefault(rewardAmountText);
 
-            return new HideAndSeekRewardData(rewardType, rewardAmount);
+            return new MoongchiRewardData(rewardType, rewardAmount);
         }
 
         private static string GetColumn(string[] cols, int index)

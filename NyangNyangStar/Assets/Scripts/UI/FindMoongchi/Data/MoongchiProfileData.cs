@@ -2,13 +2,13 @@ using System;
 using UnityEngine;
 
 
-namespace Data.ScriptableObjects.HideAndSeekSO
+namespace Data.ScriptableObjects.MoongchiSO
 {
     // 프로필_데이터 
     // 이벤트 상점의 PROFILE 상품 productID, ProfileID 연결
 
     [Serializable]
-    public class HideAndSeekProfileData
+    public class MoongchiProfileData
     {
         [SerializeField] private int _profileID;
         [SerializeField] private string _profileName;
@@ -23,7 +23,7 @@ namespace Data.ScriptableObjects.HideAndSeekSO
         public string DescStringID => _descStringID;
         public bool IsDefault => _isDefault;
 
-        public HideAndSeekProfileData(
+        public MoongchiProfileData(
             int profileID,
             string profileName,
             string addressableKey,
