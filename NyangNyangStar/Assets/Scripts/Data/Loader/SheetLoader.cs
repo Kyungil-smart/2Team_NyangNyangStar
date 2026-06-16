@@ -3,7 +3,7 @@ using System;
 using Data.Parsing;
 using Data.LibrarySystem;
 using Data.ScriptableObjects;
-using Data.ScriptableObjects.HideAndSeekSO;
+using Data.ScriptableObjects.MoongchiSO;
 using Data.ScriptableObjects.KeyContainerSO;
 using Data.ScriptableObjects.MergeBoard;
 using Data.ScriptableObjects.ScratchingTimeSO;
@@ -45,15 +45,15 @@ namespace Data.Loader
 
         [Space(8)] [Header("뭉치를 찾아라 상점/보상")]
         [SerializeField] private SheetData findMoongchiShopURL;
-        [SerializeField] private HideAndSeekShopSO findMoongchiShopSo;
+        [SerializeField] private MoongchiShopSO findMoongchiShopSo;
 
         [Space(8)] [Header("뭉치를 찾아라 미션")]
         [SerializeField] private SheetData findMoongchiMissionURL;
-        [SerializeField] private HideAndSeekMissionSO findMoongchiMissionSo;
+        [SerializeField] private MoongchiMissionSO findMoongchiMissionSo;
 
         [Space(8)] [Header("뭉치를 찾아라 프로필")]
         [SerializeField] private SheetData findMoongchiProfileURL;
-        [SerializeField] private HideAndSeekProfileSO findMoongchiProfileSo;
+        [SerializeField] private MoongchiProfileSO findMoongchiProfileSo;
 
         [Space(8)] [SerializeField] private int _pendingSheetCount;
         public int PendingSheetCount => _pendingSheetCount;
