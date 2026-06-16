@@ -34,7 +34,21 @@ namespace UI.FindMoongchi
         [SerializeField] private string _remainTimeText = "1d 12h";
         [SerializeField] private bool _completedMissionMock;
 
-        private readonly HashSet<int> _revealedTileIndices = new();
+        [Header("임시 미니게임 스테이지 - SO/Firestore 연결 전")]
+        [Tooltip("현재는 임시 하드코딩 스테이지를 사용합니다. 실제 데이터 담당 작업 후 SO/Firestore 값으로 교체하면 됩니다.")]
+        [SerializeField] private int _currentStageId = 8;
+
+        [Header("탐색 도구 ID - 순서 고정")]
+        [Tooltip("0: 가로 한 줄 도구, 1: 세로 한 줄 도구, 2: 4x4 사각형 도구. ID만 바꾸고 순서는 바꾸지 마세요.")]
+        [SerializeField] private int[] _toolItemIds =
+        {
+            FindMoongchiConstants.ToolId01,
+            FindMoongchiConstants.ToolId02,
+            FindMoongchiConstants.ToolId03
+        };
+
+        private readonly FindMoongchiGameLogic _gameLogic = new();
+        private readonly int[] _resolvedToolItemIds = new int[FindMoongchiConstants.ToolSlotCount];
         private readonly Dictionary<int, int> _shopPurchaseCounts = new();
         private readonly HashSet<int> _claimedMissionIds = new();
 
@@ -58,8 +72,10 @@ namespace UI.FindMoongchi
 
             ResolveReferences();
             ResolveDataManager();
+            ResolveToolItemIds();
             InitChildren();
             BindEvents();
+            InitGameLogic();
 
             _initialized = true;
 
@@ -120,9 +136,9 @@ namespace UI.FindMoongchi
 
         public override void ClosePopup()
         {
-            DebugTool.Log("[FindMoongchiPopup] 팝업 닫기", DebugType.FindMoongchi, this);
+            DebugTool.Log("[FindMoongchiPopup] 팝업 닫기: Destroy하지 않고 비활성화합니다.", DebugType.FindMoongchi, this);
             CloseAllModal();
-            GameManager.UI.ClosePopupUI(this);
+            gameObject.SetActive(false);
         }
 
         private void ResolveReferences()
@@ -179,6 +195,43 @@ namespace UI.FindMoongchi
             DebugTool.Log($"[FindMoongchiPopup] DataManager 연결: {_dataManager.name}", DebugType.FindMoongchi, this);
             _dataManager.OnLoadCompleted -= HandleDataLoadCompleted;
             _dataManager.OnLoadCompleted += HandleDataLoadCompleted;
+        }
+
+        private void ResolveToolItemIds()
+        {
+            if (_toolItemIds == null || _toolItemIds.Length != FindMoongchiConstants.ToolSlotCount)
+            {
+                DebugTool.Warning(
+                    $"[FindMoongchiPopup] 탐색 도구 ID 배열 길이가 올바르지 않습니다. 필요={FindMoongchiConstants.ToolSlotCount}, 현재={_toolItemIds?.Length ?? 0}. 부족한 값은 기본값을 사용합니다.",
+                    DebugType.FindMoongchi,
+                    this);
+            }
+
+            IReadOnlyList<int> defaults = FindMoongchiConstants.DefaultToolItemIds;
+
+            for (int i = 0; i < FindMoongchiConstants.ToolSlotCount; i++)
+            {
+                int value = _toolItemIds != null && i < _toolItemIds.Length ? _toolItemIds[i] : 0;
+
+                if (value <= 0)
+                {
+                    value = defaults[i];
+                    DebugTool.Warning(
+                        $"[FindMoongchiPopup] 탐색 도구 ID가 비어있어 기본값을 사용합니다. Index={i}, DefaultToolId={value}",
+                        DebugType.FindMoongchi,
+                        this);
+                }
+
+                _resolvedToolItemIds[i] = value;
+            }
+
+            _gameLogic.SetToolItemIds(_resolvedToolItemIds);
+            _gamePanel?.SetToolItemIds(_resolvedToolItemIds);
+
+            DebugTool.Log(
+                $"[FindMoongchiPopup] 탐색 도구 ID 적용 완료: 0(Row)={_resolvedToolItemIds[0]}, 1(Column)={_resolvedToolItemIds[1]}, 2(Square4x4)={_resolvedToolItemIds[2]}",
+                DebugType.FindMoongchi,
+                this);
         }
 
         private void InitChildren()
@@ -252,6 +305,17 @@ namespace UI.FindMoongchi
             {
                 DebugTool.Warning("[FindMoongchiPopup] ShopPanel이 없어 상점 이벤트를 바인딩하지 못했습니다.", DebugType.FindMoongchi, this);
             }
+        }
+
+        private void InitGameLogic()
+        {
+            _gameLogic.SetToolItemIds(_resolvedToolItemIds);
+            _gameLogic.LoadStage(_currentStageId);
+
+            DebugTool.Log(
+                $"[FindMoongchiPopup] 미니게임 임시 스테이지 로드: StageId={_gameLogic.CurrentStageId}, TargetCount={_gameLogic.TargetCount}",
+                DebugType.FindMoongchi,
+                this);
         }
 
         private void HandleDataLoadCompleted()
@@ -351,14 +415,20 @@ namespace UI.FindMoongchi
 
                 _searchChance = Mathf.Max(0, _searchChance - 1);
 
-                IReadOnlyList<int> affectedTiles = _gamePanel.GetAffectedTiles(toolItemId, tileIndex);
-                DebugTool.Log($"[FindMoongchiPopup] 도구 사용 성공: ToolId={toolItemId}, 기준 Tile={tileIndex}, 공개 대상={affectedTiles.Count}, 남은 탐색 기회={_searchChance}", DebugType.FindMoongchi, this);
+                FindMoongchiUseToolResult result = _gameLogic.UseTool(toolItemId, tileIndex);
 
-                foreach (int affectedTile in affectedTiles)
-                    _revealedTileIndices.Add(affectedTile);
+                DebugTool.Log(
+                    $"[FindMoongchiPopup] 도구 사용 성공: ToolId={toolItemId}, 기준 Tile={tileIndex}, 공개 대상={result.AffectedTileIndices.Count}, 신규 공개={result.NewlyRevealedTileIndices.Count}, 발견 목표={result.NewlyFoundTargets.Count}, 남은 탐색 기회={_searchChance}",
+                    DebugType.FindMoongchi,
+                    this);
 
-                _gamePanel.RevealTiles(affectedTiles);
+                foreach (FindMoongchiTargetRuntimeData foundTarget in result.NewlyFoundTargets)
+                    DebugTool.Log($"[FindMoongchiPopup] 목표물 발견: {foundTarget.TargetName}({foundTarget.TargetId})", DebugType.FindMoongchi, this);
+
                 RefreshGamePanel();
+
+                if (result.IsStageCleared)
+                    OpenNotice("스테이지를 클리어했습니다.");
             }
             finally
             {
@@ -462,7 +532,7 @@ namespace UI.FindMoongchi
         private void RefreshGamePanel()
         {
             FindMoongchiGameViewData data = BuildGameViewData();
-            DebugTool.Log($"[FindMoongchiPopup] 게임 패널 갱신: 탐색기회={data.SearchChance}, 공개타일={data.RevealedTileIndices.Count}, 도구={data.Tools.Count}", DebugType.FindMoongchi, this);
+            DebugTool.Log($"[FindMoongchiPopup] 게임 패널 갱신: Stage={_gameLogic.CurrentStageId}, Board={data.BoardWidth}x{data.BoardHeight}, 탐색기회={data.SearchChance}, 공개타일={data.RevealedTileIndices.Count}, 도구={data.Tools.Count}, 발견목표={_gameLogic.FoundTargetCount}/{_gameLogic.TargetCount}", DebugType.FindMoongchi, this);
             _gamePanel?.SetData(data);
         }
 
@@ -470,15 +540,17 @@ namespace UI.FindMoongchi
         {
             FindMoongchiGameViewData data = new FindMoongchiGameViewData
             {
+                BoardWidth = _gameLogic.BoardWidth,
+                BoardHeight = _gameLogic.BoardHeight,
                 CurrentWeek = _currentWeek,
                 RemainTimeText = _remainTimeText,
                 SearchChance = _searchChance,
                 EnergySpendProgress = _energySpendProgress,
                 EnergySpendTarget = FindMoongchiConstants.EnergySpendTarget,
-                RevealedTileIndices = new HashSet<int>(_revealedTileIndices)
+                RevealedTileIndices = _gameLogic.GetRevealedTileSet()
             };
 
-            foreach (int toolId in FindMoongchiConstants.ToolIds)
+            foreach (int toolId in _resolvedToolItemIds)
             {
                 data.Tools.Add(new FindMoongchiToolViewData
                 {
@@ -490,9 +562,15 @@ namespace UI.FindMoongchi
                 });
             }
 
-            data.TargetHints.Add(new FindMoongchiTargetHintViewData { TargetName = "뭉치", IsFound = false });
-            data.TargetHints.Add(new FindMoongchiTargetHintViewData { TargetName = "목표물 1", IsFound = false });
-            data.TargetHints.Add(new FindMoongchiTargetHintViewData { TargetName = "목표물 2", IsFound = false });
+            foreach (FindMoongchiTargetRuntimeData target in _gameLogic.Targets)
+            {
+                data.TargetHints.Add(new FindMoongchiTargetHintViewData
+                {
+                    TargetName = target.TargetName,
+                    Icon = null,
+                    IsFound = target.IsFound
+                });
+            }
 
             return data;
         }
