@@ -30,7 +30,9 @@ namespace UI.FindMoongchi
 
         [Header("상점 화면")]
         [SerializeField] private Image _eventCoinIconImage;
-        [SerializeField] private Image _itemListPanelImage;
+
+        [Header("미니게임 도구 패널")]
+        [SerializeField] private Image _toolPanelImage;
 
         [Header("설명 / 서브 패널")]
         [Tooltip("FM_Panel_Sub를 사용할 이미지들입니다. 예: PurchasePopup, NoticePopup, ErrorPopup 배경")]
@@ -69,7 +71,7 @@ namespace UI.FindMoongchi
             Load(_missionPanelImage, FindMoongchiSpriteKeys.PanelMission);
 
             Load(_eventCoinIconImage, FindMoongchiSpriteKeys.EventCoinIcon);
-            Load(_itemListPanelImage, FindMoongchiSpriteKeys.PanelItemList);
+            Load(_toolPanelImage, FindMoongchiSpriteKeys.PanelItemList);
 
             LoadArray(_subPanelImages, FindMoongchiSpriteKeys.PanelSub);
             LoadArray(_squareImages, FindMoongchiSpriteKeys.ShapeSquare);
