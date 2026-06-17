@@ -1,5 +1,8 @@
 using DG.Tweening;
+using Firebase.Firestore;
+using System;
 using System.Collections.Generic;
+using System.IO;
 using TMPro;
 using UI.Base;
 using UnityEngine;
@@ -7,6 +10,9 @@ using UnityEngine.UI;
 
 public class NyangNyangSnapResultUI : UIPopup
 {
+    [Header("사진 SO")]
+    [SerializeField] private NyangNyangSnapPhotoAlbumSO _photoAlbumSO;
+
     [Header("결과/보상 패널")]
     [SerializeField] private GameObject _resultCollectionPanel;
     [SerializeField] private GameObject _rewardPanel;
@@ -117,14 +123,89 @@ public class NyangNyangSnapResultUI : UIPopup
     {
         if (button == null) return;
 
-        button.onClick.AddListener(() =>
-        {
-            // TODO : 사진 저장하기 
-            _resultCollectionPanel.SetActive(false);
-            _rewardPanel.SetActive(true);
+        button.onClick.AddListener(SaveSelectedPhotos);
+    }
 
-            DebugTool.Log("[NyangNyangSnapResultUI] 사진 저장 버튼 클릭", DebugType.UI, this);
-        });
+    private async void SaveSelectedPhotos()
+    {
+        IReadOnlyList<NyangNyangSnapCaptureRecord> selectedRecords = _collectionSprite.SelectedRecords;
+
+        if (selectedRecords != null && selectedRecords.Count > 0)
+        {
+            foreach (NyangNyangSnapCaptureRecord record in selectedRecords)
+            {
+                if (record == null || record.CapturedSprite == null || record.ScoreResult == null) continue;
+
+                string photoId = $"NNSnap_{DateTime.Now:yyMMdd_HH.mm.ss.fff}";
+                string storagePath = $"NyangNyangSnap/photos/{photoId}.png";
+
+                string imageUrl = SavePhotoToFolder(record.CapturedSprite, photoId);
+
+                if (string.IsNullOrEmpty(imageUrl)) continue;
+
+                NyangNyangSnapSavedPhotoData photoData = new()
+                {
+                    photoId = photoId,
+
+                    imageUrl = imageUrl,
+                    storagePath = storagePath,
+                    poseScore = record.ScoreResult.PoseScore,
+                    compositionScore = record.ScoreResult.CompositionScore,
+                    timingScore = record.ScoreResult.ReactionScore,
+                    //backGroundScore = record.ScoreResult.BackGroundScore,
+
+                    totalScore = record.ScoreResult.TotalScore,
+                    starCount = GetStarCount(record.ScoreResult.TotalScore),
+                    createdAt = Timestamp.GetCurrentTimestamp()
+                };
+
+                _photoAlbumSO.AddPhoto(photoData);
+            }
+
+            await _photoAlbumSO.UpdateDataAsync();
+
+            DebugTool.Log(
+                "[NyangNyangSnapResultUI] 선택 사진 저장 완료",
+                DebugType.UI,
+                this);
+        }
+
+        _resultCollectionPanel.SetActive(false);
+        _rewardPanel.SetActive(true);
+
+        DebugTool.Log(
+            "[NyangNyangSnapResultUI] 사진 저장 버튼 클릭",
+            DebugType.UI,
+            this);
+    }
+
+    private string SavePhotoToFolder(Sprite sprite, string photoId)
+    {
+        if (sprite == null || sprite.texture == null) return string.Empty;
+
+        string folder = "Assets/Test/SavedPhotos";
+
+        if (!Directory.Exists(folder)) Directory.CreateDirectory(folder);
+
+        string path = $"{folder}/{photoId}.png";
+
+        File.WriteAllBytes(path, sprite.texture.EncodeToPNG());
+
+        #if UNITY_EDITOR
+        UnityEditor.AssetDatabase.Refresh();
+        #endif
+
+        return path;
+    }
+
+    private int GetStarCount(int totalScore)
+    {
+        if (totalScore < 20) return 1;
+        if (totalScore < 40) return 2;
+        if (totalScore < 60) return 3;
+        if (totalScore < 80) return 4;
+
+        return 5;
     }
 
     private void AddRetryButton(Button button)
