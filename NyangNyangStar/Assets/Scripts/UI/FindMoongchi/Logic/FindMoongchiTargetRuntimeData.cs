@@ -9,6 +9,7 @@ namespace UI.FindMoongchi
 
         public int TargetId { get; }
         public string TargetName { get; }
+        public string IconKey { get; }
         public bool IsMainTarget { get; }
         public bool IsFound { get; private set; }
         public IReadOnlyCollection<int> CellIndices => _cellIndices;
@@ -18,10 +19,12 @@ namespace UI.FindMoongchi
             string targetName,
             bool isMainTarget,
             IEnumerable<int> cellIndices,
-            int maxTileCount = FindMoongchiConstants.TileCount)
+            int maxTileCount = FindMoongchiConstants.TileCount,
+            string iconKey = null)
         {
             TargetId = targetId;
             TargetName = targetName;
+            IconKey = iconKey;
             IsMainTarget = isMainTarget;
 
             if (cellIndices == null)

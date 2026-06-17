@@ -50,7 +50,7 @@ namespace UI.FindMoongchi
             _targets.AddRange(stage.Targets);
 
             DebugTool.Log(
-                $"[FindMoongchiGameLogic] 스테이지 로드 완료: Stage={CurrentStageId}, Board={BoardWidth}x{BoardHeight}, Target={_targets.Count}",
+                $"[FindMoongchiGameLogic] 스테이지 로드 완료: Stage={CurrentStageId}, Week={CurrentWeek}, Board={BoardWidth}x{BoardHeight}, Target={_targets.Count}",
                 DebugType.FindMoongchi);
         }
 
@@ -162,6 +162,61 @@ namespace UI.FindMoongchi
             return FindMoongchiToolPattern.Row;
         }
 
+        public static IReadOnlyList<int> GetStageIdsForWeek(int week)
+        {
+            return week <= 1
+                ? new[] { 1, 2, 3, 4, 5 }
+                : new[] { 6, 7, 8, 9, 10 };
+        }
+
+        public static List<int> CreateShuffledStageCycle(int week, string userKey, int cycleNumber = 0)
+        {
+            IReadOnlyList<int> source = GetStageIdsForWeek(week);
+            List<int> result = new List<int>(source);
+
+            int seed = CreateStableSeed(userKey, week, cycleNumber);
+            System.Random random = new System.Random(seed);
+
+            for (int i = result.Count - 1; i > 0; i--)
+            {
+                int j = random.Next(i + 1);
+                (result[i], result[j]) = (result[j], result[i]);
+            }
+
+            DebugTool.Log(
+                $"[FindMoongchiGameLogic] 주차 스테이지 셔플 생성: Week={week}, Cycle={cycleNumber}, Seed={seed}, Order={string.Join(",", result)}",
+                DebugType.FindMoongchi);
+
+            return result;
+        }
+
+        public static int ResolveStageIdFromCycle(int week, string userKey, int cycleIndex, int cycleNumber = 0)
+        {
+            List<int> cycle = CreateShuffledStageCycle(week, userKey, cycleNumber);
+
+            if (cycle.Count == 0)
+                return week <= 1 ? 1 : 6;
+
+            int safeIndex = Mathf.Abs(cycleIndex) % cycle.Count;
+            return cycle[safeIndex];
+        }
+
+        private static int CreateStableSeed(string userKey, int week, int cycleNumber)
+        {
+            unchecked
+            {
+                int hash = 23;
+                string safeUserKey = string.IsNullOrEmpty(userKey) ? "FindMoongchiDefaultUser" : userKey;
+
+                for (int i = 0; i < safeUserKey.Length; i++)
+                    hash = hash * 31 + safeUserKey[i];
+
+                hash = hash * 31 + week;
+                hash = hash * 31 + cycleNumber;
+                return hash;
+            }
+        }
+
         private static void AddRowAffectedTiles(List<int> result, int row, int boardWidth)
         {
             for (int x = 0; x < boardWidth; x++)
@@ -225,9 +280,151 @@ namespace UI.FindMoongchi
         {
             return stageId switch
             {
+                1 => CreateStage01(),
+                2 => CreateStage02(),
+                3 => CreateStage03(),
+                4 => CreateStage04(),
+                5 => CreateStage05(),
+                6 => CreateStage06(),
+                7 => CreateStage07(),
+                8 => CreateStage08(),
                 9 => CreateStage09(),
-                _ => CreateStage08()
+                10 => CreateStage10(),
+                _ => CreateStage01()
             };
+        }
+
+        private static FindMoongchiStageRuntimeData CreateStage01()
+        {
+            const int width = FindMoongchiConstants.BoardWidth;
+            const int height = FindMoongchiConstants.BoardHeight;
+            int tileCount = width * height;
+
+            return new FindMoongchiStageRuntimeData(
+                1,
+                1,
+                width,
+                height,
+                new List<FindMoongchiTargetRuntimeData>
+                {
+                    CreateTarget(1001, "뭉치", true, CreateRectangleCells(1, 0, 3, 3, width, height), tileCount, FindMoongchiSpriteKeys.TargetMungchi),
+                    CreateTarget(1002, "스마트폰", false, CreateRectangleCells(5, 2, 2, 3, width, height), tileCount, FindMoongchiSpriteKeys.TargetSmartphone),
+                    CreateTarget(1003, "무선 이어폰 케이스", false, CreateRectangleCells(6, 6, 1, 2, width, height), tileCount, FindMoongchiSpriteKeys.TargetEarbuds)
+                });
+        }
+
+        private static FindMoongchiStageRuntimeData CreateStage02()
+        {
+            const int width = FindMoongchiConstants.BoardWidth;
+            const int height = FindMoongchiConstants.BoardHeight;
+            int tileCount = width * height;
+
+            return new FindMoongchiStageRuntimeData(
+                2,
+                1,
+                width,
+                height,
+                new List<FindMoongchiTargetRuntimeData>
+                {
+                    CreateTarget(2001, "뭉치", true, CreateRectangleCells(1, 0, 3, 3, width, height), tileCount, FindMoongchiSpriteKeys.TargetMungchi),
+                    CreateTarget(2002, "다이어리", false, CreateRectangleCells(5, 2, 2, 3, width, height), tileCount, FindMoongchiSpriteKeys.TargetDiary),
+                    CreateTarget(2003, "빗", false, CreateRectangleCells(0, 5, 1, 3, width, height), tileCount, FindMoongchiSpriteKeys.TargetHairbrush)
+                });
+        }
+
+        private static FindMoongchiStageRuntimeData CreateStage03()
+        {
+            const int width = FindMoongchiConstants.BoardWidth;
+            const int height = FindMoongchiConstants.BoardHeight;
+            int tileCount = width * height;
+
+            return new FindMoongchiStageRuntimeData(
+                3,
+                1,
+                width,
+                height,
+                new List<FindMoongchiTargetRuntimeData>
+                {
+                    CreateTarget(3001, "뭉치", true, CreateRectangleCells(4, 4, 3, 3, width, height), tileCount, FindMoongchiSpriteKeys.TargetMungchi),
+                    CreateTarget(3002, "양말", false, CreateCellsFromOffsets(0, 0, width, height, (0,0), (0,1), (0,2), (1,2)), tileCount, FindMoongchiSpriteKeys.TargetSocks),
+                    CreateTarget(3003, "볼펜", false, CreateRectangleCells(2, 6, 1, 3, width, height), tileCount, FindMoongchiSpriteKeys.TargetPen)
+                });
+        }
+
+        private static FindMoongchiStageRuntimeData CreateStage04()
+        {
+            const int width = FindMoongchiConstants.BoardWidth;
+            const int height = FindMoongchiConstants.BoardHeight;
+            int tileCount = width * height;
+
+            return new FindMoongchiStageRuntimeData(
+                4,
+                1,
+                width,
+                height,
+                new List<FindMoongchiTargetRuntimeData>
+                {
+                    CreateTarget(4001, "뭉치", true, CreateRectangleCells(2, 4, 3, 3, width, height), tileCount, FindMoongchiSpriteKeys.TargetMungchi),
+                    CreateTarget(4002, "TV 리모컨", false, CreateRectangleCells(3, 0, 1, 4, width, height), tileCount, FindMoongchiSpriteKeys.TargetRemoteControl),
+                    CreateTarget(4003, "안경", false, CreateRectangleCells(4, 8, 3, 1, width, height), tileCount, FindMoongchiSpriteKeys.TargetGlasses)
+                });
+        }
+
+        private static FindMoongchiStageRuntimeData CreateStage05()
+        {
+            const int width = FindMoongchiConstants.BoardWidth;
+            const int height = FindMoongchiConstants.BoardHeight;
+            int tileCount = width * height;
+
+            return new FindMoongchiStageRuntimeData(
+                5,
+                1,
+                width,
+                height,
+                new List<FindMoongchiTargetRuntimeData>
+                {
+                    CreateTarget(5001, "뭉치", true, CreateRectangleCells(4, 5, 3, 3, width, height), tileCount, FindMoongchiSpriteKeys.TargetMungchi),
+                    CreateTarget(5002, "열쇠 꾸러미", false, CreateRectangleCells(1, 4, 2, 2, width, height), tileCount, FindMoongchiSpriteKeys.TargetKeys),
+                    CreateTarget(5003, "두툼한 지갑", false, CreateRectangleCells(3, 1, 2, 2, width, height), tileCount, FindMoongchiSpriteKeys.TargetWallet)
+                });
+        }
+
+        private static FindMoongchiStageRuntimeData CreateStage06()
+        {
+            const int width = FindMoongchiConstants.BoardWidth;
+            const int height = FindMoongchiConstants.BoardHeight;
+            int tileCount = width * height;
+
+            return new FindMoongchiStageRuntimeData(
+                6,
+                2,
+                width,
+                height,
+                new List<FindMoongchiTargetRuntimeData>
+                {
+                    CreateTarget(6001, "뭉치", true, CreateRectangleCells(3, 2, 3, 3, width, height), tileCount, FindMoongchiSpriteKeys.TargetMungchi),
+                    CreateTarget(6002, "모자", false, CreateRectangleCells(0, 3, 2, 3, width, height), tileCount, FindMoongchiSpriteKeys.TargetCap),
+                    CreateTarget(6003, "립밤", false, CreateRectangleCells(6, 0, 1, 2, width, height), tileCount, FindMoongchiSpriteKeys.TargetLipBalm)
+                });
+        }
+
+        private static FindMoongchiStageRuntimeData CreateStage07()
+        {
+            const int width = FindMoongchiConstants.BoardWidth;
+            const int height = FindMoongchiConstants.BoardHeight;
+            int tileCount = width * height;
+
+            return new FindMoongchiStageRuntimeData(
+                7,
+                2,
+                width,
+                height,
+                new List<FindMoongchiTargetRuntimeData>
+                {
+                    CreateTarget(7001, "뭉치", true, CreateRectangleCells(0, 3, 3, 3, width, height), tileCount, FindMoongchiSpriteKeys.TargetMungchi),
+                    CreateTarget(7002, "접이식 에코백", false, CreateRectangleCells(3, 0, 2, 2, width, height), tileCount, FindMoongchiSpriteKeys.TargetEcoBag),
+                    CreateTarget(7003, "보조배터리", false, CreateRectangleCells(5, 4, 2, 2, width, height), tileCount, FindMoongchiSpriteKeys.TargetPowerBank)
+                });
         }
 
         private static FindMoongchiStageRuntimeData CreateStage08()
@@ -238,14 +435,14 @@ namespace UI.FindMoongchi
 
             return new FindMoongchiStageRuntimeData(
                 8,
-                1,
+                2,
                 width,
                 height,
                 new List<FindMoongchiTargetRuntimeData>
                 {
-                    new(8001, "뭉치", true, CreateRectangleCells(1, 1, 3, 3, width, height), tileCount),
-                    new(8002, "스마트폰", false, CreateRectangleCells(5, 2, 1, 3, width, height), tileCount),
-                    new(8003, "리모컨", false, CreateRectangleCells(0, 6, 4, 1, width, height), tileCount)
+                    CreateTarget(8001, "뭉치", true, CreateRectangleCells(4, 1, 3, 3, width, height), tileCount, FindMoongchiSpriteKeys.TargetMungchi),
+                    CreateTarget(8002, "충전 케이블", false, CreateCellsFromOffsets(0, 6, width, height, (0,0), (0,1), (0,2), (1,2), (2,2)), tileCount, FindMoongchiSpriteKeys.TargetChargingCable),
+                    CreateTarget(8003, "핸드크림", false, CreateRectangleCells(3, 3, 1, 3, width, height), tileCount, FindMoongchiSpriteKeys.TargetHandCream)
                 });
         }
 
@@ -262,10 +459,40 @@ namespace UI.FindMoongchi
                 height,
                 new List<FindMoongchiTargetRuntimeData>
                 {
-                    new(9001, "뭉치", true, CreateRectangleCells(3, 1, 3, 3, width, height), tileCount),
-                    new(9002, "다이어리", false, CreateRectangleCells(0, 3, 2, 3, width, height), tileCount),
-                    new(9003, "열쇠", false, CreateRectangleCells(5, 6, 2, 2, width, height), tileCount)
+                    CreateTarget(9001, "뭉치", true, CreateRectangleCells(1, 4, 3, 3, width, height), tileCount, FindMoongchiSpriteKeys.TargetMungchi),
+                    CreateTarget(9002, "무선 마우스", false, CreateRectangleCells(4, 0, 2, 2, width, height), tileCount, FindMoongchiSpriteKeys.TargetMouse),
+                    CreateTarget(9003, "사원증", false, CreateRectangleCells(5, 4, 1, 4, width, height), tileCount, FindMoongchiSpriteKeys.TargetIDCard)
                 });
+        }
+
+        private static FindMoongchiStageRuntimeData CreateStage10()
+        {
+            const int width = FindMoongchiConstants.BoardWidth;
+            const int height = FindMoongchiConstants.BoardHeight;
+            int tileCount = width * height;
+
+            return new FindMoongchiStageRuntimeData(
+                10,
+                2,
+                width,
+                height,
+                new List<FindMoongchiTargetRuntimeData>
+                {
+                    CreateTarget(10001, "뭉치", true, CreateRectangleCells(4, 5, 3, 3, width, height), tileCount, FindMoongchiSpriteKeys.TargetMungchi),
+                    CreateTarget(10002, "휴대용 물티슈", false, CreateRectangleCells(3, 1, 2, 3, width, height), tileCount, FindMoongchiSpriteKeys.TargetWetWipes),
+                    CreateTarget(10003, "손톱깎이", false, CreateRectangleCells(0, 7, 1, 2, width, height), tileCount, FindMoongchiSpriteKeys.TargetNailClipper)
+                });
+        }
+
+        private static FindMoongchiTargetRuntimeData CreateTarget(
+            int targetId,
+            string targetName,
+            bool isMainTarget,
+            IEnumerable<int> cellIndices,
+            int maxTileCount,
+            string iconKey)
+        {
+            return new FindMoongchiTargetRuntimeData(targetId, targetName, isMainTarget, cellIndices, maxTileCount, iconKey);
         }
 
         private static List<int> CreateRectangleCells(int startColumn, int startRow, int width, int height, int boardWidth, int boardHeight)
@@ -287,6 +514,30 @@ namespace UI.FindMoongchi
 
                     cells.Add(row * boardWidth + column);
                 }
+            }
+
+            return cells;
+        }
+
+        private static List<int> CreateCellsFromOffsets(int startColumn, int startRow, int boardWidth, int boardHeight, params (int x, int y)[] offsets)
+        {
+            List<int> cells = new List<int>();
+
+            if (offsets == null)
+                return cells;
+
+            for (int i = 0; i < offsets.Length; i++)
+            {
+                int column = startColumn + offsets[i].x;
+                int row = startRow + offsets[i].y;
+
+                if (column < 0 || column >= boardWidth)
+                    continue;
+
+                if (row < 0 || row >= boardHeight)
+                    continue;
+
+                cells.Add(row * boardWidth + column);
             }
 
             return cells;

@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using Data.ScriptableObjects.HideAndSeekSO;
+using Data.ScriptableObjects.MoongchiSO;
 using UnityEngine;
 
 namespace UI.FindMoongchi
@@ -15,6 +15,7 @@ namespace UI.FindMoongchi
         public int EnergySpendTarget;
         public List<FindMoongchiToolViewData> Tools = new();
         public List<FindMoongchiTargetHintViewData> TargetHints = new();
+        public List<FindMoongchiTargetVisualViewData> TargetVisuals = new();
         public HashSet<int> RevealedTileIndices = new();
     }
 
@@ -23,6 +24,7 @@ namespace UI.FindMoongchi
         public int ToolItemId;
         public string ToolName;
         public Sprite Icon;
+        public string IconKey;
         public int Count;
         public bool IsUsable;
     }
@@ -31,30 +33,43 @@ namespace UI.FindMoongchi
     {
         public string TargetName;
         public Sprite Icon;
+        public string IconKey;
         public bool IsFound;
+    }
+
+
+    public sealed class FindMoongchiTargetVisualViewData
+    {
+        public int TargetId;
+        public string TargetName;
+        public Sprite Icon;
+        public string IconKey;
+        public bool IsFound;
+        public List<int> CellIndices = new();
     }
 
     public sealed class FindMoongchiMissionViewData
     {
         public int MissionId;
-        public HideAndSeekMissionType MissionType;
+        public MoongchiMissionType MissionType;
         public string MissionDescription;
         public int CurrentAmount;
         public int TargetAmount;
         public FindMoongchiMissionSlotState State;
-        public HideAndSeekRewardData Reward1;
-        public HideAndSeekRewardData Reward2;
+        public MoongchiRewardData Reward1;
+        public MoongchiRewardData Reward2;
     }
 
     public sealed class FindMoongchiShopViewData
     {
         public int ShopItemId;
-        public HideAndSeekProductType ProductType;
+        public MoongchiProductType ProductType;
         public int ProductId;
         public string ProductName;
         public Sprite Icon;
+        public string IconKey;
         public int Quantity;
-        public HideAndSeekCurrencyType CostType;
+        public MoongchiCurrencyType CostType;
         public int CostAmount;
         public int LimitCount;
         public int PurchasedCount;
