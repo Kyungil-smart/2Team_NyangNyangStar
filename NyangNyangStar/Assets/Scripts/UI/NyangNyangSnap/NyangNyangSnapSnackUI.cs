@@ -1,45 +1,81 @@
 using Core.Managers;
 using Data.ScriptableObjects.MergeBoard;
+using DG.Tweening;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UI;
 using UI.Base;
 using UI.MergeBoard;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using Util;
 
 public class NyangNyangSnapSnackUI : UIPopup
 {
     [Header("버튼")]
-    [Tooltip("간식 버튼")]
+    [Tooltip("간식/음식 버튼")]
     [SerializeField] private Button _snackButton;
 
     [Tooltip("뒤로 가기 패널")]
     [SerializeField] private Button _backPanel;
 
-    [Tooltip("간식 패널 닫기")]
+    [Tooltip("간식/음식 패널 닫기")]
     [SerializeField] private Button _closeButton;
+
 
     [Header("데이터")]
     [Tooltip("아이템 이름과 AddressableKey를 가져올 ItemDatabase SO")]
     [SerializeField] private ItemDatabaseSo _itemDatabaseSO;
 
-    [Tooltip("ItemID로 Toy/Snack/Food를 판별할 Tool SO")]
+    [Tooltip("ItemID로 간식/음식/간식/음식을 판별할 Tool SO")]
     [SerializeField] private NyangNyangSnapToolSO _toolSO;
 
     [Header("동적 생성")]
-    [Tooltip("간식 버튼들이 생성될 부모 Content")]
+    [Tooltip("간식/음식 버튼들이 생성될 부모 Content")]
     [SerializeField] private Transform _content;
+
+    [Header("스크롤")]
+    [Tooltip("간식/음식 목록을 좌우로 움직이는 ScrollRect")]
+    [SerializeField] private ScrollRect _scrollRect;
 
     [Header("아이템 배치")]
     [SerializeField] private NyangNyangSnapPlacementController _placementController;
 
+    [Header("선택 연출")]
+    [Tooltip("선택된 간식/음식 버튼 크기 배율")]
+    [SerializeField] private float _selectedScale = 1.1f;
+
+    [Tooltip("선택 크기 변경 시간")]
+    [SerializeField] private float _selectTweenDuration = 0.15f;
+
+    [Tooltip("선택 크기 변경 Ease")]
+    [SerializeField] private Ease _selectEase = Ease.OutBack;
+
+    [Header("길게 눌러 배치")]
+    [Tooltip("간식/음식 배치 드래그가 시작되는 누르기 시간")]
+    [Min(0.05f)]
+    [SerializeField] private float _placementHoldDuration = 0.25f;
+
     private readonly List<Button> _createdButtons = new();
     private readonly List<UISpriteController> _spriteControllers = new();
 
+    private Button _selectedButton;
+    private int _selectedItemID = -1;
+    private Vector3 _selectedButtonOriginalScale = Vector3.one;
+
+    private Coroutine _holdCoroutine;
+
+    private NyangNyangSnapInventoryItem _pressedItem;
+    private Button _pressedButton;
+    private PointerEventData _currentPointerEvent;
+
     private bool _isInitialized;
+    private bool _isPointerPressed;
+    private bool _isPlacementDragging;
+    private bool _isScrollDragging;
 
     public override void Init()
     {
@@ -49,8 +85,10 @@ public class NyangNyangSnapSnackUI : UIPopup
         _backPanel = Get<Button>((int)NyangNyangSnapSnackButtons.BackPanel);
         _closeButton = Get<Button>((int)NyangNyangSnapSnackButtons.CloseButton);
 
-        InitPopups();
+        AutoAssignScrollRect();
         AutoAssignPlacementController();
+        RegisterPlacementEvents();
+        InitPopups();
 
         _isInitialized = true;
 
@@ -62,8 +100,48 @@ public class NyangNyangSnapSnackUI : UIPopup
         if (!_isInitialized)
             return;
 
+        AutoAssignScrollRect();
         AutoAssignPlacementController();
+        RegisterPlacementEvents();
         LoadSnackButtons();
+    }
+
+    private void OnDisable()
+    {
+        CancelHold();
+
+        if (_scrollRect != null)
+            _scrollRect.enabled = true;
+
+        _isPointerPressed = false;
+        _isPlacementDragging = false;
+        _isScrollDragging = false;
+
+        ResetSelectedButton(false);
+
+        if (_placementController != null)
+            _placementController.OnSnackDragCompleted -= OnSnackDragCompleted;
+    }
+
+    private void AutoAssignScrollRect()
+    {
+        if (_scrollRect != null)
+            return;
+
+        if (_snackButton != null)
+            _scrollRect = _snackButton.GetComponentInParent<ScrollRect>();
+
+        if (_scrollRect == null && _content != null)
+            _scrollRect = _content.GetComponentInParent<ScrollRect>();
+
+        if (_scrollRect == null)
+        {
+            DebugTool.Warning(
+                "[NyangNyangSnapSnackUI] 간식/음식 목록 ScrollRect를 찾지 못했습니다.",
+                DebugType.UI,
+                this
+            );
+        }
     }
 
     private void AutoAssignPlacementController()
@@ -89,6 +167,36 @@ public class NyangNyangSnapSnackUI : UIPopup
             DebugType.UI,
             this
         );
+    }
+
+    private void RegisterPlacementEvents()
+    {
+        if (_placementController == null)
+            return;
+
+        _placementController.OnSnackDragCompleted -= OnSnackDragCompleted;
+        _placementController.OnSnackDragCompleted += OnSnackDragCompleted;
+    }
+
+    private void OnSnackDragCompleted(int itemID)
+    {
+        _isPointerPressed = false;
+        _isPlacementDragging = false;
+        _isScrollDragging = false;
+
+        if (_scrollRect != null)
+            _scrollRect.enabled = true;
+
+        CancelHold();
+        ResetSelectedButton(true);
+
+        DebugTool.Log(
+            $"[NyangNyangSnapSnackUI] 고양이 도착으로 간식 사용 완료 / ItemID:{itemID}",
+            DebugType.UI,
+            this
+        );
+
+        gameObject.SetActive(false);
     }
 
     private void InitPopups()
@@ -220,9 +328,7 @@ public class NyangNyangSnapSnackUI : UIPopup
 
         SetButtonSprite(createdButton, item);
         SetButtonCount(createdButton, item.Count);
-
-        createdButton.onClick.RemoveAllListeners();
-        createdButton.onClick.AddListener(() => SelectSnackItem(item, createdButton));
+        RegisterSnackButtonEvents(createdButton, item);
 
         _createdButtons.Add(createdButton);
     }
@@ -267,40 +373,96 @@ public class NyangNyangSnapSnackUI : UIPopup
             countText.text = $"{count}";
     }
 
+    private void RegisterSnackButtonEvents(Button createdButton, NyangNyangSnapInventoryItem item)
+    {
+        createdButton.onClick.RemoveAllListeners();
+        createdButton.onClick.AddListener(() => SelectSnackItem(item, createdButton));
+
+        EventTrigger eventTrigger = createdButton.GetComponent<EventTrigger>();
+
+        if (eventTrigger == null)
+            eventTrigger = createdButton.gameObject.AddComponent<EventTrigger>();
+
+        eventTrigger.triggers.Clear();
+
+        AddEventTrigger(
+            eventTrigger,
+            EventTriggerType.PointerDown,
+            eventData => OnSnackPointerDown(item, createdButton, eventData)
+        );
+
+        AddEventTrigger(
+            eventTrigger,
+            EventTriggerType.InitializePotentialDrag,
+            OnSnackInitializePotentialDrag
+        );
+
+        AddEventTrigger(
+            eventTrigger,
+            EventTriggerType.BeginDrag,
+            OnSnackBeginDrag
+        );
+
+        AddEventTrigger(
+            eventTrigger,
+            EventTriggerType.Drag,
+            OnSnackDrag
+        );
+
+        AddEventTrigger(
+            eventTrigger,
+            EventTriggerType.EndDrag,
+            OnSnackEndDrag
+        );
+
+        AddEventTrigger(
+            eventTrigger,
+            EventTriggerType.PointerUp,
+            OnSnackPointerUp
+        );
+
+        AddEventTrigger(
+            eventTrigger,
+            EventTriggerType.PointerExit,
+            OnSnackPointerExit
+        );
+    }
+
+    private void AddEventTrigger(EventTrigger eventTrigger, EventTriggerType eventType, Action<PointerEventData> callback)
+    {
+        EventTrigger.Entry entry = new EventTrigger.Entry
+        {
+            eventID = eventType
+        };
+
+        entry.callback.AddListener(baseEventData =>
+        {
+            if (baseEventData is PointerEventData pointerEventData)
+                callback?.Invoke(pointerEventData);
+        });
+
+        eventTrigger.triggers.Add(entry);
+    }
+
     private void SelectSnackItem(NyangNyangSnapInventoryItem item, Button selectedButton)
     {
-        GameManager.Audio.PlaySfx("Main_SFX_Touch");
-
         AutoAssignPlacementController();
 
-        if (_placementController == null)
-        {
-            DebugTool.Warning(
-                "[NyangNyangSnapSnackUI] PlacementController가 없어 아이템을 선택할 수 없습니다.",
-                DebugType.UI,
-                this
-            );
-
+        if (_placementController == null || selectedButton == null)
             return;
-        }
 
-        if (selectedButton == null)
-        {
-            DebugTool.Warning(
-                $"[NyangNyangSnapSnackUI] 선택한 버튼이 없습니다. ItemID:{item.ItemID}",
-                DebugType.UI,
-                this
-            );
-
+        if (_isPlacementDragging || _isScrollDragging)
             return;
-        }
+
+        if (_selectedButton == selectedButton && _selectedItemID == item.ItemID)
+            return;
 
         Image itemImage = selectedButton.GetComponent<Image>();
 
         if (itemImage == null || itemImage.sprite == null)
         {
             DebugTool.Warning(
-                $"[NyangNyangSnapSnackUI] 선택한 간식/음식 이미지가 없습니다. ItemID:{item.ItemID}, ItemName:{item.ItemName}",
+                $"[NyangNyangSnapSnackUI] 선택한 간식/음식 이미지가 없습니다. ItemID:{item.ItemID}",
                 DebugType.UI,
                 this
             );
@@ -308,19 +470,220 @@ public class NyangNyangSnapSnackUI : UIPopup
             return;
         }
 
-        _placementController.SelectItem(item.ItemID, item.ItemName, itemImage.sprite);
+        bool selected = _placementController.SelectSnack(item.ItemID, item.ItemName, itemImage.sprite);
+
+        if (!selected)
+            return;
+
+        GameManager.Audio.PlaySfx("Main_SFX_Touch");
+
+        SetSelectedButton(selectedButton, item.ItemID);
 
         DebugTool.Log(
-            $"[NyangNyangSnapSnackUI] 간식/음식 선택 완료 / ItemID:{item.ItemID}, ItemName:{item.ItemName}, Count:{item.Count}, ToolType:{item.ToolType}",
+            $"[NyangNyangSnapSnackUI] 간식/음식 선택 완료 / ItemID:{item.ItemID}, ItemName:{item.ItemName}",
             DebugType.UI,
             this
         );
+    }
 
-        gameObject.SetActive(false);
+    private void SetSelectedButton(Button selectedButton, int itemID)
+    {
+        if (_selectedButton == selectedButton && _selectedItemID == itemID)
+            return;
+
+        ResetSelectedButton(true);
+
+        _selectedButton = selectedButton;
+        _selectedItemID = itemID;
+        _selectedButtonOriginalScale = selectedButton.transform.localScale;
+
+        selectedButton.transform.DOKill();
+
+        selectedButton.transform
+            .DOScale(_selectedButtonOriginalScale * _selectedScale, _selectTweenDuration)
+            .SetEase(_selectEase);
+    }
+
+    private void ResetSelectedButton(bool useTween)
+    {
+        if (_selectedButton == null)
+            return;
+
+        _selectedButton.transform.DOKill();
+
+        if (useTween)
+        {
+            _selectedButton.transform
+                .DOScale(_selectedButtonOriginalScale, _selectTweenDuration)
+                .SetEase(Ease.OutSine);
+        }
+        else
+        {
+            _selectedButton.transform.localScale = _selectedButtonOriginalScale;
+        }
+
+        _selectedButton = null;
+        _selectedItemID = -1;
+    }
+
+    private void OnSnackPointerDown(NyangNyangSnapInventoryItem item, Button button, PointerEventData eventData)
+    {
+        CancelHold();
+
+        _isPointerPressed = true;
+        _isPlacementDragging = false;
+        _isScrollDragging = false;
+
+        _pressedItem = item;
+        _pressedButton = button;
+        _currentPointerEvent = eventData;
+
+        _holdCoroutine = StartCoroutine(BeginPlacementAfterHold());
+    }
+
+    private void OnSnackInitializePotentialDrag(PointerEventData eventData)
+    {
+        if (_scrollRect == null)
+            return;
+
+        _scrollRect.OnInitializePotentialDrag(eventData);
+    }
+
+    private void OnSnackBeginDrag(PointerEventData eventData)
+    {
+        if (_isPlacementDragging)
+            return;
+
+        CancelHoldCoroutineOnly();
+
+        _isScrollDragging = true;
+
+        if (_scrollRect != null)
+            _scrollRect.OnBeginDrag(eventData);
+    }
+
+    private void OnSnackDrag(PointerEventData eventData)
+    {
+        _currentPointerEvent = eventData;
+
+        if (_isPlacementDragging)
+        {
+            _placementController?.UpdateSnackDrag(eventData.position);
+            return;
+        }
+
+        if (_isScrollDragging && _scrollRect != null)
+            _scrollRect.OnDrag(eventData);
+    }
+
+    private void OnSnackEndDrag(PointerEventData eventData)
+    {
+        if (_isPlacementDragging)
+            return;
+
+        if (_isScrollDragging && _scrollRect != null)
+            _scrollRect.OnEndDrag(eventData);
+
+        _isScrollDragging = false;
+    }
+
+    private void OnSnackPointerUp(PointerEventData eventData)
+    {
+        _isPointerPressed = false;
+
+        if (_isPlacementDragging)
+        {
+            _placementController?.CancelSnackDrag();
+            _isPlacementDragging = false;
+
+            if (_scrollRect != null)
+                _scrollRect.enabled = true;
+
+            CancelHold();
+
+            DebugTool.Log(
+                "[NyangNyangSnapSnackUI] 고양이 도착 전에 터치를 해제하여 간식 사용을 취소했습니다.",
+                DebugType.UI,
+                this
+            );
+
+            return;
+        }
+
+        CancelHold();
+    }
+
+    private void OnSnackPointerExit(PointerEventData eventData)
+    {
+        if (_isPlacementDragging || _isScrollDragging)
+            return;
+
+        CancelHoldCoroutineOnly();
+    }
+
+    private IEnumerator BeginPlacementAfterHold()
+    {
+        yield return new WaitForSecondsRealtime(_placementHoldDuration);
+
+        _holdCoroutine = null;
+
+        if (!_isPointerPressed)
+            yield break;
+
+        if (_isScrollDragging)
+            yield break;
+
+        if (_pressedButton == null || _pressedItem == null)
+            yield break;
+
+        if (_selectedButton != _pressedButton || _selectedItemID != _pressedItem.ItemID)
+            yield break;
+
+        AutoAssignPlacementController();
+
+        if (_placementController == null || _currentPointerEvent == null)
+            yield break;
+
+        bool started = _placementController.BeginSnackDrag(_currentPointerEvent.position);
+
+        if (!started)
+            yield break;
+
+        _isPlacementDragging = true;
+
+        if (_scrollRect != null)
+            _scrollRect.enabled = false;
+
+        DebugTool.Log(
+            $"[NyangNyangSnapSnackUI] 길게 눌러 간식/음식 배치 시작 / ItemID:{_pressedItem.ItemID}",
+            DebugType.UI,
+            this
+        );
+    }
+
+    private void CancelHoldCoroutineOnly()
+    {
+        if (_holdCoroutine == null)
+            return;
+
+        StopCoroutine(_holdCoroutine);
+        _holdCoroutine = null;
+    }
+
+    private void CancelHold()
+    {
+        CancelHoldCoroutineOnly();
+
+        _pressedItem = null;
+        _pressedButton = null;
+        _currentPointerEvent = null;
     }
 
     private void ClearCreatedButtons()
     {
+        CancelHold();
+        ResetSelectedButton(false);
+
         for (int i = 0; i < _spriteControllers.Count; i++)
             _spriteControllers[i]?.Dispose();
 
@@ -328,8 +691,12 @@ public class NyangNyangSnapSnackUI : UIPopup
 
         for (int i = 0; i < _createdButtons.Count; i++)
         {
-            if (_createdButtons[i] != null)
-                Destroy(_createdButtons[i].gameObject);
+            if (_createdButtons[i] == null)
+                continue;
+
+            _createdButtons[i].transform.DOKill();
+
+            Destroy(_createdButtons[i].gameObject);
         }
 
         _createdButtons.Clear();
@@ -338,6 +705,20 @@ public class NyangNyangSnapSnackUI : UIPopup
     private void ClosePopup()
     {
         GameManager.Audio.PlaySfx("Main_SFX_Touch");
+
+        CancelHold();
+
+        if (_scrollRect != null)
+            _scrollRect.enabled = true;
+
+        _isPointerPressed = false;
+        _isPlacementDragging = false;
+        _isScrollDragging = false;
+
+        ResetSelectedButton(true);
+
+        _placementController?.CancelSnackDrag();
+        _placementController?.CancelSelection();
 
         gameObject.SetActive(false);
     }
