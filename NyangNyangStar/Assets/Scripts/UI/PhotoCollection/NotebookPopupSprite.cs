@@ -7,7 +7,6 @@ using UnityEngine.UI;
 public class NotebookPopupSprite : UIBase
 {
     [SerializeField] private Color _locationColor;
-    [SerializeField] private Color _redPointColor;
 
     private UISpriteController[] _spriteController;
 
@@ -33,7 +32,7 @@ public class NotebookPopupSprite : UIBase
         //SetSprite(NotebookPopupImages.CatName1, "");
         SetSprite(NotebookPopupImages.CatImage1, "Profile_ProfileImages_2");
         SetSprite(NotebookPopupImages.Location1, "Shape_Square", _locationColor);
-        SetSprite(NotebookPopupImages.RedPoint1, "Shape_Circle", _redPointColor);
+        SetSprite(NotebookPopupImages.RedPoint1, "Shape_Circle", Color.red);
     }
 
     private void SetSprite(NotebookPopupImages image, string key)

@@ -1,6 +1,7 @@
 using System;
 using UI;
 using UI.Base;
+using UnityEngine;
 using UnityEngine.UI;
 
 public class SelectedCatPopupSprite : UIBase
@@ -29,10 +30,17 @@ public class SelectedCatPopupSprite : UIBase
         SetSprite(SelectedCatPopupImages.CatBackground, "Snap_BG");
         SetSprite(SelectedCatPopupImages.CatImage, "Profile_ProfileImages_2");
         SetSprite(SelectedCatPopupImages.CollectionButton, "Btn_Camera");
+        SetSprite(SelectedCatPopupImages.RedPoint, "Shape_Circle", Color.red);
     }
 
     private void SetSprite(SelectedCatPopupImages image, string key)
     {
+        _spriteController[(int)image].ChangeSprite(key);
+    }
+
+    private void SetSprite(SelectedCatPopupImages image, string key, Color color)
+    {
+        _spriteController[(int)image].ChangeColor(color);
         _spriteController[(int)image].ChangeSprite(key);
     }
 
@@ -55,4 +63,5 @@ public enum SelectedCatPopupImages
     CatBackground,
     CatImage,
     CollectionButton,
+    RedPoint
 }
