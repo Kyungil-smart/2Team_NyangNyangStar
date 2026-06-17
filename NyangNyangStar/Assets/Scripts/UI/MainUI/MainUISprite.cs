@@ -50,6 +50,7 @@ public class MainUISprite : UIBase
         SetSprite(MainUIImages.Gem, "Shape_Rectangle");
         SetSprite(MainUIImages.ProfileImage, "Profile_ProfileImages_0");
         SetSprite(MainUIImages.ProfileFrame, "Main_Profile_Frame");
+        SetSprite(MainUIImages.FindMoongchiButton, "Main_Btn_Event_FindMungchi");
     }
 
     private void SetSprite(MainUIImages image, string key)
@@ -90,4 +91,5 @@ public enum MainUIImages
     Gem,                       // 보석 패널
     ProfileImage,              // 프로필 이미지
     ProfileFrame,              // 프로필 이미지 테두리
+    FindMoongchiButton,              // 뭉치를 찾아라 이벤트
 }
