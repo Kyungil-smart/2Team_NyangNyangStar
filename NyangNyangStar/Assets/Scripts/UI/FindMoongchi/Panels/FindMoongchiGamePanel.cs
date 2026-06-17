@@ -33,6 +33,12 @@ namespace UI.FindMoongchi
         [Header("Targets")]
         [SerializeField] private List<FindMoongchiTargetHintView> _targetHints = new();
 
+        [Header("Found Mark")]
+        [SerializeField] private bool _showFoundMark = false;
+        [SerializeField] private string _foundMarkSpriteKey = FindMoongchiSpriteKeys.IconCorrect;
+        [SerializeField] private Vector2 _foundMarkSize = new(90f, 90f);
+        [SerializeField] private Vector2 _foundMarkOffset = Vector2.zero;
+
         [Header("Tools")]
         [SerializeField] private List<FindMoongchiToolSlotView> _toolSlots = new();
 
@@ -404,7 +410,15 @@ namespace UI.FindMoongchi
                 image.raycastTarget = false;
                 image.preserveAspect = true;
 
-                TargetVisualEntry entry = new TargetVisualEntry(go, image);
+                GameObject foundMarkGo = new GameObject("FoundMark", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+                foundMarkGo.transform.SetParent(go.transform, false);
+
+                Image foundMarkImage = foundMarkGo.GetComponent<Image>();
+                foundMarkImage.raycastTarget = false;
+                foundMarkImage.preserveAspect = true;
+                foundMarkGo.SetActive(false);
+
+                TargetVisualEntry entry = new TargetVisualEntry(go, image, foundMarkGo, foundMarkImage);
                 _targetVisualEntries.Add(entry);
             }
 
@@ -446,6 +460,18 @@ namespace UI.FindMoongchi
                 entry.Image.sprite = data.Icon;
                 entry.Image.enabled = data.Icon != null;
             }
+
+            ApplyFoundMark(entry, data.IsFound);
+        }
+
+        private void ApplyFoundMark(TargetVisualEntry entry, bool isFound)
+        {
+            // 발견 완료 O 표시는 보드 위 목표물이 아니라 상단 목표물 힌트에서 처리합니다.
+            // 기존 생성된 보드 FoundMark는 남겨두되 항상 숨깁니다.
+            if (entry == null || entry.FoundMarkGameObject == null)
+                return;
+
+            entry.FoundMarkGameObject.SetActive(false);
         }
 
         private bool TryCalculateTargetBounds(IReadOnlyList<int> cellIndices, out Vector2 center, out Vector2 size)
@@ -705,19 +731,31 @@ namespace UI.FindMoongchi
             public readonly GameObject GameObject;
             public readonly Image Image;
             public readonly RectTransform RectTransform;
+            public readonly GameObject FoundMarkGameObject;
+            public readonly Image FoundMarkImage;
+            public readonly RectTransform FoundMarkRectTransform;
             public UISpriteController Controller;
+            public UISpriteController FoundMarkController;
+            public string FoundMarkLoadedKey;
 
-            public TargetVisualEntry(GameObject gameObject, Image image)
+            public TargetVisualEntry(GameObject gameObject, Image image, GameObject foundMarkGameObject, Image foundMarkImage)
             {
                 GameObject = gameObject;
                 Image = image;
                 RectTransform = gameObject != null ? gameObject.transform as RectTransform : null;
+                FoundMarkGameObject = foundMarkGameObject;
+                FoundMarkImage = foundMarkImage;
+                FoundMarkRectTransform = foundMarkGameObject != null ? foundMarkGameObject.transform as RectTransform : null;
             }
 
             public void Dispose()
             {
                 Controller?.Dispose();
                 Controller = null;
+
+                FoundMarkController?.Dispose();
+                FoundMarkController = null;
+                FoundMarkLoadedKey = null;
             }
         }
     }

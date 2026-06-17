@@ -84,17 +84,7 @@ namespace UI.FindMoongchi
 
             if (!hasSeparatedRoots)
             {
-                List<FindMoongchiMissionViewData> combined = new List<FindMoongchiMissionViewData>(dailyCount + weeklyCount);
-
-                if (dailyMissions != null)
-                    combined.AddRange(dailyMissions);
-
-                if (weeklyMissions != null)
-                    combined.AddRange(weeklyMissions);
-
-                SetSectionVisible(_dailyMissionText, dailyCount > 0);
-                SetSectionVisible(_weeklyMissionText, weeklyCount > 0);
-                SetSlotGroup(_legacySlotViews, ResolveLegacyContentRoot(), combined);
+                SetLegacyGroupedMissionData(dailyMissions, weeklyMissions);
 
                 HideSlots(_dailySlotViews);
                 HideSlots(_weeklySlotViews);
@@ -153,6 +143,49 @@ namespace UI.FindMoongchi
             return _weeklyContentRoot != null ? _weeklyContentRoot : ResolveLegacyContentRoot();
         }
 
+        private void SetLegacyGroupedMissionData(
+            IReadOnlyList<FindMoongchiMissionViewData> dailyMissions,
+            IReadOnlyList<FindMoongchiMissionViewData> weeklyMissions)
+        {
+            Transform parent = ResolveLegacyContentRoot();
+            int dailyCount = dailyMissions?.Count ?? 0;
+            int weeklyCount = weeklyMissions?.Count ?? 0;
+            int totalCount = dailyCount + weeklyCount;
+
+            SetSectionVisible(_dailyMissionText, dailyCount > 0);
+            SetSectionVisible(_weeklyMissionText, weeklyCount > 0);
+            EnsureSlotCount(_legacySlotViews, parent, totalCount);
+
+            int slotIndex = 0;
+            int siblingIndex = 0;
+
+            MoveSectionText(_dailyMissionText, parent, ref siblingIndex);
+
+            for (int i = 0; i < dailyCount; i++)
+            {
+                EventMissionSlotView slot = _legacySlotViews[slotIndex++];
+                slot.SetData(dailyMissions[i], HandleClaimMissionClicked);
+                MoveSlot(slot, parent, ref siblingIndex);
+            }
+
+            MoveSectionText(_weeklyMissionText, parent, ref siblingIndex);
+
+            for (int i = 0; i < weeklyCount; i++)
+            {
+                EventMissionSlotView slot = _legacySlotViews[slotIndex++];
+                slot.SetData(weeklyMissions[i], HandleClaimMissionClicked);
+                MoveSlot(slot, parent, ref siblingIndex);
+            }
+
+            for (int i = slotIndex; i < _legacySlotViews.Count; i++)
+                _legacySlotViews[i].SetData(null, null);
+
+            DebugTool.Log(
+                $"[FindMoongchiMissionPanel] 통합 Content 정렬 완료: Daily={dailyCount}, Weekly={weeklyCount}",
+                DebugType.FindMoongchi,
+                this);
+        }
+
         private void SetSlotGroup(
             List<EventMissionSlotView> slotViews,
             Transform parent,
@@ -190,6 +223,24 @@ namespace UI.FindMoongchi
             }
 
             DebugTool.Log($"[FindMoongchiMissionPanel] 미션 슬롯 수 보정 완료: {slotViews.Count}/{count}", DebugType.FindMoongchi, this);
+        }
+
+        private static void MoveSectionText(TMP_Text text, Transform parent, ref int siblingIndex)
+        {
+            if (text == null || parent == null || !text.gameObject.activeSelf)
+                return;
+
+            if (text.transform.parent == parent)
+                text.transform.SetSiblingIndex(siblingIndex++);
+        }
+
+        private static void MoveSlot(EventMissionSlotView slot, Transform parent, ref int siblingIndex)
+        {
+            if (slot == null || parent == null || !slot.gameObject.activeSelf)
+                return;
+
+            if (slot.transform.parent == parent)
+                slot.transform.SetSiblingIndex(siblingIndex++);
         }
 
         private static void HideSlots(List<EventMissionSlotView> slotViews)
