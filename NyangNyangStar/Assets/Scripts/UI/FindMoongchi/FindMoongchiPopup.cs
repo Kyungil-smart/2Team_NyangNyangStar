@@ -53,6 +53,17 @@ namespace UI.FindMoongchi
             FindMoongchiConstants.ToolId03
         };
 
+        [Header("SFX")]
+        [Tooltip("이 팝업 하위의 Button 컴포넌트에 공통 클릭 효과음을 자동으로 연결합니다.")]
+        [SerializeField] private bool _autoBindButtonClickSfx = true;
+        [SerializeField] private FindMoongchiButtonSfxBinder _buttonSfxBinder;
+
+        [Header("Debug")]
+        [Tooltip("체크하면 보드 아이템과 탐색 기회를 소비하지 않고 도구를 무한으로 사용할 수 있습니다.")]
+        [SerializeField] private bool _debugInfiniteToolUse;
+        [Tooltip("Debug Infinite Tool Use가 켜져 있을 때 UI에 표시할 도구 수량입니다.")]
+        [SerializeField] private int _debugToolDisplayCount = 999;
+
         private readonly FindMoongchiGameLogic _gameLogic = new();
         private readonly int[] _resolvedToolItemIds = new int[FindMoongchiConstants.ToolSlotCount];
         private readonly Dictionary<int, int> _shopPurchaseCounts = new();
@@ -83,6 +94,7 @@ namespace UI.FindMoongchi
             ResolveToolItemIds();
             BindEvents();
             InitGameLogic();
+            RefreshButtonSfxBindings();
 
             _initialized = true;
 
@@ -275,6 +287,20 @@ namespace UI.FindMoongchi
             CloseAllModal();
         }
 
+        private void RefreshButtonSfxBindings()
+        {
+            if (!_autoBindButtonClickSfx)
+                return;
+
+            if (_buttonSfxBinder == null)
+                _buttonSfxBinder = GetComponent<FindMoongchiButtonSfxBinder>();
+
+            if (_buttonSfxBinder == null)
+                _buttonSfxBinder = gameObject.AddComponent<FindMoongchiButtonSfxBinder>();
+
+            _buttonSfxBinder.BindAllButtons();
+        }
+
         private void BindEvents()
         {
             DebugTool.Log("[FindMoongchiPopup] 이벤트 바인딩", DebugType.FindMoongchi, this);
@@ -457,36 +483,46 @@ namespace UI.FindMoongchi
                 return;
             }
 
-            if (_searchChance <= 0)
+            if (!_debugInfiniteToolUse && _searchChance <= 0)
             {
                 DebugTool.Warning("[FindMoongchiPopup] 탐색 기회 부족", DebugType.FindMoongchi, this);
                 OpenNotice("탐색 기회가 없습니다.");
                 return;
             }
 
-            int boardItemCount = FindMoongchiMergeBoardBridge.GetBoardItemCountById(toolItemId);
-
-            if (boardItemCount <= 0)
+            if (!_debugInfiniteToolUse)
             {
-                DebugTool.Warning($"[FindMoongchiPopup] 보드에 탐색 도구 없음: ToolId={toolItemId}", DebugType.FindMoongchi, this);
-                OpenNotice("보유한 탐색 도구가 없습니다.");
-                return;
+                int boardItemCount = FindMoongchiMergeBoardBridge.GetBoardItemCountById(toolItemId);
+
+                if (boardItemCount <= 0)
+                {
+                    DebugTool.Warning($"[FindMoongchiPopup] 보드에 탐색 도구 없음: ToolId={toolItemId}", DebugType.FindMoongchi, this);
+                    OpenNotice("보유한 탐색 도구가 없습니다.");
+                    return;
+                }
+            }
+            else
+            {
+                DebugTool.Log($"[FindMoongchiPopup] 디버그 무한 도구 사용: 보드 아이템/탐색 기회 검사를 건너뜁니다. ToolId={toolItemId}", DebugType.FindMoongchi, this);
             }
 
             _isUsingTool = true;
 
             try
             {
-                bool consumed = await FindMoongchiMergeBoardBridge.ConsumeBoardItemByIdAsync(toolItemId, 1);
-
-                if (!consumed)
+                if (!_debugInfiniteToolUse)
                 {
-                    DebugTool.Warning($"[FindMoongchiPopup] 탐색 도구 소비 실패: ToolId={toolItemId}", DebugType.FindMoongchi, this);
-                    OpenError("탐색 도구 소비에 실패했습니다.", 1001);
-                    return;
-                }
+                    bool consumed = await FindMoongchiMergeBoardBridge.ConsumeBoardItemByIdAsync(toolItemId, 1);
 
-                _searchChance = Mathf.Max(0, _searchChance - 1);
+                    if (!consumed)
+                    {
+                        DebugTool.Warning($"[FindMoongchiPopup] 탐색 도구 소비 실패: ToolId={toolItemId}", DebugType.FindMoongchi, this);
+                        OpenError("탐색 도구 소비에 실패했습니다.", 1001);
+                        return;
+                    }
+
+                    _searchChance = Mathf.Max(0, _searchChance - 1);
+                }
 
                 FindMoongchiUseToolResult result = _gameLogic.UseTool(toolItemId, tileIndex);
 
@@ -664,8 +700,9 @@ namespace UI.FindMoongchi
         private void RefreshGamePanel(bool animateNewReveals = false)
         {
             FindMoongchiGameViewData data = BuildGameViewData();
-            DebugTool.Log($"[FindMoongchiPopup] 게임 패널 갱신: Stage={_gameLogic.CurrentStageId}, Board={data.BoardWidth}x{data.BoardHeight}, 탐색기회={data.SearchChance}, 공개타일={data.RevealedTileIndices.Count}, 도구={data.Tools.Count}, 목표이미지={data.TargetVisuals.Count}, 발견목표={_gameLogic.FoundTargetCount}/{_gameLogic.TargetCount}, 연출={animateNewReveals}", DebugType.FindMoongchi, this);
+            DebugTool.Log($"[FindMoongchiPopup] 게임 패널 갱신: Stage={_gameLogic.CurrentStageId}, Board={data.BoardWidth}x{data.BoardHeight}, 탐색기회={data.SearchChance}, 공개타일={data.RevealedTileIndices.Count}, 도구={data.Tools.Count}, 목표이미지={data.TargetVisuals.Count}, 발견목표={_gameLogic.FoundTargetCount}/{_gameLogic.TargetCount}, 연출={animateNewReveals}, 디버그무한도구={_debugInfiniteToolUse}", DebugType.FindMoongchi, this);
             _gamePanel?.SetData(data, animateNewReveals);
+            RefreshButtonSfxBindings();
         }
 
         private FindMoongchiGameViewData BuildGameViewData()
@@ -676,7 +713,7 @@ namespace UI.FindMoongchi
                 BoardHeight = _gameLogic.BoardHeight,
                 CurrentWeek = _currentWeek,
                 RemainTimeText = _remainTimeText,
-                SearchChance = _searchChance,
+                SearchChance = _debugInfiniteToolUse ? Mathf.Max(1, _debugToolDisplayCount) : _searchChance,
                 EnergySpendProgress = _energySpendProgress,
                 EnergySpendTarget = FindMoongchiConstants.EnergySpendTarget,
                 RevealedTileIndices = _gameLogic.GetRevealedTileSet()
@@ -689,8 +726,8 @@ namespace UI.FindMoongchi
                     ToolItemId = toolId,
                     ToolName = GetItemName(toolId),
                     Icon = GetItemSprite(toolId),
-                    Count = FindMoongchiMergeBoardBridge.GetBoardItemCountById(toolId),
-                    IsUsable = _searchChance > 0
+                    Count = _debugInfiniteToolUse ? Mathf.Max(1, _debugToolDisplayCount) : FindMoongchiMergeBoardBridge.GetBoardItemCountById(toolId),
+                    IsUsable = _debugInfiniteToolUse || _searchChance > 0
                 });
             }
 
@@ -729,6 +766,7 @@ namespace UI.FindMoongchi
                 this);
 
             _missionPanel?.SetData(dailyMissions, weeklyMissions);
+            RefreshButtonSfxBindings();
         }
 
         private List<FindMoongchiMissionViewData> BuildMissionViewDataList(MoongchiMissionType missionType)
@@ -842,6 +880,7 @@ namespace UI.FindMoongchi
 
             DebugTool.Log($"[FindMoongchiPopup] 상점 패널 갱신: 이벤트재화={_eventCoin}, 아이템={itemProducts.Count}, 프로필={profileProducts.Count}", DebugType.FindMoongchi, this);
             _shopPanel?.SetData(_eventCoin, itemProducts, profileProducts);
+            RefreshButtonSfxBindings();
         }
 
         private FindMoongchiShopViewData BuildShopViewData(MoongchiShopItemData item)
@@ -855,6 +894,7 @@ namespace UI.FindMoongchi
                 ProductId = item.ProductID,
                 ProductName = GetProductName(item.ProductType, item.ProductID),
                 Icon = GetProductSprite(item.ProductType, item.ProductID),
+                IconKey = GetProductIconKey(item.ProductType, item.ProductID),
                 Quantity = item.Quantity,
                 CostType = item.Cost,
                 CostAmount = item.CostAmount,
@@ -919,6 +959,33 @@ namespace UI.FindMoongchi
                 return GetItemSprite(productId);
 
             return null;
+        }
+
+        private string GetProductIconKey(MoongchiProductType productType, int productId)
+        {
+            if (productType == MoongchiProductType.CURRENCY)
+                return GetCurrencyProductIconKey(productId);
+
+            MoongchiProfileSO profileSO = ProfileSO;
+            if (productType == MoongchiProductType.PROFILE &&
+                profileSO != null &&
+                profileSO.TryGetProfile(productId, out MoongchiProfileData profile))
+            {
+                return profile.AddressableKey;
+            }
+
+            return null;
+        }
+
+        private static string GetCurrencyProductIconKey(int productId)
+        {
+            return productId switch
+            {
+                1 => FindMoongchiSpriteKeys.CommonEnergyIcon,
+                2 => FindMoongchiSpriteKeys.CommonGoldIcon,
+                3 => FindMoongchiSpriteKeys.EventCoinIcon,
+                _ => null
+            };
         }
 
         private string GetItemName(int itemId)
