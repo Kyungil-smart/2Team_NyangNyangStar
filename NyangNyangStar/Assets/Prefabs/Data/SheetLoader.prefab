@@ -85,6 +85,18 @@ MonoBehaviour:
     <URL>k__BackingField: https://docs.google.com/spreadsheets/d/1hD2NCEzCWr2aml-_aqHsHZu_8HeZ0xCLpMDt_A9NfoU/edit?gid=1454821850#gid=1454821850
     <Type>k__BackingField: 2
   nyangNyangSnapToolSo: {fileID: 11400000, guid: 2522bd42372e16c43984c7db3cb8a73a, type: 2}
+  findMoongchiShopURL:
+    <URL>k__BackingField: https://docs.google.com/spreadsheets/d/1hD2NCEzCWr2aml-_aqHsHZu_8HeZ0xCLpMDt_A9NfoU/edit?gid=494262068#gid=494262068
+    <Type>k__BackingField: 2
+  findMoongchiShopSo: {fileID: 11400000, guid: b6756f79582b47b4297dfa4a32a849ff, type: 2}
+  findMoongchiMissionURL:
+    <URL>k__BackingField: https://docs.google.com/spreadsheets/d/1hD2NCEzCWr2aml-_aqHsHZu_8HeZ0xCLpMDt_A9NfoU/edit?gid=1659685990#gid=1659685990
+    <Type>k__BackingField: 2
+  findMoongchiMissionSo: {fileID: 11400000, guid: 6bda86720f38d754d90064dfc7ed81e9, type: 2}
+  findMoongchiProfileURL:
+    <URL>k__BackingField: https://docs.google.com/spreadsheets/d/1hD2NCEzCWr2aml-_aqHsHZu_8HeZ0xCLpMDt_A9NfoU/edit?gid=2002201027#gid=2002201027
+    <Type>k__BackingField: 2
+  findMoongchiProfileSo: {fileID: 11400000, guid: dc6f03ddae9535e46946ff019e0327a3, type: 2}
   _pendingSheetCount: 0
 --- !u!114 &7187299137341658617
 MonoBehaviour:

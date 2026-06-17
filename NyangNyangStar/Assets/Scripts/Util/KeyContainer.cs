@@ -54,6 +54,8 @@ namespace Util
             public const string NyangNyangSnapPopupUI = "NyangNyangSnapPopupUI";
             public const string NyangNyangSnapResultPopupUI = "NyangNyangSnapResultCanvas";
 
+            // 뭉치를 찾아라 UI 프리팹
+            public const string FindMoongchiPopupUI = "FindMoongchiPopup";
             // 임시보호 수첩(냥냥 스냅 사진 도감) UI 프리팹
             public const string NotebookPopupUI = "NotebookPopupUI";
             public const string SelectedCatPopupUI = "SelectedCatPopupUI";
@@ -280,6 +282,9 @@ namespace Util
 
             // 스크래칭 타임
             PrefabKeyDict.Add(Prefabs.ScratchingTime, new List<GameObject>());
+            
+            // 뭉치를 찾아라
+            PrefabKeyDict.Add(Prefabs.FindMoongchiPopupUI, new List<GameObject>());
         }
 
         public static void PrintKeys()

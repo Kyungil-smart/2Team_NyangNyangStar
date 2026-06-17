@@ -16,7 +16,12 @@ MonoBehaviour:
   m_Data:
     m_SerializedData: []
   m_GUID: 780cbbccf77853a4d89cf52d9ae39502
-  m_SerializeEntries: []
+  m_SerializeEntries:
+  - m_GUID: fbd1cfe7d1939174a8ba635b38c0dbc3
+    m_Address: FindMoongchiPopup
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: 567802e293b80b747b23153796443c26, type: 2}
   m_SchemaSet:

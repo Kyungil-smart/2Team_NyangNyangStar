@@ -13,6 +13,7 @@ public enum DataType
     MergeBoard,
     ScratchingTime,
     MoongchiProgess,
+    FindMoongchiProgress,
 }
 
 public class FireStoreManager : MonoBehaviour
