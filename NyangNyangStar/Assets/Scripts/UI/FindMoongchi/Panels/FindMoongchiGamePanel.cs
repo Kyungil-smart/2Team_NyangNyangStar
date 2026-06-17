@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using TMPro;
+using UI;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -20,6 +21,7 @@ namespace UI.FindMoongchi
         [SerializeField] private RectTransform _boardArea;
         [SerializeField] private Transform _tileRoot;
         [SerializeField] private RectTransform _highlightRoot;
+        [SerializeField] private RectTransform _targetVisualRoot;
         [SerializeField] private Color _highlightColor = new(1f, 0f, 0f, 0.45f);
 
         [Header("Tile Auto Generate")]
@@ -36,6 +38,7 @@ namespace UI.FindMoongchi
 
         private readonly List<FindMoongchiTileView> _tileViews = new();
         private readonly List<Image> _highlightImages = new();
+        private readonly List<TargetVisualEntry> _targetVisualEntries = new();
         private readonly HashSet<int> _revealedTiles = new();
 
         private readonly int[] _toolItemIds = new int[FindMoongchiConstants.ToolSlotCount];
@@ -54,7 +57,7 @@ namespace UI.FindMoongchi
         {
             DebugTool.Log("[FindMoongchiGamePanel] 초기화 시작", DebugType.FindMoongchi, this);
 
-            SetToolItemIds(FindMoongchiConstants.DefaultToolItemIds);
+            EnsureToolItemIdsInitialized();
 
             if (_backButton != null)
             {
@@ -72,6 +75,25 @@ namespace UI.FindMoongchi
                 $"[FindMoongchiGamePanel] 초기화 완료: 타일={_tileViews.Count}, 보드={_currentBoardWidth}x{_currentBoardHeight}, 도구슬롯={_toolSlots.Count}, 힌트={_targetHints.Count}",
                 DebugType.FindMoongchi,
                 this);
+        }
+
+        private void EnsureToolItemIdsInitialized()
+        {
+            bool hasValidToolId = false;
+
+            for (int i = 0; i < _toolItemIds.Length; i++)
+            {
+                if (_toolItemIds[i] > 0)
+                {
+                    hasValidToolId = true;
+                    break;
+                }
+            }
+
+            if (hasValidToolId)
+                return;
+
+            SetToolItemIds(FindMoongchiConstants.DefaultToolItemIds);
         }
 
         public void SetToolItemIds(IReadOnlyList<int> toolItemIds)
@@ -94,7 +116,7 @@ namespace UI.FindMoongchi
                 this);
         }
 
-        public void SetData(FindMoongchiGameViewData data)
+        public void SetData(FindMoongchiGameViewData data, bool animateNewReveals = false)
         {
             if (data == null)
             {
@@ -106,9 +128,10 @@ namespace UI.FindMoongchi
             int boardHeight = data.BoardHeight > 0 ? data.BoardHeight : _defaultBoardHeight;
 
             EnsureTiles(boardWidth, boardHeight);
+            Canvas.ForceUpdateCanvases();
 
             DebugTool.Log(
-                $"[FindMoongchiGamePanel] 데이터 적용: 보드={boardWidth}x{boardHeight}, 주차={data.CurrentWeek}, 탐색기회={data.SearchChance}, 공개타일={data.RevealedTileIndices.Count}, 도구={data.Tools.Count}, 힌트={data.TargetHints.Count}",
+                $"[FindMoongchiGamePanel] 데이터 적용: 보드={boardWidth}x{boardHeight}, 주차={data.CurrentWeek}, 탐색기회={data.SearchChance}, 공개타일={data.RevealedTileIndices.Count}, 도구={data.Tools.Count}, 힌트={data.TargetHints.Count}, 목표이미지={data.TargetVisuals.Count}",
                 DebugType.FindMoongchi,
                 this);
 
@@ -116,6 +139,8 @@ namespace UI.FindMoongchi
             SetText(_remainTimeText, data.RemainTimeText);
             SetText(_searchChanceText, data.SearchChance.ToString());
             SetText(_energyProgressText, $"{data.EnergySpendProgress}/{data.EnergySpendTarget}");
+
+            HashSet<int> previousRevealedTiles = new(_revealedTiles);
 
             _revealedTiles.Clear();
             foreach (int tileIndex in data.RevealedTileIndices)
@@ -126,13 +151,14 @@ namespace UI.FindMoongchi
                 _revealedTiles.Add(tileIndex);
             }
 
-            RefreshTiles();
+            RefreshTargetVisuals(data.TargetVisuals);
+            RefreshTiles(animateNewReveals, previousRevealedTiles);
             RefreshTools(data.Tools);
             RefreshTargetHints(data.TargetHints);
             ClearHighlight();
         }
 
-        public void RevealTiles(IEnumerable<int> tileIndices)
+        public void RevealTiles(IEnumerable<int> tileIndices, bool animate = true)
         {
             if (tileIndices == null)
             {
@@ -141,17 +167,26 @@ namespace UI.FindMoongchi
             }
 
             int beforeCount = _revealedTiles.Count;
+            List<int> newlyRevealedTiles = new();
 
             foreach (int tileIndex in tileIndices)
             {
                 if (tileIndex < 0 || tileIndex >= CurrentTileCount)
                     continue;
 
-                _revealedTiles.Add(tileIndex);
+                if (_revealedTiles.Add(tileIndex))
+                    newlyRevealedTiles.Add(tileIndex);
             }
 
-            DebugTool.Log($"[FindMoongchiGamePanel] 타일 공개 요청 반영: 이전={beforeCount}, 이후={_revealedTiles.Count}", DebugType.FindMoongchi, this);
-            RefreshTiles();
+            DebugTool.Log($"[FindMoongchiGamePanel] 타일 공개 요청 반영: 이전={beforeCount}, 이후={_revealedTiles.Count}, 신규={newlyRevealedTiles.Count}", DebugType.FindMoongchi, this);
+
+            foreach (int tileIndex in newlyRevealedTiles)
+            {
+                if (tileIndex < 0 || tileIndex >= _tileViews.Count)
+                    continue;
+
+                _tileViews[tileIndex]?.SetRevealed(true, animate);
+            }
         }
 
         public IReadOnlyList<int> GetAffectedTiles(int toolItemId, int tileIndex)
@@ -296,9 +331,10 @@ namespace UI.FindMoongchi
             DebugTool.Log($"[FindMoongchiGamePanel] 도구 슬롯 이벤트 바인딩 완료: {bindCount}개", DebugType.FindMoongchi, this);
         }
 
-        private void RefreshTiles()
+        private void RefreshTiles(bool animateNewReveals = false, HashSet<int> previousRevealedTiles = null)
         {
             int activeCount = 0;
+            int animatedCount = 0;
 
             for (int i = 0; i < _tileViews.Count; i++)
             {
@@ -307,11 +343,155 @@ namespace UI.FindMoongchi
                 if (tileView == null || !tileView.gameObject.activeSelf)
                     continue;
 
-                tileView.SetRevealed(_revealedTiles.Contains(i));
+                bool isRevealed = _revealedTiles.Contains(i);
+                bool shouldAnimate = animateNewReveals && isRevealed && (previousRevealedTiles == null || !previousRevealedTiles.Contains(i));
+
+                tileView.SetRevealed(isRevealed, shouldAnimate);
+
+                if (shouldAnimate)
+                    animatedCount++;
+
                 activeCount++;
             }
 
-            DebugTool.Log($"[FindMoongchiGamePanel] 타일 상태 갱신: 전체={activeCount}, 공개={_revealedTiles.Count}", DebugType.FindMoongchi, this);
+            DebugTool.Log($"[FindMoongchiGamePanel] 타일 상태 갱신: 전체={activeCount}, 공개={_revealedTiles.Count}, 연출={animatedCount}", DebugType.FindMoongchi, this);
+        }
+
+        private void RefreshTargetVisuals(IReadOnlyList<FindMoongchiTargetVisualViewData> targets)
+        {
+            if (_targetVisualRoot == null)
+            {
+                if (targets != null && targets.Count > 0)
+                    DebugTool.Warning("[FindMoongchiGamePanel] TargetVisualRoot가 연결되지 않았습니다.", DebugType.FindMoongchi, this);
+
+                return;
+            }
+
+            int targetCount = targets?.Count ?? 0;
+            EnsureTargetVisualCount(targetCount);
+
+            for (int i = 0; i < _targetVisualEntries.Count; i++)
+            {
+                TargetVisualEntry entry = _targetVisualEntries[i];
+
+                if (entry == null || entry.GameObject == null)
+                    continue;
+
+                bool isActive = i < targetCount;
+                entry.GameObject.SetActive(isActive);
+
+                if (!isActive)
+                    continue;
+
+                FindMoongchiTargetVisualViewData data = targets[i];
+                ApplyTargetVisual(entry, data);
+            }
+
+            DebugTool.Log($"[FindMoongchiGamePanel] 목표물 이미지 갱신: {targetCount}개", DebugType.FindMoongchi, this);
+        }
+
+        private void EnsureTargetVisualCount(int count)
+        {
+            int beforeCount = _targetVisualEntries.Count;
+
+            while (_targetVisualEntries.Count < count)
+            {
+                GameObject go = new GameObject($"TargetVisual_{_targetVisualEntries.Count}", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+                go.transform.SetParent(_targetVisualRoot, false);
+                go.transform.SetAsLastSibling();
+
+                Image image = go.GetComponent<Image>();
+                image.raycastTarget = false;
+                image.preserveAspect = true;
+
+                TargetVisualEntry entry = new TargetVisualEntry(go, image);
+                _targetVisualEntries.Add(entry);
+            }
+
+            if (_targetVisualEntries.Count > beforeCount)
+                DebugTool.Log($"[FindMoongchiGamePanel] 목표물 이미지 풀 확장: {beforeCount} → {_targetVisualEntries.Count}", DebugType.FindMoongchi, this);
+        }
+
+        private void ApplyTargetVisual(TargetVisualEntry entry, FindMoongchiTargetVisualViewData data)
+        {
+            if (entry == null || entry.Image == null || data == null)
+                return;
+
+            entry.GameObject.name = $"TargetVisual_{data.TargetId}_{data.TargetName}";
+
+            if (!TryCalculateTargetBounds(data.CellIndices, out Vector2 center, out Vector2 size))
+            {
+                entry.GameObject.SetActive(false);
+                return;
+            }
+
+            RectTransform rectTransform = entry.RectTransform;
+            rectTransform.anchorMin = new Vector2(0.5f, 0.5f);
+            rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
+            rectTransform.pivot = new Vector2(0.5f, 0.5f);
+            rectTransform.anchoredPosition = center;
+            rectTransform.sizeDelta = size;
+
+            if (!string.IsNullOrWhiteSpace(data.IconKey))
+            {
+                entry.Image.enabled = true;
+
+                if (entry.Controller == null)
+                    entry.Controller = new UISpriteController(entry.Image);
+
+                entry.Controller.ChangeSprite(data.IconKey);
+            }
+            else
+            {
+                entry.Image.sprite = data.Icon;
+                entry.Image.enabled = data.Icon != null;
+            }
+        }
+
+        private bool TryCalculateTargetBounds(IReadOnlyList<int> cellIndices, out Vector2 center, out Vector2 size)
+        {
+            center = Vector2.zero;
+            size = Vector2.zero;
+
+            if (_targetVisualRoot == null || cellIndices == null || cellIndices.Count == 0)
+                return false;
+
+            bool hasValidCell = false;
+            Vector2 min = new(float.MaxValue, float.MaxValue);
+            Vector2 max = new(float.MinValue, float.MinValue);
+            Vector3[] corners = new Vector3[4];
+
+            foreach (int tileIndex in cellIndices)
+            {
+                if (tileIndex < 0 || tileIndex >= _tileViews.Count)
+                    continue;
+
+                FindMoongchiTileView tileView = _tileViews[tileIndex];
+                if (tileView == null || !tileView.gameObject.activeSelf)
+                    continue;
+
+                RectTransform tileRect = tileView.transform as RectTransform;
+                if (tileRect == null)
+                    continue;
+
+                tileRect.GetWorldCorners(corners);
+
+                for (int i = 0; i < corners.Length; i++)
+                {
+                    Vector3 local = _targetVisualRoot.InverseTransformPoint(corners[i]);
+                    min = Vector2.Min(min, local);
+                    max = Vector2.Max(max, local);
+                }
+
+                hasValidCell = true;
+            }
+
+            if (!hasValidCell)
+                return false;
+
+            center = (min + max) * 0.5f;
+            size = max - min;
+            return size.x > 0f && size.y > 0f;
         }
 
         private void RefreshTools(IReadOnlyList<FindMoongchiToolViewData> tools)
@@ -512,6 +692,32 @@ namespace UI.FindMoongchi
                 slot.OnBeginDragTool -= HandleBeginDragTool;
                 slot.OnDragTool -= HandleDragTool;
                 slot.OnEndDragTool -= HandleEndDragTool;
+            }
+
+            foreach (TargetVisualEntry entry in _targetVisualEntries)
+                entry?.Dispose();
+
+            _targetVisualEntries.Clear();
+        }
+
+        private sealed class TargetVisualEntry
+        {
+            public readonly GameObject GameObject;
+            public readonly Image Image;
+            public readonly RectTransform RectTransform;
+            public UISpriteController Controller;
+
+            public TargetVisualEntry(GameObject gameObject, Image image)
+            {
+                GameObject = gameObject;
+                Image = image;
+                RectTransform = gameObject != null ? gameObject.transform as RectTransform : null;
+            }
+
+            public void Dispose()
+            {
+                Controller?.Dispose();
+                Controller = null;
             }
         }
     }
