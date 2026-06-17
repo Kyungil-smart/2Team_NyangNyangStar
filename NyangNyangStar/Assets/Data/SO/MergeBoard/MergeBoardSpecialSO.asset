@@ -12,6 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7f87cebc4af6d394e90e56dc51f0ea6f, type: 3}
   m_Name: MergeBoardSpecialSO
   m_EditorClassIdentifier: 
-  m_DocumentId: 
+  m_DocumentId: Special
   m_EnumType: 0
   subCollections: []

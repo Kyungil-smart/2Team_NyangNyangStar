@@ -16,10 +16,14 @@ MonoBehaviour:
   m_EnumType: 1
   subCollections:
   - {fileID: 11400000, guid: 8b1517c2c8fd42b41a195195545b6c9f, type: 2}
-  - {fileID: 11400000, guid: e83d2b0ab54c59242b8fa1becca1283d, type: 2}
+  - {fileID: 11400000, guid: 7aa4ad0242b992e4283c9aa473891fac, type: 2}
+  - {fileID: 11400000, guid: 98fca0be45d12c440adaf586a4591778, type: 2}
+  - {fileID: 11400000, guid: 0f3458433aa918a489001c0c87543b41, type: 2}
   - {fileID: 11400000, guid: f854c7e7a87af9c428d7d7b34076304d, type: 2}
   - {fileID: 11400000, guid: 4f6d6359379f32249aa736a67b698dae, type: 2}
-  userId: 
+  - {fileID: 11400000, guid: 01f5084cbd2817c42abeb68841e73649, type: 2}
+  - {fileID: 11400000, guid: 7684103119f56cb468b94264b4781452, type: 2}
+  userId: qgQBHf7j1DZN6WyFdlFi5Ige9ES2
   nickname: New User
   userLevel: 1
   userExp: 0

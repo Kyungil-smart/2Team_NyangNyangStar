@@ -12,6 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5a9048ede2ac4f044bcd3a6f41071678, type: 3}
   m_Name: MergeBoardRewardQueueSO
   m_EditorClassIdentifier: 
-  m_DocumentId: 
+  m_DocumentId: rewardqueue
   m_EnumType: 0
   subCollections: []

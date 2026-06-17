@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 575de3f67f671aa418d55877b4e6812c, type: 3}
   m_Name: ResourcesSO
   m_EditorClassIdentifier: 
-  m_DocumentId: 
+  m_DocumentId: Resources
   m_EnumType: 0
   subCollections: []
   energy: 200
