@@ -221,7 +221,8 @@ namespace Data.Loader
 
                 for (int i = headerRowCount; i < lines.Length; i++)
                 {
-                    string line = lines[i].Trim();
+                    // 줄 끝 탭은 빈 컬럼 구분자라 Trim()으로 제거하면 TSV 컬럼 수가 줄어듭니다.
+                    string line = TrimSheetLine(lines[i]);
 
                     if (string.IsNullOrEmpty(line))
                         continue;
@@ -311,7 +312,7 @@ namespace Data.Loader
 
                     for (int row = headerRowCount; row < lines.Length; row++)
                     {
-                        string line = lines[row].Trim();
+                        string line = TrimSheetLine(lines[row]);
 
                         if (string.IsNullOrEmpty(line))
                             continue;
@@ -461,6 +462,13 @@ namespace Data.Loader
                 : (float)_completedLoadStepCount / _totalLoadStepCount;
 
             OnSheetLoadProgressChanged?.Invoke(Mathf.Clamp01(progress), message);
+        }
+
+        private static string TrimSheetLine(string line)
+        {
+            return string.IsNullOrEmpty(line)
+                ? string.Empty
+                : line.TrimEnd('\r', '\n');
         }
 
         public void ClearDatas()

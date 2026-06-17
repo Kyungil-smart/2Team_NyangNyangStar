@@ -7,7 +7,7 @@ using UnityEngine;
 namespace Data.ScriptableObjects.MoongchiSO
 {
 
-    // 뭉치를 찾아라 일일/주간 미션 마스터 데이터입니다.
+    // 뭉치를 찾아라 일일 / 주간 미션 마스터 데이터입니다.
     // 일일 미션은 EVENT_COIN + ENERGY 보상, 주간 미션은 EVENT_COIN 보상을 기준으로 합니다.
 
     [CreateAssetMenu(fileName = "MoongchiMissionSO", menuName = "SO/FindMoongchi/MoongchiMissionSO", order = 1)]
@@ -47,7 +47,8 @@ namespace Data.ScriptableObjects.MoongchiSO
         public void SetData(string[] cols)
         {
 
-            if (cols == null || cols.Length < 7)
+            
+            if (cols == null || cols.Length < 6)
                 return;
 
             if (!TryParseInt(GetColumn(cols, 0), out int id) || id <= 0)
