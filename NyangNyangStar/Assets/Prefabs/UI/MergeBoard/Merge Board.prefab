@@ -322,7 +322,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _boardSystem: {fileID: 1933188620078206294}
-  _mergeBoardFirestore: {fileID: 11400000, guid: e83d2b0ab54c59242b8fa1becca1283d, type: 2}
+  _mergeBoardFirestore: {fileID: 11400000, guid: 7aa4ad0242b992e4283c9aa473891fac, type: 2}
   _queueSlotViews:
   - {fileID: 7714997014406962539}
   - {fileID: 4906011402732769412}
@@ -2196,7 +2196,7 @@ MonoBehaviour:
   _grid: {fileID: 0}
   _itemSlots: []
   _selectedSlotColor: {r: 1, g: 0.9, b: 0.6, a: 1}
-  _mergeBoardFirestore: {fileID: 11400000, guid: e83d2b0ab54c59242b8fa1becca1283d, type: 2}
+  _mergeBoardFirestore: {fileID: 11400000, guid: 98fca0be45d12c440adaf586a4591778, type: 2}
   _itemInfoPanel: {fileID: 5792808413531816249}
   _width: 7
   _height: 9
@@ -2289,7 +2289,7 @@ MonoBehaviour:
   _slotPrefab: {fileID: 8285603341155142993, guid: bcebd811af972b44aacd8b145e320bfd, type: 3}
   _grid: {fileID: 0}
   _specialSlotViews: []
-  _mergeBoardFirestore: {fileID: 11400000, guid: e83d2b0ab54c59242b8fa1becca1283d, type: 2}
+  _mergeBoardFirestore: {fileID: 11400000, guid: 0f3458433aa918a489001c0c87543b41, type: 2}
   _itemInfoPanel: {fileID: 5792808413531816249}
   _slotCount: 2
   _slotSize: 135
@@ -3491,6 +3491,9 @@ MonoBehaviour:
   _specialItemBoardSystem: {fileID: 6520057897396630295}
   _rewardQueue: {fileID: 3324999696245031561}
   _itemDatabase: {fileID: 11400000, guid: 0073675bff47ab64e8be560c0d594644, type: 2}
+  _boardSlotsStore: {fileID: 11400000, guid: 98fca0be45d12c440adaf586a4591778, type: 2}
+  _rewardQueueStore: {fileID: 11400000, guid: 7aa4ad0242b992e4283c9aa473891fac, type: 2}
+  _specialStore: {fileID: 11400000, guid: 0f3458433aa918a489001c0c87543b41, type: 2}
   _itemIdInputField: {fileID: 674147720004455596}
   _testReceiveButton: {fileID: 6602850170933857246}
 --- !u!4 &4129029772688656472 stripped
