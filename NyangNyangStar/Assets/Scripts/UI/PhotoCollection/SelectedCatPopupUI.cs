@@ -23,6 +23,7 @@ public class SelectedCatPopupUI : UIPopup
     [SerializeField] private Button _collectionButton;
 
     private NotebookPopupUI _notebookPopup;
+    private SelectedCatPopupSprite _sprite;
 
     public override void Init()
     {
@@ -43,6 +44,9 @@ public class SelectedCatPopupUI : UIPopup
 
         BindButtons();
         InitPopup(KeyContainer.Prefabs.PhotoCollectionPopupUI, _collectionButton);
+
+        _sprite = GetComponent<SelectedCatPopupSprite>();
+        _sprite.Init();
     }
 
     private void OnEnable()
