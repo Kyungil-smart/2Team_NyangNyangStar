@@ -1,7 +1,9 @@
 using Core.Managers;
+using System.Collections.Generic;
 using TMPro;
 using UI;
 using UI.Base;
+using UI.MergeBoard;
 using UnityEngine;
 using UnityEngine.UI;
 using Util;
@@ -18,6 +20,9 @@ public class NyangNyangSnapUI : UIPopup
     [Tooltip("간식 패널 버튼")][SerializeField] private Button _snackPanelButton;
     [Tooltip("장난감 패널 버튼")][SerializeField] private Button _toyPanelButton;
 
+    private UIPopup _snackPopup;
+    private UIPopup _toyPopup;
+
     [Header("사진촬영")]
     [SerializeField] private NyangNyangSnapPhotoFrameCapture _photoFrameCapture;
 
@@ -30,8 +35,18 @@ public class NyangNyangSnapUI : UIPopup
     [Tooltip("포즈 데이터 SO")]
     [SerializeField] private NyangNyangSnapPoseSO _poseSO;
 
-    [Tooltip("도구 데이터SO")]
+    [Tooltip("아이템 배치 컨트롤러")]
+    [SerializeField] private NyangNyangSnapPlacementController _placementController;
+
+    [Tooltip("고양이 랜덤 스폰 및 이동 컨트롤러")]
+    [SerializeField] private NyangNyangSnapCatController _catController;
+
+    [Tooltip("도구별 감지 범위를 가져올 Tool SO")]
     [SerializeField] private NyangNyangSnapToolSO _toolSO;
+
+    [Tooltip("ToolSO의 ItemRange에 곱할 UI 거리 배율")]
+    [Min(0.1f)]
+    [SerializeField] private float _itemRangeScale = 10f;
 
     [Tooltip("데모용 반응 점수 비율")]
     [Range(0f, 1f)]
@@ -46,7 +61,7 @@ public class NyangNyangSnapUI : UIPopup
 
     [Header("데모 고양이 UI")]
     [Tooltip("PhotoFrame 안에 배치한 고양이 UI Image 오브젝트 이름")]
-    [SerializeField] private string _catObjectName = "goods 1";
+    [SerializeField] private string _catObjectName = "";
 
     private readonly NyangNyangSnapScoreCalculator _scoreCalculator = new();
 
@@ -66,8 +81,13 @@ public class NyangNyangSnapUI : UIPopup
         _toyPanelButton = Get<Button>((int)NyangNyangSnapButtons.ToyPanelButton);
 
         InitPopups();
+
         AutoAssignCaptureComponents();
+        AutoAssignPlacementController();
+        AutoAssignCatController();
         AutoAssignCaptureCountText();
+
+        RegisterPlacementEvent();
 
         _sprite = GetComponent<NyangNyangSnapSprite>();
         _sprite.Init();
@@ -79,27 +99,47 @@ public class NyangNyangSnapUI : UIPopup
 
     private void InitPopups()
     {
-        //InitPopup(KeyContainer.Prefabs.NyangNyangSnapPopupUI, _photoButton);
         AddCloseNyangNyangSnapButton(_backButton);
         AddCapturePhotoButton(_photoButton);
 
         InitPopup(KeyContainer.Prefabs.SettingsPopupUI, _settingsButton);
-        InitPopup(KeyContainer.Prefabs.NyangNyangSnapSnackPopupUI, _snackPanelButton);
-        InitPopup(KeyContainer.Prefabs.NyangNyangSnapToyPopupUI, _toyPanelButton);
 
+        GameManager.UI.ShowPopupUI<UIPopup>(
+            KeyContainer.Prefabs.NyangNyangSnapSnackPopupUI,
+            onLoaded =>
+            {
+                _snackPopup = onLoaded;
+                AddPopupButton(_snackPanelButton, onLoaded);
+            },
+            false
+        );
+
+        GameManager.UI.ShowPopupUI<UIPopup>(
+            KeyContainer.Prefabs.NyangNyangSnapToyPopupUI,
+            onLoaded =>
+            {
+                _toyPopup = onLoaded;
+                AddPopupButton(_toyPanelButton, onLoaded);
+            },
+            false
+        );
     }
 
     private void OnDisable()
     {
-        // 냥냥스냅을 닫으면 촬영용 고양이 이미지도 숨김
+        if (_catController != null)
+        {
+            _catController.StopInteraction();
+        }
+
         SetSnapCatActive(false);
+        ClearPlacedItem();
         _isCapturing = false;
 
-        //RemovePopupButton(_photoButton);
-        //RemovePopupButton(_backButton);
-        //RemovePopupButton(_settingsButton);
-        //RemovePopupButton(_snackPanelButton);
-        //RemovePopupButton(_toyPanelButton);
+        if (_placementController != null)
+        {
+            _placementController.OnItemPlaced -= OnPlacedItem;
+        }
     }
 
     private void InitPopup(string key, Button button)
@@ -128,11 +168,25 @@ public class NyangNyangSnapUI : UIPopup
 
     private void AddCloseNyangNyangSnapButton(Button button)
     {
-        if (button == null) return;
+        if (button == null)
+            return;
 
         button.onClick.AddListener(() =>
         {
             GameManager.Audio.PlaySfx("Main_SFX_Touch");
+
+            // 간식 패널이 열려 있으면 비활성화
+            if (_snackPopup != null && _snackPopup.gameObject.activeSelf)
+            {
+                _snackPopup.gameObject.SetActive(false);
+            }
+
+            // 장난감 패널이 열려 있으면 비활성화
+            if (_toyPopup != null && _toyPopup.gameObject.activeSelf)
+            {
+                _toyPopup.gameObject.SetActive(false);
+            }
+
             gameObject.SetActive(false);
         });
     }
@@ -185,6 +239,7 @@ public class NyangNyangSnapUI : UIPopup
             UpdateCaptureCountText();
             return;
         }
+        NyangNyangSnapPoseData poseData = GetPoseByPlacedItemOrNull();
 
         _isCapturing = true;
         SetPhotoButtonInteractable(false);
@@ -211,39 +266,41 @@ public class NyangNyangSnapUI : UIPopup
                 return;
             }
 
-            NyangNyangSnapPoseData randomPoseData = GetRandomPoseByRandomTool();
-
-            if (randomPoseData == null)
-            {
-                DebugTool.Warning("[NyangNyangSnapUI] 도구 기반 포즈 데이터를 가져오지 못했습니다.", DebugType.UI, this);
-
-                Destroy(capturedSprite.texture);
-                Destroy(capturedSprite);
-
-                SetPhotoButtonInteractable(true);
-                return;
-            }
 
             float compositionRate = _compositionCalculator.CalculateCompositionRate();
 
             NyangNyangSnapScoreResult scoreResult = _scoreCalculator.Calculate(
-                randomPoseData,
+                poseData,
                 compositionRate,
                 _reactionRate
             );
 
             _captureRecorder.AddRecord(
                 capturedSprite,
-                randomPoseData,
+                poseData,
                 scoreResult
             );
 
             UpdateCaptureCountText();
+            // 촬영 1회 완료 후 배치된 아이템은 제거합니다.
+            // 아이템이 없는 상태로 촬영한 경우에는 제거할 대상이 없습니다.
+            if (_placementController != null && _placementController.HasPlacedItem)
+            {
+                ClearPlacedItem();
+
+                DebugTool.Log(
+                    "[NyangNyangSnapUI] 촬영 1회 완료로 배치 아이템 제거",
+                    DebugType.UI,
+                    this
+                );
+            }
+
+            string poseName = poseData != null ? poseData.PoseName : "아이템 없음";
 
             DebugTool.Log(
                 $"[NyangNyangSnapUI] 촬영 완료 " +
                 $"({_captureRecorder.CurrentCaptureCount}/{_captureRecorder.MaxCaptureCount}) / " +
-                $"포즈: {randomPoseData.PoseName} / " +
+                $"포즈: {poseName} / " +
                 $"총점: {scoreResult.TotalScore}",
                 DebugType.UI,
                 this
@@ -267,40 +324,80 @@ public class NyangNyangSnapUI : UIPopup
         });
     }
 
-    private NyangNyangSnapPoseData GetRandomPoseByRandomTool()
+    private void AutoAssignPlacementController()
     {
-        if (_toolSO == null)
+        if (_placementController != null)
+            return;
+
+        _placementController = GetComponent<NyangNyangSnapPlacementController>();
+
+        if (_placementController == null)
         {
-            DebugTool.Warning("[NyangNyangSnapUI] ToolSO가 연결되지 않았습니다.", DebugType.UI, this);
-            return null;
+            _placementController = FindFirstObjectByType<NyangNyangSnapPlacementController>();
         }
 
-        if (_poseSO == null)
+        if (_placementController == null)
         {
-            DebugTool.Warning("[NyangNyangSnapUI] PoseSO가 연결되지 않았습니다.", DebugType.UI, this);
-            return null;
+            DebugTool.Warning("[NyangNyangSnapUI] PlacementController를 찾지 못했습니다.", DebugType.UI, this);
+            return;
         }
 
-        NyangNyangSnapToolData randomToolData = _toolSO.GetRandomToolData();
+        DebugTool.Log("[NyangNyangSnapUI] PlacementController 자동 연결 완료", DebugType.UI, this);
+    }
+    private void AutoAssignCatController()
+    {
+        if (_catController != null)
+            return;
 
-        if (randomToolData == null)
+        AutoAssignSnapCatObject();
+
+        if (_snapCatObject != null)
         {
-            DebugTool.Warning("[NyangNyangSnapUI] 랜덤 도구 데이터를 가져오지 못했습니다.", DebugType.UI, this);
-            return null;
+            _catController =  _snapCatObject.GetComponent<NyangNyangSnapCatController>();
+        }
+
+        if (_catController == null)
+        {
+            _catController = GetComponentInChildren<NyangNyangSnapCatController>(true);
+        }
+
+        if (_catController == null)
+        {
+            DebugTool.Warning(
+                "[NyangNyangSnapUI] NyangNyangSnapCatController를 찾지 못했습니다.",
+                DebugType.UI,
+                this
+            );
+            return;
         }
 
         DebugTool.Log(
-            $"[NyangNyangSnapUI] 랜덤 도구 선택 완료 / ToolID:{randomToolData.ID}, ItemID:{randomToolData.ItemID}, Type:{randomToolData.ItemToolType}",
+            "[NyangNyangSnapUI] CatController 자동 연결 완료",
             DebugType.UI,
             this
         );
+    }
+    private void ClearPlacedItem()
+    {
+        AutoAssignPlacementController();
 
-        NyangNyangSnapPoseData randomPoseData = _poseSO.GetRandomPoseByTool(randomToolData.ID);
+        if (_placementController == null)
+            return;
 
-        if (randomPoseData == null)
+        _placementController.ClearPlacedItem();
+        _placementController.CancelSelection();
+
+        DebugTool.Log("[NyangNyangSnapUI] 배치 아이템 초기화 완료", DebugType.UI, this);
+    }
+
+    private NyangNyangSnapPoseData GetPoseByPlacedItemOrNull()
+    {
+        AutoAssignPlacementController();
+
+        if (_placementController == null)
         {
-            DebugTool.Warning(
-                $"[NyangNyangSnapUI] 선택된 도구에 연결된 포즈가 없습니다. ToolID:{randomToolData.ID}, ItemID:{randomToolData.ItemID}",
+            DebugTool.Log(
+                "[NyangNyangSnapUI] PlacementController가 없어 아이템 없는 촬영으로 처리합니다.",
                 DebugType.UI,
                 this
             );
@@ -308,14 +405,54 @@ public class NyangNyangSnapUI : UIPopup
             return null;
         }
 
+        if (!_placementController.HasPlacedItem)
+        {
+            DebugTool.Log(
+                "[NyangNyangSnapUI] 배치 아이템 없음 - 포즈 점수 0점 촬영",
+                DebugType.UI,
+                this
+            );
+
+            return null;
+        }
+
+        if (_poseSO == null)
+        {
+            DebugTool.Warning(
+                "[NyangNyangSnapUI] PoseSO가 연결되지 않았습니다. 포즈 점수는 0점 처리됩니다.",
+                DebugType.UI,
+                this
+            );
+
+            return null;
+        }
+
+        int itemID = _placementController.SelectedItemID;
+
+        List<NyangNyangSnapPoseData> poseList = _poseSO.GetPoseDataByTool(itemID);
+
+        if (poseList == null || poseList.Count == 0)
+        {
+            DebugTool.Warning(
+                $"[NyangNyangSnapUI] 배치된 아이템에 연결된 포즈가 없습니다. 포즈 점수는 0점 처리됩니다. ItemID:{itemID}",
+                DebugType.UI,
+                this
+            );
+
+            return null;
+        }
+
+        NyangNyangSnapPoseData poseData = poseList[0];
+
         DebugTool.Log(
-            $"[NyangNyangSnapUI] 도구 기반 포즈 선택 완료 / ToolID:{randomToolData.ID}, Pose:{randomPoseData.PoseName}",
+            $"[NyangNyangSnapUI] 배치 아이템 기준 포즈 선택 완료 / ItemID:{itemID}, Pose:{poseData.PoseName}",
             DebugType.UI,
             this
         );
 
-        return randomPoseData;
+        return poseData;
     }
+
     private void OpenResultUI(NyangNyangSnapCaptureRecord bestRecord)
     {
         if (bestRecord == null)
@@ -353,13 +490,22 @@ public class NyangNyangSnapUI : UIPopup
     private void AutoAssignCaptureComponents()
     {
         if (_photoFrameCapture == null)
+        {
             _photoFrameCapture = GetComponent<NyangNyangSnapPhotoFrameCapture>();
 
+        }
+
         if (_compositionCalculator == null)
+        {
             _compositionCalculator = GetComponent<NyangNyangSnapCompositionCalculator>();
 
+        }
+
         if (_captureRecorder == null)
+        {
             _captureRecorder = GetComponent<NyangNyangSnapCaptureRecorder>();
+
+        }
     }
 
     private void UpdateCaptureCountText()
@@ -415,6 +561,139 @@ public class NyangNyangSnapUI : UIPopup
 
         DebugTool.Log($"[NyangNyangSnapUI] 촬영 횟수 Text 자동 연결 완료: {_captureCountText.name}", DebugType.UI, this);
     }
+    
+    private void RegisterPlacementEvent()
+    {
+        AutoAssignPlacementController();
+
+        if (_placementController == null)
+            return;
+
+        _placementController.OnItemPlaced -= OnPlacedItem;
+        _placementController.OnItemPlaced += OnPlacedItem;
+
+        DebugTool.Log("[NyangNyangSnapUI] 아이템 배치 이벤트 연결 완료", DebugType.UI, this);
+    }
+    private async void OnPlacedItem(int itemID)
+    {
+        if (itemID <= 0)
+        {
+            DebugTool.Warning(
+                $"[NyangNyangSnapUI] 소비할 ItemID가 잘못되었습니다. " +
+                $"ItemID:{itemID}",
+                DebugType.UI,
+                this
+            );
+
+            ClearPlacedItem();
+            return;
+        }
+
+        if (MergeBoardItemService.Instance == null)
+        {
+            DebugTool.Warning(
+                $"[NyangNyangSnapUI] MergeBoardItemService.Instance가 없습니다. " +
+                $"ItemID:{itemID}",
+                DebugType.UI,
+                this
+            );
+
+            ClearPlacedItem();
+            return;
+        }
+
+        bool consumed =
+            await MergeBoardItemService.Instance
+                .ConsumeItemByIdAsync(itemID, 1);
+
+        if (!consumed)
+        {
+            DebugTool.Warning(
+                $"[NyangNyangSnapUI] 배치 아이템 소비 실패 / " +
+                $"ItemID:{itemID}",
+                DebugType.UI,
+                this
+            );
+
+            ClearPlacedItem();
+            return;
+        }
+
+        DebugTool.Log(
+            $"[NyangNyangSnapUI] 배치 아이템 소비 완료 / " +
+            $"ItemID:{itemID}",
+            DebugType.UI,
+            this
+        );
+        TryMoveCatToPlacedItem(itemID); 
+    }
+    private void TryMoveCatToPlacedItem(int itemID)
+    {
+        AutoAssignCatController();
+        AutoAssignPlacementController();
+
+        if (_catController == null)
+        {
+            DebugTool.Warning(
+                "[NyangNyangSnapUI] CatController가 없습니다.",
+                DebugType.UI,
+                this
+            );
+            return;
+        }
+
+        if (_placementController == null ||
+            _placementController.PlacedItemRectTransform == null)
+        {
+            DebugTool.Warning(
+                "[NyangNyangSnapUI] 배치된 도구 위치를 찾지 못했습니다.",
+                DebugType.UI,
+                this
+            );
+            return;
+        }
+
+        if (_toolSO == null)
+        {
+            DebugTool.Warning(
+                "[NyangNyangSnapUI] ToolSO가 연결되지 않았습니다.",
+                DebugType.UI,
+                this
+            );
+            return;
+        }
+
+        if (!_toolSO.TryGetToolDataByItemID(
+                itemID,
+                out NyangNyangSnapToolData toolData))
+        {
+            DebugTool.Warning(
+                $"[NyangNyangSnapUI] ToolSO에서 도구 데이터를 찾지 못했습니다. " +
+                $"ItemID:{itemID}",
+                DebugType.UI,
+                this
+            );
+            return;
+        }
+
+        float itemRange =
+            toolData.ItemRange * _itemRangeScale;
+
+        bool startedMove = _catController.TryMoveToTool(
+            itemID,
+            _placementController.PlacedItemRectTransform,
+            itemRange
+        );
+
+        DebugTool.Log(
+            $"[NyangNyangSnapUI] 고양이 도구 이동 검사 완료 / " +
+            $"ItemID:{itemID}, " +
+            $"Range:{itemRange:F1}, " +
+            $"Move:{startedMove}",
+            DebugType.UI,
+            this
+        );
+    }
 
     private void SetPhotoButtonInteractable(bool isInteractable)
     {
@@ -444,25 +723,33 @@ public class NyangNyangSnapUI : UIPopup
 
     private void AutoAssignSnapCatObject()
     {
-        if (_snapCatObject != null) return;
+        if (_snapCatObject != null)
+            return;
 
-        Transform catTransform = FindTransformByNameInCanvas(_catObjectName);
+        Transform catTransform =
+            FindTransformByNameInCanvas(_catObjectName);
 
         if (catTransform == null)
         {
-            DebugTool.Warning($"[NyangNyangSnapUI] 고양이 오브젝트 자동 연결 실패. 이름: {_catObjectName}", DebugType.UI, this);
+            DebugTool.Warning(
+                $"[NyangNyangSnapUI] 고양이 오브젝트 자동 연결 실패. " +
+                $"이름: {_catObjectName}",
+                DebugType.UI,
+                this
+            );
             return;
         }
 
         _snapCatObject = catTransform.gameObject;
 
         DebugTool.Log(
-            $"[NyangNyangSnapUI] 고양이 오브젝트 자동 연결 완료: {_snapCatObject.name}",
+            $"[NyangNyangSnapUI] 고양이 오브젝트 자동 연결 완료: " +
+            $"{_snapCatObject.name}",
             DebugType.UI,
             this
         );
     }
-
+   
     private Transform FindTransformByNameInCanvas(string objectName)
     {
         Canvas canvas = GetComponentInParent<Canvas>();
@@ -483,6 +770,8 @@ public class NyangNyangSnapUI : UIPopup
     {
         gameObject.SetActive(true);
 
+        RegisterPlacementEvent();
+
         _sprite.SetBackground(stage);
         _startPanel.SetActive(true);
         _startButton.SetActive(true);
@@ -490,10 +779,14 @@ public class NyangNyangSnapUI : UIPopup
         // OpenPopup 시점에는 아직 촬영 시작 전이므로 고양이 이미지는 숨김
         SetSnapCatActive(false);
 
+        ClearPlacedItem();
+
         AutoAssignCaptureComponents();
 
         if (_captureRecorder != null)
+        {
             _captureRecorder.ClearRecords();
+        }
 
         _isCapturing = false;
         SetPhotoButtonInteractable(false);
@@ -504,15 +797,22 @@ public class NyangNyangSnapUI : UIPopup
     {
         gameObject.SetActive(true);
 
+        RegisterPlacementEvent();
+
         _startPanel.SetActive(true);
         _startButton.SetActive(true);
 
         SetSnapCatActive(false);
 
+        ClearPlacedItem();
+
         AutoAssignCaptureComponents();
 
         if (_captureRecorder != null)
+        {
             _captureRecorder.ClearRecords();
+
+        }
 
         _isCapturing = false;
         SetPhotoButtonInteractable(false);
@@ -528,32 +828,59 @@ public class NyangNyangSnapUI : UIPopup
     {
         _stagePopup.gameObject.SetActive(false);
 
+        ClearPlacedItem();
+
         gameObject.SetActive(false);
     }
 
     public void StartSnapCat()
     {
+        RegisterPlacementEvent();
+
         SetSnapCatActive(true);
 
+        AutoAssignCatController();
+
+        if (_catController != null)
+        {
+            _catController.SetRandomPosition();
+
+        }
         AutoAssignCaptureComponents();
 
         if (_captureRecorder != null)
+        {
             _captureRecorder.ClearRecords();
+
+        }
 
         _isCapturing = false;
         SetPhotoButtonInteractable(true);
         UpdateCaptureCountText();
 
-        DebugTool.Log("[NyangNyangSnapUI] 촬영 시작 - 고양이 이미지 활성화", DebugType.UI, this);
+        DebugTool.Log(
+            "[NyangNyangSnapUI] 촬영 시작 - 고양이 이미지 활성화",
+            DebugType.UI,
+            this
+        );
     }
 
     public void StopSnapCat()
     {
+        if (_catController != null)
+        {
+            _catController.StopInteraction();
+        }
+
         SetSnapCatActive(false);
         _isCapturing = false;
         SetPhotoButtonInteractable(false);
 
-        DebugTool.Log("[NyangNyangSnapUI] 촬영 종료 - 고양이 이미지 비활성화", DebugType.UI, this);
+        DebugTool.Log(
+            "[NyangNyangSnapUI] 촬영 종료 - 고양이 이미지 비활성화",
+            DebugType.UI,
+            this
+        );
     }
 }
 

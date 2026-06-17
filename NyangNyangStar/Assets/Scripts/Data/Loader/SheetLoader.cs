@@ -140,13 +140,13 @@ namespace Data.Loader
                 }));
             });
 
-            LoadSheetData(nyangNyangSnapPoseURL, nyangNyangSnapPoseSo, 3, () =>
+            LoadSheetData(nyangNyangSnapPoseURL, nyangNyangSnapPoseSo, 1, () =>
             {
                 OnSheetCompleted("냥냥스냅 포즈 시트 로드 완료");
                 nyangNyangSnapPoseSo?.PrintData();
             });
 
-            LoadSheetData(nyangNyangSnapToolURL, nyangNyangSnapToolSo, 3, () =>
+            LoadSheetData(nyangNyangSnapToolURL, nyangNyangSnapToolSo, 1, () =>
             {
                 OnSheetCompleted("냥냥스냅 포즈 시트 로드 완료");
                 nyangNyangSnapToolSo?.PrintData();

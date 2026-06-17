@@ -1,9 +1,8 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
 using Data.ScriptableObjects;
-using Util;
+using System.Collections.Generic;
 using System.Text;
+using UnityEngine;
+using Util;
 
 [CreateAssetMenu(
     fileName = "NyangNyangSnapTool",
@@ -12,11 +11,10 @@ using System.Text;
 public class NyangNyangSnapToolSO : SoBase, ISheetParsable
 {
     [Header("냥냥스냅 도구 데이터")]
-    [Tooltip("도구ID, 아이템 ID, 아이템 유형, 아이템 범위")]
+    [Tooltip("아이템 ID, 아이템 유형, 아이템 범위")]
     [SerializeField] private List<NyangNyangSnapToolData> _toolData = new();
 
-    private readonly Dictionary<int, NyangNyangSnapToolData> _toolDataByID = new();
-    private readonly Dictionary<int , NyangNyangSnapToolData> _toolDataByItemID = new();
+    private readonly Dictionary<int, NyangNyangSnapToolData> _toolDataByItemID = new();
 
     public override void Init()
     {
@@ -26,26 +24,33 @@ public class NyangNyangSnapToolSO : SoBase, ISheetParsable
     public void ClearData()
     {
         _toolData.Clear();
-        _toolDataByID.Clear();
         _toolDataByItemID.Clear();
     }
+
     public void SetData(string[] cols)
     {
-        if(cols ==null || cols.Length < 4)
+        if (cols == null || cols.Length < 3)
         {
+            DebugTool.Warning(
+                $"[NyangNyangSnapToolSO] 도구 데이터 컬럼 수 부족 / cols.Length: {(cols == null ? -1 : cols.Length)}",
+                DebugType.Data
+            );
             return;
         }
 
-        int id = int.Parse(cols[0]);
-        int itemID = int.Parse(cols[1]);
-        NyangNyangSnapToolType toolType = ConvertToolType(cols[2]);
-        int itemRange = int.Parse(cols[3]);
+        int itemID = int.Parse(cols[0].Trim());
+        NyangNyangSnapToolType toolType = ConvertToolType(cols[1].Trim());
+        int itemRange = int.Parse(cols[2].Trim());
 
-        NyangNyangSnapToolData data = new NyangNyangSnapToolData(id, itemID, toolType, itemRange);
+        NyangNyangSnapToolData data = new NyangNyangSnapToolData(itemID, toolType, itemRange);
 
         _toolData.Add(data);
-        _toolDataByID[data.ID] = data;
         _toolDataByItemID[data.ItemID] = data;
+
+        DebugTool.Log(
+            $"[NyangNyangSnapToolSO] 도구 데이터 추가 / ItemID: {data.ItemID}, Type: {data.ItemToolType}, Range: {data.ItemRange}",
+            DebugType.Data
+        );
     }
 
     private NyangNyangSnapToolType ConvertToolType(string type)
@@ -62,20 +67,26 @@ public class NyangNyangSnapToolSO : SoBase, ISheetParsable
                 return NyangNyangSnapToolType.Snack;
 
             default:
+                DebugTool.Warning($"[NyangNyangSnapToolSO] 알 수 없는 도구 타입: {type}", DebugType.Data);
                 return NyangNyangSnapToolType.None;
         }
     }
 
+    public bool TryGetToolDataByItemID(int itemID, out NyangNyangSnapToolData data)
+    {
+        return _toolDataByItemID.TryGetValue(itemID, out data);
+    }
+
     public NyangNyangSnapToolData GetRandomToolData()
     {
-        if(_toolData == null || _toolData.Count == 0)
+        if (_toolData == null || _toolData.Count == 0)
         {
+            DebugTool.Warning("[NyangNyangSnapToolSO] 랜덤으로 가져올 도구 데이터가 없습니다.", DebugType.Data);
             return null;
         }
-        int randomIndex = Random.Range(0, _toolData.Count);
-        NyangNyangSnapToolData data = _toolData[randomIndex];
 
-        return data;
+        int randomIndex = Random.Range(0, _toolData.Count);
+        return _toolData[randomIndex];
     }
 
     public void PrintData()
@@ -86,14 +97,12 @@ public class NyangNyangSnapToolSO : SoBase, ISheetParsable
         foreach (NyangNyangSnapToolData data in _toolData)
         {
             builder.AppendLine(
-                $"ToolID:{data.ID}, " +
-                $"ItemID:{data.ItemID}, " +
-                $"Type:{data.ItemToolType}," +
-                $" Range:{data.ItemRange}"
+                $"ItemID: {data.ItemID}, " +
+                $"Type: {data.ItemToolType}, " +
+                $"Range: {data.ItemRange}"
             );
         }
 
         DebugTool.Log(builder.ToString(), DebugType.Data);
     }
-
 }
