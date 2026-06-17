@@ -1,5 +1,6 @@
 using System;
 using TMPro;
+using UI;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -12,6 +13,8 @@ namespace UI.FindMoongchi
         [SerializeField] private TMP_Text _nameText;
         [SerializeField] private TMP_Text _purchaseCountText;
         [SerializeField] private TMP_Text _costAmountText;
+        [Tooltip("총 가격 옆 재화 아이콘입니다. 비워두면 자식 중 CoinIcon을 자동 검색합니다.")]
+        [SerializeField] private Image _costIconImage;
 
         [Header("Buttons")]
         [SerializeField] private Button _minButton;
@@ -21,10 +24,24 @@ namespace UI.FindMoongchi
         [SerializeField] private Button _purchaseButton;
         [SerializeField] private Button _cancelButton;
 
+        private UISpriteController _itemIconController;
+        private UISpriteController _costIconController;
         private FindMoongchiShopViewData _data;
         private Action<FindMoongchiShopViewData, int> _onPurchaseConfirmed;
         private int _count;
         private int _maxCount;
+
+        private void Awake()
+        {
+            if (_itemIcon != null)
+                _itemIconController = new UISpriteController(_itemIcon);
+
+            if (_costIconImage == null)
+                _costIconImage = FindChildImage(transform, "CoinIcon");
+
+            if (_costIconImage != null)
+                _costIconController = new UISpriteController(_costIconImage);
+        }
 
         public void Init()
         {
@@ -40,11 +57,8 @@ namespace UI.FindMoongchi
             _maxCount = Mathf.Max(0, maxCount);
             _count = _maxCount > 0 ? 1 : 0;
 
-            if (_itemIcon != null)
-            {
-                _itemIcon.sprite = data?.Icon;
-                _itemIcon.enabled = data?.Icon != null;
-            }
+            SetIcon(data);
+            SetCostIcon(data?.CostType ?? Data.ScriptableObjects.MoongchiSO.MoongchiCurrencyType.EVENT_COIN);
 
             if (_nameText != null)
                 _nameText.text = data == null ? string.Empty : BuildProductName(data);
@@ -63,6 +77,52 @@ namespace UI.FindMoongchi
             _onPurchaseConfirmed = null;
             _count = 0;
             _maxCount = 0;
+        }
+
+        private void SetIcon(FindMoongchiShopViewData data)
+        {
+            if (_itemIcon == null)
+                return;
+
+            if (data != null && !string.IsNullOrWhiteSpace(data.IconKey))
+            {
+                _itemIcon.enabled = true;
+
+                if (_itemIconController == null)
+                    _itemIconController = new UISpriteController(_itemIcon);
+
+                _itemIconController.ChangeSprite(data.IconKey);
+                return;
+            }
+
+            _itemIcon.sprite = data?.Icon;
+            _itemIcon.enabled = data?.Icon != null;
+        }
+
+        private void SetCostIcon(Data.ScriptableObjects.MoongchiSO.MoongchiCurrencyType costType)
+        {
+            if (_costIconImage == null)
+                return;
+
+            string key = costType switch
+            {
+                Data.ScriptableObjects.MoongchiSO.MoongchiCurrencyType.EVENT_COIN => FindMoongchiSpriteKeys.EventCoinIcon,
+                Data.ScriptableObjects.MoongchiSO.MoongchiCurrencyType.ENERGY => FindMoongchiSpriteKeys.CommonEnergyIcon,
+                _ => FindMoongchiSpriteKeys.EventCoinIcon
+            };
+
+            if (string.IsNullOrWhiteSpace(key))
+            {
+                _costIconImage.enabled = false;
+                return;
+            }
+
+            _costIconImage.enabled = true;
+
+            if (_costIconController == null)
+                _costIconController = new UISpriteController(_costIconImage);
+
+            _costIconController.ChangeSprite(key);
         }
 
         private void BindButtons()
@@ -141,6 +201,27 @@ namespace UI.FindMoongchi
             return data.Quantity > 1 ? $"{productName} x{data.Quantity}" : productName;
         }
 
+        private static Image FindChildImage(Transform root, string childName)
+        {
+            if (root == null || string.IsNullOrEmpty(childName))
+                return null;
+
+            for (int i = 0; i < root.childCount; i++)
+            {
+                Transform child = root.GetChild(i);
+
+                if (child.name == childName && child.TryGetComponent(out Image image))
+                    return image;
+
+                Image nested = FindChildImage(child, childName);
+
+                if (nested != null)
+                    return nested;
+            }
+
+            return null;
+        }
+
         private void OnDestroy()
         {
             Unbind(_minButton, SetMin);
@@ -149,6 +230,9 @@ namespace UI.FindMoongchi
             Unbind(_maxButton, SetMax);
             Unbind(_cancelButton, Close);
             Unbind(_purchaseButton, ConfirmPurchase);
+
+            _itemIconController?.Dispose();
+            _costIconController?.Dispose();
         }
 
         private static void Unbind(Button button, UnityEngine.Events.UnityAction action)
