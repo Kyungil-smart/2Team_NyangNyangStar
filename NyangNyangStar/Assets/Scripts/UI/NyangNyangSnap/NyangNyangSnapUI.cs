@@ -129,6 +129,7 @@ public class NyangNyangSnapUI : UIPopup
     {
         if (_catController != null)
         {
+            _catController.OnDestinationReached -= OnCatDestinationReached;
             _catController.StopInteraction();
         }
 
@@ -139,6 +140,9 @@ public class NyangNyangSnapUI : UIPopup
         if (_placementController != null)
         {
             _placementController.OnItemPlaced -= OnPlacedItem;
+            _placementController.OnSnackDragStarted -= OnSnackDragStarted;
+            _placementController.OnSnackDragUpdated -= OnSnackDragUpdated;
+            _placementController.OnSnackDragCanceled -= OnSnackDragCanceled;
         }
     }
 
@@ -353,7 +357,7 @@ public class NyangNyangSnapUI : UIPopup
 
         if (_snapCatObject != null)
         {
-            _catController =  _snapCatObject.GetComponent<NyangNyangSnapCatController>();
+            _catController = _snapCatObject.GetComponent<NyangNyangSnapCatController>();
         }
 
         if (_catController == null)
@@ -561,7 +565,7 @@ public class NyangNyangSnapUI : UIPopup
 
         DebugTool.Log($"[NyangNyangSnapUI] 촬영 횟수 Text 자동 연결 완료: {_captureCountText.name}", DebugType.UI, this);
     }
-    
+
     private void RegisterPlacementEvent()
     {
         AutoAssignPlacementController();
@@ -572,7 +576,23 @@ public class NyangNyangSnapUI : UIPopup
         _placementController.OnItemPlaced -= OnPlacedItem;
         _placementController.OnItemPlaced += OnPlacedItem;
 
-        DebugTool.Log("[NyangNyangSnapUI] 아이템 배치 이벤트 연결 완료", DebugType.UI, this);
+        _placementController.OnSnackDragStarted -= OnSnackDragStarted;
+        _placementController.OnSnackDragStarted += OnSnackDragStarted;
+        _placementController.OnSnackDragUpdated -= OnSnackDragUpdated;
+        _placementController.OnSnackDragUpdated += OnSnackDragUpdated;
+
+        _placementController.OnSnackDragCanceled -= OnSnackDragCanceled;
+        _placementController.OnSnackDragCanceled += OnSnackDragCanceled;
+
+        AutoAssignCatController();
+
+        if (_catController != null)
+        {
+            _catController.OnDestinationReached -= OnCatDestinationReached;
+            _catController.OnDestinationReached += OnCatDestinationReached;
+        }
+
+        DebugTool.Log("[NyangNyangSnapUI] 아이템 배치 및 간식 드래그 이벤트 연결 완료", DebugType.UI, this);
     }
     private async void OnPlacedItem(int itemID)
     {
@@ -625,7 +645,76 @@ public class NyangNyangSnapUI : UIPopup
             DebugType.UI,
             this
         );
-        TryMoveCatToPlacedItem(itemID); 
+        if (!_placementController.LastPlacementWasSnack)
+            TryMoveCatToPlacedItem(itemID);
+    }
+
+    private void OnSnackDragStarted(int itemID)
+    {
+        AutoAssignCatController();
+
+        if (_catController == null)
+            return;
+
+        // 새 간식 드래그가 시작되면 이전 이동/섭취 상태를 초기화합니다.
+        _catController.StopInteraction();
+
+        DebugTool.Log(
+            $"[NyangNyangSnapUI] 새 간식 드래그 시작으로 고양이 상태 초기화 / ItemID:{itemID}",
+            DebugType.UI,
+            this
+        );
+    }
+
+    private void OnSnackDragUpdated(int itemID, RectTransform snackRectTransform, float itemRange)
+    {
+        AutoAssignCatController();
+        AutoAssignPlacementController();
+
+        if (_catController == null || _placementController == null)
+            return;
+
+        if (_catController.IsMoving)
+            return;
+
+        bool startedMove = _catController.TryMoveToTool(
+            itemID,
+            snackRectTransform,
+            itemRange
+        );
+
+        if (!startedMove)
+            return;
+
+        _placementController.LockSnackDrag();
+
+        DebugTool.Log(
+            $"[NyangNyangSnapUI] 고양이가 간식 효과 범위에 들어와 이동 시작 / ItemID:{itemID}",
+            DebugType.UI,
+            this
+        );
+    }
+
+    private void OnCatDestinationReached(int itemID)
+    {
+        if (_placementController == null || !_placementController.IsSnackWaitingForCat)
+            return;
+
+        _catController.EnterEating(itemID);
+
+        bool completed = _placementController.CompleteSnackDrag(itemID);
+
+        DebugTool.Log(
+            $"[NyangNyangSnapUI] 고양이 도착 후 간식 사용 완료 처리 / ItemID:{itemID}, Complete:{completed}",
+            DebugType.UI,
+            this
+        );
+    }
+
+    private void OnSnackDragCanceled()
+    {
+        if (_catController != null && !_catController.IsEating)
+            _catController.StopInteraction();
     }
     private void TryMoveCatToPlacedItem(int itemID)
     {
@@ -749,7 +838,7 @@ public class NyangNyangSnapUI : UIPopup
             this
         );
     }
-   
+
     private Transform FindTransformByNameInCanvas(string objectName)
     {
         Canvas canvas = GetComponentInParent<Canvas>();
