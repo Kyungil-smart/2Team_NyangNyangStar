@@ -26,7 +26,9 @@ namespace UI.MergeBoard
         [SerializeField] private ItemDatabaseSo _itemDatabase;
 
         [Header("머지보드 Firestore")]
-        [SerializeField] private MergeBoardFirestoreSo _mergeBoardFirestore;
+        [SerializeField] private MergeBoardSlotsSO _boardSlotsStore;
+        [SerializeField] private MergeBoardRewardQueueSO _rewardQueueStore;
+        [SerializeField] private MergeBoardSpecialSO _specialStore;
 
         [Header("테스트 아이템 생성")]
         [SerializeField] private TMP_InputField _itemIdInputField;
@@ -259,16 +261,16 @@ namespace UI.MergeBoard
             if (_rewardQueue != null && _rewardQueue.IsLoaded)
                 return await _rewardQueue.EnqueueItemAsync(itemData, count);
 
-            if (!TryResolveFirestore(out MergeBoardFirestoreSo firestore))
+            if (!TryResolveStores())
                 return false;
 
-            List<ItemData> queueItems = await firestore.LoadRewardQueueAsync();
+            List<ItemData> queueItems = await _rewardQueueStore.LoadRewardQueueAsync();
             ItemData runtimeItem = CreateRuntimeItem(itemData);
 
             for (int i = 0; i < count; i++)
                 queueItems.Add(runtimeItem.Clone());
 
-            await firestore.SaveRewardQueueAsync(queueItems);
+            await _rewardQueueStore.SaveRewardQueueAsync(queueItems);
             DebugTool.Log($"보상 큐 직접 저장 완료 / ID:{itemData.ItemID}, Count:{count}", DebugType.Board, this);
             return true;
         }
@@ -280,10 +282,10 @@ namespace UI.MergeBoard
             if (_specialItemBoardSystem != null && _specialItemBoardSystem.IsServerDataLoaded)
                 return await _specialItemBoardSystem.TryAddSpecialItemAsync(itemData, count);
 
-            if (!TryResolveFirestore(out MergeBoardFirestoreSo firestore))
+            if (!TryResolveStores())
                 return false;
 
-            Dictionary<int, SpecialItemSlotData> specialBoard = await firestore.LoadSpecialBoardAsync();
+            Dictionary<int, SpecialItemSlotData> specialBoard = await _specialStore.LoadSpecialBoardAsync();
             int slotNumber = FindSpecialSlotNumberForItem(specialBoard, itemData.ItemID);
 
             if (slotNumber == -1)
@@ -297,7 +299,7 @@ namespace UI.MergeBoard
             SpecialItemSlotData newSlotData = new SpecialItemSlotData(slotNumber, CreateRuntimeItem(itemData), newCount);
 
             specialBoard[slotNumber] = newSlotData;
-            await firestore.SaveSpecialSlotAsync(slotNumber, newSlotData);
+            await _specialStore.SaveSpecialSlotAsync(slotNumber, newSlotData);
             DebugTool.Log($"특수 아이템 직접 저장 완료 / ID:{itemData.ItemID}, Count:{count}", DebugType.Board, this);
             return true;
         }
@@ -330,11 +332,11 @@ namespace UI.MergeBoard
                 return remainingCount <= 0;
             }
 
-            if (!TryResolveFirestore(out MergeBoardFirestoreSo firestore))
+            if (!TryResolveStores())
                 return false;
 
-            Dictionary<int, ItemData> boardData = await firestore.LoadBoardAsync();
-            List<ItemData> queueItems = await firestore.LoadRewardQueueAsync();
+            Dictionary<int, ItemData> boardData = await _boardSlotsStore.LoadBoardAsync();
+            List<ItemData> queueItems = await _rewardQueueStore.LoadRewardQueueAsync();
 
             int boardCount = CountBoardItems(boardData, itemID);
             int queueCount = CountListItems(queueItems, itemID);
@@ -366,10 +368,10 @@ namespace UI.MergeBoard
                 remaining = RemoveItemsFromList(queueItems, itemID, remaining);
 
             if (changedSlots.Count > 0)
-                await firestore.SaveSlotsAsync(changedSlots);
+                await _boardSlotsStore.SaveSlotsAsync(changedSlots);
 
             if (queueCount > 0)
-                await firestore.SaveRewardQueueAsync(queueItems);
+                await _rewardQueueStore.SaveRewardQueueAsync(queueItems);
 
             return remaining <= 0;
         }
@@ -381,10 +383,10 @@ namespace UI.MergeBoard
             if (_specialItemBoardSystem != null && _specialItemBoardSystem.IsServerDataLoaded)
                 return await _specialItemBoardSystem.ConsumeItemsByIdAsync(itemID, count) == count;
 
-            if (!TryResolveFirestore(out MergeBoardFirestoreSo firestore))
+            if (!TryResolveStores())
                 return false;
 
-            Dictionary<int, SpecialItemSlotData> specialBoard = await firestore.LoadSpecialBoardAsync();
+            Dictionary<int, SpecialItemSlotData> specialBoard = await _specialStore.LoadSpecialBoardAsync();
             int slotNumber = FindSpecialSlotNumberForItem(specialBoard, itemID, requireExisting: true);
 
             if (slotNumber == -1)
@@ -406,7 +408,7 @@ namespace UI.MergeBoard
                 ? SpecialItemSlotData.Empty(slotNumber)
                 : new SpecialItemSlotData(slotNumber, CreateRuntimeItem(currentData.ItemData), newCount);
 
-            await firestore.SaveSpecialSlotAsync(slotNumber, newSlotData);
+            await _specialStore.SaveSpecialSlotAsync(slotNumber, newSlotData);
             return true;
         }
 
@@ -441,10 +443,8 @@ namespace UI.MergeBoard
                 _rewardQueue = FindFirstObjectByType<BoardRewardQueue>();
         }
 
-        private bool TryResolveFirestore(out MergeBoardFirestoreSo firestore)
+        private bool TryResolveStores()
         {
-            firestore = null;
-
             if (FireStoreManager.Instance == null)
             {
                 DebugTool.Warning("FireStoreManager.Instance가 없습니다.", DebugType.Board, this);
@@ -457,11 +457,15 @@ namespace UI.MergeBoard
                 return false;
             }
 
-            firestore = _mergeBoardFirestore;
-
-            if (firestore == null || !firestore.IsReady)
+            if (_boardSlotsStore == null || _rewardQueueStore == null || _specialStore == null)
             {
-                DebugTool.Warning("MergeBoardFirestoreSO가 인스펙터에 연결되지 않았거나 준비되지 않았습니다.", DebugType.Board, this);
+                DebugTool.Warning("머지보드 Store SO가 인스펙터에 연결되지 않았습니다.", DebugType.Board, this);
+                return false;
+            }
+
+            if (!_boardSlotsStore.IsReady || !_rewardQueueStore.IsReady || !_specialStore.IsReady)
+            {
+                DebugTool.Warning("머지보드 Store SO가 아직 준비되지 않았습니다.", DebugType.Board, this);
                 return false;
             }
 

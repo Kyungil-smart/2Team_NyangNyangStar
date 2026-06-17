@@ -11,7 +11,7 @@ namespace UI.MergeBoard
     public class BoardRewardQueue : MonoBehaviour
     {
         [SerializeField] private BoardSystem _boardSystem;
-        [SerializeField] private MergeBoardFirestoreSo _mergeBoardFirestore;
+        [SerializeField] private MergeBoardRewardQueueSO _mergeBoardFirestore;
         [SerializeField] private List<RewardQueueSlotView> _queueSlotViews = new();
         [SerializeField] private TMP_Text _countText;
 

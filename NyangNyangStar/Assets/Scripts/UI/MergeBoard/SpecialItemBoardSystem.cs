@@ -18,7 +18,7 @@ namespace UI.MergeBoard
         [SerializeField] private List<SpecialItemSlotView> _specialSlotViews = new();
 
         [Header("Firestore")]
-        [SerializeField] private MergeBoardFirestoreSo _mergeBoardFirestore;
+        [SerializeField] private MergeBoardSpecialSO _mergeBoardFirestore;
 
         [Header("아이템 정보 UI")]
         [SerializeField] private BoardItemInfoPanel _itemInfoPanel;
