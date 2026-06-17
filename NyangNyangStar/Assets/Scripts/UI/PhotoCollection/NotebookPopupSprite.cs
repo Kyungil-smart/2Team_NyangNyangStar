@@ -30,7 +30,7 @@ public class NotebookPopupSprite : UIBase
         SetSprite(NotebookPopupImages.CloseButton, "Btn_Close");
         //SetSprite(NotebookPopupImages.CatBackground1, "");
         //SetSprite(NotebookPopupImages.CatName1, "");
-        SetSprite(NotebookPopupImages.CatImage1, "Profile_ProfileImages_2");
+        SetSprite(NotebookPopupImages.CatImage1, "FM_Target_Mungchi");
         SetSprite(NotebookPopupImages.Location1, "Shape_Square", _locationColor);
         SetSprite(NotebookPopupImages.RedPoint1, "Shape_Circle", Color.red);
     }
