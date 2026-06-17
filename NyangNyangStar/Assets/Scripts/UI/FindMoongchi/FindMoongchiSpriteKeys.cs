@@ -3,7 +3,8 @@ namespace UI.FindMoongchi
     public static class FindMoongchiSpriteKeys
     {
         // Finding - 고정 UI
-        public const string GameBoardBackground = "FM_BG_GameBoard";
+        // 현재 Addressable 실제 등록 상태 기준으로 게임 배경/게임 패널 키를 원복합니다.
+        public const string GameBoardBackground = "FM_Panel_Minigame";
         public const string Tile = "FM_Tile";
         public const string IconTimer = "FM_Icon_Timer";
         public const string ButtonHelp = "FM_Btn_Help";
@@ -14,7 +15,7 @@ namespace UI.FindMoongchi
         public const string IconCorrect = "FM_Icon_Correct";
         public const string PanelInfo = "FM_Panel_Info";
         public const string PanelTargetText = "FM_Panel_TargetText";
-        public const string PanelMinigame = "FM_Panel_Minigame";
+        public const string PanelMinigame = "FM_BG_GameBoard";
 
         public const string ButtonMission = "FM_Btn_Mission";
         public const string SlotMission = "FM_Slot_Mission";
