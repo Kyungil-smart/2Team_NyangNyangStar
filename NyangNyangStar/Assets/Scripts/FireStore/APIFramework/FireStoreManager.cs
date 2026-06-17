@@ -5,14 +5,13 @@ using Firebase;
 using Firebase.Firestore;
 using Firebase.Extensions;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 public enum DataType
 {
     None,
     Users,
-    MergeBoard,
-    ScratchingTime,
-    MoongchiProgess,
+    // 최상위(루트) SO 전용 식별자. 서브컬렉션 SO는 enum에 넣지 않고 인스펙터 직접 참조로 접근한다.
 }
 
 public class FireStoreManager : MonoBehaviour
@@ -21,7 +20,10 @@ public class FireStoreManager : MonoBehaviour
     private int _sessionVersion;
     public static FireStoreManager Instance { get; private set; }
 
-    [SerializeField] private List<BaseFireStore> m_Data;
+    // 최상위(루트) SO만 등록한다. 서브컬렉션 SO는 각 부모 SO의 subCollections에만 등록한다.
+    // (구 필드명 m_Data → rootSOs. FormerlySerializedAs로 기존 프리팹/씬 참조를 그대로 승계한다.)
+    [FormerlySerializedAs("m_Data")]
+    [SerializeField] private List<BaseFireStore> rootSOs;
     private Dictionary<DataType, BaseFireStore> m_DataDictionary;
 
     public bool IsInitialized { get; private set; }
@@ -50,21 +52,21 @@ public class FireStoreManager : MonoBehaviour
 
         Debug.Log($"[FireStoreManager] InitAsync 시작 / userId: {userId}");
 
-        if (m_Data == null || m_Data.Count == 0)
+        if (rootSOs == null || rootSOs.Count == 0)
         {
-            Debug.LogError("[FireStoreManager] m_Data가 비어 있습니다.");
+            Debug.LogError("[FireStoreManager] rootSOs가 비어 있습니다.");
             return;
         }
 
-        for (int i = 0; i < m_Data.Count; i++)
+        for (int i = 0; i < rootSOs.Count; i++)
         {
-            if (m_Data[i] == null)
+            if (rootSOs[i] == null)
             {
-                Debug.LogError($"[FireStoreManager] m_Data[{i}]가 null입니다.");
+                Debug.LogError($"[FireStoreManager] rootSOs[{i}]가 null입니다.");
                 return;
             }
 
-            Debug.Log($"[FireStoreManager] 등록 데이터: {m_Data[i].name} / Type: {m_Data[i].EnumType}");
+            Debug.Log($"[FireStoreManager] 등록 루트 SO: {rootSOs[i].name} / Type: {rootSOs[i].EnumType}");
         }
 
         try
@@ -128,9 +130,8 @@ public class FireStoreManager : MonoBehaviour
         {
             Debug.Log($"UserID {userId} does NOT exist in Firestore.");
 
-            // 기존 구조처럼 UsersSO.CreateNew()를 타면 UsersSO 하위에 연결된 MergeBoard/Scratching SO까지
-            // 한 번에 생성하면서 모바일에서 로그인 진행이 멈출 수 있다.
-            // 로그인 단계에서는 Users/{uid} 루트 문서만 만든다.
+            // 신규 유저: 루트 SO와 그 하위 서브컬렉션을 재귀로 생성한다.
+            // (타임아웃 가드가 있어 느린 네트워크에서도 로그인 흐름은 막히지 않는다.)
             await CreateNew(userId);
             if (!IsCurrentSession(sessionVersion))
                 return;
@@ -141,19 +142,19 @@ public class FireStoreManager : MonoBehaviour
 
     private async Task CreateNew(string userId)
     {
-        Debug.Log($"[FireStoreManager] 신규 유저 루트 문서 생성 시작: {userId}");
+        Debug.Log($"[FireStoreManager] 신규 유저 데이터 생성 시작: {userId}");
 
-        bool completed = await CreateUserRootDocumentWithTimeoutAsync(userId, 3f);
+        bool completed = await CreateAllWithTimeoutAsync(userId, 3f);
 
         if (completed)
-            Debug.Log($"[FireStoreManager] 신규 유저 루트 문서 생성 완료: {userId}");
+            Debug.Log($"[FireStoreManager] 신규 유저 데이터 생성 완료: {userId}");
         else
-            Debug.LogWarning($"[FireStoreManager] 신규 유저 루트 문서 생성 대기 시간 초과. 초기화는 계속 진행합니다. / userId: {userId}");
+            Debug.LogWarning($"[FireStoreManager] 신규 유저 데이터 생성 대기 시간 초과. 초기화는 계속 진행합니다. / userId: {userId}");
     }
 
-    private async Task<bool> CreateUserRootDocumentWithTimeoutAsync(string userId, float timeoutSeconds)
+    private async Task<bool> CreateAllWithTimeoutAsync(string userId, float timeoutSeconds)
     {
-        Task writeTask = CreateUserRootDocumentAsync(userId);
+        Task writeTask = CreateAllRootsAsync(userId);
         Task timeoutTask = Task.Delay(Mathf.RoundToInt(timeoutSeconds * 1000f));
 
         Task completedTask = await Task.WhenAny(writeTask, timeoutTask);
@@ -168,64 +169,38 @@ public class FireStoreManager : MonoBehaviour
         {
             if (task.IsCanceled)
             {
-                Debug.LogWarning($"[FireStoreManager] 신규 유저 루트 문서 생성 취소: {userId}");
+                Debug.LogWarning($"[FireStoreManager] 신규 유저 데이터 생성 취소: {userId}");
                 return;
             }
 
             if (task.IsFaulted)
             {
-                Debug.LogWarning($"[FireStoreManager] 신규 유저 루트 문서 생성 실패: {userId} / {task.Exception?.GetBaseException().Message}");
+                Debug.LogWarning($"[FireStoreManager] 신규 유저 데이터 생성 실패: {userId} / {task.Exception?.GetBaseException().Message}");
                 return;
             }
 
-            Debug.Log($"[FireStoreManager] 신규 유저 루트 문서 백그라운드 생성 완료: {userId}");
+            Debug.Log($"[FireStoreManager] 신규 유저 데이터 백그라운드 생성 완료: {userId}");
         });
 
         return false;
     }
 
-    private async Task CreateUserRootDocumentAsync(string userId)
+    // 등록된 루트 SO들의 CreateNew를 호출한다. 각 SO가 자신과 하위 서브컬렉션 문서를 재귀로 생성한다.
+    private async Task CreateAllRootsAsync(string userId)
     {
-        Dictionary<string, object> data = new Dictionary<string, object>
-        {
-            { "UserID", userId },
-            { "UpdatedAt", FieldValue.ServerTimestamp }
-        };
-
-        BaseFireStore usersStore = GetData<BaseFireStore>(DataType.Users);
-        if (usersStore != null)
-        {
-            try
-            {
-                Dictionary<string, object> userDefaultData = usersStore.ToFirestoreDictionary();
-                if (userDefaultData != null)
-                {
-                    foreach (KeyValuePair<string, object> pair in userDefaultData)
-                        data[pair.Key] = pair.Value;
-                }
-            }
-            catch (System.Exception e)
-            {
-                Debug.LogWarning($"[FireStoreManager] UsersSO 기본값 변환 실패, 최소 유저 문서만 생성합니다: {e.Message}");
-            }
-        }
-
-        data["UserID"] = userId;
-        data["UpdatedAt"] = FieldValue.ServerTimestamp;
-
-        DocumentReference userDoc = db.Collection("Users").Document(userId);
-        await userDoc.SetAsync(data, SetOptions.MergeAll);
+        foreach (BaseFireStore root in rootSOs)
+            await root.CreateNew(db, userId);
     }
 
     private void BindClass(string userId)
     {
-        foreach (BaseFireStore item in m_Data)
+        foreach (BaseFireStore item in rootSOs)
             item.InitDataBase(db, userId);
     }
 
     private async Task LoadClass()
     {
-        foreach (BaseFireStore item in m_Data)
+        foreach (BaseFireStore item in rootSOs)
         {
             try
             {
@@ -251,7 +226,7 @@ public class FireStoreManager : MonoBehaviour
     {
         m_DataDictionary = new Dictionary<DataType, BaseFireStore>();
 
-        foreach (BaseFireStore data in m_Data.Where(data => data != null))
+        foreach (BaseFireStore data in rootSOs.Where(data => data != null))
         {
             if (data.EnumType == DataType.None)
             {
@@ -267,17 +242,6 @@ public class FireStoreManager : MonoBehaviour
 
             m_DataDictionary.Add(data.EnumType, data);
         }
-    }
-
-    public T GetData<T>(DataType type) where T : BaseFireStore
-    {
-        if (m_DataDictionary == null)
-            return null;
-
-        if (m_DataDictionary.TryGetValue(type, out BaseFireStore data))
-            return data as T;
-
-        return null;
     }
 
     private bool IsCurrentSession(int sessionVersion)

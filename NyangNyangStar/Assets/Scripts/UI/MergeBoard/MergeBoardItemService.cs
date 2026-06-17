@@ -25,6 +25,9 @@ namespace UI.MergeBoard
         [Header("아이템 데이터베이스")]
         [SerializeField] private ItemDatabaseSo _itemDatabase;
 
+        [Header("머지보드 Firestore")]
+        [SerializeField] private MergeBoardFirestoreSo _mergeBoardFirestore;
+
         [Header("테스트 아이템 생성")]
         [SerializeField] private TMP_InputField _itemIdInputField;
         [SerializeField] private Button _testReceiveButton;
@@ -454,11 +457,11 @@ namespace UI.MergeBoard
                 return false;
             }
 
-            firestore = FireStoreManager.Instance.GetData<MergeBoardFirestoreSo>(DataType.MergeBoard);
+            firestore = _mergeBoardFirestore;
 
             if (firestore == null || !firestore.IsReady)
             {
-                DebugTool.Warning("MergeBoardFirestoreSO가 준비되지 않았습니다.", DebugType.Board, this);
+                DebugTool.Warning("MergeBoardFirestoreSO가 인스펙터에 연결되지 않았거나 준비되지 않았습니다.", DebugType.Board, this);
                 return false;
             }
 

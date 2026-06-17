@@ -12,8 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 575de3f67f671aa418d55877b4e6812c, type: 3}
   m_Name: ResourcesSO
   m_EditorClassIdentifier: 
-  m_DocumentId: Resources
-  m_EnumType: 1
-  energy: 5000
-  coin: 4000
-  jewel: 6000
+  m_DocumentId: 
+  m_EnumType: 0
+  subCollections: []
+  energy: 200
+  coin: 100
+  jewel: 100
+  usedEnergy: 0
+  totalGottenEnergy: 0
+  totalGottenCoin: 0
+  totalGottenJewel: 0
+  cumulativeMerge: 0
