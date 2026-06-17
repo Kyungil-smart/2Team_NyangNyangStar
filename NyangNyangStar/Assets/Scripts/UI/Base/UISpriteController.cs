@@ -73,6 +73,18 @@ namespace UI
         {
             _color = color;
             _isColorchange = true;
+
+            if (_image != null)
+                _image.color = color;
+        }
+
+        public void ResetColor()
+        {
+            _color = Color.white;
+            _isColorchange = false;
+
+            if (_image != null)
+                _image.color = Color.white;
         }
 
         public void ClearSprite()

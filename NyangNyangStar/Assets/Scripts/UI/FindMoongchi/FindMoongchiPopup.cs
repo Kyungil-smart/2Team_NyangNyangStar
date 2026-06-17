@@ -1,7 +1,8 @@
+using System;
 using System.Collections.Generic;
 using Core.Managers;
 using Data.LibrarySystem;
-using Data.ScriptableObjects.HideAndSeekSO;
+using Data.ScriptableObjects.MoongchiSO;
 using Data.ScriptableObjects.MergeBoard;
 using UI.Base;
 using UnityEngine;
@@ -36,7 +37,12 @@ namespace UI.FindMoongchi
 
         [Header("임시 미니게임 스테이지 - SO/Firestore 연결 전")]
         [Tooltip("현재는 임시 하드코딩 스테이지를 사용합니다. 실제 데이터 담당 작업 후 SO/Firestore 값으로 교체하면 됩니다.")]
-        [SerializeField] private int _currentStageId = 8;
+        [SerializeField] private int _currentStageId = 0;
+        [Tooltip("Firestore 진행 데이터 연결 전 임시로 유저별 주차 스테이지 순서를 섞어서 사용합니다.")]
+        [SerializeField] private bool _useRandomStageCycleMock = true;
+        [SerializeField] private int _temporaryCycleIndex;
+        [SerializeField] private int _temporaryCycleNumber;
+        [SerializeField] private string _temporaryStageSeedOverride;
 
         [Header("탐색 도구 ID - 순서 고정")]
         [Tooltip("0: 가로 한 줄 도구, 1: 세로 한 줄 도구, 2: 4x4 사각형 도구. ID만 바꾸고 순서는 바꾸지 마세요.")]
@@ -54,11 +60,12 @@ namespace UI.FindMoongchi
 
         private bool _initialized;
         private bool _isUsingTool;
+        private bool _isStageClearWaitingForRestart;
         private FindMoongchiPanelType _currentPanelType = FindMoongchiPanelType.Main;
 
-        private HideAndSeekShopSO ShopSO => _dataManager != null ? _dataManager.ShopSO : null;
-        private HideAndSeekMissionSO MissionSO => _dataManager != null ? _dataManager.MissionSO : null;
-        private HideAndSeekProfileSO ProfileSO => _dataManager != null ? _dataManager.ProfileSO : null;
+        private MoongchiShopSO ShopSO => _dataManager != null ? _dataManager.ShopSO : null;
+        private MoongchiMissionSO MissionSO => _dataManager != null ? _dataManager.MissionSO : null;
+        private MoongchiProfileSO ProfileSO => _dataManager != null ? _dataManager.ProfileSO : null;
 
         private void OnEnable()
         {
@@ -72,8 +79,8 @@ namespace UI.FindMoongchi
 
             ResolveReferences();
             ResolveDataManager();
-            ResolveToolItemIds();
             InitChildren();
+            ResolveToolItemIds();
             BindEvents();
             InitGameLogic();
 
@@ -122,9 +129,28 @@ namespace UI.FindMoongchi
 
         public void OpenNotice(string message)
         {
+            OpenNotice(message, null, null);
+        }
+
+        private void OpenNotice(string message, string confirmButtonText, Action onConfirm)
+        {
             DebugTool.Log($"[FindMoongchiPopup] 안내 팝업: {message}", DebugType.FindMoongchi, this);
             OpenModalLayer();
-            _noticePopup?.Open(message);
+
+            if (_noticePopup == null)
+            {
+                DebugTool.Warning("[FindMoongchiPopup] NoticePopup이 연결되지 않았습니다.", DebugType.FindMoongchi, this);
+                return;
+            }
+
+            _noticePopup.Open(
+                message,
+                confirmButtonText,
+                () =>
+                {
+                    CloseAllModal();
+                    onConfirm?.Invoke();
+                });
         }
 
         public void OpenError(string message, int errorCode = 0)
@@ -310,12 +336,52 @@ namespace UI.FindMoongchi
         private void InitGameLogic()
         {
             _gameLogic.SetToolItemIds(_resolvedToolItemIds);
-            _gameLogic.LoadStage(_currentStageId);
+
+            int stageId = ResolveTemporaryStageId();
+            _gameLogic.LoadStage(stageId);
+            _currentStageId = _gameLogic.CurrentStageId;
+            _currentWeek = _gameLogic.CurrentWeek;
 
             DebugTool.Log(
-                $"[FindMoongchiPopup] 미니게임 임시 스테이지 로드: StageId={_gameLogic.CurrentStageId}, TargetCount={_gameLogic.TargetCount}",
+                $"[FindMoongchiPopup] 미니게임 임시 스테이지 로드: StageId={_gameLogic.CurrentStageId}, Week={_gameLogic.CurrentWeek}, TargetCount={_gameLogic.TargetCount}",
                 DebugType.FindMoongchi,
                 this);
+        }
+
+        private int ResolveTemporaryStageId()
+        {
+            if (_useRandomStageCycleMock)
+            {
+                string seed = GetTemporaryStageSeed();
+                int stageId = FindMoongchiGameLogic.ResolveStageIdFromCycle(
+                    _currentWeek,
+                    seed,
+                    _temporaryCycleIndex,
+                    _temporaryCycleNumber);
+
+                DebugTool.Log(
+                    $"[FindMoongchiPopup] 임시 랜덤 스테이지 선택: Week={_currentWeek}, CycleIndex={_temporaryCycleIndex}, StageId={stageId}, Seed={seed}",
+                    DebugType.FindMoongchi,
+                    this);
+
+                return stageId;
+            }
+
+            if (_currentStageId > 0)
+                return _currentStageId;
+
+            return _currentWeek <= 1 ? 1 : 6;
+        }
+
+        private string GetTemporaryStageSeed()
+        {
+            if (!string.IsNullOrWhiteSpace(_temporaryStageSeedOverride))
+                return _temporaryStageSeedOverride;
+
+            if (AuthManager.Instance != null && !string.IsNullOrEmpty(AuthManager.Instance.CurrentUserId))
+                return AuthManager.Instance.CurrentUserId;
+
+            return SystemInfo.deviceUniqueIdentifier;
         }
 
         private void HandleDataLoadCompleted()
@@ -384,6 +450,13 @@ namespace UI.FindMoongchi
                 return;
             }
 
+            if (_isStageClearWaitingForRestart)
+            {
+                DebugTool.Log("[FindMoongchiPopup] 클리어 완료 후 다시하기 대기 중이라 도구 사용을 막습니다.", DebugType.FindMoongchi, this);
+                OpenStageClearNotice();
+                return;
+            }
+
             if (_searchChance <= 0)
             {
                 DebugTool.Warning("[FindMoongchiPopup] 탐색 기회 부족", DebugType.FindMoongchi, this);
@@ -425,15 +498,74 @@ namespace UI.FindMoongchi
                 foreach (FindMoongchiTargetRuntimeData foundTarget in result.NewlyFoundTargets)
                     DebugTool.Log($"[FindMoongchiPopup] 목표물 발견: {foundTarget.TargetName}({foundTarget.TargetId})", DebugType.FindMoongchi, this);
 
-                RefreshGamePanel();
+                RefreshGamePanel(true);
 
                 if (result.IsStageCleared)
-                    OpenNotice("스테이지를 클리어했습니다.");
+                    HandleStageCleared();
             }
             finally
             {
                 _isUsingTool = false;
             }
+        }
+
+        private void HandleStageCleared()
+        {
+            if (_isStageClearWaitingForRestart)
+                return;
+
+            _isStageClearWaitingForRestart = true;
+
+            DebugTool.Log(
+                $"[FindMoongchiPopup] 스테이지 클리어. 현재 공개 상태를 유지하고 다시하기 입력을 기다립니다. StageId={_gameLogic.CurrentStageId}",
+                DebugType.FindMoongchi,
+                this);
+
+            OpenStageClearNotice();
+        }
+
+        private void OpenStageClearNotice()
+        {
+            OpenNotice("스테이지를 클리어했습니다.", "다시하기", HandleStageClearRestartConfirmed);
+        }
+
+        private void HandleStageClearRestartConfirmed()
+        {
+            DebugTool.Log("[FindMoongchiPopup] 스테이지 클리어 다시하기 확인", DebugType.FindMoongchi, this);
+
+            _isStageClearWaitingForRestart = false;
+            AdvanceTemporaryStageCycle();
+        }
+
+        private void AdvanceTemporaryStageCycle()
+        {
+            int nextStageId;
+
+            if (_useRandomStageCycleMock)
+            {
+                _temporaryCycleIndex++;
+
+                int stageCount = FindMoongchiGameLogic.GetStageIdsForWeek(_currentWeek).Count;
+                if (stageCount > 0 && _temporaryCycleIndex >= stageCount)
+                {
+                    _temporaryCycleIndex = 0;
+                    _temporaryCycleNumber++;
+                    DebugTool.Log($"[FindMoongchiPopup] 임시 스테이지 사이클 완료. 다음 사이클 시작: Cycle={_temporaryCycleNumber}", DebugType.FindMoongchi, this);
+                }
+
+                nextStageId = ResolveTemporaryStageId();
+            }
+            else
+            {
+                nextStageId = _currentStageId;
+            }
+
+            _gameLogic.LoadStage(nextStageId);
+            _currentStageId = _gameLogic.CurrentStageId;
+            _currentWeek = _gameLogic.CurrentWeek;
+
+            DebugTool.Log($"[FindMoongchiPopup] 다시하기 후 스테이지 로드: StageId={_currentStageId}, Week={_currentWeek}", DebugType.FindMoongchi, this);
+            RefreshGamePanel(false);
         }
 
         private void HandleClaimMissionClicked(int missionId)
@@ -529,11 +661,11 @@ namespace UI.FindMoongchi
             RefreshShopPanel();
         }
 
-        private void RefreshGamePanel()
+        private void RefreshGamePanel(bool animateNewReveals = false)
         {
             FindMoongchiGameViewData data = BuildGameViewData();
-            DebugTool.Log($"[FindMoongchiPopup] 게임 패널 갱신: Stage={_gameLogic.CurrentStageId}, Board={data.BoardWidth}x{data.BoardHeight}, 탐색기회={data.SearchChance}, 공개타일={data.RevealedTileIndices.Count}, 도구={data.Tools.Count}, 발견목표={_gameLogic.FoundTargetCount}/{_gameLogic.TargetCount}", DebugType.FindMoongchi, this);
-            _gamePanel?.SetData(data);
+            DebugTool.Log($"[FindMoongchiPopup] 게임 패널 갱신: Stage={_gameLogic.CurrentStageId}, Board={data.BoardWidth}x{data.BoardHeight}, 탐색기회={data.SearchChance}, 공개타일={data.RevealedTileIndices.Count}, 도구={data.Tools.Count}, 목표이미지={data.TargetVisuals.Count}, 발견목표={_gameLogic.FoundTargetCount}/{_gameLogic.TargetCount}, 연출={animateNewReveals}", DebugType.FindMoongchi, this);
+            _gamePanel?.SetData(data, animateNewReveals);
         }
 
         private FindMoongchiGameViewData BuildGameViewData()
@@ -568,7 +700,18 @@ namespace UI.FindMoongchi
                 {
                     TargetName = target.TargetName,
                     Icon = null,
+                    IconKey = target.IconKey,
                     IsFound = target.IsFound
+                });
+
+                data.TargetVisuals.Add(new FindMoongchiTargetVisualViewData
+                {
+                    TargetId = target.TargetId,
+                    TargetName = target.TargetName,
+                    Icon = null,
+                    IconKey = target.IconKey,
+                    IsFound = target.IsFound,
+                    CellIndices = new List<int>(target.CellIndices)
                 });
             }
 
@@ -577,24 +720,58 @@ namespace UI.FindMoongchi
 
         private void RefreshMissionPanel()
         {
-            List<FindMoongchiMissionViewData> missions = BuildMissionViewDataList();
-            DebugTool.Log($"[FindMoongchiPopup] 미션 패널 갱신: 미션={missions.Count}, 수령완료={_claimedMissionIds.Count}", DebugType.FindMoongchi, this);
-            _missionPanel?.SetData(missions);
+            List<FindMoongchiMissionViewData> dailyMissions = BuildMissionViewDataList(MoongchiMissionType.DAILY);
+            List<FindMoongchiMissionViewData> weeklyMissions = BuildWeeklyMissionViewDataList();
+
+            DebugTool.Log(
+                $"[FindMoongchiPopup] 미션 패널 갱신: Daily={dailyMissions.Count}, Weekly={weeklyMissions.Count}, 수령완료={_claimedMissionIds.Count}",
+                DebugType.FindMoongchi,
+                this);
+
+            _missionPanel?.SetData(dailyMissions, weeklyMissions);
         }
 
-        private List<FindMoongchiMissionViewData> BuildMissionViewDataList()
+        private List<FindMoongchiMissionViewData> BuildMissionViewDataList(MoongchiMissionType missionType)
         {
             List<FindMoongchiMissionViewData> result = new List<FindMoongchiMissionViewData>();
-            HideAndSeekMissionSO missionSO = MissionSO;
 
-            if (missionSO == null)
+            if (_dataManager == null)
             {
-                DebugTool.Warning("[FindMoongchiPopup] MissionSO가 없어 미션 데이터를 만들 수 없습니다.", DebugType.FindMoongchi, this);
+                DebugTool.Warning($"[FindMoongchiPopup] DataManager가 없어 미션 데이터를 만들 수 없습니다. Type={missionType}", DebugType.FindMoongchi, this);
                 return result;
             }
 
-            foreach (HideAndSeekMissionData mission in missionSO.Missions)
+            IReadOnlyList<MoongchiMissionData> missions = _dataManager.GetMissionsByType(missionType);
+
+            for (int i = 0; i < missions.Count; i++)
             {
+                MoongchiMissionData mission = missions[i];
+
+                if (mission == null)
+                    continue;
+
+                result.Add(BuildMissionViewData(mission));
+            }
+
+            return result;
+        }
+
+        private List<FindMoongchiMissionViewData> BuildWeeklyMissionViewDataList()
+        {
+            List<FindMoongchiMissionViewData> result = new List<FindMoongchiMissionViewData>();
+
+            if (_dataManager == null)
+            {
+                DebugTool.Warning("[FindMoongchiPopup] DataManager가 없어 주간 미션 데이터를 만들 수 없습니다.", DebugType.FindMoongchi, this);
+                return result;
+            }
+
+            IReadOnlyList<MoongchiMissionData> weeklyMissions = _dataManager.GetWeeklyMissions();
+
+            for (int i = 0; i < weeklyMissions.Count; i++)
+            {
+                MoongchiMissionData mission = weeklyMissions[i];
+
                 if (mission == null)
                     continue;
 
@@ -606,15 +783,15 @@ namespace UI.FindMoongchi
 
         private FindMoongchiMissionViewData BuildMissionViewDataById(int missionId)
         {
-            HideAndSeekMissionSO missionSO = MissionSO;
+            MoongchiMissionSO missionSO = MissionSO;
 
-            if (missionSO == null || !missionSO.TryGetMission(missionId, out HideAndSeekMissionData mission))
+            if (missionSO == null || !missionSO.TryGetMission(missionId, out MoongchiMissionData mission))
                 return null;
 
             return BuildMissionViewData(mission);
         }
 
-        private FindMoongchiMissionViewData BuildMissionViewData(HideAndSeekMissionData mission)
+        private FindMoongchiMissionViewData BuildMissionViewData(MoongchiMissionData mission)
         {
             int currentAmount = _completedMissionMock ? mission.TargetAmount : 0;
             FindMoongchiMissionSlotState state = FindMoongchiMissionSlotState.InProgress;
@@ -641,18 +818,18 @@ namespace UI.FindMoongchi
         {
             List<FindMoongchiShopViewData> itemProducts = new List<FindMoongchiShopViewData>();
             List<FindMoongchiShopViewData> profileProducts = new List<FindMoongchiShopViewData>();
-            HideAndSeekShopSO shopSO = ShopSO;
+            MoongchiShopSO shopSO = ShopSO;
 
             if (shopSO != null)
             {
-                foreach (HideAndSeekShopItemData item in shopSO.ShopItems)
+                foreach (MoongchiShopItemData item in shopSO.ShopItems)
                 {
                     if (item == null)
                         continue;
 
                     FindMoongchiShopViewData data = BuildShopViewData(item);
 
-                    if (data.ProductType == HideAndSeekProductType.PROFILE)
+                    if (data.ProductType == MoongchiProductType.PROFILE)
                         profileProducts.Add(data);
                     else
                         itemProducts.Add(data);
@@ -667,7 +844,7 @@ namespace UI.FindMoongchi
             _shopPanel?.SetData(_eventCoin, itemProducts, profileProducts);
         }
 
-        private FindMoongchiShopViewData BuildShopViewData(HideAndSeekShopItemData item)
+        private FindMoongchiShopViewData BuildShopViewData(MoongchiShopItemData item)
         {
             _shopPurchaseCounts.TryGetValue(item.ID, out int purchasedCount);
 
@@ -696,33 +873,33 @@ namespace UI.FindMoongchi
             return Mathf.Max(0, Mathf.Min(affordableCount, remainingLimit));
         }
 
-        private void ApplyMissionReward(HideAndSeekRewardData reward)
+        private void ApplyMissionReward(MoongchiRewardData reward)
         {
             if (reward == null || !reward.IsValid)
                 return;
 
             switch (reward.RewardType)
             {
-                case HideAndSeekCurrencyType.EVENT_COIN:
+                case MoongchiCurrencyType.EVENT_COIN:
                     _eventCoin += reward.RewardAmount;
                     DebugTool.Log($"[FindMoongchiPopup] 이벤트 재화 보상 반영: +{reward.RewardAmount}, Current={_eventCoin}", DebugType.FindMoongchi, this);
                     break;
-                case HideAndSeekCurrencyType.ENERGY:
+                case MoongchiCurrencyType.ENERGY:
                     DebugTool.Log($"[FindMoongchiPopup] 에너지 보상 지급 예정: {reward.RewardAmount}", DebugType.FindMoongchi, this);
                     break;
             }
         }
 
-        private string GetProductName(HideAndSeekProductType productType, int productId)
+        private string GetProductName(MoongchiProductType productType, int productId)
         {
-            if (productType == HideAndSeekProductType.ITEM)
+            if (productType == MoongchiProductType.ITEM)
                 return GetItemName(productId);
 
-            HideAndSeekProfileSO profileSO = ProfileSO;
-            if (productType == HideAndSeekProductType.PROFILE && profileSO != null && profileSO.TryGetProfile(productId, out HideAndSeekProfileData profile))
+            MoongchiProfileSO profileSO = ProfileSO;
+            if (productType == MoongchiProductType.PROFILE && profileSO != null && profileSO.TryGetProfile(productId, out MoongchiProfileData profile))
                 return profile.ProfileName;
 
-            if (productType == HideAndSeekProductType.CURRENCY)
+            if (productType == MoongchiProductType.CURRENCY)
             {
                 return productId switch
                 {
@@ -736,9 +913,9 @@ namespace UI.FindMoongchi
             return $"{productType} {productId}";
         }
 
-        private Sprite GetProductSprite(HideAndSeekProductType productType, int productId)
+        private Sprite GetProductSprite(MoongchiProductType productType, int productId)
         {
-            if (productType == HideAndSeekProductType.ITEM)
+            if (productType == MoongchiProductType.ITEM)
                 return GetItemSprite(productId);
 
             return null;
