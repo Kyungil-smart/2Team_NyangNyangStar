@@ -1,4 +1,5 @@
 using TMPro;
+using UI;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -11,11 +12,27 @@ namespace UI.FindMoongchi
         [SerializeField] private TMP_Text _itemNameText;
         [SerializeField] private TMP_Text _remainCountText;
         [SerializeField] private TMP_Text _costAmountText;
+        [Tooltip("가격 옆 이벤트 코인/재화 아이콘입니다. 비워두면 자식 중 CoinIcon을 자동 검색합니다.")]
+        [SerializeField] private Image _costIconImage;
         [SerializeField] private GameObject _soldOutOverlay;
         [SerializeField] private Button _button;
 
+        private UISpriteController _itemIconController;
+        private UISpriteController _costIconController;
         private FindMoongchiShopViewData _data;
         private System.Action<FindMoongchiShopViewData> _onClicked;
+
+        private void Awake()
+        {
+            if (_itemIcon != null)
+                _itemIconController = new UISpriteController(_itemIcon);
+
+            if (_costIconImage == null)
+                _costIconImage = FindChildImage(transform, "CoinIcon");
+
+            if (_costIconImage != null)
+                _costIconController = new UISpriteController(_costIconImage);
+        }
 
         public void SetData(FindMoongchiShopViewData data, System.Action<FindMoongchiShopViewData> onClicked)
         {
@@ -33,7 +50,8 @@ namespace UI.FindMoongchi
             SetText(_itemNameText, BuildName(data));
             SetText(_remainCountText, BuildLimitText(data));
             SetText(_costAmountText, data.CostAmount.ToString());
-            SetSprite(data.Icon);
+            SetIcon(data);
+            SetCostIcon(data.CostType);
 
             if (_soldOutOverlay != null)
                 _soldOutOverlay.SetActive(data.IsSoldOut);
@@ -67,19 +85,86 @@ namespace UI.FindMoongchi
 
         private static string BuildLimitText(FindMoongchiShopViewData data)
         {
-            if (!data.HasLimit)
-                return "구매 제한 없음";
+            if (data == null)
+                return string.Empty;
 
-            return $"{data.PurchasedCount}/{data.LimitCount}";
+            if (!data.HasLimit)
+                return "∞";
+
+            int remainingLimit = Mathf.Clamp(data.RemainingLimit, 0, data.LimitCount);
+            return $"{remainingLimit}/{data.LimitCount}";
         }
 
-        private void SetSprite(Sprite sprite)
+        private void SetIcon(FindMoongchiShopViewData data)
         {
             if (_itemIcon == null)
                 return;
 
-            _itemIcon.sprite = sprite;
-            _itemIcon.enabled = sprite != null;
+            if (!string.IsNullOrWhiteSpace(data.IconKey))
+            {
+                _itemIcon.enabled = true;
+
+                if (_itemIconController == null)
+                    _itemIconController = new UISpriteController(_itemIcon);
+
+                _itemIconController.ChangeSprite(data.IconKey);
+                return;
+            }
+
+            _itemIcon.sprite = data.Icon;
+            _itemIcon.enabled = data.Icon != null;
+        }
+
+        private void SetCostIcon(Data.ScriptableObjects.MoongchiSO.MoongchiCurrencyType costType)
+        {
+            if (_costIconImage == null)
+                return;
+
+            string key = GetCostIconKey(costType);
+
+            if (string.IsNullOrWhiteSpace(key))
+            {
+                _costIconImage.enabled = false;
+                return;
+            }
+
+            _costIconImage.enabled = true;
+
+            if (_costIconController == null)
+                _costIconController = new UISpriteController(_costIconImage);
+
+            _costIconController.ChangeSprite(key);
+        }
+
+        private static string GetCostIconKey(Data.ScriptableObjects.MoongchiSO.MoongchiCurrencyType costType)
+        {
+            return costType switch
+            {
+                Data.ScriptableObjects.MoongchiSO.MoongchiCurrencyType.EVENT_COIN => FindMoongchiSpriteKeys.EventCoinIcon,
+                Data.ScriptableObjects.MoongchiSO.MoongchiCurrencyType.ENERGY => FindMoongchiSpriteKeys.CommonEnergyIcon,
+                _ => FindMoongchiSpriteKeys.EventCoinIcon
+            };
+        }
+
+        private static Image FindChildImage(Transform root, string childName)
+        {
+            if (root == null || string.IsNullOrEmpty(childName))
+                return null;
+
+            for (int i = 0; i < root.childCount; i++)
+            {
+                Transform child = root.GetChild(i);
+
+                if (child.name == childName && child.TryGetComponent(out Image image))
+                    return image;
+
+                Image nested = FindChildImage(child, childName);
+
+                if (nested != null)
+                    return nested;
+            }
+
+            return null;
         }
 
         private static void SetText(TMP_Text text, string value)
@@ -92,6 +177,9 @@ namespace UI.FindMoongchi
         {
             if (_button != null)
                 _button.onClick.RemoveListener(HandleClicked);
+
+            _itemIconController?.Dispose();
+            _costIconController?.Dispose();
         }
     }
 }

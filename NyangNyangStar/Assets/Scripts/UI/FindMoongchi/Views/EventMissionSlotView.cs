@@ -1,5 +1,5 @@
 using System;
-using Data.ScriptableObjects.HideAndSeekSO;
+using Data.ScriptableObjects.MoongchiSO;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -15,24 +15,49 @@ namespace UI.FindMoongchi
         [Header("루트 버튼")]
         [SerializeField] private Button _claimButton;
 
+        [Header("Addressable 이미지")]
+        [SerializeField] private Image _slotBackgroundImage;
+
         [Header("이벤트 재화 보상")]
         [SerializeField] private Image _eventCoinRewardIcon;
         [SerializeField] private TMP_Text _eventCoinRewardAmountText;
         [SerializeField] private GameObject _eventCoinClaimedCoverImage;
+        [SerializeField] private Image _eventCoinClaimedCheckImage;
 
         [Header("에너지 보상")]
         [SerializeField] private GameObject _energyRewardRoot;
         [SerializeField] private Image _energyRewardIcon;
         [SerializeField] private TMP_Text _energyRewardAmountText;
         [SerializeField] private GameObject _energyClaimedCoverImage;
+        [SerializeField] private Image _energyClaimedCheckImage;
 
         private FindMoongchiMissionViewData _data;
         private Action<int> _onClaimClicked;
+
+        private UISpriteController _slotBackgroundController;
+        private UISpriteController _eventCoinIconController;
+        private UISpriteController _eventCoinCheckController;
+        private UISpriteController _energyIconController;
+        private UISpriteController _energyCheckController;
 
         private void Awake()
         {
             if (_claimButton == null)
                 _claimButton = GetComponent<Button>();
+
+            if (_slotBackgroundImage == null)
+                _slotBackgroundImage = GetComponent<Image>();
+
+            LoadStaticSprites();
+        }
+
+        private void LoadStaticSprites()
+        {
+            LoadSprite(ref _slotBackgroundController, _slotBackgroundImage, FindMoongchiSpriteKeys.SlotMission);
+            LoadSprite(ref _eventCoinIconController, _eventCoinRewardIcon, FindMoongchiSpriteKeys.IconCoin);
+            LoadSprite(ref _eventCoinCheckController, _eventCoinClaimedCheckImage, FindMoongchiSpriteKeys.IconCheck);
+            LoadSprite(ref _energyIconController, _energyRewardIcon, FindMoongchiSpriteKeys.IconEnergy);
+            LoadSprite(ref _energyCheckController, _energyClaimedCheckImage, FindMoongchiSpriteKeys.IconCheck);
         }
 
         public void SetData(FindMoongchiMissionViewData data, Action<int> onClaimClicked)
@@ -51,7 +76,7 @@ namespace UI.FindMoongchi
             SetText(_missionDescriptionText, data.MissionDescription);
             SetText(_missionProgressText, $"{data.CurrentAmount}/{data.TargetAmount}");
 
-            SetReward(_eventCoinRewardIcon, _eventCoinRewardAmountText, data.Reward1);
+            SetRewardAmount(_eventCoinRewardIcon, _eventCoinRewardAmountText, data.Reward1);
             bool hasEnergyReward = SetEnergyReward(data.Reward2);
 
             RefreshState(data.State, hasEnergyReward);
@@ -90,7 +115,7 @@ namespace UI.FindMoongchi
             SetActive(_energyClaimedCoverImage, isClaimed && hasEnergyReward);
         }
 
-        private bool SetEnergyReward(HideAndSeekRewardData reward)
+        private bool SetEnergyReward(MoongchiRewardData reward)
         {
             bool hasReward = reward != null && reward.IsValid;
 
@@ -108,28 +133,19 @@ namespace UI.FindMoongchi
                 return false;
             }
 
-            SetReward(_energyRewardIcon, _energyRewardAmountText, reward);
+            SetRewardAmount(_energyRewardIcon, _energyRewardAmountText, reward);
             return true;
         }
 
-        private static void SetReward(Image iconImage, TMP_Text amountText, HideAndSeekRewardData reward)
+        private static void SetRewardAmount(Image iconImage, TMP_Text amountText, MoongchiRewardData reward)
         {
-            if (reward == null || !reward.IsValid)
-            {
-                if (iconImage != null)
-                    iconImage.enabled = false;
-
-                if (amountText != null)
-                    amountText.text = string.Empty;
-
-                return;
-            }
+            bool isValid = reward != null && reward.IsValid;
 
             if (iconImage != null)
-                iconImage.enabled = true;
+                iconImage.enabled = isValid;
 
             if (amountText != null)
-                amountText.text = reward.RewardAmount.ToString();
+                amountText.text = isValid ? reward.RewardAmount.ToString() : string.Empty;
         }
 
         private static void SetText(TMP_Text text, string value)
@@ -144,10 +160,25 @@ namespace UI.FindMoongchi
                 target.SetActive(isActive);
         }
 
+        private static void LoadSprite(ref UISpriteController controller, Image image, string key)
+        {
+            if (image == null || string.IsNullOrEmpty(key))
+                return;
+
+            controller ??= new UISpriteController(image);
+            controller.ChangeSprite(key);
+        }
+
         private void OnDestroy()
         {
             if (_claimButton != null)
                 _claimButton.onClick.RemoveListener(HandleClaimButtonClicked);
+
+            _slotBackgroundController?.Dispose();
+            _eventCoinIconController?.Dispose();
+            _eventCoinCheckController?.Dispose();
+            _energyIconController?.Dispose();
+            _energyCheckController?.Dispose();
         }
     }
 }
