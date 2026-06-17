@@ -65,7 +65,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 728d88aa2c5d68e4582d13aa22c645fc, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 64b8daed39e4c21408201b0c399e64dc, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -112,7 +112,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 150, y: -150}
-  m_SizeDelta: {x: 225, y: 225}
+  m_SizeDelta: {x: 175, y: 175}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &8466003248574303344
 MonoBehaviour:
@@ -128,7 +128,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _iconImage: {fileID: 1314764933989947462}
   _countText: {fileID: 1503912228866519743}
-  _selectedFrame: {fileID: 4509513421211051431}
+  _selectedOutLine: {fileID: 4509513421211051431}
   _enabledColor: {r: 1, g: 1, b: 1, a: 1}
   _disabledColor: {r: 0.35, g: 0.35, b: 0.35, a: 1}
 --- !u!1 &4509513421211051431
@@ -143,12 +143,12 @@ GameObject:
   - component: {fileID: 5872622652484133285}
   - component: {fileID: 7162078037547703928}
   m_Layer: 5
-  m_Name: SelectedFrame
+  m_Name: SelectedOutLine
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &5617795060187309263
 RectTransform:
   m_ObjectHideFlags: 0
@@ -205,7 +205,7 @@ MonoBehaviour:
   m_FillClockwise: 1
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
-  m_PixelsPerUnitMultiplier: 2
+  m_PixelsPerUnitMultiplier: 1.2
 --- !u!1 &5395524877141772874
 GameObject:
   m_ObjectHideFlags: 0
@@ -240,8 +240,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: -10}
-  m_SizeDelta: {x: 100, y: 50}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 90, y: 50}
   m_Pivot: {x: 1, y: 1}
 --- !u!222 &3325713625672934318
 CanvasRenderer:
@@ -300,8 +300,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 50
-  m_fontSizeBase: 50
+  m_fontSize: 42
+  m_fontSizeBase: 42
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -378,7 +378,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 175, y: 175}
+  m_SizeDelta: {x: 150, y: 150}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &1275918758309312398
 CanvasRenderer:
