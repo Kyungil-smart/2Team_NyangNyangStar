@@ -443,6 +443,10 @@ namespace Data.Loader
                         return AddressableGroupType.Scratching;
                     case "Snap":
                         return AddressableGroupType.Snap;
+                    case "Finding":
+                        return AddressableGroupType.Finding;
+                    case "Items":
+                        return AddressableGroupType.Items;
                     default:
                         return AddressableGroupType.None;
                 }
