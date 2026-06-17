@@ -5,6 +5,13 @@ using Util;
 
 public class NyangNyangSnapCatController : MonoBehaviour
 {
+    public enum CatInteractionState
+    {
+        Idle,
+        Moving,
+        Eating
+    }
+
     [Header("고양이")]
     [Tooltip("이동시킬 고양이 RectTransform")]
     [SerializeField] private RectTransform _catRectTransform;
@@ -30,10 +37,13 @@ public class NyangNyangSnapCatController : MonoBehaviour
 
     private Tween _moveTween;
     private int _currentItemID;
+    private CatInteractionState _state = CatInteractionState.Idle;
 
     public RectTransform CatRectTransform => _catRectTransform;
     public int CurrentItemID => _currentItemID;
     public bool IsMoving => _moveTween != null && _moveTween.IsActive();
+    public CatInteractionState State => _state;
+    public bool IsEating => _state == CatInteractionState.Eating;
 
     public event Action<int> OnDestinationReached;
     public event Action OnInteractionStopped;
@@ -196,6 +206,7 @@ public class NyangNyangSnapCatController : MonoBehaviour
         StopInteraction(false);
 
         _currentItemID = itemID;
+        _state = CatInteractionState.Moving;
 
         PlayMoveAnimation(itemID);
         StartMoveTween(targetPosition);
@@ -233,12 +244,31 @@ public class NyangNyangSnapCatController : MonoBehaviour
         int arrivedItemID = _currentItemID;
 
         StopMoveAnimation();
+        _state = CatInteractionState.Idle;
         PlayPoseAnimation(arrivedItemID);
 
         OnDestinationReached?.Invoke(arrivedItemID);
 
         DebugTool.Log(
             $"[NyangNyangSnapCatController] 고양이 도구 위치 도착 / ItemID:{arrivedItemID}",
+            DebugType.UI,
+            this
+        );
+    }
+
+    public void EnterEating(int itemID)
+    {
+        if (itemID <= 0)
+            return;
+
+        _currentItemID = itemID;
+        _state = CatInteractionState.Eating;
+
+        StopMoveAnimation();
+        PlayEatingAnimation(itemID);
+
+        DebugTool.Log(
+            $"[NyangNyangSnapCatController] 고양이 섭취 상태 시작 / ItemID:{itemID}",
             DebugType.UI,
             this
         );
@@ -263,6 +293,7 @@ public class NyangNyangSnapCatController : MonoBehaviour
         StopPoseAnimation();
 
         _currentItemID = 0;
+        _state = CatInteractionState.Idle;
 
         if (notify && hadInteraction)
             OnInteractionStopped?.Invoke();
@@ -290,6 +321,14 @@ public class NyangNyangSnapCatController : MonoBehaviour
             return;
 
         // 추후 ItemID에 맞는 포즈 애니메이션 실행
+    }
+
+    private void PlayEatingAnimation(int itemID)
+    {
+        if (_animator == null)
+            return;
+
+        // 추후 섭취 애니메이션 Trigger 실행
     }
 
     private void StopPoseAnimation()
