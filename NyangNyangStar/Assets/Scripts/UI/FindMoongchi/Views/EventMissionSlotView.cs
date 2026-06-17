@@ -19,6 +19,7 @@ namespace UI.FindMoongchi
         [SerializeField] private Image _slotBackgroundImage;
 
         [Header("이벤트 재화 보상")]
+        [SerializeField] private GameObject _eventCoinRewardRoot;
         [SerializeField] private Image _eventCoinRewardIcon;
         [SerializeField] private TMP_Text _eventCoinRewardAmountText;
         [SerializeField] private GameObject _eventCoinClaimedCoverImage;
@@ -48,15 +49,51 @@ namespace UI.FindMoongchi
             if (_slotBackgroundImage == null)
                 _slotBackgroundImage = GetComponent<Image>();
 
+            ResolveRewardRoots();
             LoadStaticSprites();
+        }
+
+        private void ResolveRewardRoots()
+        {
+            if (_eventCoinRewardRoot == null)
+                _eventCoinRewardRoot = FindChildGameObject("EventCoinReward");
+
+            if (_energyRewardRoot == null)
+            {
+                _energyRewardRoot = FindChildGameObject("EnergyReward");
+
+                // 기존 프리팹 오타 호환
+                if (_energyRewardRoot == null)
+                    _energyRewardRoot = FindChildGameObject("EnegryReward");
+            }
+        }
+
+        private GameObject FindChildGameObject(string childName)
+        {
+            Transform[] children = GetComponentsInChildren<Transform>(true);
+
+            for (int i = 0; i < children.Length; i++)
+            {
+                Transform child = children[i];
+
+                if (child != null && child.name == childName)
+                    return child.gameObject;
+            }
+
+            return null;
         }
 
         private void LoadStaticSprites()
         {
             LoadSprite(ref _slotBackgroundController, _slotBackgroundImage, FindMoongchiSpriteKeys.SlotMission);
-            LoadSprite(ref _eventCoinIconController, _eventCoinRewardIcon, FindMoongchiSpriteKeys.IconCoin);
+
+            // 현재 프리팹 배치 기준:
+            // _eventCoinRewardRoot 계열 필드 = 왼쪽 보상 슬롯
+            // _energyRewardRoot 계열 필드 = 오른쪽 보상 슬롯
+            // 기획 UI 기준으로 왼쪽은 에너지, 오른쪽은 이벤트 코인을 표시한다.
+            LoadSprite(ref _eventCoinIconController, _eventCoinRewardIcon, FindMoongchiSpriteKeys.IconEnergy);
             LoadSprite(ref _eventCoinCheckController, _eventCoinClaimedCheckImage, FindMoongchiSpriteKeys.IconCheck);
-            LoadSprite(ref _energyIconController, _energyRewardIcon, FindMoongchiSpriteKeys.IconEnergy);
+            LoadSprite(ref _energyIconController, _energyRewardIcon, FindMoongchiSpriteKeys.IconCoin);
             LoadSprite(ref _energyCheckController, _energyClaimedCheckImage, FindMoongchiSpriteKeys.IconCheck);
         }
 
@@ -76,11 +113,46 @@ namespace UI.FindMoongchi
             SetText(_missionDescriptionText, data.MissionDescription);
             SetText(_missionProgressText, $"{data.CurrentAmount}/{data.TargetAmount}");
 
-            SetRewardAmount(_eventCoinRewardIcon, _eventCoinRewardAmountText, data.Reward1);
-            bool hasEnergyReward = SetEnergyReward(data.Reward2);
+            MoongchiRewardData energyReward = FindReward(data, MoongchiCurrencyType.ENERGY);
+            MoongchiRewardData eventCoinReward = FindReward(data, MoongchiCurrencyType.EVENT_COIN);
 
-            RefreshState(data.State, hasEnergyReward);
+            // 현재 프리팹 배치 기준:
+            // _eventCoinRewardRoot 계열 필드 = 왼쪽 보상 슬롯
+            // _energyRewardRoot 계열 필드 = 오른쪽 보상 슬롯
+            // 기획 UI 기준: 왼쪽 에너지, 오른쪽 이벤트 코인.
+            bool hasEnergyReward = SetRewardSlot(
+                _eventCoinRewardRoot,
+                _eventCoinRewardIcon,
+                _eventCoinRewardAmountText,
+                energyReward);
+
+            bool hasEventCoinReward = SetRewardSlot(
+                _energyRewardRoot,
+                _energyRewardIcon,
+                _energyRewardAmountText,
+                eventCoinReward);
+
+            RefreshState(data.State, hasEnergyReward, hasEventCoinReward);
             BindButton();
+        }
+
+        private static MoongchiRewardData FindReward(FindMoongchiMissionViewData data, MoongchiCurrencyType rewardType)
+        {
+            if (data == null)
+                return null;
+
+            if (IsRewardType(data.Reward1, rewardType))
+                return data.Reward1;
+
+            if (IsRewardType(data.Reward2, rewardType))
+                return data.Reward2;
+
+            return null;
+        }
+
+        private static bool IsRewardType(MoongchiRewardData reward, MoongchiCurrencyType rewardType)
+        {
+            return reward != null && reward.IsValid && reward.RewardType == rewardType;
         }
 
         private void BindButton()
@@ -103,7 +175,7 @@ namespace UI.FindMoongchi
             _onClaimClicked?.Invoke(_data.MissionId);
         }
 
-        private void RefreshState(FindMoongchiMissionSlotState state, bool hasEnergyReward)
+        private void RefreshState(FindMoongchiMissionSlotState state, bool hasEnergyReward, bool hasEventCoinReward)
         {
             bool canClaim = state == FindMoongchiMissionSlotState.Completed;
             bool isClaimed = state == FindMoongchiMissionSlotState.Claimed;
@@ -111,41 +183,25 @@ namespace UI.FindMoongchi
             if (_claimButton != null)
                 _claimButton.interactable = canClaim;
 
-            SetActive(_eventCoinClaimedCoverImage, isClaimed);
-            SetActive(_energyClaimedCoverImage, isClaimed && hasEnergyReward);
+            // 왼쪽 슬롯은 에너지, 오른쪽 슬롯은 이벤트 코인으로 사용한다.
+            SetActive(_eventCoinClaimedCoverImage, isClaimed && hasEnergyReward);
+            SetActive(_energyClaimedCoverImage, isClaimed && hasEventCoinReward);
         }
 
-        private bool SetEnergyReward(MoongchiRewardData reward)
+        private static bool SetRewardSlot(GameObject rewardRoot, Image iconImage, TMP_Text amountText, MoongchiRewardData reward)
         {
             bool hasReward = reward != null && reward.IsValid;
 
-            SetActive(_energyRewardRoot, hasReward);
-
-            if (!hasReward)
-            {
-                if (_energyRewardIcon != null)
-                    _energyRewardIcon.enabled = false;
-
-                if (_energyRewardAmountText != null)
-                    _energyRewardAmountText.text = string.Empty;
-
-                SetActive(_energyClaimedCoverImage, false);
-                return false;
-            }
-
-            SetRewardAmount(_energyRewardIcon, _energyRewardAmountText, reward);
-            return true;
-        }
-
-        private static void SetRewardAmount(Image iconImage, TMP_Text amountText, MoongchiRewardData reward)
-        {
-            bool isValid = reward != null && reward.IsValid;
+            // 보상이 없으면 아이콘/텍스트만 끄는 것이 아니라 보상 슬롯 배경까지 통째로 숨긴다.
+            SetActive(rewardRoot, hasReward);
 
             if (iconImage != null)
-                iconImage.enabled = isValid;
+                iconImage.enabled = hasReward;
 
             if (amountText != null)
-                amountText.text = isValid ? reward.RewardAmount.ToString() : string.Empty;
+                amountText.text = hasReward ? reward.RewardAmount.ToString() : string.Empty;
+
+            return hasReward;
         }
 
         private static void SetText(TMP_Text text, string value)

@@ -13,7 +13,7 @@ namespace UI.FindMoongchi
         [SerializeField] private TMP_Text _countText;
 
         [Tooltip("드래그 중 선택 표시용입니다. 기본 테두리라면 연결하지 마세요.")]
-        [SerializeField] private GameObject _selectedFrame;
+        [SerializeField] private GameObject _selectedOutLine;
 
         [Header("Color")]
         [SerializeField] private Color _enabledColor = Color.white;
@@ -52,8 +52,8 @@ namespace UI.FindMoongchi
 
         public void SetSelected(bool isSelected)
         {
-            if (_selectedFrame != null)
-                _selectedFrame.SetActive(isSelected);
+            if (_selectedOutLine != null)
+                _selectedOutLine.SetActive(isSelected);
         }
 
         private void SetIcon(Sprite sprite, bool isUsable)
