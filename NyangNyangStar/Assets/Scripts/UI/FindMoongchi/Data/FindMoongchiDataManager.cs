@@ -126,6 +126,24 @@ namespace UI.FindMoongchi
             }
         }
 
+        // 주차별 5개 스테이지 랜덤 사이클 준비 (진입 시)
+        public void EnsureStageCycleReady(FindMoongchiProgressRuntimeData progressData)
+        {
+            FindMoongchiStageCycleLogic.EnsureStageCycleReady(progressData);
+        }
+
+        // 현재 플레이 중인 스테이지 ID (1~10)
+        public int GetCurrentStageId(FindMoongchiProgressRuntimeData progressData)
+        {
+            return FindMoongchiStageCycleLogic.GetCurrentStageId(progressData);
+        }
+
+        // 스테이지 클리어 후 다음 스테이지 또는 새 사이클로 진행
+        public FindMoongchiStageAdvanceResult AdvanceStageOnClear(FindMoongchiProgressRuntimeData progressData)
+        {
+            return FindMoongchiStageCycleLogic.AdvanceStageOnClear(progressData);
+        }
+
         // 진행 상태 변경 후 호출하는 저장 API
         // 타일 오픈, 탐색 기회 차감, 미션 보상 수령, 상점 구매 후 RuntimeData 갱신 뒤 저장
         public async Task<bool> SaveProgressAsync(FindMoongchiProgressRuntimeData progressData)
