@@ -120,7 +120,7 @@ MonoBehaviour:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 8a2d371e13144bf47870fa2acd5b7b11
-    m_Address: FM_Target_Mungchi
+    m_Address: FM_Target_Moongchi
     m_ReadOnly: 0
     m_SerializedLabels:
     - Sprite
