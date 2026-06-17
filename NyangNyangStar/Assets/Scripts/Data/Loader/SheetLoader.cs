@@ -3,6 +3,7 @@ using System;
 using Data.Parsing;
 using Data.LibrarySystem;
 using Data.ScriptableObjects;
+using Data.ScriptableObjects.MoongchiSO;
 using Data.ScriptableObjects.KeyContainerSO;
 using Data.ScriptableObjects.MergeBoard;
 using Data.ScriptableObjects.ScratchingTimeSO;
@@ -42,6 +43,18 @@ namespace Data.Loader
         [SerializeField] private SheetData nyangNyangSnapToolURL;
         [SerializeField] private NyangNyangSnapToolSO nyangNyangSnapToolSo;
 
+        [Space(8)] [Header("뭉치를 찾아라 상점/보상")]
+        [SerializeField] private SheetData findMoongchiShopURL;
+        [SerializeField] private MoongchiShopSO findMoongchiShopSo;
+
+        [Space(8)] [Header("뭉치를 찾아라 미션")]
+        [SerializeField] private SheetData findMoongchiMissionURL;
+        [SerializeField] private MoongchiMissionSO findMoongchiMissionSo;
+
+        [Space(8)] [Header("뭉치를 찾아라 프로필")]
+        [SerializeField] private SheetData findMoongchiProfileURL;
+        [SerializeField] private MoongchiProfileSO findMoongchiProfileSo;
+
         [Space(8)] [SerializeField] private int _pendingSheetCount;
         public int PendingSheetCount => _pendingSheetCount;
 
@@ -68,7 +81,7 @@ namespace Data.Loader
             StopAllCoroutines();
             _pendingSheetCount = 0;
             _completedLoadStepCount = 0;
-            _totalLoadStepCount = Mathf.Max(1, (keyCotainerURL?.Count ?? 0) + 5);
+            _totalLoadStepCount = Mathf.Max(1, (keyCotainerURL?.Count ?? 0) + 8);
 
             ReportSheetProgress("시트 로드 시작");
 
@@ -97,7 +110,7 @@ namespace Data.Loader
 
         private void LoadContentSheets()
         {
-            _pendingSheetCount = 5;
+            _pendingSheetCount = 8;
 
             LoadSheetData(scratchingURL, scratchingSo, 1, () =>
             {
@@ -137,6 +150,24 @@ namespace Data.Loader
             {
                 OnSheetCompleted("냥냥스냅 포즈 시트 로드 완료");
                 nyangNyangSnapToolSo?.PrintData();
+            });
+
+            LoadSheetData(findMoongchiShopURL, findMoongchiShopSo, 2, () =>
+            {
+                OnSheetCompleted("뭉치를 찾아라 상점/보상 시트 로드 완료");
+                findMoongchiShopSo?.PrintData();
+            });
+
+            LoadSheetData(findMoongchiMissionURL, findMoongchiMissionSo, 2, () =>
+            {
+                OnSheetCompleted("뭉치를 찾아라 미션 시트 로드 완료");
+                findMoongchiMissionSo?.PrintData();
+            });
+
+            LoadSheetData(findMoongchiProfileURL, findMoongchiProfileSo, 2, () =>
+            {
+                OnSheetCompleted("뭉치를 찾아라 프로필 시트 로드 완료");
+                findMoongchiProfileSo?.PrintData();
             });
         }
 
@@ -190,7 +221,8 @@ namespace Data.Loader
 
                 for (int i = headerRowCount; i < lines.Length; i++)
                 {
-                    string line = lines[i].Trim();
+                    // 줄 끝 탭은 빈 컬럼 구분자라 Trim()으로 제거하면 TSV 컬럼 수가 줄어듭니다.
+                    string line = TrimSheetLine(lines[i]);
 
                     if (string.IsNullOrEmpty(line))
                         continue;
@@ -280,7 +312,7 @@ namespace Data.Loader
 
                     for (int row = headerRowCount; row < lines.Length; row++)
                     {
-                        string line = lines[row].Trim();
+                        string line = TrimSheetLine(lines[row]);
 
                         if (string.IsNullOrEmpty(line))
                             continue;
@@ -411,6 +443,10 @@ namespace Data.Loader
                         return AddressableGroupType.Scratching;
                     case "Snap":
                         return AddressableGroupType.Snap;
+                    case "Finding":
+                        return AddressableGroupType.Finding;
+                    case "Items":
+                        return AddressableGroupType.Items;
                     default:
                         return AddressableGroupType.None;
                 }
@@ -430,6 +466,13 @@ namespace Data.Loader
                 : (float)_completedLoadStepCount / _totalLoadStepCount;
 
             OnSheetLoadProgressChanged?.Invoke(Mathf.Clamp01(progress), message);
+        }
+
+        private static string TrimSheetLine(string line)
+        {
+            return string.IsNullOrEmpty(line)
+                ? string.Empty
+                : line.TrimEnd('\r', '\n');
         }
 
         public void ClearDatas()
@@ -452,6 +495,10 @@ namespace Data.Loader
             nyangNyangSnapBackgroundSo?.ClearData();
             itemDatabaseSo?.ClearData();
             nyangNyangSnapPoseSo?.ClearData();
+            nyangNyangSnapToolSo?.ClearData();
+            findMoongchiShopSo?.ClearData();
+            findMoongchiMissionSo?.ClearData();
+            findMoongchiProfileSo?.ClearData();
 
             _keyContainerDict.Clear();
 

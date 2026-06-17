@@ -28,6 +28,8 @@ public class MainUI : UIScene
     [Tooltip("공방 머지 보드판")][SerializeField] private Button _workshopMergeBoardButton;
     [Tooltip("기본 머지 보드판")][SerializeField] private Button _mainMergeBoardButton;
     [Tooltip("로그 아웃")][SerializeField] private Button _logOutButton;
+    
+    [Tooltip("뭉치를 찾아라")] [SerializeField] private Button _findMoongchiButton;
 
     private MainUISprite _mainUISprite;
     private MergeBoardController _mergeBoardController;
@@ -70,6 +72,7 @@ public class MainUI : UIScene
         _workshopMergeBoardButton = Get<Button>((int)MainUIButtons.WorkshopMergeBoardButton);
         _mainMergeBoardButton = Get<Button>((int)MainUIButtons.MainMergeBoardButton);
         _logOutButton = Get<Button>((int)MainUIButtons.LogOutButton);
+        _findMoongchiButton = Get<Button>((int)MainUIButtons.FindMoongchiButton);
 
         if (_mainUICanvas != null)
         {
@@ -98,6 +101,7 @@ public class MainUI : UIScene
         InitPopup(KeyContainer.Prefabs.AffinityPopupUI, _affinityButton);
         InitPopup(KeyContainer.Prefabs.NyangNyangSnapStagePopUpUI, _nyangNyangSnapButton);
         InitPopup(KeyContainer.Prefabs.NyangStargramHomeProfile, _meowMeowStarButton);
+        InitPopup(KeyContainer.Prefabs.FindMoongchiPopupUI, _findMoongchiButton);
 
         if (_logOutButton != null)
             _logOutButton.onClick.AddListener(LogOutButton);
@@ -121,6 +125,7 @@ public class MainUI : UIScene
         RemovePopupButton(_affinityButton);
         RemovePopupButton(_nyangNyangSnapButton);
         RemovePopupButton(_meowMeowStarButton);
+        RemovePopupButton(_findMoongchiButton);
 
         if (_mainMergeBoardButton != null)
             _mainMergeBoardButton.onClick.RemoveAllListeners();
@@ -368,4 +373,5 @@ public enum MainUIButtons
     WorkshopMergeBoardButton,
     MainMergeBoardButton,
     LogOutButton,
+    FindMoongchiButton,
 }

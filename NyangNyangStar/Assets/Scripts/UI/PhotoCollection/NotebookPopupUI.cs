@@ -19,6 +19,8 @@ public class NotebookPopupUI : UIPopup
     [Header("고양이 상세보기 버튼")]
     [SerializeField] private Button _catBackground;
 
+    private NotebookPopupSprite _sprite;
+
     public override void Init()
     {
         Bind<Button>(typeof(NotebookPopupButtons));
@@ -29,6 +31,9 @@ public class NotebookPopupUI : UIPopup
 
         BindButtons();
         InitPopup(KeyContainer.Prefabs.SelectedCatPopupUI, _catBackground);
+
+        _sprite = GetComponent<NotebookPopupSprite>();
+        _sprite.Init();
     }
 
     private void BindButtons()

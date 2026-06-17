@@ -18,6 +18,7 @@ public class PhotoCollectionPopupUI : UIPopup
     [Tooltip("필터 닫기 버튼")][SerializeField] private Button _filterCloseButton;
 
     private SelectedCatPopupUI _selectedCatPopup;
+    private PhotoCollectionPopupSprite _sprite;
 
     public override void Init()
     {
@@ -33,6 +34,9 @@ public class PhotoCollectionPopupUI : UIPopup
         _filterPanel = GetObject((int)PhotoCollectionPopupObjects.FilterPanel);
 
         BindButtons();
+
+        _sprite = GetComponent<PhotoCollectionPopupSprite>();
+        _sprite.Init();
     }
 
     private void OnEnable()

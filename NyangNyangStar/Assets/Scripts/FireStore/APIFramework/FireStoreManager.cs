@@ -21,7 +21,7 @@ public class FireStoreManager : MonoBehaviour
     public static FireStoreManager Instance { get; private set; }
 
     // 최상위(루트) SO만 등록한다. 서브컬렉션 SO는 각 부모 SO의 subCollections에만 등록한다.
-    // (구 필드명 m_Data → rootSOs. FormerlySerializedAs로 기존 프리팹/씬 참조를 그대로 승계한다.)
+
     [FormerlySerializedAs("m_Data")]
     [SerializeField] private List<BaseFireStore> rootSOs;
     private Dictionary<DataType, BaseFireStore> m_DataDictionary;

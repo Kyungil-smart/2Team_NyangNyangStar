@@ -186,7 +186,7 @@ public static class DebugTool
             DebugType.Addressable => "#FFD166",
             DebugType.ScratchingTime => "#FF3B30",
             DebugType.Board => "#00C2FF",
-            // DebugType.Wave => "#FF7A00",
+            DebugType.FindMoongchi => "#FF7A00",
             // DebugType.Node => "#A3FF12",
             DebugType.Network => "#00E676",
             DebugType.UI => "#FF4FD8",
@@ -214,5 +214,6 @@ public enum DebugType
     Missing,
     ScratchingTime,
     Board,
+    FindMoongchi,
     Default,
 }
