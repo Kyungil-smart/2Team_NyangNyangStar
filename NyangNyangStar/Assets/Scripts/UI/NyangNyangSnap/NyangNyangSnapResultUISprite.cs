@@ -11,6 +11,7 @@ public class NyangNyangSnapResultUISprite : UIBase
     private Image _resultPhotoImage; // 최고 점수 사진을 표시할 Image
     private Image _poseGaugeFillImage;
     private Image _compositionGaugeFillImage;
+    private Image _backGroundGaugeFillImage;
     private Image _reactionGaugeFillImage;
 
     private UISpriteController[] _spriteController;
@@ -36,7 +37,10 @@ public class NyangNyangSnapResultUISprite : UIBase
 
         _poseGaugeFillImage = GetImage((int)NyangNyangSnapResultImages.PoseGaugeFillImage);
         _compositionGaugeFillImage = GetImage((int)NyangNyangSnapResultImages.CompositionGaugeFillImage);
+        _backGroundGaugeFillImage = GetImage((int)NyangNyangSnapResultImages.BackGroundGaugeFillImage);
         _reactionGaugeFillImage = GetImage((int)NyangNyangSnapResultImages.ReactionGaugeFillImage);
+
+
 
         _starFillImages[0] = GetImage((int)NyangNyangSnapResultImages.StarFillImage1);
         _starFillImages[1] = GetImage((int)NyangNyangSnapResultImages.StarFillImage2);
@@ -87,6 +91,7 @@ public class NyangNyangSnapResultUISprite : UIBase
     {
         SetGaugeImmediate(_poseGaugeFillImage, 0f);
         SetGaugeImmediate(_compositionGaugeFillImage, 0f);
+        SetGaugeImmediate(_backGroundGaugeFillImage, 0f);
         SetGaugeImmediate(_reactionGaugeFillImage, 0f);
         ResetStarImages();
 
@@ -161,6 +166,11 @@ public class NyangNyangSnapResultUISprite : UIBase
     public Tween CreateReactionGaugeTween(float targetValue, float duration)
     {
         return CreateGaugeTween(_reactionGaugeFillImage, targetValue, duration);
+    }
+
+    public Tween CreateBackGroundGaugeTween(float targetValue, float duration)
+    {
+        return CreateGaugeTween(_backGroundGaugeFillImage, targetValue, duration);
     }
 
     public Sequence CreateStarFillSequence(int totalScore, float starFillDuration)
@@ -261,6 +271,8 @@ public enum NyangNyangSnapResultImages
     PoseGaugeFillImage,
     CompositionGaugeBackImage,
     CompositionGaugeFillImage,
+    BackGroundBackImage,
+    BackGroundGaugeFillImage,
     ReactionGaugeBackImage,
     ReactionGaugeFillImage,
     SelectPhotosButton,

@@ -27,6 +27,7 @@ public class NyangNyangSnapResultUI : UIPopup
     [SerializeField] private TMP_Text _poseNameText;
     [SerializeField] private TMP_Text _poseScoreText;
     [SerializeField] private TMP_Text _compositionScoreText;
+    [SerializeField] private TMP_Text _backGroundScoreText;
     [SerializeField] private TMP_Text _reactionScoreText;
     [SerializeField] private TMP_Text _totalScoreText;
 
@@ -151,7 +152,7 @@ public class NyangNyangSnapResultUI : UIPopup
                     storagePath = storagePath,
                     poseScore = record.ScoreResult.PoseScore,
                     compositionScore = record.ScoreResult.CompositionScore,
-                    timingScore = record.ScoreResult.ReactionScore,
+                    timingScore = record.ScoreResult.TimingScore,
                     //backGroundScore = record.ScoreResult.BackGroundScore,
 
                     totalScore = record.ScoreResult.TotalScore,
@@ -300,6 +301,7 @@ public class NyangNyangSnapResultUI : UIPopup
         if (_totalScoreText != null) _totalScoreText.text = "0";
         if (_poseScoreText != null) _poseScoreText.text = "0";
         if (_compositionScoreText != null) _compositionScoreText.text = "0";
+        if (_backGroundScoreText != null) _backGroundScoreText.text = "0";
         if (_reactionScoreText != null) _reactionScoreText.text = "0";
         if (_poseNameText != null) _poseNameText.text = string.Empty;
     }
@@ -334,8 +336,13 @@ public class NyangNyangSnapResultUI : UIPopup
 
         _resultSequence.AppendInterval(_sequenceInterval);
 
-        _resultSequence.Append(_resultSprite.CreateReactionGaugeTween(scoreResult.ReactionGaugeValue, _gaugeFillDuration));
-        _resultSequence.Join(CreateIntTextTween(_reactionScoreText, 0, scoreResult.ReactionScore, _gaugeFillDuration));
+        _resultSequence.Append(_resultSprite.CreateBackGroundGaugeTween(scoreResult.BackgroundGaugeValue, _gaugeFillDuration));
+        _resultSequence.Join(CreateIntTextTween(_backGroundScoreText, 0, scoreResult.BackgroundScore, _gaugeFillDuration));
+
+        _resultSequence.AppendInterval(_sequenceInterval);
+
+        _resultSequence.Append(_resultSprite.CreateReactionGaugeTween(scoreResult.TimingGaugeValue, _gaugeFillDuration));
+        _resultSequence.Join(CreateIntTextTween(_reactionScoreText, 0, scoreResult.TimingScore, _gaugeFillDuration));
 
         _resultSequence.AppendInterval(_sequenceInterval);
 
