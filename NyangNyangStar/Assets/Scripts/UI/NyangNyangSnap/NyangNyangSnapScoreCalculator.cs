@@ -3,32 +3,52 @@ using Util;
 
 public class NyangNyangSnapScoreCalculator
 {
-    private const int MaxPoseScore = 40;
-    private const int MaxCompositionScore = 30;
-    private const int MaxReactionScore = 30;
-
-    private const int MaxPoseRawScore = 20;
+    private const int MaxPoseScore = 25;
+    private const int MaxCompositionScore = 25;
+    private const int MaxBackgroundScore = 25;
+    private const int MaxTimingScore = 25;
 
     public NyangNyangSnapScoreResult Calculate(
         NyangNyangSnapPoseData poseData,
         float compositionRate,
-        float reactionRate)
+        int backgroundScore,
+        float timingRate)
     {
-        int poseScore = CalculatePoseScore(poseData);
-        int compositionScore = CalculateRateScore(compositionRate, MaxCompositionScore);
-        int reactionScore = CalculateRateScore(reactionRate, MaxReactionScore);
+        int calculatedPoseScore =
+            CalculatePoseScore(poseData);
+
+        int calculatedCompositionScore =
+            CalculateRateScore(
+                compositionRate,
+                MaxCompositionScore
+            );
+
+        int calculatedBackgroundScore =
+            Mathf.Clamp(
+                backgroundScore,
+                0,
+                MaxBackgroundScore
+            );
+
+        int calculatedTimingScore =
+            CalculateRateScore(
+                timingRate,
+                MaxTimingScore
+            );
 
         NyangNyangSnapScoreResult result = new(
-            poseScore,
-            compositionScore,
-            reactionScore
+            calculatedPoseScore,
+            calculatedCompositionScore,
+            calculatedBackgroundScore,
+            calculatedTimingScore
         );
 
         DebugTool.Log(
             $"[냥냥스냅 점수 계산] " +
             $"포즈: {result.PoseScore}/{MaxPoseScore}, " +
             $"구도: {result.CompositionScore}/{MaxCompositionScore}, " +
-            $"반응: {result.ReactionScore}/{MaxReactionScore}, " +
+            $"배경: {result.BackgroundScore}/{MaxBackgroundScore}, " +
+            $"타이밍: {result.TimingScore}/{MaxTimingScore}, " +
             $"총점: {result.TotalScore}/100",
             DebugType.Game
         );
@@ -36,21 +56,37 @@ public class NyangNyangSnapScoreCalculator
         return result;
     }
 
-    private int CalculatePoseScore(NyangNyangSnapPoseData poseData)
+    private int CalculatePoseScore(
+        NyangNyangSnapPoseData poseData)
     {
         if (poseData == null)
         {
-            DebugTool.Warning("[NyangNyangSnapScoreCalculator] 포즈 데이터가 없습니다. 포즈 점수는 0점 처리됩니다.", DebugType.Game);
+            DebugTool.Warning(
+                "[NyangNyangSnapScoreCalculator] " +
+                "포즈 데이터가 없어 포즈 점수를 0점으로 처리합니다.",
+                DebugType.Game
+            );
+
             return 0;
         }
 
-        float poseRate = Mathf.Clamp01((float)poseData.PoseScore / MaxPoseRawScore);
-        return Mathf.RoundToInt(poseRate * MaxPoseScore);
+        // Sheets의 포즈 점수가 이미 0~25점 기준이므로 그대로 사용합니다.
+        return Mathf.Clamp(
+            poseData.PoseScore,
+            0,
+            MaxPoseScore
+        );
     }
 
-    private int CalculateRateScore(float rate, int maxScore)
+    private int CalculateRateScore(
+        float rate,
+        int maxScore)
     {
-        float clampedRate = Mathf.Clamp01(rate);
-        return Mathf.RoundToInt(clampedRate * maxScore);
+        float clampedRate =
+            Mathf.Clamp01(rate);
+
+        return Mathf.RoundToInt(
+            clampedRate * maxScore
+        );
     }
 }

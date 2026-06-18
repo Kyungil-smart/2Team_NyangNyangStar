@@ -1589,7 +1589,7 @@ GameObject:
   - component: {fileID: 3829547326141088709}
   - component: {fileID: 6353894720071349524}
   - component: {fileID: 9036223199996659869}
-  m_Layer: 8
+  m_Layer: 5
   m_Name: Image
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1850,6 +1850,81 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!1 &2640116821755626027
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 98301373109348842}
+  - component: {fileID: 4693932851541059418}
+  - component: {fileID: 9220338045846522996}
+  m_Layer: 3
+  m_Name: Center
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 0
+--- !u!224 &98301373109348842
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2640116821755626027}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 8370192271459856048}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 100, y: 100}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!222 &4693932851541059418
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2640116821755626027}
+  m_CullTransparentMesh: 1
+--- !u!114 &9220338045846522996
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2640116821755626027}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 21300000, guid: ff173edddbbc14744867dcf5527a0a2e, type: 3}
+  m_Type: 0
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
 --- !u!1 &3040049425424261572
 GameObject:
   m_ObjectHideFlags: 0
@@ -1961,7 +2036,7 @@ Camera:
   m_Depth: 0
   m_CullingMask:
     serializedVersion: 2
-    m_Bits: 256
+    m_Bits: 55
   m_RenderingPath: -1
   m_TargetTexture: {fileID: 8400000, guid: ccaf9685f9909f648987fc9e4a20bf1f, type: 2}
   m_TargetDisplay: 0
@@ -2465,7 +2540,7 @@ GameObject:
   - component: {fileID: 5710663629039144230}
   - component: {fileID: 3465686997959130628}
   - component: {fileID: 4419289690824942654}
-  m_Layer: 8
+  m_Layer: 5
   m_Name: BackPanel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2583,7 +2658,7 @@ GameObject:
   - component: {fileID: 4703726863570528669}
   - component: {fileID: 7190087880014200869}
   - component: {fileID: 9102764649544598510}
-  m_Layer: 8
+  m_Layer: 5
   m_Name: MarkerImage
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2659,7 +2734,7 @@ GameObject:
   - component: {fileID: 2210590919572024503}
   - component: {fileID: 8405178368531046437}
   - component: {fileID: 4773059032378355124}
-  m_Layer: 8
+  m_Layer: 5
   m_Name: Cat
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2713,7 +2788,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 71dc8ca2ce8d5de4290e8e78de60b21c, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 2ff5def808e6ba244affd8fe99366b30, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -2804,11 +2879,11 @@ MonoBehaviour:
   _compositionCalculator: {fileID: -7232552080694976061}
   _captureRecorder: {fileID: 1308053347534607216}
   _poseSO: {fileID: 11400000, guid: 2d506e23c35a91140a7555d9a210a339, type: 2}
-  _placementController: {fileID: 0}
-  _catController: {fileID: 0}
+  _placementController: {fileID: 7050640827036175901}
+  _catController: {fileID: 4773059032378355124}
   _toolSO: {fileID: 11400000, guid: 2522bd42372e16c43984c7db3cb8a73a, type: 2}
   _itemRangeScale: 10
-  _reactionRate: 0.6
+  _timingRate: 0.6
   _captureCountTextName: CaptureCountText
   _captureCountText: {fileID: 7740484312729834847}
   _catObjectName: Cat
@@ -2838,9 +2913,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _captureCamera: {fileID: 3520544343773344542}
+  _photoRoot: {fileID: 8370192271459856048}
   _targetCatRect: {fileID: 8549330611516343131}
-  _perfectRadiusRate: 0.12
-  _failRadiusRate: 0.5
+  _targetPointRect: {fileID: 98301373109348842}
+  _targetPointImage: {fileID: 9220338045846522996}
+  _horizontalPaddingRate: 0.1
+  _verticalPaddingRate: 0.1
 --- !u!114 &641592965699989632
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3158,7 +3236,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8370192271459856048}
-  m_Layer: 8
+  m_Layer: 5
   m_Name: PhotoRoot
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3181,6 +3259,7 @@ RectTransform:
   - {fileID: 8549330611516343131}
   - {fileID: 3829547326141088709}
   - {fileID: 4703726863570528669}
+  - {fileID: 98301373109348842}
   m_Father: {fileID: 4254728560050255649}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -3710,7 +3789,7 @@ GameObject:
   - component: {fileID: 8570667758248947741}
   - component: {fileID: 6274842763352651203}
   - component: {fileID: 1448257181352355389}
-  m_Layer: 8
+  m_Layer: 0
   m_Name: PhotoCanvas
   m_TagString: Untagged
   m_Icon: {fileID: 0}
