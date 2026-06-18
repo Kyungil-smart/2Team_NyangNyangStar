@@ -59,7 +59,7 @@ namespace UI.FindMoongchi
         public const string IconGem = CommonGemIcon;
 
         // 목표물
-        public const string TargetMungchi = "FM_Target_Mungchi";
+        public const string TargetMoongchi = "FM_Target_Moongchi";
         public const string TargetCap = "FM_Target_Cap";
         public const string TargetChargingCable = "FM_Target_ChargingCable";
         public const string TargetDiary = "FM_Target_Diary";

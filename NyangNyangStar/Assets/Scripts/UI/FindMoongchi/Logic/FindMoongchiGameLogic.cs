@@ -307,7 +307,7 @@ namespace UI.FindMoongchi
                 height,
                 new List<FindMoongchiTargetRuntimeData>
                 {
-                    CreateTarget(1001, "뭉치", true, CreateRectangleCells(1, 0, 3, 3, width, height), tileCount, FindMoongchiSpriteKeys.TargetMungchi),
+                    CreateTarget(1001, "뭉치", true, CreateRectangleCells(1, 0, 3, 3, width, height), tileCount, FindMoongchiSpriteKeys.TargetMoongchi),
                     CreateTarget(1002, "스마트폰", false, CreateRectangleCells(5, 2, 2, 3, width, height), tileCount, FindMoongchiSpriteKeys.TargetSmartphone),
                     CreateTarget(1003, "무선 이어폰 케이스", false, CreateRectangleCells(6, 6, 1, 2, width, height), tileCount, FindMoongchiSpriteKeys.TargetEarbuds)
                 });
@@ -326,7 +326,7 @@ namespace UI.FindMoongchi
                 height,
                 new List<FindMoongchiTargetRuntimeData>
                 {
-                    CreateTarget(2001, "뭉치", true, CreateRectangleCells(1, 0, 3, 3, width, height), tileCount, FindMoongchiSpriteKeys.TargetMungchi),
+                    CreateTarget(2001, "뭉치", true, CreateRectangleCells(1, 0, 3, 3, width, height), tileCount, FindMoongchiSpriteKeys.TargetMoongchi),
                     CreateTarget(2002, "다이어리", false, CreateRectangleCells(5, 2, 2, 3, width, height), tileCount, FindMoongchiSpriteKeys.TargetDiary),
                     CreateTarget(2003, "빗", false, CreateRectangleCells(0, 5, 1, 3, width, height), tileCount, FindMoongchiSpriteKeys.TargetHairbrush)
                 });
@@ -345,7 +345,7 @@ namespace UI.FindMoongchi
                 height,
                 new List<FindMoongchiTargetRuntimeData>
                 {
-                    CreateTarget(3001, "뭉치", true, CreateRectangleCells(4, 4, 3, 3, width, height), tileCount, FindMoongchiSpriteKeys.TargetMungchi),
+                    CreateTarget(3001, "뭉치", true, CreateRectangleCells(4, 4, 3, 3, width, height), tileCount, FindMoongchiSpriteKeys.TargetMoongchi),
                     CreateTarget(3002, "양말", false, CreateCellsFromOffsets(0, 0, width, height, (0,0), (0,1), (0,2), (1,2)), tileCount, FindMoongchiSpriteKeys.TargetSocks),
                     CreateTarget(3003, "볼펜", false, CreateRectangleCells(2, 6, 1, 3, width, height), tileCount, FindMoongchiSpriteKeys.TargetPen)
                 });
@@ -364,7 +364,7 @@ namespace UI.FindMoongchi
                 height,
                 new List<FindMoongchiTargetRuntimeData>
                 {
-                    CreateTarget(4001, "뭉치", true, CreateRectangleCells(2, 4, 3, 3, width, height), tileCount, FindMoongchiSpriteKeys.TargetMungchi),
+                    CreateTarget(4001, "뭉치", true, CreateRectangleCells(2, 4, 3, 3, width, height), tileCount, FindMoongchiSpriteKeys.TargetMoongchi),
                     CreateTarget(4002, "TV 리모컨", false, CreateRectangleCells(3, 0, 1, 4, width, height), tileCount, FindMoongchiSpriteKeys.TargetRemoteControl),
                     CreateTarget(4003, "안경", false, CreateRectangleCells(4, 8, 3, 1, width, height), tileCount, FindMoongchiSpriteKeys.TargetGlasses)
                 });
@@ -383,7 +383,7 @@ namespace UI.FindMoongchi
                 height,
                 new List<FindMoongchiTargetRuntimeData>
                 {
-                    CreateTarget(5001, "뭉치", true, CreateRectangleCells(4, 5, 3, 3, width, height), tileCount, FindMoongchiSpriteKeys.TargetMungchi),
+                    CreateTarget(5001, "뭉치", true, CreateRectangleCells(4, 5, 3, 3, width, height), tileCount, FindMoongchiSpriteKeys.TargetMoongchi),
                     CreateTarget(5002, "열쇠 꾸러미", false, CreateRectangleCells(1, 4, 2, 2, width, height), tileCount, FindMoongchiSpriteKeys.TargetKeys),
                     CreateTarget(5003, "두툼한 지갑", false, CreateRectangleCells(3, 1, 2, 2, width, height), tileCount, FindMoongchiSpriteKeys.TargetWallet)
                 });
@@ -402,7 +402,7 @@ namespace UI.FindMoongchi
                 height,
                 new List<FindMoongchiTargetRuntimeData>
                 {
-                    CreateTarget(6001, "뭉치", true, CreateRectangleCells(3, 2, 3, 3, width, height), tileCount, FindMoongchiSpriteKeys.TargetMungchi),
+                    CreateTarget(6001, "뭉치", true, CreateRectangleCells(3, 2, 3, 3, width, height), tileCount, FindMoongchiSpriteKeys.TargetMoongchi),
                     CreateTarget(6002, "모자", false, CreateRectangleCells(0, 3, 2, 3, width, height), tileCount, FindMoongchiSpriteKeys.TargetCap),
                     CreateTarget(6003, "립밤", false, CreateRectangleCells(6, 0, 1, 2, width, height), tileCount, FindMoongchiSpriteKeys.TargetLipBalm)
                 });
@@ -421,7 +421,7 @@ namespace UI.FindMoongchi
                 height,
                 new List<FindMoongchiTargetRuntimeData>
                 {
-                    CreateTarget(7001, "뭉치", true, CreateRectangleCells(0, 3, 3, 3, width, height), tileCount, FindMoongchiSpriteKeys.TargetMungchi),
+                    CreateTarget(7001, "뭉치", true, CreateRectangleCells(0, 3, 3, 3, width, height), tileCount, FindMoongchiSpriteKeys.TargetMoongchi),
                     CreateTarget(7002, "접이식 에코백", false, CreateRectangleCells(3, 0, 2, 2, width, height), tileCount, FindMoongchiSpriteKeys.TargetEcoBag),
                     CreateTarget(7003, "보조배터리", false, CreateRectangleCells(5, 4, 2, 2, width, height), tileCount, FindMoongchiSpriteKeys.TargetPowerBank)
                 });
@@ -440,7 +440,7 @@ namespace UI.FindMoongchi
                 height,
                 new List<FindMoongchiTargetRuntimeData>
                 {
-                    CreateTarget(8001, "뭉치", true, CreateRectangleCells(4, 1, 3, 3, width, height), tileCount, FindMoongchiSpriteKeys.TargetMungchi),
+                    CreateTarget(8001, "뭉치", true, CreateRectangleCells(4, 1, 3, 3, width, height), tileCount, FindMoongchiSpriteKeys.TargetMoongchi),
                     CreateTarget(8002, "충전 케이블", false, CreateCellsFromOffsets(0, 6, width, height, (0,0), (0,1), (0,2), (1,2), (2,2)), tileCount, FindMoongchiSpriteKeys.TargetChargingCable),
                     CreateTarget(8003, "핸드크림", false, CreateRectangleCells(3, 3, 1, 3, width, height), tileCount, FindMoongchiSpriteKeys.TargetHandCream)
                 });
@@ -459,7 +459,7 @@ namespace UI.FindMoongchi
                 height,
                 new List<FindMoongchiTargetRuntimeData>
                 {
-                    CreateTarget(9001, "뭉치", true, CreateRectangleCells(1, 4, 3, 3, width, height), tileCount, FindMoongchiSpriteKeys.TargetMungchi),
+                    CreateTarget(9001, "뭉치", true, CreateRectangleCells(1, 4, 3, 3, width, height), tileCount, FindMoongchiSpriteKeys.TargetMoongchi),
                     CreateTarget(9002, "무선 마우스", false, CreateRectangleCells(4, 0, 2, 2, width, height), tileCount, FindMoongchiSpriteKeys.TargetMouse),
                     CreateTarget(9003, "사원증", false, CreateRectangleCells(5, 4, 1, 4, width, height), tileCount, FindMoongchiSpriteKeys.TargetIDCard)
                 });
@@ -478,7 +478,7 @@ namespace UI.FindMoongchi
                 height,
                 new List<FindMoongchiTargetRuntimeData>
                 {
-                    CreateTarget(10001, "뭉치", true, CreateRectangleCells(4, 5, 3, 3, width, height), tileCount, FindMoongchiSpriteKeys.TargetMungchi),
+                    CreateTarget(10001, "뭉치", true, CreateRectangleCells(4, 5, 3, 3, width, height), tileCount, FindMoongchiSpriteKeys.TargetMoongchi),
                     CreateTarget(10002, "휴대용 물티슈", false, CreateRectangleCells(3, 1, 2, 3, width, height), tileCount, FindMoongchiSpriteKeys.TargetWetWipes),
                     CreateTarget(10003, "손톱깎이", false, CreateRectangleCells(0, 7, 1, 2, width, height), tileCount, FindMoongchiSpriteKeys.TargetNailClipper)
                 });
