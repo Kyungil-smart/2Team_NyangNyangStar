@@ -138,7 +138,7 @@ public class NyangNyangSnapResultUI : UIPopup
                 if (record == null || record.CapturedSprite == null || record.ScoreResult == null) continue;
 
                 string photoId = $"NNSnap_{DateTime.Now:yyMMdd_HH.mm.ss.fff}";
-                string storagePath = $"NyangNyangSnap/photos/{photoId}.png";
+                //string storagePath = $"NyangNyangSnap/photos/{photoId}.png";
 
                 string imageUrl = SavePhotoToFolder(record.CapturedSprite, photoId);
 
@@ -149,11 +149,11 @@ public class NyangNyangSnapResultUI : UIPopup
                     photoId = photoId,
 
                     imageUrl = imageUrl,
-                    storagePath = storagePath,
+                    storagePath = imageUrl,
                     poseScore = record.ScoreResult.PoseScore,
                     compositionScore = record.ScoreResult.CompositionScore,
                     timingScore = record.ScoreResult.TimingScore,
-                    //backGroundScore = record.ScoreResult.BackGroundScore,
+                    backGroundScore = record.ScoreResult.BackgroundScore,
 
                     totalScore = record.ScoreResult.TotalScore,
                     starCount = GetStarCount(record.ScoreResult.TotalScore),
