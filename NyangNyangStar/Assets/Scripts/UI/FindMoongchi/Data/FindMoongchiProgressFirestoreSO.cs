@@ -5,9 +5,7 @@ using UnityEngine;
 
 namespace Data.ScriptableObjects.MoongchiSO
 {
-    // 뭉치를 찾아라 이벤트의 플레이어별 진행 데이터 Firestore 저장 SO
-    // UI / 게임 로직에서는 직접 접근 대신 FindMoongchiDataManager의 LoadProgressAsync/SaveProgressAsync 사용
-    // 미션 / 상점 / 프로필 같은 정적 데이터는 Moongchi 계열 SO 담당, 여기서는 유저별 진행값만 관리
+    // Firestore 유저 진행 SO. UI 직접 접근 금지
     [FirestorePath("Users/{userId}/FindMoongchiProgress/{docId}")]
     [CreateAssetMenu(fileName = "FindMoongchiProgressFirestoreSO", menuName = "SO/FindMoongchi/FindMoongchiProgressFirestoreSO", order = 3)]
     public class FindMoongchiProgressFirestoreSO : BaseFireStore
@@ -29,6 +27,7 @@ namespace Data.ScriptableObjects.MoongchiSO
         [SerializeField] private int _searchChance = DefaultSearchChance;
         [SerializeField] private int _todayBonusSearchChanceCount;
         [SerializeField] private int _eventCurrency;
+        [SerializeField] private int _dailyEnergySpendProgress;
 
         [Header("미션 / 상점 진행 상태")]
         [FirestoreMap]
@@ -36,6 +35,9 @@ namespace Data.ScriptableObjects.MoongchiSO
 
         [FirestoreMap]
         [SerializeField] private List<FindMoongchiShopPurchaseData> _shopPurchaseCounts = new();
+
+        [FirestoreMap]
+        [SerializeField] private List<int> _ownedProfileIDs = new();
 
         [Header("초기화 기준 시간")]
         [SerializeField] private long _lastDailyResetUnixTime;
@@ -50,8 +52,10 @@ namespace Data.ScriptableObjects.MoongchiSO
         public int SearchChance => _searchChance;
         public int TodayBonusSearchChanceCount => _todayBonusSearchChanceCount;
         public int EventCurrency => _eventCurrency;
+        public int DailyEnergySpendProgress => _dailyEnergySpendProgress;
         public IReadOnlyList<FindMoongchiMissionProgressData> MissionProgresses => _missionProgresses;
         public IReadOnlyList<FindMoongchiShopPurchaseData> ShopPurchaseCounts => _shopPurchaseCounts;
+        public IReadOnlyList<int> OwnedProfileIDs => _ownedProfileIDs;
         public long LastDailyResetUnixTime => _lastDailyResetUnixTime;
         public long LastWeeklyResetUnixTime => _lastWeeklyResetUnixTime;
 
@@ -90,9 +94,11 @@ namespace Data.ScriptableObjects.MoongchiSO
             progress.SearchChance = _searchChance;
             progress.TodayBonusSearchChanceCount = _todayBonusSearchChanceCount;
             progress.EventCurrency = _eventCurrency;
+            progress.DailyEnergySpendProgress = _dailyEnergySpendProgress;
 
             CopyList(_missionProgresses, progress.MissionProgresses);
             CopyList(_shopPurchaseCounts, progress.ShopPurchaseCounts);
+            CopyList(_ownedProfileIDs, progress.OwnedProfileIDs);
 
             progress.LastDailyResetUnixTime = _lastDailyResetUnixTime;
             progress.LastWeeklyResetUnixTime = _lastWeeklyResetUnixTime;
@@ -115,9 +121,11 @@ namespace Data.ScriptableObjects.MoongchiSO
             _searchChance = progress.SearchChance;
             _todayBonusSearchChanceCount = progress.TodayBonusSearchChanceCount;
             _eventCurrency = progress.EventCurrency;
+            _dailyEnergySpendProgress = progress.DailyEnergySpendProgress;
 
             CopyList(progress.MissionProgresses, _missionProgresses);
             CopyList(progress.ShopPurchaseCounts, _shopPurchaseCounts);
+            CopyList(progress.OwnedProfileIDs, _ownedProfileIDs);
 
             _lastDailyResetUnixTime = progress.LastDailyResetUnixTime;
             _lastWeeklyResetUnixTime = progress.LastWeeklyResetUnixTime;
@@ -136,9 +144,11 @@ namespace Data.ScriptableObjects.MoongchiSO
             _searchChance = DefaultSearchChance;
             _todayBonusSearchChanceCount = 0;
             _eventCurrency = 0;
+            _dailyEnergySpendProgress = 0;
 
             _missionProgresses.Clear();
             _shopPurchaseCounts.Clear();
+            _ownedProfileIDs.Clear();
 
             _lastDailyResetUnixTime = 0;
             _lastWeeklyResetUnixTime = 0;

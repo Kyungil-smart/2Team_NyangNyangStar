@@ -86,6 +86,62 @@ namespace UI.FindMoongchi
             return new HashSet<int>(_revealedTileIndices);
         }
 
+        public IReadOnlyList<int> GetOpenedTileIds()
+        {
+            return new List<int>(_revealedTileIndices);
+        }
+
+        public IReadOnlyList<int> GetFoundTargetIds()
+        {
+            List<int> foundTargetIds = new List<int>();
+
+            for (int i = 0; i < _targets.Count; i++)
+            {
+                FindMoongchiTargetRuntimeData target = _targets[i];
+
+                if (target != null && target.IsFound)
+                    foundTargetIds.Add(target.TargetId);
+            }
+
+            return foundTargetIds;
+        }
+
+        public void RestoreBoardProgress(IReadOnlyList<int> openedTileIds, IReadOnlyList<int> foundTargetIds)
+        {
+            _revealedTileIndices.Clear();
+
+            if (openedTileIds != null)
+            {
+                for (int i = 0; i < openedTileIds.Count; i++)
+                {
+                    int tileIndex = openedTileIds[i];
+
+                    if (tileIndex >= 0 && tileIndex < TileCount)
+                        _revealedTileIndices.Add(tileIndex);
+                }
+            }
+
+            HashSet<int> foundTargetIdSet = foundTargetIds != null
+                ? new HashSet<int>(foundTargetIds)
+                : new HashSet<int>();
+
+            for (int i = 0; i < _targets.Count; i++)
+            {
+                FindMoongchiTargetRuntimeData target = _targets[i];
+
+                if (target == null)
+                    continue;
+
+                if (foundTargetIdSet.Contains(target.TargetId))
+                {
+                    target.MarkFound();
+                    continue;
+                }
+
+                target.RefreshFoundState(_revealedTileIndices);
+            }
+        }
+
         public static List<int> CalculateAffectedTiles(int toolItemId, int tileIndex, int boardWidth, int boardHeight)
         {
             return CalculateAffectedTiles(toolItemId, tileIndex, boardWidth, boardHeight, FindMoongchiConstants.ToolIds);
