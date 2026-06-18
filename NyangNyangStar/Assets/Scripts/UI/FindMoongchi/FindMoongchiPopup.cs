@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Core.Managers;
 using Data.LibrarySystem;
 using Data.ScriptableObjects.MoongchiSO;
@@ -26,6 +27,8 @@ namespace UI.FindMoongchi
         [Header("Data")]
         [Tooltip("같은 오브젝트에 붙어있으면 비워도 자동으로 찾습니다.")]
         [SerializeField] private FindMoongchiDataManager _dataManager;
+        [Tooltip("데이터 담당자가 만든 Firestore 진행 컨트롤러입니다. 비워두면 자동으로 찾습니다.")]
+        [SerializeField] private FindMoongchiProgressController _progressController;
 
         [Header("임시 유저 값 - Firestore 연결 전")]
         [SerializeField] private int _eventCoin = 1000;
@@ -90,9 +93,11 @@ namespace UI.FindMoongchi
 
             ResolveReferences();
             ResolveDataManager();
+            ResolveProgressController();
             InitChildren();
             ResolveToolItemIds();
             BindEvents();
+            BindProgressEvents();
             InitGameLogic();
             RefreshButtonSfxBindings();
 
@@ -100,6 +105,7 @@ namespace UI.FindMoongchi
 
             DebugTool.Log("[FindMoongchiPopup] 초기화 완료", DebugType.FindMoongchi, this);
             ShowPanel(FindMoongchiPanelType.Main);
+            _ = EnsureProgressReadyAndRefreshAsync();
         }
 
         public override void PlayOpenAnimation()
@@ -110,6 +116,7 @@ namespace UI.FindMoongchi
                 Init();
 
             ShowPanel(FindMoongchiPanelType.Main);
+            _ = EnsureProgressReadyAndRefreshAsync();
         }
 
         public void ShowPanel(FindMoongchiPanelType panelType)
@@ -233,6 +240,126 @@ namespace UI.FindMoongchi
             DebugTool.Log($"[FindMoongchiPopup] DataManager 연결: {_dataManager.name}", DebugType.FindMoongchi, this);
             _dataManager.OnLoadCompleted -= HandleDataLoadCompleted;
             _dataManager.OnLoadCompleted += HandleDataLoadCompleted;
+        }
+
+        private void ResolveProgressController()
+        {
+            if (_progressController == null)
+                _progressController = GetComponent<FindMoongchiProgressController>();
+
+            if (_progressController == null)
+                _progressController = GetComponentInChildren<FindMoongchiProgressController>(true);
+
+            if (_progressController == null)
+                _progressController = FindFirstObjectByType<FindMoongchiProgressController>();
+
+            if (_progressController == null)
+            {
+                DebugTool.Warning("[FindMoongchiPopup] FindMoongchiProgressController를 찾지 못했습니다. 임시값으로 동작합니다.", DebugType.FindMoongchi, this);
+                return;
+            }
+
+            _progressController.ResolveDataManager();
+
+            if (_dataManager == null && _progressController.DataManager != null)
+                _dataManager = _progressController.DataManager;
+
+            DebugTool.Log($"[FindMoongchiPopup] ProgressController 연결: {_progressController.name}", DebugType.FindMoongchi, this);
+        }
+
+        private void BindProgressEvents()
+        {
+            if (_progressController == null)
+                return;
+
+            _progressController.OnProgressReady -= HandleProgressReady;
+            _progressController.OnProgressChanged -= HandleProgressChanged;
+            _progressController.OnProgressReady += HandleProgressReady;
+            _progressController.OnProgressChanged += HandleProgressChanged;
+        }
+
+        private void UnbindProgressEvents()
+        {
+            if (_progressController == null)
+                return;
+
+            _progressController.OnProgressReady -= HandleProgressReady;
+            _progressController.OnProgressChanged -= HandleProgressChanged;
+        }
+
+        private void HandleProgressReady()
+        {
+            DebugTool.Log("[FindMoongchiPopup] 진행 데이터 로드 완료 이벤트 수신", DebugType.FindMoongchi, this);
+            SyncFromProgressController();
+            RefreshCurrentPanel();
+        }
+
+        private void HandleProgressChanged()
+        {
+            DebugTool.Log("[FindMoongchiPopup] 진행 데이터 변경 이벤트 수신", DebugType.FindMoongchi, this);
+            SyncFromProgressController();
+            RefreshCurrentPanel();
+        }
+
+        private async Task<bool> EnsureProgressReadyAsync()
+        {
+            ResolveProgressController();
+            BindProgressEvents();
+
+            if (_progressController == null)
+                return false;
+
+            if (_progressController.IsProgressReady)
+            {
+                SyncFromProgressController();
+                return true;
+            }
+
+            bool loaded = await _progressController.EnsureLoadedAsync();
+
+            if (!loaded)
+            {
+                DebugTool.Warning("[FindMoongchiPopup] 진행 데이터 로드 실패. 임시값으로 동작합니다.", DebugType.FindMoongchi, this);
+                return false;
+            }
+
+            SyncFromProgressController();
+            return true;
+        }
+
+        private async Task EnsureProgressReadyAndRefreshAsync()
+        {
+            bool loaded = await EnsureProgressReadyAsync();
+
+            if (loaded)
+                RefreshCurrentPanel();
+        }
+
+        private bool IsProgressReady => _progressController != null && _progressController.IsProgressReady;
+
+        private void SyncFromProgressController()
+        {
+            if (!IsProgressReady)
+                return;
+
+            _progressController.SyncGameLogicFromProgress(_gameLogic);
+
+            _eventCoin = _progressController.EventCurrency;
+            _searchChance = _progressController.SearchChance;
+            _energySpendProgress = _progressController.DailyEnergySpendProgress;
+            _currentWeek = _progressController.CurrentWeek;
+            _currentStageId = _progressController.GetCurrentStageId();
+
+            if (_currentStageId <= 0)
+                _currentStageId = _gameLogic.CurrentStageId;
+
+            if (_currentWeek <= 0)
+                _currentWeek = _gameLogic.CurrentWeek;
+
+            DebugTool.Log(
+                $"[FindMoongchiPopup] 진행 데이터 동기화: Week={_currentWeek}, Stage={_currentStageId}, EventCoin={_eventCoin}, SearchChance={_searchChance}, EnergyProgress={_energySpendProgress}",
+                DebugType.FindMoongchi,
+                this);
         }
 
         private void ResolveToolItemIds()
@@ -363,6 +490,16 @@ namespace UI.FindMoongchi
         {
             _gameLogic.SetToolItemIds(_resolvedToolItemIds);
 
+            if (IsProgressReady)
+            {
+                SyncFromProgressController();
+                DebugTool.Log(
+                    $"[FindMoongchiPopup] 미니게임 진행 데이터 스테이지 로드: StageId={_gameLogic.CurrentStageId}, Week={_gameLogic.CurrentWeek}, TargetCount={_gameLogic.TargetCount}",
+                    DebugType.FindMoongchi,
+                    this);
+                return;
+            }
+
             int stageId = ResolveTemporaryStageId();
             _gameLogic.LoadStage(stageId);
             _currentStageId = _gameLogic.CurrentStageId;
@@ -436,21 +573,24 @@ namespace UI.FindMoongchi
             }
         }
 
-        private void HandleGameButtonClicked()
+        private async void HandleGameButtonClicked()
         {
             DebugTool.Log("[FindMoongchiPopup] 게임 패널 열기 요청", DebugType.FindMoongchi, this);
+            await EnsureProgressReadyAsync();
             ShowPanel(FindMoongchiPanelType.Game);
         }
 
-        private void HandleMissionButtonClicked()
+        private async void HandleMissionButtonClicked()
         {
             DebugTool.Log("[FindMoongchiPopup] 미션 패널 열기 요청", DebugType.FindMoongchi, this);
+            await EnsureProgressReadyAsync();
             ShowPanel(FindMoongchiPanelType.Mission);
         }
 
-        private void HandleShopButtonClicked()
+        private async void HandleShopButtonClicked()
         {
             DebugTool.Log("[FindMoongchiPopup] 상점 패널 열기 요청", DebugType.FindMoongchi, this);
+            await EnsureProgressReadyAsync();
             ShowPanel(FindMoongchiPanelType.Shop);
         }
 
@@ -483,7 +623,12 @@ namespace UI.FindMoongchi
                 return;
             }
 
-            if (!_debugInfiniteToolUse && _searchChance <= 0)
+            if (!_debugInfiniteToolUse)
+                await EnsureProgressReadyAsync();
+
+            int currentSearchChance = GetCurrentSearchChance();
+
+            if (!_debugInfiniteToolUse && currentSearchChance <= 0)
             {
                 DebugTool.Warning("[FindMoongchiPopup] 탐색 기회 부족", DebugType.FindMoongchi, this);
                 OpenNotice("탐색 기회가 없습니다.");
@@ -499,6 +644,17 @@ namespace UI.FindMoongchi
                     DebugTool.Warning($"[FindMoongchiPopup] 보드에 탐색 도구 없음: ToolId={toolItemId}", DebugType.FindMoongchi, this);
                     OpenNotice("보유한 탐색 도구가 없습니다.");
                     return;
+                }
+
+                if (IsProgressReady && !_progressController.TryConsumeSearchChance(1))
+                {
+                    DebugTool.Warning("[FindMoongchiPopup] 진행 데이터 탐색 기회 차감 실패", DebugType.FindMoongchi, this);
+                    OpenNotice("탐색 기회가 없습니다.");
+                    return;
+                }
+                else if (!IsProgressReady)
+                {
+                    _searchChance = Mathf.Max(0, _searchChance - 1);
                 }
             }
             else
@@ -516,18 +672,35 @@ namespace UI.FindMoongchi
 
                     if (!consumed)
                     {
+                        if (IsProgressReady)
+                            _progressController.RestoreSearchChance(1);
+                        else
+                            _searchChance += 1;
+
                         DebugTool.Warning($"[FindMoongchiPopup] 탐색 도구 소비 실패: ToolId={toolItemId}", DebugType.FindMoongchi, this);
                         OpenError("탐색 도구 소비에 실패했습니다.", 1001);
+                        RefreshGamePanel();
                         return;
                     }
-
-                    _searchChance = Mathf.Max(0, _searchChance - 1);
                 }
 
                 FindMoongchiUseToolResult result = _gameLogic.UseTool(toolItemId, tileIndex);
 
+                if (!_debugInfiniteToolUse && IsProgressReady)
+                {
+                    bool saved = await _progressController.PersistAfterToolUseAsync(_gameLogic, result);
+
+                    if (!saved)
+                        OpenError("진행 데이터 저장에 실패했습니다.", 1002);
+                }
+
+                if (IsProgressReady)
+                    SyncFromProgressController();
+                else
+                    _searchChance = Mathf.Max(0, _searchChance);
+
                 DebugTool.Log(
-                    $"[FindMoongchiPopup] 도구 사용 성공: ToolId={toolItemId}, 기준 Tile={tileIndex}, 공개 대상={result.AffectedTileIndices.Count}, 신규 공개={result.NewlyRevealedTileIndices.Count}, 발견 목표={result.NewlyFoundTargets.Count}, 남은 탐색 기회={_searchChance}",
+                    $"[FindMoongchiPopup] 도구 사용 성공: ToolId={toolItemId}, 기준 Tile={tileIndex}, 공개 대상={result.AffectedTileIndices.Count}, 신규 공개={result.NewlyRevealedTileIndices.Count}, 발견 목표={result.NewlyFoundTargets.Count}, 남은 탐색 기회={GetCurrentSearchChance()}",
                     DebugType.FindMoongchi,
                     this);
 
@@ -565,11 +738,28 @@ namespace UI.FindMoongchi
             OpenNotice("스테이지를 클리어했습니다.", "다시하기", HandleStageClearRestartConfirmed);
         }
 
-        private void HandleStageClearRestartConfirmed()
+        private async void HandleStageClearRestartConfirmed()
         {
             DebugTool.Log("[FindMoongchiPopup] 스테이지 클리어 다시하기 확인", DebugType.FindMoongchi, this);
 
             _isStageClearWaitingForRestart = false;
+
+            if (!_debugInfiniteToolUse && await EnsureProgressReadyAsync())
+            {
+                bool saved = await _progressController.AdvanceStageAndPersistAsync(_gameLogic);
+
+                if (!saved)
+                {
+                    OpenError("다음 스테이지 저장에 실패했습니다.", 3001);
+                    return;
+                }
+
+                SyncFromProgressController();
+                DebugTool.Log($"[FindMoongchiPopup] 다시하기 후 진행 데이터 스테이지 로드: StageId={_currentStageId}, Week={_currentWeek}", DebugType.FindMoongchi, this);
+                RefreshGamePanel(false);
+                return;
+            }
+
             AdvanceTemporaryStageCycle();
         }
 
@@ -600,13 +790,15 @@ namespace UI.FindMoongchi
             _currentStageId = _gameLogic.CurrentStageId;
             _currentWeek = _gameLogic.CurrentWeek;
 
-            DebugTool.Log($"[FindMoongchiPopup] 다시하기 후 스테이지 로드: StageId={_currentStageId}, Week={_currentWeek}", DebugType.FindMoongchi, this);
+            DebugTool.Log($"[FindMoongchiPopup] 다시하기 후 임시 스테이지 로드: StageId={_currentStageId}, Week={_currentWeek}", DebugType.FindMoongchi, this);
             RefreshGamePanel(false);
         }
 
-        private void HandleClaimMissionClicked(int missionId)
+        private async void HandleClaimMissionClicked(int missionId)
         {
             DebugTool.Log($"[FindMoongchiPopup] 미션 보상 수령 요청: MissionId={missionId}", DebugType.FindMoongchi, this);
+
+            await EnsureProgressReadyAsync();
 
             FindMoongchiMissionViewData mission = BuildMissionViewDataById(missionId);
 
@@ -628,11 +820,28 @@ namespace UI.FindMoongchi
                 return;
             }
 
+            if (IsProgressReady)
+            {
+                bool claimed = await _progressController.TryClaimMissionAndPersistAsync(missionId);
+
+                if (!claimed)
+                {
+                    OpenError("미션 보상 수령에 실패했습니다.", 2002);
+                    return;
+                }
+
+                SyncFromProgressController();
+                DebugTool.Log($"[FindMoongchiPopup] 미션 보상 수령 완료: MissionId={missionId}, EventCoin={GetCurrentEventCoin()}", DebugType.FindMoongchi, this);
+                OpenNotice("미션 보상을 수령했습니다.");
+                RefreshMissionPanel();
+                return;
+            }
+
             ApplyMissionReward(mission.Reward1);
             ApplyMissionReward(mission.Reward2);
             _claimedMissionIds.Add(missionId);
 
-            DebugTool.Log($"[FindMoongchiPopup] 미션 보상 수령 완료: MissionId={missionId}, EventCoin={_eventCoin}", DebugType.FindMoongchi, this);
+            DebugTool.Log($"[FindMoongchiPopup] 임시 미션 보상 수령 완료: MissionId={missionId}, EventCoin={_eventCoin}", DebugType.FindMoongchi, this);
             OpenNotice("미션 보상을 수령했습니다.");
             RefreshMissionPanel();
         }
@@ -662,7 +871,7 @@ namespace UI.FindMoongchi
             _purchasePopup?.Open(data, maxBuyCount, HandlePurchaseConfirmed);
         }
 
-        private void HandlePurchaseConfirmed(FindMoongchiShopViewData data, int count)
+        private async void HandlePurchaseConfirmed(FindMoongchiShopViewData data, int count)
         {
             if (data != null)
                 DebugTool.Log($"[FindMoongchiPopup] 구매 확정 요청: ShopItemId={data.ShopItemId}, Count={count}", DebugType.FindMoongchi, this);
@@ -670,9 +879,12 @@ namespace UI.FindMoongchi
             if (data == null || count <= 0)
                 return;
 
-            int totalCost = data.CostAmount * count;
+            await EnsureProgressReadyAsync();
 
-            if (_eventCoin < totalCost)
+            int totalCost = data.CostAmount * count;
+            int currentEventCoin = GetCurrentEventCoin();
+
+            if (currentEventCoin < totalCost)
             {
                 OpenNotice("이벤트 재화가 부족합니다.");
                 return;
@@ -684,6 +896,29 @@ namespace UI.FindMoongchi
                 return;
             }
 
+            if (IsProgressReady)
+            {
+                bool purchased = await _progressController.TryPurchaseAndPersistAsync(
+                    data.ShopItemId,
+                    count,
+                    totalCost,
+                    data.LimitCount);
+
+                if (!purchased)
+                {
+                    OpenError("구매 처리에 실패했습니다.", 4001);
+                    RefreshShopPanel();
+                    return;
+                }
+
+                SyncFromProgressController();
+                DebugTool.Log($"[FindMoongchiPopup] 구매 완료: ShopItemId={data.ShopItemId}, Count={count}, 남은 이벤트 재화={GetCurrentEventCoin()}", DebugType.FindMoongchi, this);
+                _purchasePopup?.Close();
+                OpenNotice("구매가 완료되었습니다.");
+                RefreshShopPanel();
+                return;
+            }
+
             _eventCoin -= totalCost;
 
             if (!_shopPurchaseCounts.ContainsKey(data.ShopItemId))
@@ -691,7 +926,7 @@ namespace UI.FindMoongchi
 
             _shopPurchaseCounts[data.ShopItemId] += count;
 
-            DebugTool.Log($"[FindMoongchiPopup] 구매 완료: ShopItemId={data.ShopItemId}, Count={count}, 남은 이벤트 재화={_eventCoin}", DebugType.FindMoongchi, this);
+            DebugTool.Log($"[FindMoongchiPopup] 임시 구매 완료: ShopItemId={data.ShopItemId}, Count={count}, 남은 이벤트 재화={_eventCoin}", DebugType.FindMoongchi, this);
             _purchasePopup?.Close();
             OpenNotice("구매가 완료되었습니다.");
             RefreshShopPanel();
@@ -705,16 +940,37 @@ namespace UI.FindMoongchi
             RefreshButtonSfxBindings();
         }
 
+
+        private int GetCurrentEventCoin()
+        {
+            return IsProgressReady ? _progressController.EventCurrency : _eventCoin;
+        }
+
+        private int GetCurrentSearchChance()
+        {
+            return IsProgressReady ? _progressController.SearchChance : _searchChance;
+        }
+
+        private int GetCurrentEnergySpendProgress()
+        {
+            return IsProgressReady ? _progressController.DailyEnergySpendProgress : _energySpendProgress;
+        }
+
+        private int GetCurrentWeek()
+        {
+            return IsProgressReady ? _progressController.CurrentWeek : _currentWeek;
+        }
+
         private FindMoongchiGameViewData BuildGameViewData()
         {
             FindMoongchiGameViewData data = new FindMoongchiGameViewData
             {
                 BoardWidth = _gameLogic.BoardWidth,
                 BoardHeight = _gameLogic.BoardHeight,
-                CurrentWeek = _currentWeek,
+                CurrentWeek = GetCurrentWeek(),
                 RemainTimeText = _remainTimeText,
-                SearchChance = _debugInfiniteToolUse ? Mathf.Max(1, _debugToolDisplayCount) : _searchChance,
-                EnergySpendProgress = _energySpendProgress,
+                SearchChance = _debugInfiniteToolUse ? Mathf.Max(1, _debugToolDisplayCount) : GetCurrentSearchChance(),
+                EnergySpendProgress = GetCurrentEnergySpendProgress(),
                 EnergySpendTarget = FindMoongchiConstants.EnergySpendTarget,
                 RevealedTileIndices = _gameLogic.GetRevealedTileSet()
             };
@@ -727,7 +983,7 @@ namespace UI.FindMoongchi
                     ToolName = GetItemName(toolId),
                     Icon = GetItemSprite(toolId),
                     Count = _debugInfiniteToolUse ? Mathf.Max(1, _debugToolDisplayCount) : FindMoongchiMergeBoardBridge.GetBoardItemCountById(toolId),
-                    IsUsable = _debugInfiniteToolUse || _searchChance > 0
+                    IsUsable = _debugInfiniteToolUse || GetCurrentSearchChance() > 0
                 });
             }
 
@@ -804,19 +1060,32 @@ namespace UI.FindMoongchi
                 return result;
             }
 
-            IReadOnlyList<MoongchiMissionData> weeklyMissions = _dataManager.GetWeeklyMissions();
+            AddMissionViewDataByType(result, MoongchiMissionType.WEEKLY);
 
-            for (int i = 0; i < weeklyMissions.Count; i++)
+            if (GetCurrentWeek() <= 1)
+                AddMissionViewDataByType(result, MoongchiMissionType.WEEKLY_1ST);
+            else
+                AddMissionViewDataByType(result, MoongchiMissionType.WEEKLY_2ND);
+
+            return result;
+        }
+
+        private void AddMissionViewDataByType(List<FindMoongchiMissionViewData> result, MoongchiMissionType missionType)
+        {
+            if (result == null || _dataManager == null)
+                return;
+
+            IReadOnlyList<MoongchiMissionData> missions = _dataManager.GetMissionsByType(missionType);
+
+            for (int i = 0; i < missions.Count; i++)
             {
-                MoongchiMissionData mission = weeklyMissions[i];
+                MoongchiMissionData mission = missions[i];
 
                 if (mission == null)
                     continue;
 
                 result.Add(BuildMissionViewData(mission));
             }
-
-            return result;
         }
 
         private FindMoongchiMissionViewData BuildMissionViewDataById(int missionId)
@@ -831,13 +1100,24 @@ namespace UI.FindMoongchi
 
         private FindMoongchiMissionViewData BuildMissionViewData(MoongchiMissionData mission)
         {
-            int currentAmount = _completedMissionMock ? mission.TargetAmount : 0;
-            FindMoongchiMissionSlotState state = FindMoongchiMissionSlotState.InProgress;
+            int currentAmount;
+            FindMoongchiMissionSlotState state;
 
-            if (_claimedMissionIds.Contains(mission.ID))
-                state = FindMoongchiMissionSlotState.Claimed;
-            else if (currentAmount >= mission.TargetAmount)
-                state = FindMoongchiMissionSlotState.Completed;
+            if (IsProgressReady)
+            {
+                currentAmount = _progressController.GetMissionCurrentAmount(mission.ID);
+                state = _progressController.GetMissionSlotState(mission);
+            }
+            else
+            {
+                currentAmount = _completedMissionMock ? mission.TargetAmount : 0;
+                state = FindMoongchiMissionSlotState.InProgress;
+
+                if (_claimedMissionIds.Contains(mission.ID))
+                    state = FindMoongchiMissionSlotState.Claimed;
+                else if (currentAmount >= mission.TargetAmount)
+                    state = FindMoongchiMissionSlotState.Completed;
+            }
 
             return new FindMoongchiMissionViewData
             {
@@ -878,14 +1158,17 @@ namespace UI.FindMoongchi
                 DebugTool.Warning("[FindMoongchiPopup] ShopSO가 없어 상점 데이터를 만들 수 없습니다.", DebugType.FindMoongchi, this);
             }
 
-            DebugTool.Log($"[FindMoongchiPopup] 상점 패널 갱신: 이벤트재화={_eventCoin}, 아이템={itemProducts.Count}, 프로필={profileProducts.Count}", DebugType.FindMoongchi, this);
-            _shopPanel?.SetData(_eventCoin, itemProducts, profileProducts);
+            int eventCoin = GetCurrentEventCoin();
+            DebugTool.Log($"[FindMoongchiPopup] 상점 패널 갱신: 이벤트재화={eventCoin}, 아이템={itemProducts.Count}, 프로필={profileProducts.Count}", DebugType.FindMoongchi, this);
+            _shopPanel?.SetData(eventCoin, itemProducts, profileProducts);
             RefreshButtonSfxBindings();
         }
 
         private FindMoongchiShopViewData BuildShopViewData(MoongchiShopItemData item)
         {
-            _shopPurchaseCounts.TryGetValue(item.ID, out int purchasedCount);
+            int purchasedCount = IsProgressReady
+                ? _progressController.GetShopPurchaseCount(item.ID)
+                : (_shopPurchaseCounts.TryGetValue(item.ID, out int localPurchasedCount) ? localPurchasedCount : 0);
 
             return new FindMoongchiShopViewData
             {
@@ -896,7 +1179,9 @@ namespace UI.FindMoongchi
                 Icon = GetProductSprite(item.ProductType, item.ProductID),
                 IconKey = GetProductIconKey(item.ProductType, item.ProductID),
                 Quantity = item.Quantity,
-                CostType = item.Cost,
+                // 상점 구매 비용은 항상 이벤트 코인으로 처리합니다.
+                // 정적 시트의 Cost 값이 GOLD/COIN처럼 잘못 들어와도 UI와 구매 검증은 이벤트 코인 기준입니다.
+                CostType = MoongchiCurrencyType.EVENT_COIN,
                 CostAmount = item.CostAmount,
                 LimitCount = item.LimitCount,
                 PurchasedCount = purchasedCount
@@ -908,7 +1193,7 @@ namespace UI.FindMoongchi
             if (data == null || data.CostAmount <= 0)
                 return 0;
 
-            int affordableCount = _eventCoin / data.CostAmount;
+            int affordableCount = GetCurrentEventCoin() / data.CostAmount;
             int remainingLimit = data.HasLimit ? data.RemainingLimit : int.MaxValue;
             return Mathf.Max(0, Mathf.Min(affordableCount, remainingLimit));
         }
@@ -1037,6 +1322,8 @@ namespace UI.FindMoongchi
 
         private void OnDestroy()
         {
+            UnbindProgressEvents();
+
             if (_dataManager != null)
                 _dataManager.OnLoadCompleted -= HandleDataLoadCompleted;
 
