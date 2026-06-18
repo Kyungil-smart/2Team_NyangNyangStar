@@ -28,7 +28,7 @@ public class SelectedCatPopupSprite : UIBase
         SetSprite(SelectedCatPopupImages.BackButton, "Btn_Back");
         SetSprite(SelectedCatPopupImages.CloseButton, "Btn_Close");
         SetSprite(SelectedCatPopupImages.CatBackground, "FM_BG_GameBoard");
-        SetSprite(SelectedCatPopupImages.CatImage, "FM_Target_Mungchi");
+        SetSprite(SelectedCatPopupImages.CatImage, "FM_Target_Moongchi");
         SetSprite(SelectedCatPopupImages.CollectionButton, "Btn_Camera");
         SetSprite(SelectedCatPopupImages.RedPoint, "Shape_Circle", Color.red);
     }

@@ -2,8 +2,7 @@ using System.Collections.Generic;
 
 namespace Data.ScriptableObjects.MoongchiSO
 {
-    // UI / 게임 로직에서 읽고 수정하는 뭉치를 찾아라 진행 데이터
-    // 서버 저장 / 로드는 FindMoongchiDataManager.LoadProgressAsync/SaveProgressAsync로 처리
+    // 런타임 진행 모델. UI는 ProgressController 경유
     public sealed class FindMoongchiProgressRuntimeData
     {
         // 현재 진행 중인 주차와 스테이지 정보
@@ -21,6 +20,12 @@ namespace Data.ScriptableObjects.MoongchiSO
         public int SearchChance;
         public int TodayBonusSearchChanceCount;
         public int EventCurrency;
+
+        // 일일 에너지 소비 누적 (탐색 기회 보너스 UI용)
+        public int DailyEnergySpendProgress;
+
+        // 상점에서 구매한 프로필 ID 목록
+        public List<int> OwnedProfileIDs = new();
 
         // 미션 진행도/보상 수령 여부와 상점 상품별 구매 횟수
         public List<FindMoongchiMissionProgressData> MissionProgresses = new();

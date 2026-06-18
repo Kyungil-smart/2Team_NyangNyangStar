@@ -9,6 +9,8 @@ public class NyangNyangSnapSprite : UIBase
     [SerializeField] private NyangNyangSnapBackgroundSO _backgroundSO;
     private UISpriteController[] _spriteController;
 
+    public NyangNyangSnapBackgroundData CurrentBackgroundData { get; private set; }
+
     public override void Init()
     {
         Bind<Image>(typeof(NyangNyangSnapImages));
@@ -25,9 +27,9 @@ public class NyangNyangSnapSprite : UIBase
 
     public void SetBackground(int stage)
     {
-        string key = _backgroundSO.GetRandomBackgroundKey(stage);
-        DebugTool.Log($"SetBackground: {key}", DebugType.UI);
-        SetSprite(NyangNyangSnapImages.BackPanel, key);
+        CurrentBackgroundData = _backgroundSO.GetRandomBackgroundData(stage);
+        DebugTool.Log($"SetBackground: {stage}", DebugType.UI);
+        SetSprite(NyangNyangSnapImages.BackPanel, CurrentBackgroundData.BackgroundKey);
     }
 
     private void SetSprites()
