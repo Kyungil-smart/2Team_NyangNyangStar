@@ -8,6 +8,7 @@ using UnityEngine.Serialization;
 
 namespace UI.FindMoongchi
 {
+    // 시트 SO + Firestore 진행 데이터 허브. UI는 FindMoongchiProgressController 사용
     public class FindMoongchiDataManager : MonoBehaviour
     {
         [Header("상점/보상 데이터")] [SerializeField] private MoongchiShopSO _shopSO;
@@ -18,6 +19,10 @@ namespace UI.FindMoongchi
         [SerializeField] private MoongchiProfileSO _profileSO;
 
         [Header("유저 진행 데이터")] [SerializeField] private FindMoongchiProgressFirestoreSO _progressSO;
+
+        [Header("보상 지급")]
+        [Tooltip("에너지/골드 지급에 사용합니다. UsersSO 서브컬렉션 ResourcesSO를 연결하세요.")]
+        [SerializeField] private ResourcesSO _resourcesSO;
 
         [Header("로드 상태 옵션")]
         [FormerlySerializedAs("_loadOnStart")]
@@ -32,6 +37,12 @@ namespace UI.FindMoongchi
         public bool IsLoaded { get; private set; }
 
         public event Action OnLoadCompleted;
+        public event Action OnProgressReady;
+        public event Action OnProgressChanged;
+
+        private FindMoongchiProgressRuntimeData _progress;
+        private bool _isProgressReady;
+        private int _progressLoadVersion;
 
         private bool _isWaitingForGlobalDataReady;
 
@@ -42,10 +53,15 @@ namespace UI.FindMoongchi
         private static readonly IReadOnlyList<MoongchiProfileData> EmptyProfiles =
             Array.Empty<MoongchiProfileData>();
 
+        public FindMoongchiProgressRuntimeData Progress => _progress;
+        public bool IsProgressReady => _isProgressReady && _progress != null;
+
         private void Start()
         {
             if (_notifyLoadedOnStart)
                 NotifyWhenSheetLoaderReady();
+
+            SubscribeAuthChanges();
         }
 
         [ContextMenu("FindMoongchi 시트 로드 완료 알림")]
@@ -90,6 +106,30 @@ namespace UI.FindMoongchi
         private void OnDestroy()
         {
             UnsubscribeGlobalDataReady();
+            UnsubscribeAuthChanges();
+            InvalidateProgress();
+        }
+
+        private void SubscribeAuthChanges()
+        {
+            if (AuthManager.Instance == null)
+                return;
+
+            AuthManager.Instance.OnUserIdChanged -= HandleUserIdChanged;
+            AuthManager.Instance.OnUserIdChanged += HandleUserIdChanged;
+        }
+
+        private void UnsubscribeAuthChanges()
+        {
+            if (AuthManager.Instance == null)
+                return;
+
+            AuthManager.Instance.OnUserIdChanged -= HandleUserIdChanged;
+        }
+
+        private void HandleUserIdChanged(string userId)
+        {
+            InvalidateProgress();
         }
 
         private void UnsubscribeGlobalDataReady()
@@ -99,6 +139,376 @@ namespace UI.FindMoongchi
 
             LocalDataAccess.Instance.Game.OnReady -= HandleGlobalDataReady;
             _isWaitingForGlobalDataReady = false;
+        }
+
+        // 이벤트 팝업 진입 시 호출. 서버에서 진행 데이터를 읽고 RuntimeData를 준비한다.
+        public async Task<bool> EnsureProgressLoadedAsync()
+        {
+            if (_isProgressReady && _progress != null)
+                return true;
+
+            int loadVersion = ++_progressLoadVersion;
+            FindMoongchiProgressRuntimeData loaded = await LoadProgressAsync();
+
+            if (loadVersion != _progressLoadVersion)
+                return false;
+
+            if (loaded == null)
+                return false;
+
+            bool hadValidCycle = loaded.CurrentCycleStageIDs != null &&
+                                 loaded.CurrentCycleStageIDs.Count == 5;
+
+            EnsureStageCycleReady(loaded);
+
+            bool resetApplied = FindMoongchiProgressResetLogic.ApplyResetsIfNeeded(loaded, _missionSO);
+
+            _progress = loaded;
+            _isProgressReady = true;
+            OnProgressReady?.Invoke();
+
+            if (!hadValidCycle || resetApplied)
+                await SaveProgressAsync(_progress);
+
+            return true;
+        }
+
+        public void InvalidateProgress()
+        {
+            _progressLoadVersion++;
+            _isProgressReady = false;
+            _progress = null;
+        }
+
+        // 현재 메모리상 Progress를 Firestore에 저장
+        public async Task<bool> PersistProgressAsync()
+        {
+            if (!_isProgressReady || _progress == null)
+            {
+                DebugTool.Warning("[FindMoongchiDataManager] 저장할 진행 데이터가 준비되지 않았습니다.", DebugType.Data, this);
+                return false;
+            }
+
+            bool saved = await SaveProgressAsync(_progress);
+
+            if (saved)
+                OnProgressChanged?.Invoke();
+
+            return saved;
+        }
+
+        public int GetMissionCurrentAmount(int missionId)
+        {
+            return IsProgressReady
+                ? FindMoongchiProgressHelper.GetMissionCurrentAmount(_progress, missionId)
+                : 0;
+        }
+
+        public bool IsMissionRewardClaimed(int missionId)
+        {
+            return IsProgressReady &&
+                   FindMoongchiProgressHelper.IsMissionRewardClaimed(_progress, missionId);
+        }
+
+        public FindMoongchiMissionSlotState GetMissionSlotState(MoongchiMissionData mission)
+        {
+            if (mission == null)
+                return FindMoongchiMissionSlotState.InProgress;
+
+            if (IsMissionRewardClaimed(mission.ID))
+                return FindMoongchiMissionSlotState.Claimed;
+
+            int currentAmount = GetMissionCurrentAmount(mission.ID);
+            return currentAmount >= mission.TargetAmount
+                ? FindMoongchiMissionSlotState.Completed
+                : FindMoongchiMissionSlotState.InProgress;
+        }
+
+        public bool TryClaimMissionReward(int missionId, out MoongchiMissionData missionData)
+        {
+            missionData = null;
+
+            if (!IsProgressReady || !TryGetMission(missionId, out missionData) || missionData == null)
+                return false;
+
+            if (GetMissionSlotState(missionData) != FindMoongchiMissionSlotState.Completed)
+                return false;
+
+            FindMoongchiMissionProgressData entry =
+                FindMoongchiProgressHelper.GetOrCreateMissionProgress(_progress, missionId);
+
+            return entry != null && !entry.IsRewardClaimed;
+        }
+
+        public int DailyEnergySpendProgress =>
+            IsProgressReady ? _progress.DailyEnergySpendProgress : 0;
+
+        public bool HasOwnedProfile(int profileId)
+        {
+            return IsProgressReady && FindMoongchiProgressHelper.HasOwnedProfile(_progress, profileId);
+        }
+
+        public bool TrackEnergySpent(int amount)
+        {
+            if (!IsProgressReady || amount <= 0)
+                return false;
+
+            _progress.DailyEnergySpendProgress += amount;
+
+            bool changed = FindMoongchiMissionTracker.Track(
+                _missionSO,
+                _progress,
+                MoongchiMissionTrigger.EnergySpend,
+                amount);
+
+            changed |= TryGrantDailyEnergyBonus();
+            return changed;
+        }
+
+        public bool TrackToolUseResult(FindMoongchiUseToolResult result)
+        {
+            if (!IsProgressReady || result == null)
+                return false;
+
+            bool changed = FindMoongchiMissionTracker.Track(
+                _missionSO,
+                _progress,
+                MoongchiMissionTrigger.UseSearchTool,
+                1);
+
+            if (result.NewlyRevealedTileIndices.Count > 0)
+            {
+                changed |= FindMoongchiMissionTracker.Track(
+                    _missionSO,
+                    _progress,
+                    MoongchiMissionTrigger.OpenTile,
+                    result.NewlyRevealedTileIndices.Count);
+            }
+
+            if (result.NewlyFoundTargets.Count > 0)
+            {
+                List<FindMoongchiTargetTrackInfo> trackInfos = new List<FindMoongchiTargetTrackInfo>();
+
+                for (int i = 0; i < result.NewlyFoundTargets.Count; i++)
+                {
+                    FindMoongchiTargetRuntimeData target = result.NewlyFoundTargets[i];
+
+                    if (target == null)
+                        continue;
+
+                    trackInfos.Add(new FindMoongchiTargetTrackInfo(target.TargetId, target.IsMainTarget));
+                }
+
+                changed |= FindMoongchiMissionTracker.TrackNewlyFoundTargets(_missionSO, _progress, trackInfos);
+            }
+
+            if (result.IsStageCleared)
+            {
+                changed |= FindMoongchiMissionTracker.Track(
+                    _missionSO,
+                    _progress,
+                    MoongchiMissionTrigger.StageClear,
+                    1);
+            }
+
+            return changed;
+        }
+
+        public async Task<bool> PersistAfterToolUseAsync(
+            FindMoongchiGameLogic gameLogic,
+            FindMoongchiUseToolResult result)
+        {
+            TrackToolUseResult(result);
+            CaptureBoardFromGame(gameLogic);
+            return await PersistProgressAsync();
+        }
+
+        public async Task<bool> TryClaimMissionAndPersistAsync(int missionId)
+        {
+            if (!TryClaimMissionReward(missionId, out MoongchiMissionData missionData))
+                return false;
+
+            FindMoongchiMissionProgressData entry =
+                FindMoongchiProgressHelper.GetOrCreateMissionProgress(_progress, missionId);
+
+            entry.SetRewardClaimed(true);
+
+            bool reward1Granted = await FindMoongchiRewardGrantService.GrantMissionRewardAsync(
+                missionData.Reward1,
+                _progress,
+                _resourcesSO);
+
+            bool reward2Granted = !missionData.HasReward2 ||
+                                    await FindMoongchiRewardGrantService.GrantMissionRewardAsync(
+                                        missionData.Reward2,
+                                        _progress,
+                                        _resourcesSO);
+
+            if (!reward1Granted || !reward2Granted)
+            {
+                entry.SetRewardClaimed(false);
+                DebugTool.Warning($"[FindMoongchiDataManager] 미션 보상 지급 실패: MissionId={missionId}", DebugType.Data, this);
+                return false;
+            }
+
+            return await PersistProgressAsync();
+        }
+
+        public async Task<bool> TryPurchaseShopItemAsync(int shopItemId, int count, int totalCost, int limitCount)
+        {
+            if (!IsProgressReady || shopItemId <= 0 || count <= 0 || totalCost <= 0)
+                return false;
+
+            if (!TryGetShopItem(shopItemId, out MoongchiShopItemData shopItem) || shopItem == null)
+                return false;
+
+            if (!TrySpendEventCurrency(totalCost))
+                return false;
+
+            if (limitCount > 0 && GetShopPurchaseCount(shopItemId) + count > limitCount)
+            {
+                _progress.EventCurrency += totalCost;
+                return false;
+            }
+
+            bool granted = await FindMoongchiRewardGrantService.GrantShopProductAsync(
+                shopItem,
+                count,
+                _progress,
+                _resourcesSO);
+
+            if (!granted)
+            {
+                _progress.EventCurrency += totalCost;
+                DebugTool.Warning($"[FindMoongchiDataManager] 상점 상품 지급 실패: ShopItemId={shopItemId}", DebugType.Data, this);
+                return false;
+            }
+
+            RecordShopPurchase(shopItemId, count);
+            return await PersistProgressAsync();
+        }
+
+        public async Task<bool> PersistBoardStateAsync(FindMoongchiGameLogic gameLogic)
+        {
+            CaptureBoardFromGame(gameLogic);
+            return await PersistProgressAsync();
+        }
+
+        public async Task<bool> AdvanceStageAndPersistAsync(FindMoongchiGameLogic gameLogic)
+        {
+            if (AdvanceStageAfterClear() == FindMoongchiStageAdvanceResult.Invalid)
+                return false;
+
+            return await PersistProgressAsync();
+        }
+
+        public int GetShopPurchaseCount(int shopItemId)
+        {
+            return IsProgressReady
+                ? FindMoongchiProgressHelper.GetShopPurchaseCount(_progress, shopItemId)
+                : 0;
+        }
+
+        public void RecordShopPurchase(int shopItemId, int count)
+        {
+            if (!IsProgressReady || shopItemId <= 0 || count <= 0)
+                return;
+
+            FindMoongchiProgressHelper.AddShopPurchaseCount(_progress, shopItemId, count);
+        }
+
+        public bool TrySpendEventCurrency(int amount)
+        {
+            if (!IsProgressReady || amount <= 0 || _progress.EventCurrency < amount)
+                return false;
+
+            _progress.EventCurrency -= amount;
+            return true;
+        }
+
+        public void CaptureBoardFromGame(FindMoongchiGameLogic gameLogic)
+        {
+            if (!IsProgressReady || gameLogic == null)
+                return;
+
+            _progress.OpenedTileIDs.Clear();
+            _progress.OpenedTileIDs.AddRange(gameLogic.GetOpenedTileIds());
+
+            _progress.FoundTargetIDs.Clear();
+            _progress.FoundTargetIDs.AddRange(gameLogic.GetFoundTargetIds());
+        }
+
+        public void ApplyBoardToGame(FindMoongchiGameLogic gameLogic)
+        {
+            if (!IsProgressReady || gameLogic == null)
+                return;
+
+            gameLogic.RestoreBoardProgress(_progress.OpenedTileIDs, _progress.FoundTargetIDs);
+        }
+
+        public FindMoongchiStageAdvanceResult AdvanceStageAfterClear()
+        {
+            if (!IsProgressReady)
+                return FindMoongchiStageAdvanceResult.Invalid;
+
+            return AdvanceStageOnClear(_progress);
+        }
+
+        public bool TryConsumeSearchChance(int amount = 1)
+        {
+            if (!IsProgressReady || amount <= 0 || _progress.SearchChance < amount)
+                return false;
+
+            _progress.SearchChance -= amount;
+            return true;
+        }
+
+        public void RestoreSearchChance(int amount = 1)
+        {
+            if (!IsProgressReady || amount <= 0)
+                return;
+
+            _progress.SearchChance += amount;
+        }
+
+        public int GetCurrentStageIdFromProgress()
+        {
+            return IsProgressReady ? GetCurrentStageId(_progress) : 0;
+        }
+
+        public void SyncGameLogicFromProgress(FindMoongchiGameLogic gameLogic)
+        {
+            if (!IsProgressReady || gameLogic == null)
+                return;
+
+            EnsureStageCycleReady(_progress);
+
+            int stageId = GetCurrentStageId(_progress);
+            gameLogic.LoadStage(stageId);
+            ApplyBoardToGame(gameLogic);
+        }
+
+        private bool TryGrantDailyEnergyBonus()
+        {
+            if (!IsProgressReady)
+                return false;
+
+            if (_progress.DailyEnergySpendProgress < FindMoongchiConstants.EnergySpendTarget)
+                return false;
+
+            if (_progress.TodayBonusSearchChanceCount > 0)
+                return false;
+
+            _progress.DailyEnergySpendProgress -= FindMoongchiConstants.EnergySpendTarget;
+            _progress.SearchChance += 1;
+            _progress.TodayBonusSearchChanceCount += 1;
+
+            DebugTool.Log(
+                $"[FindMoongchiDataManager] 일일 에너지 보너스 탐색 기회 지급: SearchChance={_progress.SearchChance}",
+                DebugType.Data,
+                this);
+
+            return true;
         }
 
         // 이벤트 화면 진입 시 호출하는 진행 데이터 로드 API

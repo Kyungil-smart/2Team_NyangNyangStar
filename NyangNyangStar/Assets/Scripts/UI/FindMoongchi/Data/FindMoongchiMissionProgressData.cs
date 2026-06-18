@@ -28,5 +28,15 @@ namespace Data.ScriptableObjects.MoongchiSO
             _currentAmount = Mathf.Max(0, currentAmount);
             _isRewardClaimed = isRewardClaimed;
         }
+
+        public void SetCurrentAmount(int currentAmount)
+        {
+            _currentAmount = Mathf.Max(0, currentAmount);
+        }
+
+        public void SetRewardClaimed(bool isRewardClaimed)
+        {
+            _isRewardClaimed = isRewardClaimed;
+        }
     }
 }

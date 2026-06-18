@@ -55,5 +55,10 @@ namespace UI.FindMoongchi
             IsFound = true;
             return true;
         }
+
+        public void MarkFound()
+        {
+            IsFound = true;
+        }
     }
 }

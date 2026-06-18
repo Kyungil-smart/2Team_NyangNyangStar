@@ -25,5 +25,18 @@ namespace Data.ScriptableObjects.MoongchiSO
             _shopItemID = shopItemID;
             _purchaseCount = Mathf.Max(0, purchaseCount);
         }
+
+        public void AddPurchaseCount(int count)
+        {
+            if (count <= 0)
+                return;
+
+            _purchaseCount = Mathf.Max(0, _purchaseCount + count);
+        }
+
+        public void SetPurchaseCount(int purchaseCount)
+        {
+            _purchaseCount = Mathf.Max(0, purchaseCount);
+        }
     }
 }

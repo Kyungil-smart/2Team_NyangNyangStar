@@ -35,6 +35,12 @@ MonoBehaviour:
     m_SerializedLabels:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 13f129b4bb2701b4582c9c5a99f18b58
+    m_Address: Item_Water_Bottle
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 1b31e64b1031716468a5ba57915b48b5
     m_Address: Item_Food_FishPouch
     m_ReadOnly: 0
@@ -113,6 +119,18 @@ MonoBehaviour:
     m_SerializedLabels:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5dc390e4e69ff6641b2b9fc4144f3c0b
+    m_Address: Item_Water_Cup_02
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 63b65006c191b1045824431acb4e3ec7
+    m_Address: Item_Water_Drop_01
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 68b3c2126e01dc248841acda33a303d2
     m_Address: Item_Toy_FishToy
     m_ReadOnly: 0
@@ -167,6 +185,12 @@ MonoBehaviour:
     m_SerializedLabels:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8ce331f4662dde64385b1fe572acfa5f
+    m_Address: Item_Water_Cup_01
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 97ca79e8513a1b8498966344d31f2eb1
     m_Address: Item_Treat_Slice
     m_ReadOnly: 0
@@ -211,6 +235,12 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: b5662011507eafc4d860372d42460800
     m_Address: Item_Food_TunaCan
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b5fa590662bbac24f812d4191a11712f
+    m_Address: Item_Water_Drop_02
     m_ReadOnly: 0
     m_SerializedLabels:
     - Sprite
