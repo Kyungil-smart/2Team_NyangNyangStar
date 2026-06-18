@@ -50,7 +50,7 @@ public class NyangNyangSnapUI : UIPopup
 
     [Tooltip("데모용 반응 점수 비율")]
     [Range(0f, 1f)]
-    [SerializeField] private float _reactionRate = 0.6f;
+    [SerializeField] private float _timingRate = 0.6f;
 
     [Header("촬영 횟수 UI")]
     [Tooltip("남은 촬영 횟수 Text 이름")]
@@ -245,23 +245,44 @@ public class NyangNyangSnapUI : UIPopup
         }
         NyangNyangSnapPoseData poseData = GetPoseByPlacedItemOrNull();
 
+        // 마커를 숨기기 전에 현재 위치로 구도 점수를 먼저 계산합니다.
+        float compositionRate =
+            _compositionCalculator.CalculateCompositionRate();
+
         _isCapturing = true;
         SetPhotoButtonInteractable(false);
 
+        // RenderTexture 촬영 결과에 Center가 나오지 않도록
+        // GameObject가 아니라 Image 컴포넌트만 잠시 숨깁니다.
+        _compositionCalculator.SetTargetImageVisible(false);
+
         _photoFrameCapture.CapturePhoto(capturedSprite =>
         {
+            // 캡처 성공 여부와 관계없이 사용자 화면에는 Center를 다시 표시합니다.
+            _compositionCalculator.SetTargetImageVisible(true);
+
             _isCapturing = false;
 
             if (capturedSprite == null)
             {
-                DebugTool.Warning("[NyangNyangSnapUI] 사진 캡처 실패", DebugType.UI, this);
+                DebugTool.Warning(
+                    "[NyangNyangSnapUI] 사진 캡처 실패",
+                    DebugType.UI,
+                    this
+                );
+
                 SetPhotoButtonInteractable(true);
                 return;
             }
 
             if (_captureRecorder.IsCaptureComplete)
             {
-                DebugTool.Log("[NyangNyangSnapUI] 최대 촬영 횟수 이후 들어온 캡처 결과는 무시합니다.", DebugType.UI, this);
+                DebugTool.Log(
+                    "[NyangNyangSnapUI] 최대 촬영 횟수 이후 들어온 캡처 결과는 무시합니다.",
+                    DebugType.UI,
+                    this
+                );
+
                 Destroy(capturedSprite.texture);
                 Destroy(capturedSprite);
 
@@ -270,13 +291,16 @@ public class NyangNyangSnapUI : UIPopup
                 return;
             }
 
-
-            float compositionRate = _compositionCalculator.CalculateCompositionRate();
+            int backgroundScore =
+                _sprite.CurrentBackgroundData != null
+                    ? _sprite.CurrentBackgroundData.Score
+                    : 0;
 
             NyangNyangSnapScoreResult scoreResult = _scoreCalculator.Calculate(
                 poseData,
                 compositionRate,
-                _reactionRate
+                backgroundScore,
+                _timingRate
             );
 
             _captureRecorder.AddRecord(
@@ -872,6 +896,11 @@ public class NyangNyangSnapUI : UIPopup
 
         AutoAssignCaptureComponents();
 
+        if(_compositionCalculator != null)
+        {
+            _compositionCalculator.SetTargetVisible(false);
+        }
+
         if (_captureRecorder != null)
         {
             _captureRecorder.ClearRecords();
@@ -896,6 +925,11 @@ public class NyangNyangSnapUI : UIPopup
         ClearPlacedItem();
 
         AutoAssignCaptureComponents();
+
+        if (_compositionCalculator != null)
+        {
+            _compositionCalculator.SetTargetVisible(false);
+        }
 
         if (_captureRecorder != null)
         {
@@ -937,6 +971,11 @@ public class NyangNyangSnapUI : UIPopup
         }
         AutoAssignCaptureComponents();
 
+        if (_compositionCalculator != null)
+        {
+            _compositionCalculator.RandomizeTargetPoint();
+        }
+
         if (_captureRecorder != null)
         {
             _captureRecorder.ClearRecords();
@@ -959,6 +998,11 @@ public class NyangNyangSnapUI : UIPopup
         if (_catController != null)
         {
             _catController.StopInteraction();
+        }
+
+        if(_compositionCalculator != null )
+        {
+            _compositionCalculator.SetTargetVisible(false);
         }
 
         SetSnapCatActive(false);

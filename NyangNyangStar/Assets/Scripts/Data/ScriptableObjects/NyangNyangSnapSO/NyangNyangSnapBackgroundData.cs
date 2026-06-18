@@ -12,6 +12,8 @@ public class NyangNyangSnapBackgroundData
     [SerializeField] private BackgroundGrade _backgroundGrade;
     [Header("스테이지")]
     [SerializeField] private int _stage;
+    [Header("점수")]
+    [SerializeField] private int _score;
     [Header("배경 Key")]
     [SerializeField] private string _backgroundKey;
 
@@ -19,6 +21,7 @@ public class NyangNyangSnapBackgroundData
     public string BackgroundName => _backgroundName;
     public BackgroundGrade BackgroundGrade => _backgroundGrade;
     public int Stage => _stage;
+    public int Score => _score;
     public string BackgroundKey => _backgroundKey;
 
     public NyangNyangSnapBackgroundData(
@@ -26,12 +29,14 @@ public class NyangNyangSnapBackgroundData
         string backgroundName, 
         BackgroundGrade backgroundGrade, 
         int stage, 
+        int score,
         string backgroundKey)
     {
         _backgroundId = backgroundId;
         _backgroundName = backgroundName;
         _backgroundGrade = backgroundGrade;
         _stage = stage;
+        _score = score;
         _backgroundKey = backgroundKey;
     }
 }
