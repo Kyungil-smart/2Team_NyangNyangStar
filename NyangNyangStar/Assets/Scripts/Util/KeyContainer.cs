@@ -60,6 +60,7 @@ namespace Util
             public const string NotebookPopupUI = "NotebookPopupUI";
             public const string SelectedCatPopupUI = "SelectedCatPopupUI";
             public const string PhotoCollectionPopupUI = "PhotoCollectionPopupUI";
+            public const string PhotoDetailPopupUI = "PhotoDetailPopupUI";
 
             // 스크래칭 타임 UI 프리팹
             public const string ScratchingTime = "ScratchingTimeScreen";
@@ -279,6 +280,7 @@ namespace Util
             PrefabKeyDict.Add(Prefabs.NotebookPopupUI, new List<GameObject>());
             PrefabKeyDict.Add(Prefabs.SelectedCatPopupUI, new List<GameObject>());
             PrefabKeyDict.Add(Prefabs.PhotoCollectionPopupUI, new List<GameObject>());
+            PrefabKeyDict.Add(Prefabs.PhotoDetailPopupUI, new List<GameObject>());
 
             // 스크래칭 타임
             PrefabKeyDict.Add(Prefabs.ScratchingTime, new List<GameObject>());

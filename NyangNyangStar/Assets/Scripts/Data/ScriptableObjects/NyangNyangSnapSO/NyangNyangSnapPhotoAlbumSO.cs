@@ -12,6 +12,8 @@ public class NyangNyangSnapPhotoAlbumSO : BaseFireStore
     [FirestoreMap]
     [SerializeField] private List<NyangNyangSnapSavedPhotoData> photos = new();
 
+    public IReadOnlyList<NyangNyangSnapSavedPhotoData> Photos => photos;
+
     public void AddPhoto(NyangNyangSnapSavedPhotoData photo)
     {
         photos.Add(photo);
