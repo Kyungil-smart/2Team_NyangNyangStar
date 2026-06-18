@@ -37,11 +37,14 @@ public class PhotoCollectionPopupUI : UIPopup
 
         _sprite = GetComponent<PhotoCollectionPopupSprite>();
         _sprite.Init();
+
+        _filterPanel.SetActive(false);
     }
 
     private void OnEnable()
     {
-       _filterPanel.SetActive(false);
+        if (_filterPanel != null)
+            _filterPanel.SetActive(false);
     }
 
     public void SetSelectedCatPopup(SelectedCatPopupUI popup)
