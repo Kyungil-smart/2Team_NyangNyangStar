@@ -21,7 +21,7 @@ namespace UI.MergeBoard
         private Color _baseColor = new (1f, 1f, 1f, 1);
 
         [Header("Firestore")]
-        [SerializeField] private MergeBoardFirestoreSo _mergeBoardFirestore;
+        [SerializeField] private MergeBoardSlotsSO _mergeBoardFirestore;
 
         [Header("아이템 정보 UI")]
         [SerializeField] private BoardItemInfoPanel _itemInfoPanel;
@@ -576,11 +576,9 @@ namespace UI.MergeBoard
                 return false;
             }
 
-            _mergeBoardFirestore = FireStoreManager.Instance.GetData<MergeBoardFirestoreSo>(DataType.MergeBoard);
-
             if (_mergeBoardFirestore == null)
             {
-                DebugTool.Warning("FireStoreManager에서 MergeBoardFirestoreSO를 찾을 수 없습니다.", DebugType.Board, this);
+                DebugTool.Warning("MergeBoardFirestoreSO가 인스펙터에 연결되지 않았습니다.", DebugType.Board, this);
                 return false;
             }
 

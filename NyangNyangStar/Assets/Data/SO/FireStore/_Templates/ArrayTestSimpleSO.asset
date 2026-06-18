@@ -13,15 +13,15 @@ MonoBehaviour:
   m_Name: ArrayTestSimpleSO
   m_EditorClassIdentifier: 
   m_DocumentId: ArrayTest
-  m_EnumType: 0
+  m_EnumType: 1
   subCollections: []
   tags:
   - starter
   - test
   - array
-  rewardIds: 6500000066000000cd000000
   multipliers:
   - 1
   - 1.5
   - 2
+  rewardIds: 6500000066000000cd000000
   emptyCheck: []

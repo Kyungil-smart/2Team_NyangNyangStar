@@ -4236,6 +4236,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e0752750d86f74644bed7d3d535a0978, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _photoAlbumSO: {fileID: 11400000, guid: 7684103119f56cb468b94264b4781452, type: 2}
   _resultCollectionPanel: {fileID: 6117662747030174926}
   _rewardPanel: {fileID: 4262444684742725542}
   _selectPhotosButton: {fileID: 0}

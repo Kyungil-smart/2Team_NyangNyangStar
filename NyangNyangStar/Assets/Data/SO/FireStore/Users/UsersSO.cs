@@ -27,6 +27,7 @@ public class UsersSO : BaseFireStore
 
     public override async Task CreateNew(FirebaseFirestore database, string userId)
     {
+
         this.userId = userId;
         nickname = "New User";
         await base.CreateNew(database, userId);

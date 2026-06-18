@@ -172,11 +172,11 @@ namespace UI.FindMoongchi
             }
         }
 
-        // FireStoreManager에 등록된 FindMoongchiProgressFirestoreSO 조회
+        // 인스펙터에 직접 연결된 FindMoongchiProgressFirestoreSO 사용 (서브컬렉션 SO는 직접 참조)
         // UI 쪽에서는 FireStoreManager 직접 접근 대신 LoadProgressAsync/SaveProgressAsync만 사용
         private bool TryResolveProgressSO(out FindMoongchiProgressFirestoreSO progressSO)
         {
-            progressSO = null;
+            progressSO = _progressSO;
 
             if (FireStoreManager.Instance == null)
             {
@@ -190,16 +190,11 @@ namespace UI.FindMoongchi
                 return false;
             }
 
-            progressSO = FireStoreManager.Instance.GetData<FindMoongchiProgressFirestoreSO>(DataType.FindMoongchiProgress);
-
             if (progressSO == null)
             {
-                DebugTool.Warning("[FindMoongchiDataManager] FireStoreManager에서 FindMoongchiProgressFirestoreSO를 찾을 수 없습니다.", DebugType.Data, this);
+                DebugTool.Warning("[FindMoongchiDataManager] FindMoongchiProgressFirestoreSO가 인스펙터에 연결되지 않았습니다.", DebugType.Data, this);
                 return false;
             }
-
-            if (!ReferenceEquals(_progressSO, progressSO))
-                _progressSO = progressSO;
 
             return true;
         }

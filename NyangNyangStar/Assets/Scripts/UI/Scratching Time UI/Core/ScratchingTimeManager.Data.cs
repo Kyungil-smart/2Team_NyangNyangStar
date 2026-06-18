@@ -371,19 +371,10 @@ public partial class ScratchingTimeManager
             return false;
         }
 
-        ScratchingProgressSO resolvedProgress =
-            FireStoreManager.Instance.GetData<ScratchingProgressSO>(DataType.ScratchingTime);
-
-        if (resolvedProgress == null)
+        if (_scratchingProgress == null)
         {
-            DebugTool.Warning("FireStoreManager에서 ScratchingProgressSO를 찾을 수 없습니다.", DebugType.ScratchingTime, this);
+            DebugTool.Warning("ScratchingProgressSO가 인스펙터에 연결되지 않았습니다.", DebugType.ScratchingTime, this);
             return false;
-        }
-
-        if (!ReferenceEquals(_scratchingProgress, resolvedProgress))
-        {
-            _scratchingProgress = resolvedProgress;
-            DebugTool.Log("ScratchingProgressSO 연결 완료", DebugType.ScratchingTime, this);
         }
 
         return true;
