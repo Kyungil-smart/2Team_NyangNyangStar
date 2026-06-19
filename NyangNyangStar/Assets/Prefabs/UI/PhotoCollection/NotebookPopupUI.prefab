@@ -3842,7 +3842,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 1}
   m_AnchorMax: {x: 0.5, y: 1}
-  m_AnchoredPosition: {x: 0, y: -12}
+  m_AnchoredPosition: {x: 0, y: -15}
   m_SizeDelta: {x: 510, y: 90}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!222 &2574461038905287993
@@ -6400,7 +6400,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _locationColor: {r: 1, g: 0.9411765, b: 0.8627451, a: 1}
-  _redPointColor: {r: 1, g: 0, b: 0, a: 1}
 --- !u!1 &5879432198138340501
 GameObject:
   m_ObjectHideFlags: 0

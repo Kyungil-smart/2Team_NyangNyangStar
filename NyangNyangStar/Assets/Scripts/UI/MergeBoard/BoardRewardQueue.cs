@@ -30,16 +30,6 @@ namespace UI.MergeBoard
 
         public bool IsLoaded { get; private set; }
 
-        private void OnEnable()
-        {
-            ClearAlert();
-        }
-
-        private void OnDisable()
-        {
-            ClearAlert();
-        }
-
         private void Start()
         {
             for (int i = 0; i < _queueSlotViews.Count; i++)
@@ -51,7 +41,8 @@ namespace UI.MergeBoard
                 _queueSlotViews[i].Init(this, isTopSlot);
             }
 
-            ClearAlert();
+            if (_alertText != null)
+                _alertText.gameObject.SetActive(false);
 
             RefreshView();
 
@@ -344,30 +335,10 @@ namespace UI.MergeBoard
                 return;
             }
 
-            if (!isActiveAndEnabled)
-            {
-                ClearAlert();
-                DebugTool.Warning(message, DebugType.Board, this);
-                return;
-            }
-
-            ClearAlert();
-            _alertCoroutine = StartCoroutine(AlertRoutine(message));
-        }
-
-        public void ClearAlert()
-        {
             if (_alertCoroutine != null)
-            {
                 StopCoroutine(_alertCoroutine);
-                _alertCoroutine = null;
-            }
 
-            if (_alertText == null)
-                return;
-
-            _alertText.text = string.Empty;
-            _alertText.gameObject.SetActive(false);
+            _alertCoroutine = StartCoroutine(AlertRoutine(message));
         }
 
         private IEnumerator AlertRoutine(string message)
@@ -377,7 +348,8 @@ namespace UI.MergeBoard
 
             yield return new WaitForSeconds(_alertDuration);
 
-            ClearAlert();
+            _alertText.gameObject.SetActive(false);
+            _alertCoroutine = null;
         }
 
         private void RefreshView()

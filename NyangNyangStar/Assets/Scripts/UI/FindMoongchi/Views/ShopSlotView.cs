@@ -51,7 +51,7 @@ namespace UI.FindMoongchi
             SetText(_remainCountText, BuildLimitText(data));
             SetText(_costAmountText, data.CostAmount.ToString());
             SetIcon(data);
-            SetCostIcon(data);
+            SetCostIcon(data.CostType);
 
             if (_soldOutOverlay != null)
                 _soldOutOverlay.SetActive(data.IsSoldOut);
@@ -115,18 +115,12 @@ namespace UI.FindMoongchi
             _itemIcon.enabled = data.Icon != null;
         }
 
-        private void SetCostIcon(FindMoongchiShopViewData data)
+        private void SetCostIcon(Data.ScriptableObjects.MoongchiSO.MoongchiCurrencyType costType)
         {
-            if (_costIconImage == null)
-                _costIconImage = FindChildImage(transform, "CoinIcon");
-
             if (_costIconImage == null)
                 return;
 
-            // 상품 아이콘은 ProductType/ProductID를 따르지만, 구매 비용 아이콘은 항상 이벤트 코인입니다.
-            string key = !string.IsNullOrWhiteSpace(data?.CostIconKey)
-                ? data.CostIconKey
-                : FindMoongchiSpriteKeys.EventCoinIcon;
+            string key = GetCostIconKey(costType);
 
             if (string.IsNullOrWhiteSpace(key))
             {
@@ -135,14 +129,21 @@ namespace UI.FindMoongchi
             }
 
             _costIconImage.enabled = true;
-            _costIconImage.sprite = null;
-            _costIconImage.color = Color.white;
-            _costIconImage.preserveAspect = true;
 
             if (_costIconController == null)
                 _costIconController = new UISpriteController(_costIconImage);
 
             _costIconController.ChangeSprite(key);
+        }
+
+        private static string GetCostIconKey(Data.ScriptableObjects.MoongchiSO.MoongchiCurrencyType costType)
+        {
+            return costType switch
+            {
+                Data.ScriptableObjects.MoongchiSO.MoongchiCurrencyType.EVENT_COIN => FindMoongchiSpriteKeys.EventCoinIcon,
+                Data.ScriptableObjects.MoongchiSO.MoongchiCurrencyType.ENERGY => FindMoongchiSpriteKeys.CommonEnergyIcon,
+                _ => FindMoongchiSpriteKeys.EventCoinIcon
+            };
         }
 
         private static Image FindChildImage(Transform root, string childName)

@@ -9,6 +9,7 @@ public class NotebookPopupSprite : UIBase
     [SerializeField] private Color _locationColor;
 
     private UISpriteController[] _spriteController;
+    private Image _redPoint1;
 
     public override void Init()
     {
@@ -20,6 +21,8 @@ public class NotebookPopupSprite : UIBase
         {
             _spriteController[i] = new UISpriteController(GetImage(i));
         }
+
+        _redPoint1 = GetImage((int)NotebookPopupImages.RedPoint1);
 
         SetSprites();
     }
@@ -44,6 +47,11 @@ public class NotebookPopupSprite : UIBase
     {
         _spriteController[(int)image].ChangeColor(color);
         _spriteController[(int)image].ChangeSprite(key);
+    }
+
+    public void SetRedPoint(bool isOn)
+    {
+        _redPoint1.gameObject.SetActive(isOn);
     }
 
     private void OnDestroy()

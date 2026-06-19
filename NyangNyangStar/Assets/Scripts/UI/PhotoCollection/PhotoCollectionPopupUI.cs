@@ -21,6 +21,13 @@ public class PhotoCollectionPopupUI : UIPopup
     [Tooltip("필터 패널")][SerializeField] private GameObject _filterPanel;
     [Tooltip("필터 닫기 버튼")][SerializeField] private Button _filterCloseButton;
 
+    [Header("별 필터 버튼(Toggle)")]
+    [SerializeField] private Toggle _star1Toggle;
+    [SerializeField] private Toggle _star2Toggle;
+    [SerializeField] private Toggle _star3Toggle;
+    [SerializeField] private Toggle _star4Toggle;
+    [SerializeField] private Toggle _star5Toggle;
+
     [Header("사진 데이터")]
     [SerializeField] private NyangNyangSnapPhotoAlbumSO _photoAlbumSO;
 
@@ -32,6 +39,7 @@ public class PhotoCollectionPopupUI : UIPopup
     private SelectedCatPopupUI _selectedCatPopup;
     private PhotoCollectionPopupSprite _sprite;
     private PhotoDetailPopupUI _detailPopup;
+    private Toggle[] _starToggles;
 
     public override void Init()
     {
@@ -45,6 +53,9 @@ public class PhotoCollectionPopupUI : UIPopup
         _filterCloseButton = GetButton((int)PhotoCollectionPopupButtons.FilterCloseButton);
 
         _filterPanel = GetObject((int)PhotoCollectionPopupObjects.FilterPanel);
+
+        _starToggles = new Toggle[] { _star1Toggle, _star2Toggle, _star3Toggle, _star4Toggle, _star5Toggle };
+        BindFilterToggles();
 
         BindButtons();
         InitPhotoDetailPopup();
@@ -61,6 +72,8 @@ public class PhotoCollectionPopupUI : UIPopup
             onLoaded =>
             {
                 _detailPopup = onLoaded;
+                _detailPopup.SetPhotoCollectionPopup(this);
+                _detailPopup.OnDeleted += RefreshPhotoSlots;
             },
             false);
     }
@@ -69,7 +82,7 @@ public class PhotoCollectionPopupUI : UIPopup
     {
         if (_filterPanel != null)
             _filterPanel.SetActive(false);
-
+        MainUI.Instance?.SetPhotoAlert(false);
         RefreshPhotoSlots();
     }
 
@@ -120,6 +133,7 @@ public class PhotoCollectionPopupUI : UIPopup
         }
 
         RemoveDeletedSlots(serverPhotoIds);
+        ApplyStarFilter();
     }
 
     private CatPhotoSlotUI CreateSlot(string photoId)
@@ -185,6 +199,35 @@ public class PhotoCollectionPopupUI : UIPopup
         GameManager.Audio.PlaySfx("Main_SFX_Touch");
     }
 
+    private void BindFilterToggles()
+    {
+        foreach (Toggle toggle in _starToggles)
+        {
+            toggle.onValueChanged.AddListener(isOn => 
+            {
+                DebugTool.Log($"{toggle.name} : {isOn}", DebugType.UI, this);
+                ApplyStarFilter();
+                GameManager.Audio.PlaySfx("Main_SFX_Touch");
+            });
+        }
+    }
+
+    private void ApplyStarFilter()
+    {
+        List<int> selectedStars = new();
+
+        for (int i = 0; i < _starToggles.Length; i++)
+        {
+            if (_starToggles[i].isOn)
+                selectedStars.Add(i + 1);
+        }
+
+        foreach (CatPhotoSlotUI slot in _photoDic.Values)
+        {
+            slot.gameObject.SetActive(selectedStars.Contains(slot.StarCount));
+        }
+    }
+
     private void ClosePhotoCollectionPopup()
     {
         gameObject.SetActive(false);
@@ -194,10 +237,15 @@ public class PhotoCollectionPopupUI : UIPopup
 
     private void CloseAllPopups()
     {
-        _selectedCatPopup.HideSelectedCatPopup();
-        gameObject.SetActive(false);
+        HidePhotoCollectionPopup();
 
         GameManager.Audio.PlaySfx("Main_SFX_Touch");
+    }
+
+    public void HidePhotoCollectionPopup()
+    {
+        _selectedCatPopup.HideSelectedCatPopup();
+        gameObject.SetActive(false);
     }
 }
 

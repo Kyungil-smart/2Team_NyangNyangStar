@@ -17,10 +17,10 @@ namespace UI.FindMoongchi
         [SerializeField] private bool _showFoundMark = true;
         [SerializeField] private GameObject _foundMark;
         [SerializeField] private Image _foundMarkImage;
-        [SerializeField] private string _foundMarkSpriteKey = FindMoongchiSpriteKeys.IconCheck;
+        [SerializeField] private string _foundMarkSpriteKey = FindMoongchiSpriteKeys.IconCorrect;
         [SerializeField] private bool _fitFoundMarkToIcon = true;
-        [SerializeField] private Vector2 _foundMarkSize = new(42f, 42f);
-        [SerializeField] private float _foundMarkScale = 0.45f;
+        [SerializeField] private Vector2 _foundMarkSize = new(90f, 90f);
+        [SerializeField] private float _foundMarkScale = 1f;
         [SerializeField] private Vector2 _foundMarkOffset = Vector2.zero;
         [SerializeField] private bool _createFoundMarkIfMissing = true;
 
