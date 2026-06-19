@@ -1228,9 +1228,9 @@ namespace UI.FindMoongchi
             {
                 return productId switch
                 {
-                    1 => "에너지",
-                    2 => "골드",
-                    3 => "이벤트 코인",
+                    1 => "골드",
+                    2 => "보석",
+                    3 => "에너지",
                     _ => $"재화 {productId}"
                 };
             }
@@ -1266,9 +1266,9 @@ namespace UI.FindMoongchi
         {
             return productId switch
             {
-                1 => FindMoongchiSpriteKeys.CommonEnergyIcon,
-                2 => FindMoongchiSpriteKeys.CommonGoldIcon,
-                3 => FindMoongchiSpriteKeys.EventCoinIcon,
+                1 => FindMoongchiSpriteKeys.CommonGoldIcon,
+                2 => FindMoongchiSpriteKeys.CommonGemIcon,
+                3 => FindMoongchiSpriteKeys.CommonEnergyIcon,
                 _ => null
             };
         }
