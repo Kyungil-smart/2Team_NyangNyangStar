@@ -38,7 +38,7 @@ namespace UI.MergeBoard
 
         [Header("Resource Cost")]
         [Min(0)]
-        [SerializeField] private int _generateItemEnergyCost = 20;
+        [SerializeField] private int _generateItemEnergyCost = 5;
 
         private const int GeneralBoardSlotCount = 63;
 
