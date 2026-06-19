@@ -61,6 +61,7 @@ public class PhotoCollectionPopupUI : UIPopup
             onLoaded =>
             {
                 _detailPopup = onLoaded;
+                _detailPopup.SetPhotoCollectionPopup(this);
                 _detailPopup.OnDeleted += RefreshPhotoSlots;
             },
             false);
@@ -195,10 +196,15 @@ public class PhotoCollectionPopupUI : UIPopup
 
     private void CloseAllPopups()
     {
-        _selectedCatPopup.HideSelectedCatPopup();
-        gameObject.SetActive(false);
+        HidePhotoCollectionPopup();
 
         GameManager.Audio.PlaySfx("Main_SFX_Touch");
+    }
+
+    public void HidePhotoCollectionPopup()
+    {
+        _selectedCatPopup.HideSelectedCatPopup();
+        gameObject.SetActive(false);
     }
 }
 

@@ -22,6 +22,7 @@ public class PhotoDetailPopupUI : UIPopup
 
     private NyangNyangSnapSavedPhotoData _photoData;
     private PhotoDetailPopupSprite _sprite;
+    private PhotoCollectionPopupUI _photoCollectionPopup;
 
     public event Action OnDeleted;
 
@@ -46,6 +47,11 @@ public class PhotoDetailPopupUI : UIPopup
 
         _sprite.SetPhoto(photoData.imageUrl);
         _sprite.SetStar(photoData.starCount);
+    }
+
+    public void SetPhotoCollectionPopup(PhotoCollectionPopupUI popup)
+    {
+        _photoCollectionPopup = popup;
     }
 
     private void BindButtons()
@@ -81,7 +87,9 @@ public class PhotoDetailPopupUI : UIPopup
 
     private void OpenNyangstagram()
     {
-
+        _photoCollectionPopup.HidePhotoCollectionPopup();
+        gameObject.SetActive(false);
+        MainUI.Instance.OpenNyangStargramPopup();
     }
 
     private async void DeletePhoto()

@@ -34,7 +34,8 @@ public class MainUI : UIScene
     private MainUISprite _mainUISprite;
     private MergeBoardController _mergeBoardController;
     private ScratchingTimeManager _scratchingTimeManager;
-    
+    private UIPopup _nyangStargramPopup;
+
     [SerializeField] private UsersSO _usersSO;
     [SerializeField] private TMP_Text _uidText;
 
@@ -100,7 +101,7 @@ public class MainUI : UIScene
         InitPopup(KeyContainer.Prefabs.RoulettePopupUI, _rouletteButton);
         InitPopup(KeyContainer.Prefabs.AffinityPopupUI, _affinityButton);
         InitPopup(KeyContainer.Prefabs.NyangNyangSnapStagePopUpUI, _nyangNyangSnapButton);
-        InitPopup(KeyContainer.Prefabs.NyangStargramHomeProfile, _meowMeowStarButton);
+        InitNyangStargramPopup();
         InitPopup(KeyContainer.Prefabs.FindMoongchiPopupUI, _findMoongchiButton);
 
         if (_logOutButton != null)
@@ -326,6 +327,17 @@ public class MainUI : UIScene
         GameManager.UI.ShowPopupUI<UIPopup>(key, onLoaded => AddPopupButton(button, onLoaded), false);
     }
 
+    private void InitNyangStargramPopup()
+    {
+        GameManager.UI.ShowPopupUI<UIPopup>(KeyContainer.Prefabs.NyangStargramHomeProfile,
+            onLoaded =>
+            {
+                _nyangStargramPopup = onLoaded;
+                AddPopupButton(_meowMeowStarButton, onLoaded);
+            },
+            false);
+    }
+
     private void AddPopupButton(Button button, UIPopup popup)
     {
         if (button == null)
@@ -353,6 +365,13 @@ public class MainUI : UIScene
             return;
 
         popup.PlayOpenAnimation();
+    }
+
+    public void OpenNyangStargramPopup()
+    {
+        _nyangStargramPopup.gameObject.SetActive(true);
+        PlayPopupOpenAnimation(_nyangStargramPopup);
+        GameManager.Audio.PlaySfx("Main_SFX_Touch");
     }
 }
 
