@@ -34,9 +34,13 @@ namespace UI.FindMoongchi
         [SerializeField] private List<FindMoongchiTargetHintView> _targetHints = new();
 
         [Header("Found Mark")]
-        [SerializeField] private bool _showFoundMark = false;
+        [SerializeField] private bool _showFoundMark = true;
         [SerializeField] private string _foundMarkSpriteKey = FindMoongchiSpriteKeys.IconCorrect;
+        [SerializeField] private bool _fitFoundMarkToTarget = true;
         [SerializeField] private Vector2 _foundMarkSize = new(90f, 90f);
+        [SerializeField] private float _foundMarkScale = 0.75f;
+        [SerializeField] private Vector2 _foundMarkMinSize = new(48f, 48f);
+        [SerializeField] private Vector2 _foundMarkMaxSize = new(180f, 180f);
         [SerializeField] private Vector2 _foundMarkOffset = Vector2.zero;
 
         [Header("Tools")]
@@ -466,12 +470,61 @@ namespace UI.FindMoongchi
 
         private void ApplyFoundMark(TargetVisualEntry entry, bool isFound)
         {
-            // 발견 완료 O 표시는 보드 위 목표물이 아니라 상단 목표물 힌트에서 처리합니다.
-            // 기존 생성된 보드 FoundMark는 남겨두되 항상 숨깁니다.
             if (entry == null || entry.FoundMarkGameObject == null)
                 return;
 
-            entry.FoundMarkGameObject.SetActive(false);
+            bool shouldShow = _showFoundMark && isFound &&
+                              entry.FoundMarkImage != null &&
+                              !string.IsNullOrWhiteSpace(_foundMarkSpriteKey);
+            entry.FoundMarkGameObject.SetActive(shouldShow);
+
+            if (!shouldShow)
+                return;
+
+            RectTransform rectTransform = entry.FoundMarkRectTransform;
+
+            if (rectTransform != null)
+            {
+                rectTransform.anchorMin = new Vector2(0.5f, 0.5f);
+                rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
+                rectTransform.pivot = new Vector2(0.5f, 0.5f);
+                rectTransform.anchoredPosition = _foundMarkOffset;
+                rectTransform.sizeDelta = GetFoundMarkSize(entry);
+                rectTransform.SetAsLastSibling();
+            }
+
+            entry.FoundMarkImage.preserveAspect = true;
+            entry.FoundMarkController ??= new UISpriteController(entry.FoundMarkImage);
+
+            if (entry.FoundMarkLoadedKey == _foundMarkSpriteKey && entry.FoundMarkImage.sprite != null)
+                return;
+
+            entry.FoundMarkLoadedKey = _foundMarkSpriteKey;
+            entry.FoundMarkController.ChangeSprite(_foundMarkSpriteKey);
+        }
+
+        private Vector2 GetFoundMarkSize(TargetVisualEntry entry)
+        {
+            if (!_fitFoundMarkToTarget || entry?.RectTransform == null)
+                return _foundMarkSize;
+
+            Vector2 targetSize = entry.RectTransform.rect.size;
+            float targetDiameter = Mathf.Min(Mathf.Abs(targetSize.x), Mathf.Abs(targetSize.y));
+
+            if (targetDiameter <= 0f)
+                return _foundMarkSize;
+
+            float minDiameter = Mathf.Min(Mathf.Abs(_foundMarkMinSize.x), Mathf.Abs(_foundMarkMinSize.y));
+            float maxDiameter = Mathf.Min(Mathf.Abs(_foundMarkMaxSize.x), Mathf.Abs(_foundMarkMaxSize.y));
+            float diameter = targetDiameter * Mathf.Max(0f, _foundMarkScale);
+
+            if (maxDiameter > 0f)
+                diameter = Mathf.Min(diameter, maxDiameter);
+
+            if (minDiameter > 0f)
+                diameter = Mathf.Max(diameter, minDiameter);
+
+            return new Vector2(diameter, diameter);
         }
 
         private bool TryCalculateTargetBounds(IReadOnlyList<int> cellIndices, out Vector2 center, out Vector2 size)
