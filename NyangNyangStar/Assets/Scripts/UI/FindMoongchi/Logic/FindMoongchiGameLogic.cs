@@ -142,6 +142,12 @@ namespace UI.FindMoongchi
             }
         }
 
+
+        public void ApplyProgress(IReadOnlyList<int> openedTileIds, IReadOnlyList<int> foundTargetIds)
+        {
+            RestoreBoardProgress(openedTileIds, foundTargetIds);
+        }
+
         public static List<int> CalculateAffectedTiles(int toolItemId, int tileIndex, int boardWidth, int boardHeight)
         {
             return CalculateAffectedTiles(toolItemId, tileIndex, boardWidth, boardHeight, FindMoongchiConstants.ToolIds);
