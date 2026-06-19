@@ -2,6 +2,7 @@ using Core.Managers;
 using TMPro;
 using UI;
 using UI.Base;
+using UI.Common;
 using UI.MergeBoard;
 using UI.Transition;
 using UnityEngine;
@@ -34,6 +35,7 @@ public class MainUI : UIScene
     private MainUISprite _mainUISprite;
     private MergeBoardController _mergeBoardController;
     private ScratchingTimeManager _scratchingTimeManager;
+    private PlayerResourceDisplay _resourceDisplay;
     
     [SerializeField] private UsersSO _usersSO;
     [SerializeField] private TMP_Text _uidText;
@@ -83,6 +85,7 @@ public class MainUI : UIScene
         _mainUISprite = GetComponent<MainUISprite>();
         _mainUISprite?.Init();
 
+        InitResourceDisplay();
         InitPopups();
         SubscribeUserIdChanged();
         UpdateUidText();
@@ -144,6 +147,17 @@ public class MainUI : UIScene
     {
         if (Instance == this)
             Instance = null;
+    }
+
+    private void InitResourceDisplay()
+    {
+        _resourceDisplay = GetComponent<PlayerResourceDisplay>();
+
+        if (_resourceDisplay == null)
+            _resourceDisplay = gameObject.AddComponent<PlayerResourceDisplay>();
+
+        _resourceDisplay.ResolveTextsFrom(transform);
+        _resourceDisplay.RefreshDisplay();
     }
 
     private void LoadMergeBoard()
