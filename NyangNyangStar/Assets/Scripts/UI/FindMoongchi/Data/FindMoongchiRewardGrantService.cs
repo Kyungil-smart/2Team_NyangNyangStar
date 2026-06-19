@@ -131,18 +131,48 @@ namespace UI.FindMoongchi
             if (itemId <= 0 || count <= 0)
                 return false;
 
-            if (MergeBoardItemService.Instance == null)
+            MergeBoardItemService itemService = ResolveMergeBoardItemService();
+
+            if (itemService == null)
             {
                 DebugTool.Warning("[FindMoongchiRewardGrantService] MergeBoardItemService가 없어 아이템을 지급할 수 없습니다.", DebugType.Data);
                 return false;
             }
 
-            bool granted = await MergeBoardItemService.Instance.AddItemByIdAsync(itemId, count);
+            bool granted = await itemService.AddItemByIdAsync(itemId, count);
 
             if (granted)
                 DebugTool.Log($"[FindMoongchiRewardGrantService] 아이템 지급: ItemId={itemId}, Count={count}", DebugType.Data);
 
             return granted;
+        }
+
+        private static MergeBoardItemService ResolveMergeBoardItemService()
+        {
+            if (MergeBoardItemService.Instance != null)
+                return MergeBoardItemService.Instance;
+
+            MergeBoardItemService activeService = Object.FindFirstObjectByType<MergeBoardItemService>();
+
+            if (activeService != null)
+                return activeService;
+
+            MergeBoardItemService[] services = Resources.FindObjectsOfTypeAll<MergeBoardItemService>();
+
+            for (int i = 0; i < services.Length; i++)
+            {
+                MergeBoardItemService service = services[i];
+
+                if (service == null || service.gameObject == null)
+                    continue;
+
+                if (!service.gameObject.scene.IsValid())
+                    continue;
+
+                return service;
+            }
+
+            return null;
         }
 
         private static bool GrantOwnedProfile(FindMoongchiProgressRuntimeData progress, int profileId)

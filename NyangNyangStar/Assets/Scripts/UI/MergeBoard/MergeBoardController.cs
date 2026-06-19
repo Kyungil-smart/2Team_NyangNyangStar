@@ -118,12 +118,9 @@ namespace UI.MergeBoard
                 _resourceDisplay = GetComponentInChildren<PlayerResourceDisplay>(true);
 
             if (_resourceDisplay == null)
-                _resourceDisplay = PlayerResourceDisplay.CreateGeneratedHud(_boardRoot != null ? _boardRoot.transform : transform);
-
-            if (_resourceDisplay == null)
                 return;
 
-            _resourceDisplay.ResolveTextsFrom(_resourceDisplay.transform);
+            _resourceDisplay.ResolveReferencesFrom(_resourceDisplay.transform);
             _resourceDisplay.RefreshDisplay();
             _ = PlayerResourceManager.Instance.RefreshAsync();
         }

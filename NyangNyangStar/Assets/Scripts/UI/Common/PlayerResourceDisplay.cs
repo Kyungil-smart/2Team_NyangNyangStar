@@ -1,6 +1,7 @@
 using System;
 using Core.Managers;
 using TMPro;
+using UI;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -9,19 +10,38 @@ namespace UI.Common
     public class PlayerResourceDisplay : MonoBehaviour
     {
         [SerializeField] private ResourcesSO _resourcesSO;
-        [SerializeField] private TMP_Text _coinText;
-        [SerializeField] private TMP_Text _jewelText;
+
+        [Header("Energy")]
         [SerializeField] private TMP_Text _energyText;
-        [SerializeField] private bool _autoFindTexts = true;
+        [SerializeField] private Image _energyIcon;
+        [SerializeField] private string _energyIconKey = "Main_Icon_Energy";
+
+        [Header("Coin")]
+        [SerializeField] private TMP_Text _coinText;
+        [SerializeField] private Image _coinIcon;
+        [SerializeField] private string _coinIconKey = "Main_Icon_Coin";
+
+        [Header("Jewel")]
+        [SerializeField] private TMP_Text _jewelText;
+        [SerializeField] private Image _jewelIcon;
+        [SerializeField] private string _jewelIconKey = "Main_Icon_Jewel";
+
+        [SerializeField] private bool _autoFindReferences = true;
         [SerializeField] private bool _refreshOnEnable = true;
+        [SerializeField] private bool _loadIconsOnEnable = true;
         [SerializeField] private bool _showLabels;
+
+        private UISpriteController _energyIconController;
+        private UISpriteController _coinIconController;
+        private UISpriteController _jewelIconController;
 
         private void Awake()
         {
-            if (_autoFindTexts)
-                ResolveTextsFrom(transform);
+            if (_autoFindReferences)
+                ResolveReferencesFrom(transform);
 
             BindResourceSO();
+            LoadIcons();
         }
 
         private void OnEnable()
@@ -30,6 +50,7 @@ namespace UI.Common
             PlayerResourceManager.Instance.ResourcesChanged += RefreshDisplay;
 
             BindResourceSO();
+            LoadIcons();
             RefreshDisplay();
 
             if (_refreshOnEnable)
@@ -43,13 +64,24 @@ namespace UI.Common
 
         public void ResolveTextsFrom(Transform root)
         {
+            ResolveReferencesFrom(root);
+        }
+
+        public void ResolveReferencesFrom(Transform root)
+        {
             if (root == null)
                 return;
 
+            ResolveSlot(root, "EnergyBox", ref _energyText, ref _energyIcon, "EnergyText");
+            ResolveSlot(root, "CoinBox", ref _coinText, ref _coinIcon, "CoinText");
+            ResolveSlot(root, "JewelBox", ref _jewelText, ref _jewelIcon, "JewelText", "GemText");
+            ResolveSlot(root, "GemBox", ref _jewelText, ref _jewelIcon, "JewelText", "GemText");
+
+            _energyText ??= FindText(root, "EnergyText");
             _coinText ??= FindText(root, "CoinText");
             _jewelText ??= FindText(root, "JewelText", "GemText");
-            _energyText ??= FindText(root, "EnergyText");
 
+            LoadIcons();
             RefreshDisplay();
         }
 
@@ -62,58 +94,33 @@ namespace UI.Common
             RefreshDisplay();
         }
 
+        public void SetReferences(
+            TMP_Text energyText,
+            Image energyIcon,
+            TMP_Text coinText,
+            Image coinIcon,
+            TMP_Text jewelText,
+            Image jewelIcon,
+            bool showLabels = false)
+        {
+            _energyText = energyText;
+            _energyIcon = energyIcon;
+            _coinText = coinText;
+            _coinIcon = coinIcon;
+            _jewelText = jewelText;
+            _jewelIcon = jewelIcon;
+            _showLabels = showLabels;
+            LoadIcons();
+            RefreshDisplay();
+        }
+
         public void RefreshDisplay()
         {
             PlayerResourceManager resourceManager = PlayerResourceManager.Instance;
 
-            SetText(_coinText, "Coin", resourceManager.Coin);
-            SetText(_jewelText, "Gem", resourceManager.Jewel);
             SetText(_energyText, "Energy", resourceManager.Energy);
-        }
-
-        public static PlayerResourceDisplay CreateGeneratedHud(Transform parent)
-        {
-            if (parent == null)
-                return null;
-
-            GameObject hud = new GameObject(
-                "ResourceHud",
-                typeof(RectTransform),
-                typeof(Image),
-                typeof(HorizontalLayoutGroup),
-                typeof(PlayerResourceDisplay));
-
-            hud.layer = parent.gameObject.layer;
-            hud.transform.SetParent(parent, false);
-
-            RectTransform rect = hud.GetComponent<RectTransform>();
-            rect.anchorMin = new Vector2(0.5f, 1f);
-            rect.anchorMax = new Vector2(0.5f, 1f);
-            rect.pivot = new Vector2(0.5f, 1f);
-            rect.anchoredPosition = new Vector2(0f, -64f);
-            rect.sizeDelta = new Vector2(620f, 64f);
-
-            Image background = hud.GetComponent<Image>();
-            background.color = new Color(1f, 0.96f, 0.88f, 0.9f);
-            background.raycastTarget = false;
-
-            HorizontalLayoutGroup layout = hud.GetComponent<HorizontalLayoutGroup>();
-            layout.childAlignment = TextAnchor.MiddleCenter;
-            layout.spacing = 12f;
-            layout.childControlWidth = false;
-            layout.childControlHeight = true;
-            layout.childForceExpandWidth = false;
-            layout.childForceExpandHeight = true;
-
-            PlayerResourceDisplay display = hud.GetComponent<PlayerResourceDisplay>();
-            TMP_Text coinText = CreateText(hud.transform, "CoinText", "Coin 0", parent.gameObject.layer);
-            TMP_Text jewelText = CreateText(hud.transform, "GemText", "Gem 0", parent.gameObject.layer);
-            TMP_Text energyText = CreateText(hud.transform, "EnergyText", "Energy 0", parent.gameObject.layer);
-
-            display._autoFindTexts = false;
-            display._showLabels = true;
-            display.SetTexts(coinText, jewelText, energyText, true);
-            return display;
+            SetText(_coinText, "Coin", resourceManager.Coin);
+            SetText(_jewelText, "Jewel", resourceManager.Jewel);
         }
 
         private void BindResourceSO()
@@ -122,12 +129,77 @@ namespace UI.Common
                 PlayerResourceManager.Instance.Bind(_resourcesSO);
         }
 
+        private void LoadIcons()
+        {
+            if (!_loadIconsOnEnable)
+                return;
+
+            LoadIcon(ref _energyIconController, _energyIcon, _energyIconKey);
+            LoadIcon(ref _coinIconController, _coinIcon, _coinIconKey);
+            LoadIcon(ref _jewelIconController, _jewelIcon, _jewelIconKey);
+        }
+
+        private static void LoadIcon(ref UISpriteController controller, Image image, string key)
+        {
+            if (image == null || string.IsNullOrWhiteSpace(key))
+                return;
+
+            controller ??= new UISpriteController(image);
+            controller.ChangeSprite(key);
+        }
+
         private void SetText(TMP_Text text, string label, int amount)
         {
             if (text == null)
                 return;
 
             text.text = _showLabels ? $"{label} {amount}" : amount.ToString();
+        }
+
+        private static void ResolveSlot(
+            Transform root,
+            string boxName,
+            ref TMP_Text text,
+            ref Image icon,
+            params string[] fallbackTextNames)
+        {
+            Transform box = FindChild(root, boxName);
+
+            if (box == null)
+                return;
+
+            text ??= FindText(box, BuildTextNames(fallbackTextNames));
+            icon ??= FindImage(box, "Icon", "ResourceIcon");
+        }
+
+        private static string[] BuildTextNames(string[] fallbackTextNames)
+        {
+            if (fallbackTextNames == null || fallbackTextNames.Length == 0)
+                return new[] { "ResourceText" };
+
+            string[] names = new string[fallbackTextNames.Length + 1];
+            names[0] = "ResourceText";
+
+            for (int i = 0; i < fallbackTextNames.Length; i++)
+                names[i + 1] = fallbackTextNames[i];
+
+            return names;
+        }
+
+        private static Transform FindChild(Transform root, string name)
+        {
+            if (root == null || string.IsNullOrWhiteSpace(name))
+                return null;
+
+            Transform[] children = root.GetComponentsInChildren<Transform>(true);
+
+            foreach (Transform child in children)
+            {
+                if (child != null && string.Equals(child.name, name, StringComparison.OrdinalIgnoreCase))
+                    return child;
+            }
+
+            return null;
         }
 
         private static TMP_Text FindText(Transform root, params string[] names)
@@ -149,31 +221,30 @@ namespace UI.Common
             return null;
         }
 
-        private static TMP_Text CreateText(Transform parent, string name, string text, int layer)
+        private static Image FindImage(Transform root, params string[] names)
         {
-            GameObject go = new GameObject(name, typeof(RectTransform), typeof(TextMeshProUGUI), typeof(LayoutElement));
-            go.layer = layer;
-            go.transform.SetParent(parent, false);
+            Image[] images = root.GetComponentsInChildren<Image>(true);
 
-            RectTransform rect = go.GetComponent<RectTransform>();
-            rect.sizeDelta = new Vector2(184f, 52f);
+            foreach (Image image in images)
+            {
+                if (image == null)
+                    continue;
 
-            LayoutElement layoutElement = go.GetComponent<LayoutElement>();
-            layoutElement.preferredWidth = 184f;
-            layoutElement.preferredHeight = 52f;
+                foreach (string name in names)
+                {
+                    if (string.Equals(image.name, name, StringComparison.OrdinalIgnoreCase))
+                        return image;
+                }
+            }
 
-            TextMeshProUGUI tmp = go.GetComponent<TextMeshProUGUI>();
-            tmp.text = text;
-            tmp.fontSize = 28f;
-            tmp.alignment = TextAlignmentOptions.Center;
-            tmp.color = Color.black;
-            tmp.raycastTarget = false;
-            tmp.enableAutoSizing = true;
-            tmp.fontSizeMin = 18f;
-            tmp.fontSizeMax = 28f;
-            tmp.overflowMode = TextOverflowModes.Ellipsis;
+            return null;
+        }
 
-            return tmp;
+        private void OnDestroy()
+        {
+            _energyIconController?.Dispose();
+            _coinIconController?.Dispose();
+            _jewelIconController?.Dispose();
         }
     }
 }

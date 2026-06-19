@@ -881,16 +881,7 @@ namespace UI.FindMoongchi
                 return;
             }
 
-            _eventCoin -= totalCost;
-
-            if (!_shopPurchaseCounts.ContainsKey(data.ShopItemId))
-                _shopPurchaseCounts[data.ShopItemId] = 0;
-
-            _shopPurchaseCounts[data.ShopItemId] += count;
-
-            DebugTool.Log($"[FindMoongchiPopup] 임시 구매 완료: ShopItemId={data.ShopItemId}, Count={count}, 남은 이벤트 재화={_eventCoin}", DebugType.FindMoongchi, this);
-            _purchasePopup?.Close();
-            OpenNotice("구매가 완료되었습니다.");
+            OpenError("진행 데이터를 불러오지 못해 구매를 처리할 수 없습니다.", 4002);
             RefreshShopPanel();
         }
 
