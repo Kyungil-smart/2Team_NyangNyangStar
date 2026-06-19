@@ -2,9 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Core.Managers;
-using Data.LibrarySystem;
 using Data.ScriptableObjects.MoongchiSO;
-using Data.ScriptableObjects.MergeBoard;
 using UI.Base;
 using UnityEngine;
 
@@ -68,10 +66,12 @@ namespace UI.FindMoongchi
         [SerializeField] private int _debugToolDisplayCount = 999;
 
         private readonly FindMoongchiGameLogic _gameLogic = new();
+        private readonly FindMoongchiMergeBoardItemResolver _mergeBoardItemResolver = new();
         private readonly int[] _resolvedToolItemIds = new int[FindMoongchiConstants.ToolSlotCount];
         private readonly Dictionary<int, int> _shopPurchaseCounts = new();
         private readonly HashSet<int> _claimedMissionIds = new();
 
+        private FindMoongchiGameViewDataFactory _gameViewDataFactory;
         private bool _initialized;
         private bool _isUsingTool;
         private bool _isStageClearWaitingForRestart;
@@ -80,6 +80,7 @@ namespace UI.FindMoongchi
         private MoongchiShopSO ShopSO => _dataManager != null ? _dataManager.ShopSO : null;
         private MoongchiMissionSO MissionSO => _dataManager != null ? _dataManager.MissionSO : null;
         private MoongchiProfileSO ProfileSO => _dataManager != null ? _dataManager.ProfileSO : null;
+        private FindMoongchiGameViewDataFactory GameViewDataFactory => _gameViewDataFactory ??= new FindMoongchiGameViewDataFactory(_mergeBoardItemResolver);
 
         private void OnEnable()
         {
@@ -430,60 +431,21 @@ namespace UI.FindMoongchi
 
         private void BindEvents()
         {
-            DebugTool.Log("[FindMoongchiPopup] 이벤트 바인딩", DebugType.FindMoongchi, this);
+            DebugTool.Log("[FindMoongchiPopup] Bind panel events.", DebugType.FindMoongchi, this);
 
-            if (_mainPanel != null)
-            {
-                _mainPanel.OnGameButtonClicked -= HandleGameButtonClicked;
-                _mainPanel.OnMissionButtonClicked -= HandleMissionButtonClicked;
-                _mainPanel.OnShopButtonClicked -= HandleShopButtonClicked;
-                _mainPanel.OnCloseButtonClicked -= HandleCloseButtonClicked;
-
-                _mainPanel.OnGameButtonClicked += HandleGameButtonClicked;
-                _mainPanel.OnMissionButtonClicked += HandleMissionButtonClicked;
-                _mainPanel.OnShopButtonClicked += HandleShopButtonClicked;
-                _mainPanel.OnCloseButtonClicked += HandleCloseButtonClicked;
-            }
-            else
-            {
-                DebugTool.Warning("[FindMoongchiPopup] MainPanel이 없어 메인 버튼 이벤트를 바인딩하지 못했습니다.", DebugType.FindMoongchi, this);
-            }
-
-            if (_gamePanel != null)
-            {
-                _gamePanel.OnBackButtonClicked -= HandleBackToMain;
-                _gamePanel.OnToolDropped -= HandleToolDropped;
-                _gamePanel.OnBackButtonClicked += HandleBackToMain;
-                _gamePanel.OnToolDropped += HandleToolDropped;
-            }
-            else
-            {
-                DebugTool.Warning("[FindMoongchiPopup] GamePanel이 없어 게임 이벤트를 바인딩하지 못했습니다.", DebugType.FindMoongchi, this);
-            }
-
-            if (_missionPanel != null)
-            {
-                _missionPanel.OnBackButtonClicked -= HandleBackToMain;
-                _missionPanel.OnClaimMissionClicked -= HandleClaimMissionClicked;
-                _missionPanel.OnBackButtonClicked += HandleBackToMain;
-                _missionPanel.OnClaimMissionClicked += HandleClaimMissionClicked;
-            }
-            else
-            {
-                DebugTool.Warning("[FindMoongchiPopup] MissionPanel이 없어 미션 이벤트를 바인딩하지 못했습니다.", DebugType.FindMoongchi, this);
-            }
-
-            if (_shopPanel != null)
-            {
-                _shopPanel.OnBackButtonClicked -= HandleBackToMain;
-                _shopPanel.OnShopItemClicked -= HandleShopItemClicked;
-                _shopPanel.OnBackButtonClicked += HandleBackToMain;
-                _shopPanel.OnShopItemClicked += HandleShopItemClicked;
-            }
-            else
-            {
-                DebugTool.Warning("[FindMoongchiPopup] ShopPanel이 없어 상점 이벤트를 바인딩하지 못했습니다.", DebugType.FindMoongchi, this);
-            }
+            FindMoongchiPanelEventBinder.Bind(
+                _mainPanel,
+                _gamePanel,
+                _missionPanel,
+                _shopPanel,
+                HandleGameButtonClicked,
+                HandleMissionButtonClicked,
+                HandleShopButtonClicked,
+                HandleCloseButtonClicked,
+                HandleBackToMain,
+                HandleToolDropped,
+                HandleClaimMissionClicked,
+                HandleShopItemClicked);
         }
 
         private void InitGameLogic()
@@ -963,52 +925,15 @@ namespace UI.FindMoongchi
 
         private FindMoongchiGameViewData BuildGameViewData()
         {
-            FindMoongchiGameViewData data = new FindMoongchiGameViewData
-            {
-                BoardWidth = _gameLogic.BoardWidth,
-                BoardHeight = _gameLogic.BoardHeight,
-                CurrentWeek = GetCurrentWeek(),
-                RemainTimeText = _remainTimeText,
-                SearchChance = _debugInfiniteToolUse ? Mathf.Max(1, _debugToolDisplayCount) : GetCurrentSearchChance(),
-                EnergySpendProgress = GetCurrentEnergySpendProgress(),
-                EnergySpendTarget = FindMoongchiConstants.EnergySpendTarget,
-                RevealedTileIndices = _gameLogic.GetRevealedTileSet()
-            };
-
-            foreach (int toolId in _resolvedToolItemIds)
-            {
-                data.Tools.Add(new FindMoongchiToolViewData
-                {
-                    ToolItemId = toolId,
-                    ToolName = GetItemName(toolId),
-                    Icon = GetItemSprite(toolId),
-                    Count = _debugInfiniteToolUse ? Mathf.Max(1, _debugToolDisplayCount) : FindMoongchiMergeBoardBridge.GetBoardItemCountById(toolId),
-                    IsUsable = _debugInfiniteToolUse || GetCurrentSearchChance() > 0
-                });
-            }
-
-            foreach (FindMoongchiTargetRuntimeData target in _gameLogic.Targets)
-            {
-                data.TargetHints.Add(new FindMoongchiTargetHintViewData
-                {
-                    TargetName = target.TargetName,
-                    Icon = null,
-                    IconKey = target.IconKey,
-                    IsFound = target.IsFound
-                });
-
-                data.TargetVisuals.Add(new FindMoongchiTargetVisualViewData
-                {
-                    TargetId = target.TargetId,
-                    TargetName = target.TargetName,
-                    Icon = null,
-                    IconKey = target.IconKey,
-                    IsFound = target.IsFound,
-                    CellIndices = new List<int>(target.CellIndices)
-                });
-            }
-
-            return data;
+            return GameViewDataFactory.Build(
+                _gameLogic,
+                _resolvedToolItemIds,
+                GetCurrentWeek(),
+                _remainTimeText,
+                GetCurrentSearchChance(),
+                GetCurrentEnergySpendProgress(),
+                _debugInfiniteToolUse,
+                _debugToolDisplayCount);
         }
 
         private void RefreshMissionPanel()
@@ -1062,8 +987,8 @@ namespace UI.FindMoongchi
                 _progressController,
                 IsProgressReady,
                 _shopPurchaseCounts,
-                GetItemName,
-                GetItemSprite);
+                _mergeBoardItemResolver.GetItemName,
+                _mergeBoardItemResolver.GetItemSprite);
         }
 
         private int GetMaxBuyCount(FindMoongchiShopViewData data)
@@ -1091,31 +1016,6 @@ namespace UI.FindMoongchi
                     DebugTool.Log($"[FindMoongchiPopup] 에너지 보상 지급 예정: {reward.RewardAmount}", DebugType.FindMoongchi, this);
                     break;
             }
-        }
-
-        private string GetItemName(int itemId)
-        {
-            if (LocalDataAccess.Instance?.Game != null &&
-                LocalDataAccess.Instance.Game.TryGetMergeBoardItemById(itemId, out ItemData itemData) &&
-                itemData != null &&
-                !string.IsNullOrEmpty(itemData.ItemName))
-            {
-                return itemData.ItemName;
-            }
-
-            return itemId.ToString();
-        }
-
-        private Sprite GetItemSprite(int itemId)
-        {
-            if (LocalDataAccess.Instance?.Game != null &&
-                LocalDataAccess.Instance.Game.TryGetMergeBoardItemById(itemId, out ItemData itemData) &&
-                itemData != null)
-            {
-                return itemData.ItemSprite;
-            }
-
-            return null;
         }
 
         private void OpenModalLayer()
@@ -1147,31 +1047,19 @@ namespace UI.FindMoongchi
             if (_dataManager != null)
                 _dataManager.OnLoadCompleted -= HandleDataLoadCompleted;
 
-            if (_mainPanel != null)
-            {
-                _mainPanel.OnGameButtonClicked -= HandleGameButtonClicked;
-                _mainPanel.OnMissionButtonClicked -= HandleMissionButtonClicked;
-                _mainPanel.OnShopButtonClicked -= HandleShopButtonClicked;
-                _mainPanel.OnCloseButtonClicked -= HandleCloseButtonClicked;
-            }
-
-            if (_gamePanel != null)
-            {
-                _gamePanel.OnBackButtonClicked -= HandleBackToMain;
-                _gamePanel.OnToolDropped -= HandleToolDropped;
-            }
-
-            if (_missionPanel != null)
-            {
-                _missionPanel.OnBackButtonClicked -= HandleBackToMain;
-                _missionPanel.OnClaimMissionClicked -= HandleClaimMissionClicked;
-            }
-
-            if (_shopPanel != null)
-            {
-                _shopPanel.OnBackButtonClicked -= HandleBackToMain;
-                _shopPanel.OnShopItemClicked -= HandleShopItemClicked;
-            }
+            FindMoongchiPanelEventBinder.Unbind(
+                _mainPanel,
+                _gamePanel,
+                _missionPanel,
+                _shopPanel,
+                HandleGameButtonClicked,
+                HandleMissionButtonClicked,
+                HandleShopButtonClicked,
+                HandleCloseButtonClicked,
+                HandleBackToMain,
+                HandleToolDropped,
+                HandleClaimMissionClicked,
+                HandleShopItemClicked);
         }
     }
 }
