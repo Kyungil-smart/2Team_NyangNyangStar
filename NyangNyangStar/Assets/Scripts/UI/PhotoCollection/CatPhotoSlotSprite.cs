@@ -8,6 +8,9 @@ using UnityEngine.UI;
 
 public class CatPhotoSlotSprite : UIBase
 {
+    private const string NormalStarKey = "Snap_Icon_Star";
+    private const string PinkStarKey = "Snap_Icon_PinkStar";
+
     private UISpriteController[] _spriteController;
 
     private Image _catImage;
@@ -40,9 +43,9 @@ public class CatPhotoSlotSprite : UIBase
 
     private void SetSprites()
     {
-        SetSprite(CatPhotoSlotImages.Star1, "Snap_Icon_Star");
-        SetSprite(CatPhotoSlotImages.Star2, "Snap_Icon_Star");
-        SetSprite(CatPhotoSlotImages.Star3, "Snap_Icon_Star");
+        SetSprite(CatPhotoSlotImages.Star1, NormalStarKey);
+        SetSprite(CatPhotoSlotImages.Star2, NormalStarKey);
+        SetSprite(CatPhotoSlotImages.Star3, NormalStarKey);
     }
 
     private void SetSprite(CatPhotoSlotImages image, string key)
@@ -52,8 +55,9 @@ public class CatPhotoSlotSprite : UIBase
 
     public void SetPhoto(string imagePath)
     {
-        byte[] bytes = File.ReadAllBytes(imagePath);
         if (!File.Exists(imagePath)) return;
+
+        byte[] bytes = File.ReadAllBytes(imagePath);
 
         Texture2D texture = new Texture2D(1,1);
         texture.LoadImage(bytes);
@@ -75,7 +79,7 @@ public class CatPhotoSlotSprite : UIBase
         SetStarActive(false, false, false);
         _starCountText.gameObject.SetActive(false);
 
-        SetSprite(CatPhotoSlotImages.Star1, "Snap_Icon_Star");
+        SetSprite(CatPhotoSlotImages.Star1, NormalStarKey);
 
         if (starCount <= 0) return;
 
@@ -88,7 +92,7 @@ public class CatPhotoSlotSprite : UIBase
         SetStarActive(true, false, false);
 
         if (starCount == 5)
-            SetSprite(CatPhotoSlotImages.Star1, "Snap_Icon_PinkStar");
+            SetSprite(CatPhotoSlotImages.Star1, PinkStarKey);
 
         _starCountText.gameObject.SetActive(true);
         _starCountText.text = $"X {starCount}";

@@ -61,6 +61,7 @@ public class PhotoCollectionPopupUI : UIPopup
             onLoaded =>
             {
                 _detailPopup = onLoaded;
+                _detailPopup.OnDeleted += RefreshPhotoSlots;
             },
             false);
     }
