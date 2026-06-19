@@ -82,8 +82,9 @@ namespace UI.FindMoongchi
                 IconKey = GetProductIconKey(item.ProductType, item.ProductID),
                 Quantity = item.Quantity,
                 // 상점 구매 비용은 항상 이벤트 코인으로 처리합니다.
-                // 시트의 Cost 값이 다른 재화로 들어와도 UI/구매 검증은 이벤트 코인 기준입니다.
+                // 상품 아이콘은 ProductType/ProductID 기준이고, 비용 아이콘은 이벤트 코인으로 고정합니다.
                 CostType = MoongchiCurrencyType.EVENT_COIN,
+                CostIconKey = FindMoongchiSpriteKeys.EventCoinIcon,
                 CostAmount = item.CostAmount,
                 LimitCount = item.LimitCount,
                 PurchasedCount = purchasedCount

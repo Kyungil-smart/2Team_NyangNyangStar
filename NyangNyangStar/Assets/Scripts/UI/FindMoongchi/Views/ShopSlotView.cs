@@ -51,7 +51,7 @@ namespace UI.FindMoongchi
             SetText(_remainCountText, BuildLimitText(data));
             SetText(_costAmountText, data.CostAmount.ToString());
             SetIcon(data);
-            SetCostIcon();
+            SetCostIcon(data);
 
             if (_soldOutOverlay != null)
                 _soldOutOverlay.SetActive(data.IsSoldOut);
@@ -115,13 +115,18 @@ namespace UI.FindMoongchi
             _itemIcon.enabled = data.Icon != null;
         }
 
-        private void SetCostIcon()
+        private void SetCostIcon(FindMoongchiShopViewData data)
         {
+            if (_costIconImage == null)
+                _costIconImage = FindChildImage(transform, "CoinIcon");
+
             if (_costIconImage == null)
                 return;
 
-            // 상점 구매 비용은 시트 Cost 값과 무관하게 항상 이벤트 코인으로 고정합니다.
-            string key = FindMoongchiSpriteKeys.EventCoinIcon;
+            // 상품 아이콘은 ProductType/ProductID를 따르지만, 구매 비용 아이콘은 항상 이벤트 코인입니다.
+            string key = !string.IsNullOrWhiteSpace(data?.CostIconKey)
+                ? data.CostIconKey
+                : FindMoongchiSpriteKeys.EventCoinIcon;
 
             if (string.IsNullOrWhiteSpace(key))
             {
