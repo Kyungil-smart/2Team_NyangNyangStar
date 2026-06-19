@@ -1909,7 +1909,7 @@ MonoBehaviour:
   m_CaretWidth: 1
   m_ReadOnly: 0
   m_RichText: 1
-  m_GlobalFontAsset: {fileID: 11400000, guid: c90db2b3195254149bff19a87306cbdd, type: 2}
+  m_GlobalFontAsset: {fileID: 0}
   m_OnFocusSelectAll: 1
   m_ResetOnDeActivation: 1
   m_RestoreOriginalTextOnEscape: 1
@@ -3396,6 +3396,10 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 3324999696245031561}
     - target: {fileID: 3408012149333413592, guid: 3de316d8114e3b649bf197d9f3286756, type: 3}
+      propertyPath: _normalizeDocumentIds
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3408012149333413592, guid: 3de316d8114e3b649bf197d9f3286756, type: 3}
       propertyPath: _specialItemBoardSystem
       value: 
       objectReference: {fileID: 6520057897396630295}
@@ -3415,6 +3419,10 @@ PrefabInstance:
       propertyPath: _testReceiveButton
       value: 
       objectReference: {fileID: 6602850170933857246}
+    - target: {fileID: 4041150538008155550, guid: 3de316d8114e3b649bf197d9f3286756, type: 3}
+      propertyPath: _generateItemEnergyCost
+      value: 5
+      objectReference: {fileID: 0}
     - target: {fileID: 4041150538008155550, guid: 3de316d8114e3b649bf197d9f3286756, type: 3}
       propertyPath: _specialItemBoardSystem
       value: 
