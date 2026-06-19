@@ -47,11 +47,14 @@ public class SelectedCatPopupUI : UIPopup
 
         _sprite = GetComponent<SelectedCatPopupSprite>();
         _sprite.Init();
+
+        OpenTab(_infoPanel);
     }
 
     private void OnEnable()
     {
-        OpenTab(_infoPanel);
+        if(_infoPanel != null)
+            OpenTab(_infoPanel);
     }
 
     public void SetNotebookPopup(NotebookPopupUI popup)

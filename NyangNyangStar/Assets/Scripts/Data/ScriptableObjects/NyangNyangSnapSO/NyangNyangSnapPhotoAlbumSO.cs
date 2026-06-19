@@ -12,6 +12,8 @@ public class NyangNyangSnapPhotoAlbumSO : BaseFireStore
     [FirestoreMap]
     [SerializeField] private List<NyangNyangSnapSavedPhotoData> photos = new();
 
+    public IReadOnlyList<NyangNyangSnapSavedPhotoData> Photos => photos;
+
     public void AddPhoto(NyangNyangSnapSavedPhotoData photo)
     {
         photos.Add(photo);
@@ -24,22 +26,7 @@ public class NyangNyangSnapPhotoAlbumSO : BaseFireStore
 
     public override async Task CreateNew(FirebaseFirestore database, string userId)
     {
-        photos = new List<NyangNyangSnapSavedPhotoData>
-        {
-            new NyangNyangSnapSavedPhotoData
-            {
-                photoId = "default",
-                imageUrl = "null",
-                storagePath = "NyangNyangSnap/photos/default.png",
-                poseScore = 0,
-                compositionScore = 0,
-                timingScore = 0,
-                backGroundScore = 0,
-                totalScore = 0,
-                starCount = 0,
-                createdAt = Timestamp.GetCurrentTimestamp()
-            }
-        };
+        photos = new List<NyangNyangSnapSavedPhotoData>();
 
         await base.CreateNew(database, userId);
     }
