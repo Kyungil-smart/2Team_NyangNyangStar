@@ -11,6 +11,7 @@ namespace UI.MergeBoard
         [Header("보드 창")]
         [SerializeField] private GameObject _boardRoot;
         [SerializeField] private MergeBoardLoader _mergeBoardLoader;
+        [SerializeField] private BoardRewardQueue _boardRewardQueue;
         [SerializeField] private Button _closeButton;
 
         [Header("옵션")]
@@ -51,6 +52,9 @@ namespace UI.MergeBoard
             if (_mergeBoardLoader == null)
                 _mergeBoardLoader = _boardRoot.GetComponentInChildren<MergeBoardLoader>(true);
 
+            CacheRewardQueue();
+            _boardRewardQueue?.ClearAlert();
+
             if (_mergeBoardLoader == null)
             {
                 DebugTool.Warning("MergeBoardLoader가 연결되지 않았습니다.", DebugType.Board, this);
@@ -73,10 +77,24 @@ namespace UI.MergeBoard
         
         public void SetVisible(bool isOpen)
         {
+            CacheRewardQueue();
+            _boardRewardQueue?.ClearAlert();
+
             IsOpen = isOpen;
 
             if (_boardRoot != null)
                 _boardRoot.SetActive(isOpen);
+
+            if (isOpen)
+                _boardRewardQueue?.ClearAlert();
+        }
+
+        private void CacheRewardQueue()
+        {
+            if (_boardRewardQueue != null || _boardRoot == null)
+                return;
+
+            _boardRewardQueue = _boardRoot.GetComponentInChildren<BoardRewardQueue>(true);
         }
 
         public void ForceReloadOnNextOpen()

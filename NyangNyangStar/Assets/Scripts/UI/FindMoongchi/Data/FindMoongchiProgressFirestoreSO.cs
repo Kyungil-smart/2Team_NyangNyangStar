@@ -36,7 +36,7 @@ namespace Data.ScriptableObjects.MoongchiSO
         [FirestoreMap]
         [SerializeField] private List<FindMoongchiShopPurchaseData> _shopPurchaseCounts = new();
 
-        [FirestoreMap]
+        // [FirestoreMap]
         [SerializeField] private List<int> _ownedProfileIDs = new();
 
         [Header("초기화 기준 시간")]

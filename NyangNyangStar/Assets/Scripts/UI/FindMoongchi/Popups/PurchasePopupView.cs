@@ -58,7 +58,7 @@ namespace UI.FindMoongchi
             _count = _maxCount > 0 ? 1 : 0;
 
             SetIcon(data);
-            SetCostIcon(data?.CostType ?? Data.ScriptableObjects.MoongchiSO.MoongchiCurrencyType.EVENT_COIN);
+            SetCostIcon();
 
             if (_nameText != null)
                 _nameText.text = data == null ? string.Empty : BuildProductName(data);
@@ -99,17 +99,13 @@ namespace UI.FindMoongchi
             _itemIcon.enabled = data?.Icon != null;
         }
 
-        private void SetCostIcon(Data.ScriptableObjects.MoongchiSO.MoongchiCurrencyType costType)
+        private void SetCostIcon()
         {
             if (_costIconImage == null)
                 return;
 
-            string key = costType switch
-            {
-                Data.ScriptableObjects.MoongchiSO.MoongchiCurrencyType.EVENT_COIN => FindMoongchiSpriteKeys.EventCoinIcon,
-                Data.ScriptableObjects.MoongchiSO.MoongchiCurrencyType.ENERGY => FindMoongchiSpriteKeys.CommonEnergyIcon,
-                _ => FindMoongchiSpriteKeys.EventCoinIcon
-            };
+            // 구매 팝업의 필요 재화도 항상 이벤트 코인으로 표시합니다.
+            string key = FindMoongchiSpriteKeys.EventCoinIcon;
 
             if (string.IsNullOrWhiteSpace(key))
             {
@@ -118,6 +114,9 @@ namespace UI.FindMoongchi
             }
 
             _costIconImage.enabled = true;
+            _costIconImage.sprite = null;
+            _costIconImage.color = Color.white;
+            _costIconImage.preserveAspect = true;
 
             if (_costIconController == null)
                 _costIconController = new UISpriteController(_costIconImage);
