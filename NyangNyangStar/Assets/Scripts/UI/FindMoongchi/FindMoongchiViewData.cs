@@ -70,6 +70,7 @@ namespace UI.FindMoongchi
         public string IconKey;
         public int Quantity;
         public MoongchiCurrencyType CostType;
+        public string CostIconKey;
         public int CostAmount;
         public int LimitCount;
         public int PurchasedCount;

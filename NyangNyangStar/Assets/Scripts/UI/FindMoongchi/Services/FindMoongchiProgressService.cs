@@ -293,7 +293,13 @@ namespace UI.FindMoongchi
             if (dataManager == null || newlyFoundTargets == null || newlyFoundTargets.Count == 0)
                 return;
 
-            IReadOnlyList<MoongchiMissionData> weeklyMissions = dataManager.GetWeeklyMissions();
+            List<MoongchiMissionData> weeklyMissions = new List<MoongchiMissionData>();
+            AddMissionsByType(dataManager, weeklyMissions, MoongchiMissionType.WEEKLY);
+
+            if (CurrentWeek <= 1)
+                AddMissionsByType(dataManager, weeklyMissions, MoongchiMissionType.WEEKLY_1ST);
+            else
+                AddMissionsByType(dataManager, weeklyMissions, MoongchiMissionType.WEEKLY_2ND);
 
             for (int i = 0; i < newlyFoundTargets.Count; i++)
             {
@@ -323,6 +329,23 @@ namespace UI.FindMoongchi
 
                 if (!matched)
                     DebugTool.Log($"[FindMoongchiProgressService] 발견 목표와 연결되는 주간 미션이 없습니다. Target={target.TargetName}", DebugType.FindMoongchi);
+            }
+        }
+
+        private static void AddMissionsByType(
+            FindMoongchiDataManager dataManager,
+            List<MoongchiMissionData> target,
+            MoongchiMissionType missionType)
+        {
+            if (dataManager == null || target == null)
+                return;
+
+            IReadOnlyList<MoongchiMissionData> missions = dataManager.GetMissionsByType(missionType);
+
+            for (int i = 0; i < missions.Count; i++)
+            {
+                if (missions[i] != null)
+                    target.Add(missions[i]);
             }
         }
 

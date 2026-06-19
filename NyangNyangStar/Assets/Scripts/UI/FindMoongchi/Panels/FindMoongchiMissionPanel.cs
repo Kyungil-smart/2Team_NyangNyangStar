@@ -27,6 +27,8 @@ namespace UI.FindMoongchi
         [Header("Section Text")]
         [SerializeField] private TMP_Text _dailyMissionText;
         [SerializeField] private TMP_Text _weeklyMissionText;
+        [SerializeField] private string _dailyMissionTitle = "일일 미션";
+        [SerializeField] private string _weeklyMissionTitleFormat = "주간 미션 - {0}주차";
 
         private readonly List<EventMissionSlotView> _legacySlotViews = new();
         private readonly List<EventMissionSlotView> _dailySlotViews = new();
@@ -70,11 +72,21 @@ namespace UI.FindMoongchi
             IReadOnlyList<FindMoongchiMissionViewData> dailyMissions,
             IReadOnlyList<FindMoongchiMissionViewData> weeklyMissions)
         {
+            SetData(dailyMissions, weeklyMissions, 0);
+        }
+
+        public void SetData(
+            IReadOnlyList<FindMoongchiMissionViewData> dailyMissions,
+            IReadOnlyList<FindMoongchiMissionViewData> weeklyMissions,
+            int currentWeek)
+        {
             int dailyCount = dailyMissions?.Count ?? 0;
             int weeklyCount = weeklyMissions?.Count ?? 0;
 
+            ApplySectionTitles(currentWeek);
+
             DebugTool.Log(
-                $"[FindMoongchiMissionPanel] 미션 데이터 적용: Daily={dailyCount}, Weekly={weeklyCount}",
+                $"[FindMoongchiMissionPanel] 미션 데이터 적용: Week={currentWeek}, Daily={dailyCount}, Weekly={weeklyCount}",
                 DebugType.FindMoongchi,
                 this);
 
@@ -96,6 +108,22 @@ namespace UI.FindMoongchi
             SetSlotGroup(_dailySlotViews, ResolveDailyContentRoot(), dailyMissions);
             SetSlotGroup(_weeklySlotViews, ResolveWeeklyContentRoot(), weeklyMissions);
             HideSlots(_legacySlotViews);
+        }
+
+        private void ApplySectionTitles(int currentWeek)
+        {
+            if (_dailyMissionText != null)
+                _dailyMissionText.text = string.IsNullOrWhiteSpace(_dailyMissionTitle) ? "일일 미션" : _dailyMissionTitle;
+
+            if (_weeklyMissionText == null)
+                return;
+
+            int displayWeek = currentWeek <= 0 ? 1 : currentWeek;
+            string format = string.IsNullOrWhiteSpace(_weeklyMissionTitleFormat)
+                ? "주간 미션 - {0}주차"
+                : _weeklyMissionTitleFormat;
+
+            _weeklyMissionText.text = string.Format(format, displayWeek);
         }
 
         private void ResolveSlotViews()
