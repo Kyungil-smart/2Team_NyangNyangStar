@@ -60,19 +60,19 @@ namespace UI.FindMoongchi
             if (amount <= 0)
                 return true;
 
-            if (resourcesSO == null)
-            {
-                DebugTool.Warning("[FindMoongchiRewardGrantService] ResourcesSO가 연결되지 않아 에너지를 지급할 수 없습니다.", DebugType.Data);
-                return false;
-            }
+            if (resourcesSO != null)
+                PlayerResourceManager.Instance.Bind(resourcesSO);
 
-            PlayerResourceManager.Instance.Bind(resourcesSO);
             bool granted = await PlayerResourceManager.Instance.AddEnergyAsync(amount);
 
             if (granted)
+            {
                 DebugTool.Log($"[FindMoongchiRewardGrantService] 에너지 지급: +{amount}", DebugType.Data);
+                return true;
+            }
 
-            return granted;
+            DebugTool.Warning("[FindMoongchiRewardGrantService] PlayerResourceManager를 통해 에너지를 지급하지 못했습니다.", DebugType.Data);
+            return false;
         }
 
         private static bool GrantEventCoin(FindMoongchiProgressRuntimeData progress, int amount)
@@ -111,11 +111,19 @@ namespace UI.FindMoongchi
             if (amount <= 0)
                 return true;
 
-            if (resourcesSO == null)
-                return false;
+            if (resourcesSO != null)
+                PlayerResourceManager.Instance.Bind(resourcesSO);
 
-            PlayerResourceManager.Instance.Bind(resourcesSO);
-            return await PlayerResourceManager.Instance.AddCoinAsync(amount);
+            bool granted = await PlayerResourceManager.Instance.AddCoinAsync(amount);
+
+            if (granted)
+            {
+                DebugTool.Log($"[FindMoongchiRewardGrantService] 코인 지급: +{amount}", DebugType.Data);
+                return true;
+            }
+
+            DebugTool.Warning("[FindMoongchiRewardGrantService] PlayerResourceManager를 통해 코인을 지급하지 못했습니다.", DebugType.Data);
+            return false;
         }
 
         private static async Task<bool> GrantMergeBoardItemAsync(int itemId, int count)
