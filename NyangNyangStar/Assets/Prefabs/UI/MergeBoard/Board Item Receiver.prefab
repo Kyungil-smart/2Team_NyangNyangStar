@@ -9,7 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5142774498657601557}
-  - component: {fileID: 4972214568497510174}
+  - component: {fileID: 4041150538008155550}
   - component: {fileID: 3408012149333413592}
   m_Layer: 0
   m_Name: Board Item Receiver
@@ -33,7 +33,7 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &4972214568497510174
+--- !u!114 &4041150538008155550
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -54,7 +54,7 @@ MonoBehaviour:
   _specialStore: {fileID: 11400000, guid: 0f3458433aa918a489001c0c87543b41, type: 2}
   _itemIdInputField: {fileID: 0}
   _testReceiveButton: {fileID: 0}
-  _generateItemEnergyCost: 20
+  _generateItemEnergyCost: 10
 --- !u!114 &3408012149333413592
 MonoBehaviour:
   m_ObjectHideFlags: 0
