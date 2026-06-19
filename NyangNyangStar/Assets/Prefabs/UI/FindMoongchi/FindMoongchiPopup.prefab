@@ -1714,9 +1714,13 @@ MonoBehaviour:
   - {fileID: 8562254858243216556}
   - {fileID: 553579023761392622}
   - {fileID: 8240102487201269447}
-  _showFoundMark: 0
+  _showFoundMark: 1
   _foundMarkSpriteKey: FM_Icon_Correct
+  _fitFoundMarkToTarget: 1
   _foundMarkSize: {x: 90, y: 90}
+  _foundMarkScale: 0.75
+  _foundMarkMinSize: {x: 48, y: 48}
+  _foundMarkMaxSize: {x: 180, y: 180}
   _foundMarkOffset: {x: 0, y: 0}
   _toolSlots:
   - {fileID: 6609360297015991791}

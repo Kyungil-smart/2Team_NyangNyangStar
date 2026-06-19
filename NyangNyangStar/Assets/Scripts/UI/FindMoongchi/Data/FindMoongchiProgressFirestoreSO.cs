@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Firebase.Firestore;
+using UI.FindMoongchi;
 using UnityEngine;
 
 namespace Data.ScriptableObjects.MoongchiSO
@@ -11,7 +12,6 @@ namespace Data.ScriptableObjects.MoongchiSO
     public class FindMoongchiProgressFirestoreSO : BaseFireStore
     {
         private const int DefaultWeek = 1;
-        private const int DefaultSearchChance = 2;
 
         [Header("스테이지 진행 상태")]
         [SerializeField] private int _currentWeek = DefaultWeek;
@@ -24,7 +24,7 @@ namespace Data.ScriptableObjects.MoongchiSO
         [SerializeField] private List<int> _foundTargetIDs = new();
 
         [Header("재화/탐색 기회")]
-        [SerializeField] private int _searchChance = DefaultSearchChance;
+        [SerializeField] private int _searchChance = FindMoongchiConstants.DailySearchChance;
         [SerializeField] private int _todayBonusSearchChanceCount;
         [SerializeField] private int _eventCurrency;
         [SerializeField] private int _dailyEnergySpendProgress;
@@ -141,7 +141,7 @@ namespace Data.ScriptableObjects.MoongchiSO
             _openedTileIDs.Clear();
             _foundTargetIDs.Clear();
 
-            _searchChance = DefaultSearchChance;
+            _searchChance = FindMoongchiConstants.DailySearchChance;
             _todayBonusSearchChanceCount = 0;
             _eventCurrency = 0;
             _dailyEnergySpendProgress = 0;

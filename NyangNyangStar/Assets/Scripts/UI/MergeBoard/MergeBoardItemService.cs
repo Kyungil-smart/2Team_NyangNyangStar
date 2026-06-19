@@ -1,9 +1,11 @@
+using Core.Managers;
 using Data.LibrarySystem;
 using Data.ScriptableObjects.MergeBoard;
 using Services.Enums;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using TMPro;
+using UI.FindMoongchi;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -33,6 +35,10 @@ namespace UI.MergeBoard
         [Header("테스트 아이템 생성")]
         [SerializeField] private TMP_InputField _itemIdInputField;
         [SerializeField] private Button _testReceiveButton;
+
+        [Header("Resource Cost")]
+        [Min(0)]
+        [SerializeField] private int _generateItemEnergyCost = 20;
 
         private const int GeneralBoardSlotCount = 63;
 
@@ -231,27 +237,75 @@ namespace UI.MergeBoard
 
         public void ReceiveRandomTestItem()
         {
+            _ = ReceiveRandomTestItemAsync();
+        }
+
+        public async Task<bool> ReceiveRandomTestItemAsync()
+        {
             DebugTool.Log("아이템 생성 버튼 클릭됨", DebugType.Board, this);
 
             if (!CanUseItemService())
-                return;
+                return false;
 
             if (TryReadInputItemID(out int itemID, out bool hasInput))
             {
-                AddItemById(itemID);
-                return;
+                if (!TryGetItemDataById(itemID, out ItemData inputItemData))
+                {
+                    DebugTool.Warning($"{itemID} ID에 해당하는 아이템 데이터를 찾을 수 없습니다.", DebugType.Board, this);
+                    return false;
+                }
+
+                return await GenerateItemByEnergyAsync(inputItemData);
             }
 
             if (hasInput)
-                return;
+                return false;
 
             if (!TryGetRandomCommonItem(out ItemData itemData))
             {
                 DebugTool.Warning("생성 가능한 Common 아이템 데이터가 없습니다.", DebugType.Board, this);
-                return;
+                return false;
             }
 
-            AddItem(itemData);
+            return await GenerateItemByEnergyAsync(itemData);
+        }
+
+        public async Task<bool> GenerateItemByEnergyAsync(ItemData itemData, int count = 1)
+        {
+            if (_isAddingItem)
+                return false;
+
+            if (itemData == null || !itemData.HasItem)
+            {
+                DebugTool.Warning("유효하지 않은 아이템 데이터입니다.", DebugType.Board, this);
+                return false;
+            }
+
+            int safeCount = Mathf.Max(1, count);
+            int energyCost = Mathf.Max(0, _generateItemEnergyCost) * safeCount;
+
+            _isAddingItem = true;
+
+            try
+            {
+                if (!await TrySpendGenerateEnergyAsync(energyCost))
+                    return false;
+
+                bool added = await AddItemAsync(itemData, safeCount);
+
+                if (!added)
+                {
+                    await RefundGenerateEnergyAsync(energyCost);
+                    return false;
+                }
+
+                await NotifyFindMoongchiEnergySpentAsync(energyCost);
+                return true;
+            }
+            finally
+            {
+                _isAddingItem = false;
+            }
         }
 
         private async Task<bool> AddCommonItemAsync(ItemData itemData, int count)
@@ -302,6 +356,77 @@ namespace UI.MergeBoard
             await _specialStore.SaveSpecialSlotAsync(slotNumber, newSlotData);
             DebugTool.Log($"특수 아이템 직접 저장 완료 / ID:{itemData.ItemID}, Count:{count}", DebugType.Board, this);
             return true;
+        }
+
+        private async Task<bool> TrySpendGenerateEnergyAsync(int energyCost)
+        {
+            if (energyCost <= 0)
+                return true;
+
+            bool spent = await PlayerResourceManager.Instance.TrySpendEnergyAsync(energyCost);
+
+            if (!spent)
+            {
+                DebugTool.Warning(
+                    $"아이템 생성에 필요한 에너지가 부족합니다. 필요:{energyCost}, 보유:{PlayerResourceManager.Instance.Energy}",
+                    DebugType.Board,
+                    this);
+            }
+
+            return spent;
+        }
+
+        private static Task<bool> RefundGenerateEnergyAsync(int energyCost)
+        {
+            if (energyCost <= 0)
+                return Task.FromResult(true);
+
+            return PlayerResourceManager.Instance.AddEnergyAsync(
+                energyCost,
+                refreshFromServer: false,
+                trackTotal: false);
+        }
+
+        private async Task NotifyFindMoongchiEnergySpentAsync(int energyCost)
+        {
+            if (energyCost <= 0)
+                return;
+
+            FindMoongchiProgressController progressController = ResolveFindMoongchiProgressController();
+
+            if (progressController == null)
+            {
+                DebugTool.Warning("FindMoongchiProgressController를 찾지 못해 에너지 사용 진행도를 갱신하지 못했습니다.", DebugType.FindMoongchi, this);
+                return;
+            }
+
+            if (!progressController.IsProgressReady && !await progressController.EnsureLoadedAsync())
+            {
+                DebugTool.Warning("뭉치를 찾아라 진행 데이터가 준비되지 않아 에너지 사용 진행도를 갱신하지 못했습니다.", DebugType.FindMoongchi, this);
+                return;
+            }
+
+            await progressController.NotifyEnergySpentAsync(energyCost);
+        }
+
+        private static FindMoongchiProgressController ResolveFindMoongchiProgressController()
+        {
+            FindMoongchiProgressController activeController = FindFirstObjectByType<FindMoongchiProgressController>();
+
+            if (activeController != null)
+                return activeController;
+
+            FindMoongchiProgressController[] controllers = Resources.FindObjectsOfTypeAll<FindMoongchiProgressController>();
+
+            for (int i = 0; i < controllers.Length; i++)
+            {
+                FindMoongchiProgressController controller = controllers[i];
+
+                if (controller != null && controller.gameObject.scene.IsValid())
+                    return controller;
+            }
+
+            return null;
         }
 
         private async Task<bool> ConsumeCommonItemAsync(int itemID, int count)

@@ -1,6 +1,7 @@
 using Core.Managers;
 using Data.ScriptableObjects.MergeBoard;
 using System.Threading.Tasks;
+using UI.Common;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -12,6 +13,7 @@ namespace UI.MergeBoard
         [SerializeField] private GameObject _boardRoot;
         [SerializeField] private MergeBoardLoader _mergeBoardLoader;
         [SerializeField] private BoardRewardQueue _boardRewardQueue;
+        [SerializeField] private PlayerResourceDisplay _resourceDisplay;
         [SerializeField] private Button _closeButton;
 
         [Header("옵션")]
@@ -46,6 +48,7 @@ namespace UI.MergeBoard
 
             _boardRoot.SetActive(true);
             IsOpen = true;
+            EnsureResourceDisplay();
 
             await Task.Yield();
 
@@ -86,7 +89,10 @@ namespace UI.MergeBoard
                 _boardRoot.SetActive(isOpen);
 
             if (isOpen)
+            {
+                EnsureResourceDisplay();
                 _boardRewardQueue?.ClearAlert();
+            }
         }
 
         private void CacheRewardQueue()
@@ -101,6 +107,25 @@ namespace UI.MergeBoard
         {
             if (_mergeBoardLoader != null)
                 _mergeBoardLoader.ResetLoadedState();
+        }
+
+        private void EnsureResourceDisplay()
+        {
+            if (_resourceDisplay == null && _boardRoot != null)
+                _resourceDisplay = _boardRoot.GetComponentInChildren<PlayerResourceDisplay>(true);
+
+            if (_resourceDisplay == null)
+                _resourceDisplay = GetComponentInChildren<PlayerResourceDisplay>(true);
+
+            if (_resourceDisplay == null)
+                _resourceDisplay = PlayerResourceDisplay.CreateGeneratedHud(_boardRoot != null ? _boardRoot.transform : transform);
+
+            if (_resourceDisplay == null)
+                return;
+
+            _resourceDisplay.ResolveTextsFrom(_resourceDisplay.transform);
+            _resourceDisplay.RefreshDisplay();
+            _ = PlayerResourceManager.Instance.RefreshAsync();
         }
     }
 }

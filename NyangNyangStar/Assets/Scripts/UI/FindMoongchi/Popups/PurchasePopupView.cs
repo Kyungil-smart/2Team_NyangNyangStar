@@ -58,7 +58,7 @@ namespace UI.FindMoongchi
             _count = _maxCount > 0 ? 1 : 0;
 
             SetIcon(data);
-            SetCostIcon();
+            SetCostIcon(data);
 
             if (_nameText != null)
                 _nameText.text = data == null ? string.Empty : BuildProductName(data);
@@ -99,13 +99,18 @@ namespace UI.FindMoongchi
             _itemIcon.enabled = data?.Icon != null;
         }
 
-        private void SetCostIcon()
+        private void SetCostIcon(FindMoongchiShopViewData data)
         {
+            if (_costIconImage == null)
+                _costIconImage = FindChildImage(transform, "CoinIcon");
+
             if (_costIconImage == null)
                 return;
 
             // 구매 팝업의 필요 재화도 항상 이벤트 코인으로 표시합니다.
-            string key = FindMoongchiSpriteKeys.EventCoinIcon;
+            string key = !string.IsNullOrWhiteSpace(data?.CostIconKey)
+                ? data.CostIconKey
+                : FindMoongchiSpriteKeys.EventCoinIcon;
 
             if (string.IsNullOrWhiteSpace(key))
             {
