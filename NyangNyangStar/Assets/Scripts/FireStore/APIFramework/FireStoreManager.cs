@@ -27,6 +27,7 @@ public class FireStoreManager : MonoBehaviour
     private Dictionary<DataType, BaseFireStore> m_DataDictionary;
 
     public bool IsInitialized { get; private set; }
+    public string CurrentUserId { get; private set; } = string.Empty;
 
     private void Awake()
     {
@@ -47,8 +48,12 @@ public class FireStoreManager : MonoBehaviour
 
     public async Task InitAsync(string userId = "testUserId")
     {
+        userId ??= string.Empty;
+
         int sessionVersion = ++_sessionVersion;
         IsInitialized = false;
+        CurrentUserId = userId;
+        Core.Managers.PlayerResourceManager.Instance.ResetForUserChange(CurrentUserId);
 
         Debug.Log($"[FireStoreManager] InitAsync 시작 / userId: {userId}");
 
@@ -261,6 +266,8 @@ public class FireStoreManager : MonoBehaviour
     {
         _sessionVersion++;
         IsInitialized = false;
+        CurrentUserId = string.Empty;
+        Core.Managers.PlayerResourceManager.Instance.ResetForUserChange(CurrentUserId);
         m_DataDictionary = null;
         db = null;
 

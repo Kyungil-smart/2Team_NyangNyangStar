@@ -16,6 +16,8 @@ namespace UI.FindMoongchi
         [SerializeField] private TMP_Text _remainTimeText;
         [SerializeField] private TMP_Text _searchChanceText;
         [SerializeField] private TMP_Text _energyProgressText;
+        [SerializeField] private Image _energyProgressFillImage;
+        [SerializeField] private bool _forceEnergyProgressFillType = true;
 
         [Header("Board")]
         [SerializeField] private RectTransform _boardArea;
@@ -71,6 +73,7 @@ namespace UI.FindMoongchi
                 _backButton.onClick.AddListener(HandleBackButtonClicked);
             }
 
+            ResolveEnergyProgressFillImage();
             ResolveToolSlots();
             BindToolSlots();
 
@@ -144,7 +147,7 @@ namespace UI.FindMoongchi
             SetText(_weekText, $"{data.CurrentWeek}주차");
             SetText(_remainTimeText, data.RemainTimeText);
             SetText(_searchChanceText, data.SearchChance.ToString());
-            SetText(_energyProgressText, $"{data.EnergySpendProgress}/{data.EnergySpendTarget}");
+            RefreshEnergyProgress(data.EnergySpendProgress, data.EnergySpendTarget);
 
             HashSet<int> previousRevealedTiles = new(_revealedTiles);
 
@@ -301,6 +304,63 @@ namespace UI.FindMoongchi
 
             gridLayoutGroup.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
             gridLayoutGroup.constraintCount = boardWidth;
+        }
+
+        private void ResolveEnergyProgressFillImage()
+        {
+            if (_energyProgressFillImage != null)
+                return;
+
+            _energyProgressFillImage = FindChildImage("RemainEnergyFill");
+
+            if (_energyProgressFillImage == null)
+                _energyProgressFillImage = FindChildImage("EnergyProgressFill");
+
+            if (_energyProgressFillImage == null)
+                DebugTool.Warning("[FindMoongchiGamePanel] 에너지 진행도 Fill Image를 찾지 못했습니다. RemainEnergyFill 오브젝트를 연결하세요.", DebugType.FindMoongchi, this);
+        }
+
+        private Image FindChildImage(string childName)
+        {
+            if (string.IsNullOrWhiteSpace(childName))
+                return null;
+
+            Transform[] children = GetComponentsInChildren<Transform>(true);
+
+            for (int i = 0; i < children.Length; i++)
+            {
+                Transform child = children[i];
+
+                if (child == null || child.name != childName)
+                    continue;
+
+                return child.GetComponent<Image>();
+            }
+
+            return null;
+        }
+
+        private void RefreshEnergyProgress(int progress, int target)
+        {
+            int safeTarget = Mathf.Max(1, target);
+            int safeProgress = Mathf.Clamp(progress, 0, safeTarget);
+            float fillAmount = Mathf.Clamp01((float)safeProgress / safeTarget);
+
+            SetText(_energyProgressText, $"{safeProgress}/{safeTarget}");
+
+            ResolveEnergyProgressFillImage();
+
+            if (_energyProgressFillImage == null)
+                return;
+
+            if (_forceEnergyProgressFillType && _energyProgressFillImage.type != Image.Type.Filled)
+            {
+                _energyProgressFillImage.type = Image.Type.Filled;
+                _energyProgressFillImage.fillMethod = Image.FillMethod.Horizontal;
+                _energyProgressFillImage.fillOrigin = 0;
+            }
+
+            _energyProgressFillImage.fillAmount = fillAmount;
         }
 
         private void ResolveToolSlots()

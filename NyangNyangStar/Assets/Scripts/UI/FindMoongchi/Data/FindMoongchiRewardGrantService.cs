@@ -1,4 +1,5 @@
 using System.Threading.Tasks;
+using Core.Managers;
 using Data.ScriptableObjects.MoongchiSO;
 using UI.MergeBoard;
 using UnityEngine;
@@ -59,33 +60,19 @@ namespace UI.FindMoongchi
             if (amount <= 0)
                 return true;
 
-            if (resourcesSO == null)
-            {
-                DebugTool.Warning("[FindMoongchiRewardGrantService] ResourcesSO가 연결되지 않아 에너지를 지급할 수 없습니다.", DebugType.Data);
-                return false;
-            }
+            if (resourcesSO != null)
+                PlayerResourceManager.Instance.Bind(resourcesSO);
 
-            if (FireStoreManager.Instance == null || !FireStoreManager.Instance.IsInitialized)
-            {
-                DebugTool.Warning("[FindMoongchiRewardGrantService] Firestore 초기화 전에는 에너지를 지급할 수 없습니다.", DebugType.Data);
-                return false;
-            }
+            bool granted = await PlayerResourceManager.Instance.AddEnergyAsync(amount);
 
-            try
+            if (granted)
             {
-                await resourcesSO.UpdateFromServerAsync(false);
-                resourcesSO.energy += amount;
-                resourcesSO.totalGottenEnergy += amount;
-                await resourcesSO.UpdateDataAsync();
-
                 DebugTool.Log($"[FindMoongchiRewardGrantService] 에너지 지급: +{amount}", DebugType.Data);
                 return true;
             }
-            catch (System.Exception e)
-            {
-                DebugTool.Warning($"[FindMoongchiRewardGrantService] 에너지 지급 실패: {e.Message}", DebugType.Data);
-                return false;
-            }
+
+            DebugTool.Warning("[FindMoongchiRewardGrantService] PlayerResourceManager를 통해 에너지를 지급하지 못했습니다.", DebugType.Data);
+            return false;
         }
 
         private static bool GrantEventCoin(FindMoongchiProgressRuntimeData progress, int amount)
@@ -106,11 +93,11 @@ namespace UI.FindMoongchi
             switch (currencyProductId)
             {
                 case 1:
-                    return await GrantEnergyAsync(resourcesSO, amount);
-                case 2:
                     return await GrantCoinAsync(resourcesSO, amount);
+                case 2:
+                    return await GrantJewelAsync(resourcesSO, amount);
                 case 3:
-                    return GrantEventCoin(progress, amount);
+                    return await GrantEnergyAsync(resourcesSO, amount);
                 default:
                     DebugTool.Warning(
                         $"[FindMoongchiRewardGrantService] 알 수 없는 재화 상품 ID: {currencyProductId}",
@@ -124,22 +111,39 @@ namespace UI.FindMoongchi
             if (amount <= 0)
                 return true;
 
-            if (resourcesSO == null || FireStoreManager.Instance == null || !FireStoreManager.Instance.IsInitialized)
-                return false;
+            if (resourcesSO != null)
+                PlayerResourceManager.Instance.Bind(resourcesSO);
 
-            try
+            bool granted = await PlayerResourceManager.Instance.AddCoinAsync(amount);
+
+            if (granted)
             {
-                await resourcesSO.UpdateFromServerAsync(false);
-                resourcesSO.coin += amount;
-                resourcesSO.totalGottenCoin += amount;
-                await resourcesSO.UpdateDataAsync();
+                DebugTool.Log($"[FindMoongchiRewardGrantService] 코인 지급: +{amount}", DebugType.Data);
                 return true;
             }
-            catch (System.Exception e)
+
+            DebugTool.Warning("[FindMoongchiRewardGrantService] PlayerResourceManager를 통해 코인을 지급하지 못했습니다.", DebugType.Data);
+            return false;
+        }
+
+        private static async Task<bool> GrantJewelAsync(ResourcesSO resourcesSO, int amount)
+        {
+            if (amount <= 0)
+                return true;
+
+            if (resourcesSO != null)
+                PlayerResourceManager.Instance.Bind(resourcesSO);
+
+            bool granted = await PlayerResourceManager.Instance.AddJewelAsync(amount);
+
+            if (granted)
             {
-                DebugTool.Warning($"[FindMoongchiRewardGrantService] 골드 지급 실패: {e.Message}", DebugType.Data);
-                return false;
+                DebugTool.Log($"[FindMoongchiRewardGrantService] Jewel grant +{amount}", DebugType.Data);
+                return true;
             }
+
+            DebugTool.Warning("[FindMoongchiRewardGrantService] Failed to grant jewel through PlayerResourceManager.", DebugType.Data);
+            return false;
         }
 
         private static async Task<bool> GrantMergeBoardItemAsync(int itemId, int count)
@@ -147,18 +151,48 @@ namespace UI.FindMoongchi
             if (itemId <= 0 || count <= 0)
                 return false;
 
-            if (MergeBoardItemService.Instance == null)
+            MergeBoardItemService itemService = ResolveMergeBoardItemService();
+
+            if (itemService == null)
             {
                 DebugTool.Warning("[FindMoongchiRewardGrantService] MergeBoardItemService가 없어 아이템을 지급할 수 없습니다.", DebugType.Data);
                 return false;
             }
 
-            bool granted = await MergeBoardItemService.Instance.AddItemByIdAsync(itemId, count);
+            bool granted = await itemService.AddItemByIdAsync(itemId, count);
 
             if (granted)
                 DebugTool.Log($"[FindMoongchiRewardGrantService] 아이템 지급: ItemId={itemId}, Count={count}", DebugType.Data);
 
             return granted;
+        }
+
+        private static MergeBoardItemService ResolveMergeBoardItemService()
+        {
+            if (MergeBoardItemService.Instance != null)
+                return MergeBoardItemService.Instance;
+
+            MergeBoardItemService activeService = Object.FindFirstObjectByType<MergeBoardItemService>();
+
+            if (activeService != null)
+                return activeService;
+
+            MergeBoardItemService[] services = Resources.FindObjectsOfTypeAll<MergeBoardItemService>();
+
+            for (int i = 0; i < services.Length; i++)
+            {
+                MergeBoardItemService service = services[i];
+
+                if (service == null || service.gameObject == null)
+                    continue;
+
+                if (!service.gameObject.scene.IsValid())
+                    continue;
+
+                return service;
+            }
+
+            return null;
         }
 
         private static bool GrantOwnedProfile(FindMoongchiProgressRuntimeData progress, int profileId)

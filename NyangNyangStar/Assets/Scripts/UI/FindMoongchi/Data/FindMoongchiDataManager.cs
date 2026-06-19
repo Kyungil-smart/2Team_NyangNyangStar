@@ -165,9 +165,12 @@ namespace UI.FindMoongchi
 
             _progress = loaded;
             _isProgressReady = true;
+
+            bool energyBonusApplied = TryGrantEnergySpendBonus();
+
             OnProgressReady?.Invoke();
 
-            if (!hadValidCycle || resetApplied)
+            if (!hadValidCycle || resetApplied || energyBonusApplied)
                 await SaveProgressAsync(_progress);
 
             return true;
@@ -253,15 +256,16 @@ namespace UI.FindMoongchi
             if (!IsProgressReady || amount <= 0)
                 return false;
 
-            _progress.DailyEnergySpendProgress += amount;
+            _progress.DailyEnergySpendProgress = Mathf.Max(0, _progress.DailyEnergySpendProgress) + amount;
 
-            bool changed = FindMoongchiMissionTracker.Track(
+            bool changed = true;
+            changed |= FindMoongchiMissionTracker.Track(
                 _missionSO,
                 _progress,
                 MoongchiMissionTrigger.EnergySpend,
                 amount);
 
-            changed |= TryGrantDailyEnergyBonus();
+            changed |= TryGrantEnergySpendBonus();
             return changed;
         }
 
@@ -296,7 +300,7 @@ namespace UI.FindMoongchi
                     if (target == null)
                         continue;
 
-                    trackInfos.Add(new FindMoongchiTargetTrackInfo(target.TargetId, target.IsMainTarget));
+                    trackInfos.Add(new FindMoongchiTargetTrackInfo(target.TargetId, target.IsMainTarget, target.TargetName));
                 }
 
                 changed |= FindMoongchiMissionTracker.TrackNewlyFoundTargets(_missionSO, _progress, trackInfos);
@@ -436,6 +440,35 @@ namespace UI.FindMoongchi
 
             _progress.FoundTargetIDs.Clear();
             _progress.FoundTargetIDs.AddRange(gameLogic.GetFoundTargetIds());
+
+            BackfillSpecificTargetMissions(gameLogic);
+        }
+
+        private void BackfillSpecificTargetMissions(FindMoongchiGameLogic gameLogic)
+        {
+            if (!IsProgressReady || gameLogic?.Targets == null)
+                return;
+
+            List<FindMoongchiTargetTrackInfo> trackInfos = new List<FindMoongchiTargetTrackInfo>();
+
+            for (int i = 0; i < gameLogic.Targets.Count; i++)
+            {
+                FindMoongchiTargetRuntimeData target = gameLogic.Targets[i];
+
+                if (target == null || !target.IsFound || target.IsMainTarget)
+                    continue;
+
+                trackInfos.Add(new FindMoongchiTargetTrackInfo(target.TargetId, false, target.TargetName));
+            }
+
+            if (trackInfos.Count <= 0)
+                return;
+
+            FindMoongchiMissionTracker.TrackNewlyFoundTargets(
+                _missionSO,
+                _progress,
+                trackInfos,
+                includeGenericTargetMissions: false);
         }
 
         public void ApplyBoardToGame(FindMoongchiGameLogic gameLogic)
@@ -488,23 +521,30 @@ namespace UI.FindMoongchi
             ApplyBoardToGame(gameLogic);
         }
 
-        private bool TryGrantDailyEnergyBonus()
+        private bool TryGrantEnergySpendBonus()
         {
             if (!IsProgressReady)
                 return false;
 
-            if (_progress.DailyEnergySpendProgress < FindMoongchiConstants.EnergySpendTarget)
+            int target = FindMoongchiConstants.EnergySpendTarget;
+
+            if (target <= 0)
                 return false;
 
-            if (_progress.TodayBonusSearchChanceCount > 0)
+            _progress.DailyEnergySpendProgress = Mathf.Max(0, _progress.DailyEnergySpendProgress);
+
+            if (_progress.DailyEnergySpendProgress < target)
                 return false;
 
-            _progress.DailyEnergySpendProgress -= FindMoongchiConstants.EnergySpendTarget;
-            _progress.SearchChance += 1;
-            _progress.TodayBonusSearchChanceCount += 1;
+            int grantCount = _progress.DailyEnergySpendProgress / target;
+            int remainProgress = _progress.DailyEnergySpendProgress % target;
+
+            _progress.DailyEnergySpendProgress = remainProgress;
+            _progress.SearchChance += grantCount;
+            _progress.TodayBonusSearchChanceCount += grantCount;
 
             DebugTool.Log(
-                $"[FindMoongchiDataManager] 일일 에너지 보너스 탐색 기회 지급: SearchChance={_progress.SearchChance}",
+                $"[FindMoongchiDataManager] 에너지 소비 보너스 탐색 기회 지급: +{grantCount}, SearchChance={_progress.SearchChance}, Progress={_progress.DailyEnergySpendProgress}/{target}",
                 DebugType.Data,
                 this);
 
