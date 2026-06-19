@@ -1,5 +1,4 @@
 using System.Threading.Tasks;
-using Core.Managers;
 using Data.ScriptableObjects.MoongchiSO;
 using UI.MergeBoard;
 using UnityEngine;
@@ -66,13 +65,27 @@ namespace UI.FindMoongchi
                 return false;
             }
 
-            PlayerResourceManager.Instance.Bind(resourcesSO);
-            bool granted = await PlayerResourceManager.Instance.AddEnergyAsync(amount);
+            if (FireStoreManager.Instance == null || !FireStoreManager.Instance.IsInitialized)
+            {
+                DebugTool.Warning("[FindMoongchiRewardGrantService] Firestore 초기화 전에는 에너지를 지급할 수 없습니다.", DebugType.Data);
+                return false;
+            }
 
-            if (granted)
+            try
+            {
+                await resourcesSO.UpdateFromServerAsync(false);
+                resourcesSO.energy += amount;
+                resourcesSO.totalGottenEnergy += amount;
+                await resourcesSO.UpdateDataAsync();
+
                 DebugTool.Log($"[FindMoongchiRewardGrantService] 에너지 지급: +{amount}", DebugType.Data);
-
-            return granted;
+                return true;
+            }
+            catch (System.Exception e)
+            {
+                DebugTool.Warning($"[FindMoongchiRewardGrantService] 에너지 지급 실패: {e.Message}", DebugType.Data);
+                return false;
+            }
         }
 
         private static bool GrantEventCoin(FindMoongchiProgressRuntimeData progress, int amount)
@@ -111,11 +124,22 @@ namespace UI.FindMoongchi
             if (amount <= 0)
                 return true;
 
-            if (resourcesSO == null)
+            if (resourcesSO == null || FireStoreManager.Instance == null || !FireStoreManager.Instance.IsInitialized)
                 return false;
 
-            PlayerResourceManager.Instance.Bind(resourcesSO);
-            return await PlayerResourceManager.Instance.AddCoinAsync(amount);
+            try
+            {
+                await resourcesSO.UpdateFromServerAsync(false);
+                resourcesSO.coin += amount;
+                resourcesSO.totalGottenCoin += amount;
+                await resourcesSO.UpdateDataAsync();
+                return true;
+            }
+            catch (System.Exception e)
+            {
+                DebugTool.Warning($"[FindMoongchiRewardGrantService] 골드 지급 실패: {e.Message}", DebugType.Data);
+                return false;
+            }
         }
 
         private static async Task<bool> GrantMergeBoardItemAsync(int itemId, int count)

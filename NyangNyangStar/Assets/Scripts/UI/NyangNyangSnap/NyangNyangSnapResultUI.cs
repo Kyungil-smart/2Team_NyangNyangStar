@@ -164,6 +164,7 @@ public class NyangNyangSnapResultUI : UIPopup
             }
 
             await _photoAlbumSO.UpdateDataAsync();
+            MainUI.Instance?.SetPhotoAlert(true);
 
             DebugTool.Log(
                 "[NyangNyangSnapResultUI] 선택 사진 저장 완료",

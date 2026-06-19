@@ -141,6 +141,11 @@ public class SelectedCatPopupUI : UIPopup
         _notebookPopup.HideNotebookPopup();
         gameObject.SetActive(false);
     }
+
+    public void SetPhotoAlert(bool isOn)
+    {
+        _sprite?.SetRedPoint(isOn);
+    }
 }
 
 public enum SelectedCatPopupButtons

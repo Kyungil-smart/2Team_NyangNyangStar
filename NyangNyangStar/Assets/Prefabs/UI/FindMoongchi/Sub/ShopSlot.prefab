@@ -555,7 +555,7 @@ MonoBehaviour:
   _itemNameText: {fileID: 3091988328934098651}
   _remainCountText: {fileID: 374796318662478909}
   _costAmountText: {fileID: 456556127400215525}
-  _costIconImage: {fileID: 2447148739654603022}
+  _costIconImage: {fileID: 0}
   _soldOutOverlay: {fileID: 1075510957548139237}
   _button: {fileID: 1590971448131248188}
 --- !u!222 &3277280275092719691

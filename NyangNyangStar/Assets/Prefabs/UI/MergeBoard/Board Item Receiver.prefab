@@ -9,7 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5142774498657601557}
-  - component: {fileID: 4041150538008155550}
+  - component: {fileID: 4972214568497510174}
   - component: {fileID: 3408012149333413592}
   m_Layer: 0
   m_Name: Board Item Receiver
@@ -33,7 +33,7 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &4041150538008155550
+--- !u!114 &4972214568497510174
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -42,19 +42,15 @@ MonoBehaviour:
   m_GameObject: {fileID: 6716280515592162958}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f06293f8cedcfce43b4f836a4a2a707a, type: 3}
+  m_Script: {fileID: 11500000, guid: 48323fd3905f4d7dbfbddef74c7d6d25, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   _boardSystem: {fileID: 0}
   _specialItemBoardSystem: {fileID: 0}
   _rewardQueue: {fileID: 0}
   _itemDatabase: {fileID: 11400000, guid: 0073675bff47ab64e8be560c0d594644, type: 2}
-  _boardSlotsStore: {fileID: 11400000, guid: 98fca0be45d12c440adaf586a4591778, type: 2}
-  _rewardQueueStore: {fileID: 11400000, guid: 7aa4ad0242b992e4283c9aa473891fac, type: 2}
-  _specialStore: {fileID: 11400000, guid: 0f3458433aa918a489001c0c87543b41, type: 2}
   _itemIdInputField: {fileID: 0}
   _testReceiveButton: {fileID: 0}
-  _generateItemEnergyCost: 10
 --- !u!114 &3408012149333413592
 MonoBehaviour:
   m_ObjectHideFlags: 0

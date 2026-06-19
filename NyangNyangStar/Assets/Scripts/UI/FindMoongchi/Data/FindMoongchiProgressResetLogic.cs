@@ -1,12 +1,12 @@
 using System;
 using System.Collections.Generic;
-using UI.FindMoongchi;
 using UnityEngine;
 
 namespace Data.ScriptableObjects.MoongchiSO
 {
     public static class FindMoongchiProgressResetLogic
     {
+        private const int DefaultDailySearchChance = 2;
         private const int MaxEventWeek = 2;
 
         private static readonly TimeSpan KstOffset = TimeSpan.FromHours(9);
@@ -21,30 +21,13 @@ namespace Data.ScriptableObjects.MoongchiSO
             long now = GetCurrentUnixTimeSeconds();
             bool changed = false;
 
-            // 신규 문서(LastDailyResetUnixTime == 0)는 첫 진입 시 일일 기본값만 세팅
-            if (progress.LastDailyResetUnixTime <= 0)
-            {
-                ApplyDailyReset(progress, missionSO, now);
-                changed = true;
-            }
-            else if (ShouldResetDaily(progress.LastDailyResetUnixTime, now))
+            if (ShouldResetDaily(progress.LastDailyResetUnixTime, now))
             {
                 ApplyDailyReset(progress, missionSO, now);
                 changed = true;
             }
 
-            // 신규 문서(LastWeeklyResetUnixTime == 0)는 주차를 올리지 않고 이번 주 기준 시각만 기록
-            // (기존: 0이면 ApplyWeeklyReset → CurrentWeek가 1→2로 즉시 증가하는 버그)
-            if (progress.LastWeeklyResetUnixTime <= 0)
-            {
-                progress.LastWeeklyResetUnixTime = GetWeeklyAnchorUnixTime(now);
-                changed = true;
-
-                DebugTool.Log(
-                    $"[FindMoongchiProgressResetLogic] 주간 초기화 기준 시각 설정 (신규 유저, CurrentWeek={progress.CurrentWeek} 유지)",
-                    DebugType.Data);
-            }
-            else if (ShouldResetWeekly(progress.LastWeeklyResetUnixTime, now))
+            if (ShouldResetWeekly(progress.LastWeeklyResetUnixTime, now))
             {
                 ApplyWeeklyReset(progress, missionSO, now);
                 changed = true;
@@ -63,14 +46,19 @@ namespace Data.ScriptableObjects.MoongchiSO
             return progress?.DailyEnergySpendProgress ?? 0;
         }
 
-        // 0(미설정)은 ApplyResetsIfNeeded에서 신규/실제 리셋으로 분기하므로 여기서는 날짜 비교만 수행
         private static bool ShouldResetDaily(long lastResetUnixTime, long nowUnixTime)
         {
+            if (lastResetUnixTime <= 0)
+                return true;
+
             return GetDailyAnchorUnixTime(lastResetUnixTime) < GetDailyAnchorUnixTime(nowUnixTime);
         }
 
         private static bool ShouldResetWeekly(long lastResetUnixTime, long nowUnixTime)
         {
+            if (lastResetUnixTime <= 0)
+                return true;
+
             return GetWeeklyAnchorUnixTime(lastResetUnixTime) < GetWeeklyAnchorUnixTime(nowUnixTime);
         }
 
@@ -81,7 +69,7 @@ namespace Data.ScriptableObjects.MoongchiSO
         {
             ClearMissionProgressByType(progress, missionSO, MoongchiMissionType.DAILY);
 
-            progress.SearchChance = FindMoongchiConstants.DailySearchChance;
+            progress.SearchChance = DefaultDailySearchChance;
             progress.TodayBonusSearchChanceCount = 0;
             progress.DailyEnergySpendProgress = 0;
             progress.LastDailyResetUnixTime = GetDailyAnchorUnixTime(nowUnixTime);

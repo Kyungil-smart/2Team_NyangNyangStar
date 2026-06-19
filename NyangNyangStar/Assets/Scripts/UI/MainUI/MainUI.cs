@@ -2,7 +2,6 @@ using Core.Managers;
 using TMPro;
 using UI;
 using UI.Base;
-using UI.Common;
 using UI.MergeBoard;
 using UI.Transition;
 using UnityEngine;
@@ -35,8 +34,9 @@ public class MainUI : UIScene
     private MainUISprite _mainUISprite;
     private MergeBoardController _mergeBoardController;
     private ScratchingTimeManager _scratchingTimeManager;
-    private PlayerResourceDisplay _resourceDisplay;
-    
+    private UIPopup _nyangStargramPopup;
+    private NotebookPopupUI _notebookPopup;
+
     [SerializeField] private UsersSO _usersSO;
     [SerializeField] private TMP_Text _uidText;
 
@@ -85,10 +85,10 @@ public class MainUI : UIScene
         _mainUISprite = GetComponent<MainUISprite>();
         _mainUISprite?.Init();
 
-        InitResourceDisplay();
         InitPopups();
         SubscribeUserIdChanged();
         UpdateUidText();
+        SetPhotoAlert(false);
     }
 
     private void InitPopups()
@@ -99,11 +99,11 @@ public class MainUI : UIScene
         InitPopup(KeyContainer.Prefabs.SettingsPopupUI, _settingsButton);
         InitPopup(KeyContainer.Prefabs.CollectionPopupUI, _collectionButton);
         InitPopup(KeyContainer.Prefabs.StoryBookPopupUI, _storyBookButton);
-        InitPopup(KeyContainer.Prefabs.NotebookPopupUI, _notebookButton);
+        InitNotebookPopup();
         InitPopup(KeyContainer.Prefabs.RoulettePopupUI, _rouletteButton);
         InitPopup(KeyContainer.Prefabs.AffinityPopupUI, _affinityButton);
         InitPopup(KeyContainer.Prefabs.NyangNyangSnapStagePopUpUI, _nyangNyangSnapButton);
-        InitPopup(KeyContainer.Prefabs.NyangStargramHomeProfile, _meowMeowStarButton);
+        InitNyangStargramPopup();
         InitPopup(KeyContainer.Prefabs.FindMoongchiPopupUI, _findMoongchiButton);
 
         if (_logOutButton != null)
@@ -147,17 +147,6 @@ public class MainUI : UIScene
     {
         if (Instance == this)
             Instance = null;
-    }
-
-    private void InitResourceDisplay()
-    {
-        _resourceDisplay = GetComponent<PlayerResourceDisplay>();
-
-        if (_resourceDisplay == null)
-            _resourceDisplay = gameObject.AddComponent<PlayerResourceDisplay>();
-
-        _resourceDisplay.ResolveTextsFrom(transform);
-        _resourceDisplay.RefreshDisplay();
     }
 
     private void LoadMergeBoard()
@@ -340,6 +329,28 @@ public class MainUI : UIScene
         GameManager.UI.ShowPopupUI<UIPopup>(key, onLoaded => AddPopupButton(button, onLoaded), false);
     }
 
+    private void InitNotebookPopup()
+    {
+        GameManager.UI.ShowPopupUI<NotebookPopupUI>(KeyContainer.Prefabs.NotebookPopupUI,
+            onLoaded =>
+            {
+                _notebookPopup = onLoaded;
+                AddPopupButton(_notebookButton, onLoaded);
+            },
+            false);
+    }
+
+    private void InitNyangStargramPopup()
+    {
+        GameManager.UI.ShowPopupUI<UIPopup>(KeyContainer.Prefabs.NyangStargramHomeProfile,
+            onLoaded =>
+            {
+                _nyangStargramPopup = onLoaded;
+                AddPopupButton(_meowMeowStarButton, onLoaded);
+            },
+            false);
+    }
+
     private void AddPopupButton(Button button, UIPopup popup)
     {
         if (button == null)
@@ -367,6 +378,19 @@ public class MainUI : UIScene
             return;
 
         popup.PlayOpenAnimation();
+    }
+
+    public void SetPhotoAlert(bool isOn)
+    {
+        _mainUISprite?.SetNotebookAlert(isOn);
+        _notebookPopup?.SetPhotoAlert(isOn);
+    }
+
+    public void OpenNyangStargramPopup()
+    {
+        _nyangStargramPopup.gameObject.SetActive(true);
+        PlayPopupOpenAnimation(_nyangStargramPopup);
+        GameManager.Audio.PlaySfx("Main_SFX_Touch");
     }
 }
 

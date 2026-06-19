@@ -642,7 +642,7 @@ GameObject:
   - component: {fileID: 7443202301111500815}
   - component: {fileID: 8715067438853674912}
   m_Layer: 0
-  m_Name: Toggle2
+  m_Name: Star2Toggle
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1091,7 +1091,7 @@ GameObject:
   - component: {fileID: 7168763559770396211}
   - component: {fileID: 5537885279419258790}
   m_Layer: 0
-  m_Name: Toggle3
+  m_Name: Star3Toggle
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1299,7 +1299,7 @@ GameObject:
   - component: {fileID: 8980448740257000246}
   - component: {fileID: 7437167655753365987}
   m_Layer: 0
-  m_Name: Toggle5
+  m_Name: Star5Toggle
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1586,6 +1586,11 @@ MonoBehaviour:
   _filterButton: {fileID: 0}
   _filterPanel: {fileID: 0}
   _filterCloseButton: {fileID: 0}
+  _star1Toggle: {fileID: 1345650244774617229}
+  _star2Toggle: {fileID: 8715067438853674912}
+  _star3Toggle: {fileID: 5537885279419258790}
+  _star4Toggle: {fileID: 2541215158164095460}
+  _star5Toggle: {fileID: 7437167655753365987}
   _photoAlbumSO: {fileID: 11400000, guid: 7684103119f56cb468b94264b4781452, type: 2}
   _content: {fileID: 4790034486642315090}
   _catPhotoSlotPrefab: {fileID: 8655329051593768335, guid: 277bc544a685c8749903dedc6f1da7cf, type: 3}
@@ -1614,7 +1619,7 @@ GameObject:
   - component: {fileID: 7742575316031899175}
   - component: {fileID: 2541215158164095460}
   m_Layer: 0
-  m_Name: Toggle4
+  m_Name: Star4Toggle
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1703,7 +1708,7 @@ GameObject:
   - component: {fileID: 2486039853945255859}
   - component: {fileID: 1345650244774617229}
   m_Layer: 0
-  m_Name: Toggle1
+  m_Name: Star1Toggle
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2776,7 +2781,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 1}
   m_AnchorMax: {x: 0.5, y: 1}
-  m_AnchoredPosition: {x: 0, y: -12}
+  m_AnchoredPosition: {x: 0, y: -15}
   m_SizeDelta: {x: 510, y: 90}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!222 &6469823295479688710

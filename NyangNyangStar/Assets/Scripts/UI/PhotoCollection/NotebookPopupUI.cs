@@ -20,6 +20,7 @@ public class NotebookPopupUI : UIPopup
     [SerializeField] private Button _catBackground;
 
     private NotebookPopupSprite _sprite;
+    private SelectedCatPopupUI _selectedCatPopup;
 
     public override void Init()
     {
@@ -53,6 +54,7 @@ public class NotebookPopupUI : UIPopup
     {
         GameManager.UI.ShowPopupUI<SelectedCatPopupUI>(key, onLoaded => 
         {
+            _selectedCatPopup = onLoaded;
             onLoaded.SetNotebookPopup(this);
             AddPopupButton(button, onLoaded); 
         }, 
@@ -99,6 +101,12 @@ public class NotebookPopupUI : UIPopup
     }
 
     public void HideNotebookPopup() => gameObject.SetActive(false);
+
+    public void SetPhotoAlert(bool isOn)
+    {
+        _sprite?.SetRedPoint(isOn);
+        _selectedCatPopup?.SetPhotoAlert(isOn);
+    }
 }
 
 public enum NotebookPopupButtons

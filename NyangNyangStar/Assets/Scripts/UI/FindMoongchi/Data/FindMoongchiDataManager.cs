@@ -159,10 +159,9 @@ namespace UI.FindMoongchi
             bool hadValidCycle = loaded.CurrentCycleStageIDs != null &&
                                  loaded.CurrentCycleStageIDs.Count == 5;
 
-            // 주간 리셋으로 CurrentWeek가 바뀐 뒤 해당 주차 스테이지 풀로 사이클을 맞춤 (순서 중요)
-            bool resetApplied = FindMoongchiProgressResetLogic.ApplyResetsIfNeeded(loaded, _missionSO);
-
             EnsureStageCycleReady(loaded);
+
+            bool resetApplied = FindMoongchiProgressResetLogic.ApplyResetsIfNeeded(loaded, _missionSO);
 
             _progress = loaded;
             _isProgressReady = true;

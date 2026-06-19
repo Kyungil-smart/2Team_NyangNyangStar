@@ -11,6 +11,8 @@ public class CatPhotoSlotUI : UIBase
     private NyangNyangSnapSavedPhotoData _photoData;
     private PhotoDetailPopupUI _detailPopup;
 
+    public int StarCount => _photoData.starCount;
+
     public override void Init()
     {
         Bind<Button>(typeof(CatPhotoSlotButtons));
