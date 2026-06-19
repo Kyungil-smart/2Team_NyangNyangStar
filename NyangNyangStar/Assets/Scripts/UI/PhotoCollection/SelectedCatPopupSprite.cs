@@ -7,6 +7,7 @@ using UnityEngine.UI;
 public class SelectedCatPopupSprite : UIBase
 {
     private UISpriteController[] _spriteController;
+    private Image _redPoint;
 
     public override void Init()
     {
@@ -18,6 +19,8 @@ public class SelectedCatPopupSprite : UIBase
         {
             _spriteController[i] = new UISpriteController(GetImage(i));
         }
+
+        _redPoint = GetImage((int)SelectedCatPopupImages.RedPoint);
 
         SetSprites();
     }
@@ -42,6 +45,11 @@ public class SelectedCatPopupSprite : UIBase
     {
         _spriteController[(int)image].ChangeColor(color);
         _spriteController[(int)image].ChangeSprite(key);
+    }
+
+    public void SetRedPoint(bool isOn)
+    {
+        _redPoint.gameObject.SetActive(isOn);
     }
 
     private void OnDestroy()

@@ -9,6 +9,7 @@ public class MainUISprite : UIBase
     [SerializeField] private Color _workshopMergeBoardColor;
     [SerializeField] private Color _mainMergeBoardColor;
     private UISpriteController[] _spriteController;
+    private Image _notebookAlert;
 
     public override void Init()
     {
@@ -20,6 +21,8 @@ public class MainUISprite : UIBase
         {
             _spriteController[i] = new UISpriteController(GetImage(i));
         }
+
+        _notebookAlert = GetImage((int)MainUIImages.NotebookAlert);
 
         SetSprites();
     }
@@ -51,6 +54,7 @@ public class MainUISprite : UIBase
         SetSprite(MainUIImages.ProfileImage, "Profile_ProfileImages_0");
         SetSprite(MainUIImages.ProfileFrame, "Main_Profile_Frame");
         SetSprite(MainUIImages.FindMoongchiButton, "Main_Btn_Event_FindMoongchi");
+        SetSprite(MainUIImages.NotebookAlert, "Main_Alert");
     }
 
     private void SetSprite(MainUIImages image, string key)
@@ -62,6 +66,11 @@ public class MainUISprite : UIBase
     {
         _spriteController[(int)image].ChangeColor(color);
         _spriteController[(int)image].ChangeSprite(key);
+    }
+
+    public void SetNotebookAlert(bool isOn)
+    {
+        _notebookAlert.gameObject.SetActive(isOn);
     }
 }
 
@@ -91,5 +100,6 @@ public enum MainUIImages
     Gem,                       // 보석 패널
     ProfileImage,              // 프로필 이미지
     ProfileFrame,              // 프로필 이미지 테두리
-    FindMoongchiButton,              // 뭉치를 찾아라 이벤트
+    FindMoongchiButton,        // 뭉치를 찾아라 이벤트
+    NotebookAlert,             // 임시보호 수업 알림 
 }

@@ -35,6 +35,7 @@ public class MainUI : UIScene
     private MergeBoardController _mergeBoardController;
     private ScratchingTimeManager _scratchingTimeManager;
     private UIPopup _nyangStargramPopup;
+    private NotebookPopupUI _notebookPopup;
 
     [SerializeField] private UsersSO _usersSO;
     [SerializeField] private TMP_Text _uidText;
@@ -87,6 +88,7 @@ public class MainUI : UIScene
         InitPopups();
         SubscribeUserIdChanged();
         UpdateUidText();
+        SetPhotoAlert(false);
     }
 
     private void InitPopups()
@@ -97,7 +99,7 @@ public class MainUI : UIScene
         InitPopup(KeyContainer.Prefabs.SettingsPopupUI, _settingsButton);
         InitPopup(KeyContainer.Prefabs.CollectionPopupUI, _collectionButton);
         InitPopup(KeyContainer.Prefabs.StoryBookPopupUI, _storyBookButton);
-        InitPopup(KeyContainer.Prefabs.NotebookPopupUI, _notebookButton);
+        InitNotebookPopup();
         InitPopup(KeyContainer.Prefabs.RoulettePopupUI, _rouletteButton);
         InitPopup(KeyContainer.Prefabs.AffinityPopupUI, _affinityButton);
         InitPopup(KeyContainer.Prefabs.NyangNyangSnapStagePopUpUI, _nyangNyangSnapButton);
@@ -327,6 +329,17 @@ public class MainUI : UIScene
         GameManager.UI.ShowPopupUI<UIPopup>(key, onLoaded => AddPopupButton(button, onLoaded), false);
     }
 
+    private void InitNotebookPopup()
+    {
+        GameManager.UI.ShowPopupUI<NotebookPopupUI>(KeyContainer.Prefabs.NotebookPopupUI,
+            onLoaded =>
+            {
+                _notebookPopup = onLoaded;
+                AddPopupButton(_notebookButton, onLoaded);
+            },
+            false);
+    }
+
     private void InitNyangStargramPopup()
     {
         GameManager.UI.ShowPopupUI<UIPopup>(KeyContainer.Prefabs.NyangStargramHomeProfile,
@@ -365,6 +378,12 @@ public class MainUI : UIScene
             return;
 
         popup.PlayOpenAnimation();
+    }
+
+    public void SetPhotoAlert(bool isOn)
+    {
+        _mainUISprite?.SetNotebookAlert(isOn);
+        _notebookPopup?.SetPhotoAlert(isOn);
     }
 
     public void OpenNyangStargramPopup()

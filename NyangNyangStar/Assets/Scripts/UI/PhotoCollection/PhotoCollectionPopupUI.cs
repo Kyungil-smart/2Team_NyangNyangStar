@@ -82,7 +82,7 @@ public class PhotoCollectionPopupUI : UIPopup
     {
         if (_filterPanel != null)
             _filterPanel.SetActive(false);
-
+        MainUI.Instance?.SetPhotoAlert(false);
         RefreshPhotoSlots();
     }
 
