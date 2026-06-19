@@ -301,7 +301,7 @@ namespace UI.FindMoongchi
                     if (target == null)
                         continue;
 
-                    trackInfos.Add(new FindMoongchiTargetTrackInfo(target.TargetId, target.IsMainTarget));
+                    trackInfos.Add(new FindMoongchiTargetTrackInfo(target.TargetId, target.IsMainTarget, target.TargetName));
                 }
 
                 changed |= FindMoongchiMissionTracker.TrackNewlyFoundTargets(_missionSO, _progress, trackInfos);
@@ -441,6 +441,35 @@ namespace UI.FindMoongchi
 
             _progress.FoundTargetIDs.Clear();
             _progress.FoundTargetIDs.AddRange(gameLogic.GetFoundTargetIds());
+
+            BackfillSpecificTargetMissions(gameLogic);
+        }
+
+        private void BackfillSpecificTargetMissions(FindMoongchiGameLogic gameLogic)
+        {
+            if (!IsProgressReady || gameLogic?.Targets == null)
+                return;
+
+            List<FindMoongchiTargetTrackInfo> trackInfos = new List<FindMoongchiTargetTrackInfo>();
+
+            for (int i = 0; i < gameLogic.Targets.Count; i++)
+            {
+                FindMoongchiTargetRuntimeData target = gameLogic.Targets[i];
+
+                if (target == null || !target.IsFound || target.IsMainTarget)
+                    continue;
+
+                trackInfos.Add(new FindMoongchiTargetTrackInfo(target.TargetId, false, target.TargetName));
+            }
+
+            if (trackInfos.Count <= 0)
+                return;
+
+            FindMoongchiMissionTracker.TrackNewlyFoundTargets(
+                _missionSO,
+                _progress,
+                trackInfos,
+                includeGenericTargetMissions: false);
         }
 
         public void ApplyBoardToGame(FindMoongchiGameLogic gameLogic)

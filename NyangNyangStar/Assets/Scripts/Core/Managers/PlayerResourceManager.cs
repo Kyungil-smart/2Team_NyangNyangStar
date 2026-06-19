@@ -18,6 +18,7 @@ namespace Core.Managers
 
         private readonly SemaphoreSlim _operationLock = new SemaphoreSlim(1, 1);
         private ResourcesSO _resourcesSO;
+        private string _boundUserId = string.Empty;
 
         public event Action ResourcesChanged;
 
@@ -31,11 +32,28 @@ namespace Core.Managers
 
         public void Bind(ResourcesSO resourcesSO)
         {
-            if (resourcesSO == null || _resourcesSO == resourcesSO)
+            string currentUserId = GetCurrentUserId();
+
+            if (resourcesSO == null ||
+                string.IsNullOrEmpty(currentUserId) ||
+                !IsFirestoreReadyForUser(currentUserId))
+            {
+                ClearBoundResources(currentUserId, true);
+                return;
+            }
+
+            if (_resourcesSO == resourcesSO &&
+                string.Equals(_boundUserId, currentUserId, StringComparison.Ordinal))
                 return;
 
             _resourcesSO = resourcesSO;
+            _boundUserId = currentUserId;
             NotifyChanged();
+        }
+
+        public void ResetForUserChange(string userId = null)
+        {
+            ClearBoundResources(userId ?? GetCurrentUserId(), true);
         }
 
         public int GetAmount(PlayerResourceType type)
@@ -238,13 +256,36 @@ namespace Core.Managers
 
         private ResourcesSO ResolveResourcesSO(bool warnIfMissing = true)
         {
-            if (_resourcesSO != null)
+            string currentUserId = GetCurrentUserId();
+
+            if (string.IsNullOrEmpty(currentUserId))
+            {
+                ClearBoundResources(currentUserId, false);
+                return null;
+            }
+
+            if (_resourcesSO != null &&
+                string.Equals(_boundUserId, currentUserId, StringComparison.Ordinal) &&
+                IsFirestoreReadyForUser(currentUserId))
+            {
                 return _resourcesSO;
+            }
+
+            ClearBoundResources(currentUserId, false);
+
+            if (!IsFirestoreReadyForUser(currentUserId))
+            {
+                if (warnIfMissing)
+                    DebugTool.Warning("[PlayerResourceManager] Firestore is not initialized for the current user.", DebugType.Data);
+
+                return null;
+            }
 
             if (FireStoreManager.Instance != null &&
                 FireStoreManager.Instance.TryGetStore(out ResourcesSO resourcesSO))
             {
                 _resourcesSO = resourcesSO;
+                _boundUserId = currentUserId;
                 return _resourcesSO;
             }
 
@@ -256,11 +297,52 @@ namespace Core.Managers
 
         private static bool CanUseFirestore()
         {
-            if (FireStoreManager.Instance != null && FireStoreManager.Instance.IsInitialized)
+            string currentUserId = GetCurrentUserId();
+
+            if (string.IsNullOrEmpty(currentUserId))
+            {
+                DebugTool.Warning("[PlayerResourceManager] No logged-in user is available.", DebugType.Data);
+                return false;
+            }
+
+            if (IsFirestoreReadyForUser(currentUserId))
                 return true;
 
-            DebugTool.Warning("[PlayerResourceManager] Firestore is not initialized.", DebugType.Data);
+            DebugTool.Warning("[PlayerResourceManager] Firestore is not initialized for the current user.", DebugType.Data);
             return false;
+        }
+
+        private static bool IsFirestoreReadyForUser(string userId)
+        {
+            FireStoreManager fireStoreManager = FireStoreManager.Instance;
+
+            return fireStoreManager != null &&
+                   fireStoreManager.IsInitialized &&
+                   string.Equals(fireStoreManager.CurrentUserId, userId, StringComparison.Ordinal);
+        }
+
+        private static string GetCurrentUserId()
+        {
+            if (AuthManager.Instance != null)
+                return AuthManager.Instance.CurrentUserId ?? string.Empty;
+
+            return FireStoreManager.Instance != null
+                ? FireStoreManager.Instance.CurrentUserId ?? string.Empty
+                : string.Empty;
+        }
+
+        private void ClearBoundResources(string userId, bool notify)
+        {
+            userId ??= string.Empty;
+
+            bool changed = _resourcesSO != null ||
+                           !string.Equals(_boundUserId, userId, StringComparison.Ordinal);
+
+            _resourcesSO = null;
+            _boundUserId = userId;
+
+            if (changed && notify)
+                NotifyChanged();
         }
 
         private static int GetAmount(ResourcesSO resourcesSO, PlayerResourceType type)

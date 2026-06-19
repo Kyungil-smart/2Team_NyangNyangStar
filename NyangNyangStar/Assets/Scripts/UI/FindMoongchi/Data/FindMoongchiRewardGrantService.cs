@@ -93,11 +93,11 @@ namespace UI.FindMoongchi
             switch (currencyProductId)
             {
                 case 1:
-                    return await GrantEnergyAsync(resourcesSO, amount);
-                case 2:
                     return await GrantCoinAsync(resourcesSO, amount);
+                case 2:
+                    return await GrantJewelAsync(resourcesSO, amount);
                 case 3:
-                    return GrantEventCoin(progress, amount);
+                    return await GrantEnergyAsync(resourcesSO, amount);
                 default:
                     DebugTool.Warning(
                         $"[FindMoongchiRewardGrantService] 알 수 없는 재화 상품 ID: {currencyProductId}",
@@ -123,6 +123,26 @@ namespace UI.FindMoongchi
             }
 
             DebugTool.Warning("[FindMoongchiRewardGrantService] PlayerResourceManager를 통해 코인을 지급하지 못했습니다.", DebugType.Data);
+            return false;
+        }
+
+        private static async Task<bool> GrantJewelAsync(ResourcesSO resourcesSO, int amount)
+        {
+            if (amount <= 0)
+                return true;
+
+            if (resourcesSO != null)
+                PlayerResourceManager.Instance.Bind(resourcesSO);
+
+            bool granted = await PlayerResourceManager.Instance.AddJewelAsync(amount);
+
+            if (granted)
+            {
+                DebugTool.Log($"[FindMoongchiRewardGrantService] Jewel grant +{amount}", DebugType.Data);
+                return true;
+            }
+
+            DebugTool.Warning("[FindMoongchiRewardGrantService] Failed to grant jewel through PlayerResourceManager.", DebugType.Data);
             return false;
         }
 

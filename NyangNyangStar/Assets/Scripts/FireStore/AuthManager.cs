@@ -308,6 +308,7 @@ public class AuthManager : MonoBehaviour
             return;
 
         CurrentUserId = userId;
+        PlayerResourceManager.Instance.ResetForUserChange(CurrentUserId);
         OnUserIdChanged?.Invoke(CurrentUserId);
     }
 
