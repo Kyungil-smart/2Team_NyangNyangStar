@@ -109,10 +109,16 @@ public class NyangNyangSnapPlacementController : MonoBehaviour
 
     public event Action<int> OnItemPlaced;
     public event Action OnToyDropFailed;
+
+    public event Action OnToyAlertStarted;
+    public event Action OnToyAlertEnded;
+
     public event Action<int> OnSnackDragStarted;
     public event Action<int, RectTransform, float> OnSnackDragUpdated;
     public event Action<int> OnSnackDragCompleted;
     public event Action OnSnackDragCanceled;
+
+    public event Action<RectTransform> OnPreviewMoved;
 
     private void Awake()
     {
@@ -122,6 +128,7 @@ public class NyangNyangSnapPlacementController : MonoBehaviour
         SetMarkerActive(false);
         SetRangeActive(false);
         SetRetryMessageActive(false);
+        ApplyPhotoLayerOrder();
     }
 
     private void OnDisable()
@@ -180,30 +187,6 @@ public class NyangNyangSnapPlacementController : MonoBehaviour
         return true;
     }
 
-    public void SelectItem(int itemID, string itemName, Sprite itemSprite)
-    {
-        if (!ValidateSelection(itemID, itemSprite))
-            return;
-
-        _selectedItemID = itemID;
-        _selectedItemName = itemName;
-        _selectedSprite = itemSprite;
-
-        if (_previewImage != null)
-        {
-            _previewImage.sprite = itemSprite;
-            _previewImage.preserveAspect = true;
-        }
-
-        SetPreviewAlpha(1f);
-        SetPreviewActive(false);
-
-        DebugTool.Log(
-            $"[NyangNyangSnapPlacementController] 아이템 선택 완료 / ItemID:{itemID}, ItemName:{itemName}",
-            DebugType.UI,
-            this
-        );
-    }
 
     public bool SelectSnack(int itemID, string itemName, Sprite itemSprite)
     {
@@ -258,7 +241,7 @@ public class NyangNyangSnapPlacementController : MonoBehaviour
         SetMarkerActive(false);
         SetRangeActive(true);
 
-        _previewImage.transform.SetAsLastSibling();
+        ApplyPreviewLayerOrder();
         UpdateSnackDrag(pointerPosition);
 
         _lastSnackPosition = _previewImage.rectTransform.anchoredPosition;
@@ -287,6 +270,7 @@ public class NyangNyangSnapPlacementController : MonoBehaviour
 
         _previewImage.rectTransform.anchoredPosition = placementPosition;
         ShowRange(placementPosition);
+        OnPreviewMoved?.Invoke(_previewImage.rectTransform);
 
         if (movedDistance >= _snackMoveThreshold)
         {
@@ -298,8 +282,7 @@ public class NyangNyangSnapPlacementController : MonoBehaviour
     private void HandleSnackStationary()
     {
         if (_snackState != SnackPlacementState.Dragging ||
-            _previewImage == null ||
-            _snackStationaryChecked)
+            _previewImage == null)
         {
             return;
         }
@@ -309,13 +292,18 @@ public class NyangNyangSnapPlacementController : MonoBehaviour
         if (_snackStationaryTime < _snackStationaryDuration)
             return;
 
-        _snackStationaryChecked = true;
-
+        // ALERT 연출과 간식 정지 시간이 동시에 끝나는 경우를 대비해
+        // 고양이 이동이 시작될 때까지 이동 가능 여부를 계속 전달합니다.
         OnSnackDragUpdated?.Invoke(
             _selectedItemID,
             _previewImage.rectTransform,
             GetCurrentDropRadius()
         );
+
+        if (_snackStationaryChecked)
+            return;
+
+        _snackStationaryChecked = true;
 
         DebugTool.Log(
             $"[NyangNyangSnapPlacementController] 간식 2초 정지 확인 완료 / ItemID:{_selectedItemID}",
@@ -409,20 +397,6 @@ public class NyangNyangSnapPlacementController : MonoBehaviour
         return true;
     }
 
-    public bool EndSelection(Vector2 pointerPosition)
-    {
-        if (!TryGetPlacementLocalPoint(pointerPosition, out Vector2 localPoint))
-        {
-            SetPreviewAlpha(1f);
-            SetPreviewActive(false);
-
-            return false;
-        }
-
-        PlaceSelectedItem(localPoint);
-
-        return true;
-    }
 
     public bool BeginToyDrag(Vector2 pointerPosition)
     {
@@ -474,7 +448,7 @@ public class NyangNyangSnapPlacementController : MonoBehaviour
             return;
 
         _previewImage.rectTransform.anchoredPosition = canvasPosition;
-
+        OnPreviewMoved?.Invoke(_previewImage.rectTransform);
         bool canDrop = Vector2.Distance(canvasPosition, _markerCanvasPosition) <= GetCurrentDropRadius();
 
         SetPreviewAlpha(canDrop ? 1f : _invalidPreviewAlpha);
@@ -505,8 +479,14 @@ public class NyangNyangSnapPlacementController : MonoBehaviour
         return true;
     }
 
-    public void CancelSelection()
+    public void CancelSelection(bool notifyToyAlertEnded = true)
     {
+        if (notifyToyAlertEnded &&
+            _toyState != ToyPlacementState.None)
+        {
+            OnToyAlertEnded?.Invoke();
+        }
+
         _toyState = ToyPlacementState.None;
         _snackState = SnackPlacementState.None;
 
@@ -551,6 +531,8 @@ public class NyangNyangSnapPlacementController : MonoBehaviour
         _markerPlacementPosition = placementPosition;
         _markerCanvasPosition = canvasPosition;
         _toyState = ToyPlacementState.MarkerPlaced;
+
+        OnToyAlertStarted?.Invoke();
 
         ShowMarker(canvasPosition);
         ShowRange(canvasPosition);
@@ -625,9 +607,13 @@ public class NyangNyangSnapPlacementController : MonoBehaviour
 
         _placedItemID = _selectedItemID;
 
+        // BackPanel → 배치 도구 → Cat 순서를 강제로 유지합니다.
+        ApplyPhotoLayerOrder();
+
         int placedItemID = _placedItemID;
 
-        CancelSelection();
+        // 정상 배치 완료는 ALERT 취소가 아니므로 종료 이벤트를 보내지 않습니다.
+        CancelSelection(false);
 
         OnItemPlaced?.Invoke(placedItemID);
 
@@ -636,6 +622,63 @@ public class NyangNyangSnapPlacementController : MonoBehaviour
             DebugType.UI,
             this
         );
+    }
+
+
+    private void ApplyPhotoLayerOrder()
+    {
+        if (_placementArea == null)
+            return;
+
+        Transform backPanel = FindChildByName(_placementArea, "BackPanel");
+        Transform cat = FindChildByName(_placementArea, "Cat");
+
+        // BackPanel은 같은 부모 안에서 항상 가장 뒤로 보냅니다.
+        if (backPanel != null)
+            backPanel.SetAsFirstSibling();
+
+        // 배치된 도구는 Cat 바로 뒤에 위치시킵니다.
+        if (_placedImage != null && cat != null && _placedImage.transform.parent == cat.parent)
+        {
+            _placedImage.transform.SetSiblingIndex(cat.GetSiblingIndex());
+        }
+
+        // Cat은 같은 부모 안에서 항상 가장 앞으로 가져옵니다.
+        if (cat != null)
+            cat.SetAsLastSibling();
+    }
+
+    private void ApplyPreviewLayerOrder()
+    {
+        if (_previewImage == null || _placementArea == null)
+            return;
+
+        Transform cat = FindChildByName(_placementArea, "Cat");
+
+        if (cat != null && _previewImage.transform.parent == cat.parent)
+        {
+            _previewImage.transform.SetSiblingIndex(cat.GetSiblingIndex());
+            cat.SetAsLastSibling();
+            return;
+        }
+
+        _previewImage.transform.SetAsLastSibling();
+    }
+
+    private Transform FindChildByName(Transform root, string objectName)
+    {
+        if (root == null)
+            return null;
+
+        RectTransform[] children = root.GetComponentsInChildren<RectTransform>(true);
+
+        foreach (RectTransform child in children)
+        {
+            if (child.name == objectName)
+                return child;
+        }
+
+        return null;
     }
 
     private void FailToyDrop()

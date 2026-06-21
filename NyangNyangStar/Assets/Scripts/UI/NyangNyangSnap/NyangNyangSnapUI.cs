@@ -1,4 +1,5 @@
 using Core.Managers;
+using DG.Tweening;
 using System.Collections.Generic;
 using TMPro;
 using UI;
@@ -48,10 +49,6 @@ public class NyangNyangSnapUI : UIPopup
     [Min(0.1f)]
     [SerializeField] private float _itemRangeScale = 10f;
 
-    [Tooltip("데모용 반응 점수 비율")]
-    [Range(0f, 1f)]
-    [SerializeField] private float _timingRate = 0.6f;
-
     [Header("촬영 횟수 UI")]
     [Tooltip("남은 촬영 횟수 Text 이름")]
     [SerializeField] private string _captureCountTextName = "CaptureCountText";
@@ -64,11 +61,15 @@ public class NyangNyangSnapUI : UIPopup
     [SerializeField] private string _catObjectName = "";
 
     private readonly NyangNyangSnapScoreCalculator _scoreCalculator = new();
+    private readonly NyangNyangSnapTimingScoreCalculator _timingScoreCalculator = new();
 
     private GameObject _snapCatObject;
     private NyangNyangSnapSprite _sprite;
     private NyangNyangSnapStagePopupUI _stagePopup;
     private bool _isCapturing;
+
+    [SerializeField] private NyangNyangSnapCatSpriteAnimator _catSpriteAnimator;
+    [SerializeField] private DOTweenAnimation _photoButtonBlinkAnimation;
 
     public override void Init()
     {
@@ -95,6 +96,14 @@ public class NyangNyangSnapUI : UIPopup
         // 냥냥스냅 진입 직후에는 고양이 이미지를 보여주지 않음
         SetSnapCatActive(false);
         UpdateCaptureCountText();
+    }
+    private void OnEnable()
+    {
+        if (_catSpriteAnimator == null)
+            return;
+
+        _catSpriteAnimator.OnFrameChanged += OnCatFrameChanged;
+        _catSpriteAnimator.OnAnimationCompleted += OnCatAnimationCompleted;
     }
 
     private void InitPopups()
@@ -127,6 +136,14 @@ public class NyangNyangSnapUI : UIPopup
 
     private void OnDisable()
     {
+        if (_catSpriteAnimator != null)
+        {
+            _catSpriteAnimator.OnFrameChanged -= OnCatFrameChanged;
+            _catSpriteAnimator.OnAnimationCompleted -= OnCatAnimationCompleted;
+        }
+
+        StopPhotoButtonBlink();
+
         if (_catController != null)
         {
             _catController.OnDestinationReached -= OnCatDestinationReached;
@@ -140,12 +157,38 @@ public class NyangNyangSnapUI : UIPopup
         if (_placementController != null)
         {
             _placementController.OnItemPlaced -= OnPlacedItem;
+
+            _placementController.OnToyAlertStarted -= OnToyAlertStarted;
+            _placementController.OnToyAlertEnded -= OnToyAlertEnded;
+
             _placementController.OnSnackDragStarted -= OnSnackDragStarted;
             _placementController.OnSnackDragUpdated -= OnSnackDragUpdated;
             _placementController.OnSnackDragCanceled -= OnSnackDragCanceled;
+            _placementController.OnPreviewMoved -= OnPreviewMoved;
         }
     }
+    private void OnCatFrameChanged(CatAnimationType animationType, int frameIndex, int frameCount)
+    {
+        if (_catSpriteAnimator.IsOptimalCut)
+        {
+            _photoButtonBlinkAnimation?.DORestart();
+            return;
+        }
 
+        StopPhotoButtonBlink();
+    }
+    private void OnCatAnimationCompleted(CatAnimationType animationType)
+    {
+        StopPhotoButtonBlink();
+    }
+    private void StopPhotoButtonBlink()
+    {
+        if (_photoButtonBlinkAnimation == null)
+            return;
+
+        _photoButtonBlinkAnimation.DOPause();
+        _photoButtonBlinkAnimation.DORewind();
+    }
     private void InitPopup(string key, Button button)
     {
         GameManager.UI.ShowPopupUI<UIPopup>(key, onLoaded => AddPopupButton(button, onLoaded), false);
@@ -245,6 +288,9 @@ public class NyangNyangSnapUI : UIPopup
         }
         NyangNyangSnapPoseData poseData = GetPoseByPlacedItemOrNull();
 
+        // 캡처 완료 시점이 아니라 촬영 버튼을 누른 순간의 점수를 저장합니다.
+        int timingScore = _timingScoreCalculator.Calculate(_catSpriteAnimator);
+
         // 마커를 숨기기 전에 현재 위치로 구도 점수를 먼저 계산합니다.
         float compositionRate =
             _compositionCalculator.CalculateCompositionRate();
@@ -300,7 +346,7 @@ public class NyangNyangSnapUI : UIPopup
                 poseData,
                 compositionRate,
                 backgroundScore,
-                _timingRate
+                timingScore
             );
 
             _captureRecorder.AddRecord(
@@ -600,6 +646,12 @@ public class NyangNyangSnapUI : UIPopup
         _placementController.OnItemPlaced -= OnPlacedItem;
         _placementController.OnItemPlaced += OnPlacedItem;
 
+        _placementController.OnToyAlertStarted -= OnToyAlertStarted;
+        _placementController.OnToyAlertStarted += OnToyAlertStarted;
+
+        _placementController.OnToyAlertEnded -= OnToyAlertEnded;
+        _placementController.OnToyAlertEnded += OnToyAlertEnded;
+
         _placementController.OnSnackDragStarted -= OnSnackDragStarted;
         _placementController.OnSnackDragStarted += OnSnackDragStarted;
         _placementController.OnSnackDragUpdated -= OnSnackDragUpdated;
@@ -607,6 +659,9 @@ public class NyangNyangSnapUI : UIPopup
 
         _placementController.OnSnackDragCanceled -= OnSnackDragCanceled;
         _placementController.OnSnackDragCanceled += OnSnackDragCanceled;
+
+        _placementController.OnPreviewMoved -= OnPreviewMoved;
+        _placementController.OnPreviewMoved += OnPreviewMoved;
 
         AutoAssignCatController();
 
@@ -617,6 +672,22 @@ public class NyangNyangSnapUI : UIPopup
         }
 
         DebugTool.Log("[NyangNyangSnapUI] 아이템 배치 및 간식 드래그 이벤트 연결 완료", DebugType.UI, this);
+    }
+    private void OnToyAlertStarted()
+    {
+        AutoAssignCatController();
+
+        if (_catController == null)
+            return;
+
+        _catController.BeginAlert();
+    }
+    private void OnToyAlertEnded()
+    {
+        if (_catController == null)
+            return;
+
+        _catController.EndAlert();
     }
     private async void OnPlacedItem(int itemID)
     {
@@ -672,7 +743,17 @@ public class NyangNyangSnapUI : UIPopup
         if (!_placementController.LastPlacementWasSnack)
             TryMoveCatToPlacedItem(itemID);
     }
+    private void OnPreviewMoved(RectTransform previewRectTransform)
+    {
+        AutoAssignCatController();
 
+        if (_catController == null)
+            return;
+
+        _catController.LookAtTarget(
+            previewRectTransform
+        );
+    }
     private void OnSnackDragStarted(int itemID)
     {
         AutoAssignCatController();
@@ -680,11 +761,10 @@ public class NyangNyangSnapUI : UIPopup
         if (_catController == null)
             return;
 
-        // 새 간식 드래그가 시작되면 이전 이동/섭취 상태를 초기화합니다.
-        _catController.StopInteraction();
+        _catController.BeginAlert();
 
         DebugTool.Log(
-            $"[NyangNyangSnapUI] 새 간식 드래그 시작으로 고양이 상태 초기화 / ItemID:{itemID}",
+            $"[NyangNyangSnapUI] 간식 드래그 시작으로 ALERT 상태 전환 / ItemID:{itemID}",
             DebugType.UI,
             this
         );
@@ -896,7 +976,7 @@ public class NyangNyangSnapUI : UIPopup
 
         AutoAssignCaptureComponents();
 
-        if(_compositionCalculator != null)
+        if (_compositionCalculator != null)
         {
             _compositionCalculator.SetTargetVisible(false);
         }
@@ -1000,7 +1080,7 @@ public class NyangNyangSnapUI : UIPopup
             _catController.StopInteraction();
         }
 
-        if(_compositionCalculator != null )
+        if (_compositionCalculator != null)
         {
             _compositionCalculator.SetTargetVisible(false);
         }

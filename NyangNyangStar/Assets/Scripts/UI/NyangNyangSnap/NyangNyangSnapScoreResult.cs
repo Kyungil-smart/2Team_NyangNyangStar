@@ -16,6 +16,10 @@ public class NyangNyangSnapScoreResult
     public int TimingScore { get; private set; }
     public int TotalScore { get; private set; }
 
+    // 0점도 별 1개를 지급하는 현재 기획을 유지한다.
+    public int StarCount => CalculateStarCount(TotalScore);
+    public int RewardJewelCount => StarCount;
+
     public float PoseGaugeValue =>
         PoseScore / (float)MaxPoseScore;
 
@@ -30,6 +34,12 @@ public class NyangNyangSnapScoreResult
 
     public float TotalGaugeValue =>
         TotalScore / (float)MaxTotalScore;
+
+    public static int CalculateStarCount(int totalScore)
+    {
+        int clampedScore = Math.Clamp(totalScore, 0, MaxTotalScore);
+        return Math.Clamp(clampedScore / 20 + 1, 1, 5);
+    }
 
     public NyangNyangSnapScoreResult(
         int poseScore,
