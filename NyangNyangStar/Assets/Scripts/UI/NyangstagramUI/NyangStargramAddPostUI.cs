@@ -127,7 +127,7 @@ public class NyangStargramAddPostUI : UIPopup
     {
         if (button == null) return;
         button.onClick.RemoveAllListeners();
-        button.onClick.AddListener(ClosePopup);
+        button.onClick.AddListener(CloseAddPostPopup);
     }
 
 
@@ -167,7 +167,7 @@ public class NyangStargramAddPostUI : UIPopup
             .SetEase(Ease.OutSine);
     }
 
-    private void ClosePopup()
+    private void CloseAddPostPopup()
     {
         if (_panel == null) return;
 
