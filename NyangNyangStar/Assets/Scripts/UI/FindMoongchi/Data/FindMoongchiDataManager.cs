@@ -555,6 +555,9 @@ namespace UI.FindMoongchi
         // Firestore 접근 세부 구현은 여기서만 처리, 호출자는 RuntimeData만 사용
         public async Task<FindMoongchiProgressRuntimeData> LoadProgressAsync()
         {
+            if (!await WaitForFirestoreReadyAsync())
+                return null;
+
             if (!TryResolveProgressSO(out FindMoongchiProgressFirestoreSO progressSO))
                 return null;
 
@@ -604,6 +607,9 @@ namespace UI.FindMoongchi
                 return false;
             }
 
+            if (!await WaitForFirestoreReadyAsync())
+                return false;
+
             if (!TryResolveProgressSO(out FindMoongchiProgressFirestoreSO progressSO))
                 return false;
 
@@ -624,6 +630,23 @@ namespace UI.FindMoongchi
 
         // 인스펙터에 직접 연결된 FindMoongchiProgressFirestoreSO 사용 (서브컬렉션 SO는 직접 참조)
         // UI 쪽에서는 FireStoreManager 직접 접근 대신 LoadProgressAsync/SaveProgressAsync만 사용
+        private static async Task<bool> WaitForFirestoreReadyAsync(int timeoutMs = 5000)
+        {
+            const int intervalMs = 100;
+            int elapsedMs = 0;
+
+            while (elapsedMs < timeoutMs)
+            {
+                if (FireStoreManager.Instance != null && FireStoreManager.Instance.IsInitialized)
+                    return true;
+
+                await Task.Delay(intervalMs);
+                elapsedMs += intervalMs;
+            }
+
+            return FireStoreManager.Instance != null && FireStoreManager.Instance.IsInitialized;
+        }
+
         private bool TryResolveProgressSO(out FindMoongchiProgressFirestoreSO progressSO)
         {
             progressSO = _progressSO;

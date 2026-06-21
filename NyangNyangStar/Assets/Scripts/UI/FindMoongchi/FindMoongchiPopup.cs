@@ -176,8 +176,16 @@ namespace UI.FindMoongchi
         public void OpenError(string message, int errorCode = 0)
         {
             DebugTool.Warning($"[FindMoongchiPopup] 오류 팝업: {message}, Code: {errorCode}", DebugType.FindMoongchi, this);
+
+            if (_errorPopup == null)
+            {
+                DebugTool.Warning("[FindMoongchiPopup] ErrorPopup이 연결되지 않았습니다.", DebugType.FindMoongchi, this);
+                CloseModalLayer();
+                return;
+            }
+
             OpenModalLayer();
-            _errorPopup?.Open(message, errorCode);
+            _errorPopup.Open(message, errorCode, CloseModalLayer);
         }
 
         public override void ClosePopup()
@@ -535,25 +543,25 @@ namespace UI.FindMoongchi
             }
         }
 
-        private async void HandleGameButtonClicked()
+        private void HandleGameButtonClicked()
         {
             DebugTool.Log("[FindMoongchiPopup] 게임 패널 열기 요청", DebugType.FindMoongchi, this);
-            await EnsureProgressReadyAsync();
             ShowPanel(FindMoongchiPanelType.Game);
+            _ = EnsureProgressReadyAndRefreshAsync();
         }
 
-        private async void HandleMissionButtonClicked()
+        private void HandleMissionButtonClicked()
         {
             DebugTool.Log("[FindMoongchiPopup] 미션 패널 열기 요청", DebugType.FindMoongchi, this);
-            await EnsureProgressReadyAsync();
             ShowPanel(FindMoongchiPanelType.Mission);
+            _ = EnsureProgressReadyAndRefreshAsync();
         }
 
-        private async void HandleShopButtonClicked()
+        private void HandleShopButtonClicked()
         {
             DebugTool.Log("[FindMoongchiPopup] 상점 패널 열기 요청", DebugType.FindMoongchi, this);
-            await EnsureProgressReadyAsync();
             ShowPanel(FindMoongchiPanelType.Shop);
+            _ = EnsureProgressReadyAndRefreshAsync();
         }
 
         private void HandleBackToMain()
@@ -808,13 +816,20 @@ namespace UI.FindMoongchi
             RefreshMissionPanel();
         }
 
-        private void HandleShopItemClicked(FindMoongchiShopViewData data)
+        private async void HandleShopItemClicked(FindMoongchiShopViewData data)
         {
             if (data != null)
                 DebugTool.Log($"[FindMoongchiPopup] 상점 상품 클릭: ShopItemId={data.ShopItemId}, ProductId={data.ProductId}", DebugType.FindMoongchi, this);
 
             if (data == null)
                 return;
+
+            if (!await EnsureProgressReadyAsync())
+            {
+                OpenError("진행 데이터를 불러오지 못해 구매를 처리할 수 없습니다.", 4002);
+                RefreshShopPanel();
+                return;
+            }
 
             int maxBuyCount = GetMaxBuyCount(data);
 
@@ -830,7 +845,7 @@ namespace UI.FindMoongchi
 
             DebugTool.Log($"[FindMoongchiPopup] 구매 팝업 열기: ShopItemId={data.ShopItemId}, MaxBuy={maxBuyCount}", DebugType.FindMoongchi, this);
             OpenModalLayer();
-            _purchasePopup?.Open(data, maxBuyCount, HandlePurchaseConfirmed);
+            _purchasePopup?.Open(data, maxBuyCount, HandlePurchaseConfirmed, CloseModalLayer);
         }
 
         private async void HandlePurchaseConfirmed(FindMoongchiShopViewData data, int count)
@@ -841,7 +856,12 @@ namespace UI.FindMoongchi
             if (data == null || count <= 0)
                 return;
 
-            await EnsureProgressReadyAsync();
+            if (!await EnsureProgressReadyAsync() || !IsProgressReady)
+            {
+                OpenError("진행 데이터를 불러오지 못해 구매를 처리할 수 없습니다.", 4002);
+                RefreshShopPanel();
+                return;
+            }
 
             int totalCost = data.CostAmount * count;
             int currentEventCoin = GetCurrentEventCoin();
@@ -1013,6 +1033,12 @@ namespace UI.FindMoongchi
         {
             if (_modalLayer != null)
                 _modalLayer.SetActive(true);
+        }
+
+        private void CloseModalLayer()
+        {
+            if (_modalLayer != null)
+                _modalLayer.SetActive(false);
         }
 
         private void CloseAllModal()

@@ -28,6 +28,7 @@ namespace UI.FindMoongchi
         private UISpriteController _costIconController;
         private FindMoongchiShopViewData _data;
         private Action<FindMoongchiShopViewData, int> _onPurchaseConfirmed;
+        private Action _onClosed;
         private int _count;
         private int _maxCount;
 
@@ -49,11 +50,16 @@ namespace UI.FindMoongchi
             gameObject.SetActive(false);
         }
 
-        public void Open(FindMoongchiShopViewData data, int maxCount, Action<FindMoongchiShopViewData, int> onPurchaseConfirmed)
+        public void Open(
+            FindMoongchiShopViewData data,
+            int maxCount,
+            Action<FindMoongchiShopViewData, int> onPurchaseConfirmed,
+            Action onClosed = null)
         {
             DebugTool.Log($"[PurchasePopupView] 구매 팝업 열기: ShopItemId={data?.ShopItemId}, MaxCount={maxCount}", DebugType.FindMoongchi, this);
             _data = data;
             _onPurchaseConfirmed = onPurchaseConfirmed;
+            _onClosed = onClosed;
             _maxCount = Mathf.Max(0, maxCount);
             _count = _maxCount > 0 ? 1 : 0;
 
@@ -77,6 +83,10 @@ namespace UI.FindMoongchi
             _onPurchaseConfirmed = null;
             _count = 0;
             _maxCount = 0;
+
+            Action callback = _onClosed;
+            _onClosed = null;
+            callback?.Invoke();
         }
 
         private void SetIcon(FindMoongchiShopViewData data)

@@ -447,6 +447,8 @@ namespace Data.Loader
                         return AddressableGroupType.Finding;
                     case "Items":
                         return AddressableGroupType.Items;
+                    case "Nyangquarium":
+                        return AddressableGroupType.Nyangquarium;
                     default:
                         return AddressableGroupType.None;
                 }

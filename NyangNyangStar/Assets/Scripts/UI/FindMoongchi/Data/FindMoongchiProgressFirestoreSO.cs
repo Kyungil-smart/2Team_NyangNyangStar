@@ -36,7 +36,8 @@ namespace Data.ScriptableObjects.MoongchiSO
         [FirestoreMap]
         [SerializeField] private List<FindMoongchiShopPurchaseData> _shopPurchaseCounts = new();
 
-        [FirestoreMap]
+        // int ID 목록은 Firestore 배열로 저장합니다.
+        // [FirestoreMap]을 붙이면 int 원소에서 [FirestoreMapKey]를 찾으려 해 로드가 실패합니다.
         [SerializeField] private List<int> _ownedProfileIDs = new();
 
         [Header("초기화 기준 시간")]

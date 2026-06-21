@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Data.ScriptableObjects.MoongchiSO;
 using UnityEngine;
+using Util;
 
 namespace UI.FindMoongchi
 {
@@ -133,10 +134,28 @@ namespace UI.FindMoongchi
                 _dataManager.TryGetProfile(productId, out MoongchiProfileData profile) &&
                 profile != null)
             {
-                return profile.AddressableKey;
+                return ResolveProfileIconKey(profile.AddressableKey);
             }
 
             return null;
+        }
+
+        private static string ResolveProfileIconKey(string profileIconKey)
+        {
+            // 프로필 시트의 AddressableKey가 Sprite 키로 등록되지 않은 경우가 있습니다.
+            // 등록되지 않은 키를 UISpriteController로 넘기면 Addressable 경고가 반복되므로 여기서 차단합니다.
+            if (IsSpriteKeyRegistered(profileIconKey))
+                return profileIconKey;
+
+            if (IsSpriteKeyRegistered(FindMoongchiSpriteKeys.TargetMoongchi))
+                return FindMoongchiSpriteKeys.TargetMoongchi;
+
+            return null;
+        }
+
+        private static bool IsSpriteKeyRegistered(string key)
+        {
+            return !string.IsNullOrWhiteSpace(key) && KeyContainer.Sprites.Contains(key);
         }
 
         public static string GetCurrencyProductName(int productId)

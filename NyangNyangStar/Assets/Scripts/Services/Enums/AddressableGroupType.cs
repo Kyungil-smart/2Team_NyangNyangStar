@@ -10,5 +10,6 @@
         Snap,
         Finding,
         Items,
+        Nyangquarium,
     }
 }

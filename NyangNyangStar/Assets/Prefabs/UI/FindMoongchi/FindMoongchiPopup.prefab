@@ -4876,8 +4876,8 @@ MonoBehaviour:
   _errorPopup: {fileID: 4320216273485927884}
   _dataManager: {fileID: 3608201681325411485}
   _progressController: {fileID: 0}
-  _eventCoin: 1000
-  _searchChance: 99
+  _eventCoin: 0
+  _searchChance: 10
   _energySpendProgress: 0
   _currentWeek: 1
   _remainTimeText: 1d 12h

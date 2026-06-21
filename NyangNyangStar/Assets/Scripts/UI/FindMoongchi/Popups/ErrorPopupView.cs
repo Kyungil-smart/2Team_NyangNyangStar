@@ -1,3 +1,4 @@
+using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -10,6 +11,8 @@ namespace UI.FindMoongchi
         [SerializeField] private TMP_Text _errorCodeText;
         [SerializeField] private Button _confirmButton;
 
+        private Action _onClosed;
+
         public void Init()
         {
             if (_confirmButton != null)
@@ -21,9 +24,11 @@ namespace UI.FindMoongchi
             gameObject.SetActive(false);
         }
 
-        public void Open(string message, int errorCode = 0)
+        public void Open(string message, int errorCode = 0, Action onClosed = null)
         {
             DebugTool.Warning($"[ErrorPopupView] 열기: {message}, Code={errorCode}", DebugType.FindMoongchi, this);
+
+            _onClosed = onClosed;
 
             if (_noticeText != null)
                 _noticeText.text = message;
@@ -40,6 +45,10 @@ namespace UI.FindMoongchi
                 DebugTool.Log("[ErrorPopupView] 닫기", DebugType.FindMoongchi, this);
 
             gameObject.SetActive(false);
+
+            Action callback = _onClosed;
+            _onClosed = null;
+            callback?.Invoke();
         }
 
         private void OnDestroy()
