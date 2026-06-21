@@ -8,11 +8,7 @@ public class NyangNyangSnapScoreCalculator
     private const int MaxBackgroundScore = 25;
     private const int MaxTimingScore = 25;
 
-    public NyangNyangSnapScoreResult Calculate(
-        NyangNyangSnapPoseData poseData,
-        float compositionRate,
-        int backgroundScore,
-        float timingRate)
+    public NyangNyangSnapScoreResult Calculate(NyangNyangSnapPoseData poseData,float compositionRate,int backgroundScore,int timingScore)
     {
         int calculatedPoseScore =
             CalculatePoseScore(poseData);
@@ -31,8 +27,9 @@ public class NyangNyangSnapScoreCalculator
             );
 
         int calculatedTimingScore =
-            CalculateRateScore(
-                timingRate,
+            Mathf.Clamp(
+                timingScore,
+                0,
                 MaxTimingScore
             );
 
@@ -56,8 +53,7 @@ public class NyangNyangSnapScoreCalculator
         return result;
     }
 
-    private int CalculatePoseScore(
-        NyangNyangSnapPoseData poseData)
+    private int CalculatePoseScore(NyangNyangSnapPoseData poseData)
     {
         if (poseData == null)
         {
@@ -78,9 +74,7 @@ public class NyangNyangSnapScoreCalculator
         );
     }
 
-    private int CalculateRateScore(
-        float rate,
-        int maxScore)
+    private int CalculateRateScore(float rate,int maxScore)
     {
         float clampedRate =
             Mathf.Clamp01(rate);

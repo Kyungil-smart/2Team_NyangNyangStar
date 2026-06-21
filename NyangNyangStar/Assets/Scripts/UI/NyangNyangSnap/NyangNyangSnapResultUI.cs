@@ -1,3 +1,4 @@
+using Core.Managers;
 using DG.Tweening;
 using Firebase.Firestore;
 using System;
@@ -22,6 +23,10 @@ public class NyangNyangSnapResultUI : UIPopup
     [Tooltip("사진 저장 버튼")][SerializeField] private Button _saveButton;
     [Tooltip("다시 시도 버튼")][SerializeField] private Button _retryButton;
     [Tooltip("메인화면 버튼")][SerializeField] private Button _mainButton;
+
+    [Header("보상 텍스트")]
+    [Tooltip("별 개수만큼 지급되는 Jewel 수량")]
+    [SerializeField] private TMP_Text _rewardJewelText;
 
     [Header("점수 텍스트")]
     [SerializeField] private TMP_Text _poseNameText;
@@ -54,6 +59,8 @@ public class NyangNyangSnapResultUI : UIPopup
     private IReadOnlyList<NyangNyangSnapCaptureRecord> _records;
     private Sequence _resultSequence;
     private NyangNyangSnapUI _snapUI;
+    private bool _isSaving;
+    private bool _isRewardGranted;
 
     public override void Init()
     {
@@ -129,56 +136,131 @@ public class NyangNyangSnapResultUI : UIPopup
 
     private async void SaveSelectedPhotos()
     {
-        IReadOnlyList<NyangNyangSnapCaptureRecord> selectedRecords = _collectionSprite.SelectedRecords;
+        if (_isSaving) return;
 
-        if (selectedRecords != null && selectedRecords.Count > 0)
+        _isSaving = true;
+
+        if (_saveButton != null)
+            _saveButton.interactable = false;
+
+        try
         {
-            foreach (NyangNyangSnapCaptureRecord record in selectedRecords)
+            IReadOnlyList<NyangNyangSnapCaptureRecord> selectedRecords = _collectionSprite.SelectedRecords;
+
+            if (selectedRecords != null && selectedRecords.Count > 0)
             {
-                if (record == null || record.CapturedSprite == null || record.ScoreResult == null) continue;
-
-                string photoId = $"NNSnap_{DateTime.Now:yyMMdd_HH.mm.ss.fff}";
-                //string storagePath = $"NyangNyangSnap/photos/{photoId}.png";
-
-                string imageUrl = SavePhotoToFolder(record.CapturedSprite, photoId);
-
-                if (string.IsNullOrEmpty(imageUrl)) continue;
-
-                NyangNyangSnapSavedPhotoData photoData = new()
+                foreach (NyangNyangSnapCaptureRecord record in selectedRecords)
                 {
-                    photoId = photoId,
+                    if (record == null || record.CapturedSprite == null || record.ScoreResult == null) continue;
 
-                    imageUrl = imageUrl,
-                    storagePath = imageUrl,
-                    poseScore = record.ScoreResult.PoseScore,
-                    compositionScore = record.ScoreResult.CompositionScore,
-                    timingScore = record.ScoreResult.TimingScore,
-                    backGroundScore = record.ScoreResult.BackgroundScore,
+                    string photoId = $"NNSnap_{DateTime.Now:yyMMdd_HH.mm.ss.fff}";
+                    string imageUrl = SavePhotoToFolder(record.CapturedSprite, photoId);
 
-                    totalScore = record.ScoreResult.TotalScore,
-                    starCount = GetStarCount(record.ScoreResult.TotalScore),
-                    createdAt = Timestamp.GetCurrentTimestamp()
-                };
+                    if (string.IsNullOrEmpty(imageUrl)) continue;
 
-                _photoAlbumSO.AddPhoto(photoData);
+                    NyangNyangSnapSavedPhotoData photoData = new()
+                    {
+                        photoId = photoId,
+                        imageUrl = imageUrl,
+                        storagePath = imageUrl,
+                        poseScore = record.ScoreResult.PoseScore,
+                        compositionScore = record.ScoreResult.CompositionScore,
+                        timingScore = record.ScoreResult.TimingScore,
+                        backGroundScore = record.ScoreResult.BackgroundScore,
+                        totalScore = record.ScoreResult.TotalScore,
+                        starCount = record.ScoreResult.StarCount,
+                        createdAt = Timestamp.GetCurrentTimestamp()
+                    };
+
+                    _photoAlbumSO.AddPhoto(photoData);
+                }
+
+                await _photoAlbumSO.UpdateDataAsync();
+                MainUI.Instance?.SetPhotoAlert(true);
+
+                DebugTool.Log(
+                    "[NyangNyangSnapResultUI] 선택 사진 저장 완료",
+                    DebugType.UI,
+                    this);
             }
 
-            await _photoAlbumSO.UpdateDataAsync();
-            MainUI.Instance?.SetPhotoAlert(true);
+            bool rewardGranted = await GrantJewelRewardAsync();
+
+            if (!rewardGranted)
+            {
+                DebugTool.Warning(
+                    "[NyangNyangSnapResultUI] Jewel 보상 지급에 실패하여 보상 패널을 열지 않습니다.",
+                    DebugType.UI,
+                    this);
+                return;
+            }
+
+            _resultCollectionPanel.SetActive(false);
+            _rewardPanel.SetActive(true);
 
             DebugTool.Log(
-                "[NyangNyangSnapResultUI] 선택 사진 저장 완료",
+                "[NyangNyangSnapResultUI] 사진 저장 및 Jewel 보상 지급 완료",
                 DebugType.UI,
                 this);
         }
+        finally
+        {
+            _isSaving = false;
 
-        _resultCollectionPanel.SetActive(false);
-        _rewardPanel.SetActive(true);
+            if (_saveButton != null)
+                _saveButton.interactable = true;
+        }
+    }
+
+    private async System.Threading.Tasks.Task<bool> GrantJewelRewardAsync()
+    {
+        if (_isRewardGranted)
+            return true;
+
+        if (_currentRecord?.ScoreResult == null)
+        {
+            DebugTool.Warning(
+                "[NyangNyangSnapResultUI] Jewel 보상 계산에 필요한 점수 결과가 없습니다.",
+                DebugType.UI,
+                this);
+            return false;
+        }
+
+        int rewardJewelCount = _currentRecord.ScoreResult.RewardJewelCount;
+        bool success = await PlayerResourceManager.Instance.AddJewelAsync(rewardJewelCount);
+
+        if (!success)
+            return false;
+
+        _isRewardGranted = true;
+        SetRewardJewelText(rewardJewelCount);
 
         DebugTool.Log(
-            "[NyangNyangSnapResultUI] 사진 저장 버튼 클릭",
+            $"[NyangNyangSnapResultUI] Jewel 보상 지급 완료 / 별: {_currentRecord.ScoreResult.StarCount}, Jewel: {rewardJewelCount}",
             DebugType.UI,
             this);
+
+        return true;
+    }
+
+    private void SetRewardJewelText(int rewardJewelCount)
+    {
+        if (_rewardJewelText == null && _rewardPanel != null)
+        {
+            TMP_Text[] texts = _rewardPanel.GetComponentsInChildren<TMP_Text>(true);
+            _rewardJewelText = Array.Find(texts, text => text.name == "RewardJewelText");
+        }
+
+        if (_rewardJewelText == null)
+        {
+            DebugTool.Warning(
+                "[NyangNyangSnapResultUI] RewardPanel 하위에 RewardJewelText가 없습니다.",
+                DebugType.UI,
+                this);
+            return;
+        }
+
+        _rewardJewelText.text = $"x {rewardJewelCount}";
     }
 
     private string SavePhotoToFolder(Sprite sprite, string photoId)
@@ -193,21 +275,11 @@ public class NyangNyangSnapResultUI : UIPopup
 
         File.WriteAllBytes(path, sprite.texture.EncodeToPNG());
 
-        #if UNITY_EDITOR
+#if UNITY_EDITOR
         UnityEditor.AssetDatabase.Refresh();
-        #endif
+#endif
 
         return path;
-    }
-
-    private int GetStarCount(int totalScore)
-    {
-        if (totalScore < 20) return 1;
-        if (totalScore < 40) return 2;
-        if (totalScore < 60) return 3;
-        if (totalScore < 80) return 4;
-
-        return 5;
     }
 
     private void AddRetryButton(Button button)
@@ -295,6 +367,13 @@ public class NyangNyangSnapResultUI : UIPopup
         _resultCollectionPanel.SetActive(false);
         _rewardPanel.SetActive(false);
         _selectPhotosButton.gameObject.SetActive(true);
+        _isSaving = false;
+        _isRewardGranted = false;
+
+        if (_saveButton != null)
+            _saveButton.interactable = true;
+
+        SetRewardJewelText(_currentRecord?.ScoreResult?.RewardJewelCount ?? 0);
 
         if (_resultSprite != null)
             _resultSprite.ResetRuntimeImages();

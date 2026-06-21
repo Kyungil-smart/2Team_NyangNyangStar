@@ -24,6 +24,7 @@ public class RewardPanelSprite : UIBase
     private void SetSprites()
     {
         SetSprite(RewardPanelImages.RewardPanel, "Snap_Btn_Gray");
+        SetSprite(RewardPanelImages.GemIcon, "Main_Icon_Jewel");
         SetSprite(RewardPanelImages.ADIcon, "Btn_AD");
         SetSprite(RewardPanelImages.RetryButton, "Snap_Btn_Green");
         SetSprite(RewardPanelImages.MainButton, "Snap_Btn_Blue");
@@ -48,6 +49,7 @@ public class RewardPanelSprite : UIBase
 public enum RewardPanelImages
 {
     RewardPanel,
+    GemIcon,
     ADIcon,
     RetryButton,
     MainButton,

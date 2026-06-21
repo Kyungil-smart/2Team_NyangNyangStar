@@ -177,7 +177,7 @@ public class NyangNyangSnapResultUISprite : UIBase
     {
         Sequence starSequence = DOTween.Sequence();
 
-        int starCount = Mathf.Clamp(totalScore / 20 + 1, 1, 5);
+        int starCount = NyangNyangSnapScoreResult.CalculateStarCount(totalScore);
 
         SetStarSprites(starCount);
 
@@ -264,7 +264,7 @@ public enum NyangNyangSnapResultImages
     StarFillImage1,
     StarFillImage2,
     StarFillImage3,
-    StarFillImage4, 
+    StarFillImage4,
     StarFillImage5,
     ResultPhotoImage,
     PoseGaugeBackImage,
