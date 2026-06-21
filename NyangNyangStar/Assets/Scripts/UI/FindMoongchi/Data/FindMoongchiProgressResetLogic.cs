@@ -1,12 +1,12 @@
 using System;
 using System.Collections.Generic;
+using UI.FindMoongchi;
 using UnityEngine;
 
 namespace Data.ScriptableObjects.MoongchiSO
 {
     public static class FindMoongchiProgressResetLogic
     {
-        private const int DefaultDailySearchChance = 2;
         private const int MaxEventWeek = 2;
 
         private static readonly TimeSpan KstOffset = TimeSpan.FromHours(9);
@@ -21,13 +21,27 @@ namespace Data.ScriptableObjects.MoongchiSO
             long now = GetCurrentUnixTimeSeconds();
             bool changed = false;
 
-            if (ShouldResetDaily(progress.LastDailyResetUnixTime, now))
+            if (progress.LastDailyResetUnixTime <= 0)
+            {
+                ApplyDailyReset(progress, missionSO, now);
+                changed = true;
+            }
+            else if (ShouldResetDaily(progress.LastDailyResetUnixTime, now))
             {
                 ApplyDailyReset(progress, missionSO, now);
                 changed = true;
             }
 
-            if (ShouldResetWeekly(progress.LastWeeklyResetUnixTime, now))
+            if (progress.LastWeeklyResetUnixTime <= 0)
+            {
+                progress.LastWeeklyResetUnixTime = GetWeeklyAnchorUnixTime(now);
+                changed = true;
+
+                DebugTool.Log(
+                    $"[FindMoongchiProgressResetLogic] 주간 초기화 기준 시각 설정 (신규 유저, CurrentWeek={progress.CurrentWeek} 유지)",
+                    DebugType.Data);
+            }
+            else if (ShouldResetWeekly(progress.LastWeeklyResetUnixTime, now))
             {
                 ApplyWeeklyReset(progress, missionSO, now);
                 changed = true;
@@ -48,17 +62,11 @@ namespace Data.ScriptableObjects.MoongchiSO
 
         private static bool ShouldResetDaily(long lastResetUnixTime, long nowUnixTime)
         {
-            if (lastResetUnixTime <= 0)
-                return true;
-
             return GetDailyAnchorUnixTime(lastResetUnixTime) < GetDailyAnchorUnixTime(nowUnixTime);
         }
 
         private static bool ShouldResetWeekly(long lastResetUnixTime, long nowUnixTime)
         {
-            if (lastResetUnixTime <= 0)
-                return true;
-
             return GetWeeklyAnchorUnixTime(lastResetUnixTime) < GetWeeklyAnchorUnixTime(nowUnixTime);
         }
 
@@ -69,7 +77,7 @@ namespace Data.ScriptableObjects.MoongchiSO
         {
             ClearMissionProgressByType(progress, missionSO, MoongchiMissionType.DAILY);
 
-            progress.SearchChance = DefaultDailySearchChance;
+            progress.SearchChance = FindMoongchiConstants.DailySearchChance;
             progress.TodayBonusSearchChanceCount = 0;
             progress.DailyEnergySpendProgress = 0;
             progress.LastDailyResetUnixTime = GetDailyAnchorUnixTime(nowUnixTime);

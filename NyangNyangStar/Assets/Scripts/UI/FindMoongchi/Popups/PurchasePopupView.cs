@@ -37,7 +37,7 @@ namespace UI.FindMoongchi
                 _itemIconController = new UISpriteController(_itemIcon);
 
             if (_costIconImage == null)
-                _costIconImage = FindChildImage(transform, "CoinIcon");
+                _costIconImage = FindCostIconImage(transform);
 
             if (_costIconImage != null)
                 _costIconController = new UISpriteController(_costIconImage);
@@ -58,7 +58,7 @@ namespace UI.FindMoongchi
             _count = _maxCount > 0 ? 1 : 0;
 
             SetIcon(data);
-            SetCostIcon(data?.CostType ?? Data.ScriptableObjects.MoongchiSO.MoongchiCurrencyType.EVENT_COIN);
+            SetCostIcon(data);
 
             if (_nameText != null)
                 _nameText.text = data == null ? string.Empty : BuildProductName(data);
@@ -99,17 +99,17 @@ namespace UI.FindMoongchi
             _itemIcon.enabled = data?.Icon != null;
         }
 
-        private void SetCostIcon(Data.ScriptableObjects.MoongchiSO.MoongchiCurrencyType costType)
+        private void SetCostIcon(FindMoongchiShopViewData data)
         {
+            if (_costIconImage == null)
+                _costIconImage = FindCostIconImage(transform);
+
             if (_costIconImage == null)
                 return;
 
-            string key = costType switch
-            {
-                Data.ScriptableObjects.MoongchiSO.MoongchiCurrencyType.EVENT_COIN => FindMoongchiSpriteKeys.EventCoinIcon,
-                Data.ScriptableObjects.MoongchiSO.MoongchiCurrencyType.ENERGY => FindMoongchiSpriteKeys.CommonEnergyIcon,
-                _ => FindMoongchiSpriteKeys.EventCoinIcon
-            };
+            string key = !string.IsNullOrWhiteSpace(data?.CostIconKey)
+                ? data.CostIconKey
+                : FindMoongchiSpriteKeys.EventCoinIcon;
 
             if (string.IsNullOrWhiteSpace(key))
             {
@@ -118,6 +118,9 @@ namespace UI.FindMoongchi
             }
 
             _costIconImage.enabled = true;
+            _costIconImage.sprite = null;
+            _costIconImage.color = Color.white;
+            _costIconImage.preserveAspect = true;
 
             if (_costIconController == null)
                 _costIconController = new UISpriteController(_costIconImage);
@@ -214,6 +217,43 @@ namespace UI.FindMoongchi
                     return image;
 
                 Image nested = FindChildImage(child, childName);
+
+                if (nested != null)
+                    return nested;
+            }
+
+            return null;
+        }
+
+        private static Image FindCostIconImage(Transform root)
+        {
+            Image image = FindChildImage(root, "CoinIcon");
+
+            if (image != null)
+                return image;
+
+            image = FindChildImage(root, "CostIcon");
+
+            if (image != null)
+                return image;
+
+            Transform costBox = FindChildTransform(root, "CostBox");
+            return FindChildImage(costBox, "Icon");
+        }
+
+        private static Transform FindChildTransform(Transform root, string childName)
+        {
+            if (root == null || string.IsNullOrEmpty(childName))
+                return null;
+
+            for (int i = 0; i < root.childCount; i++)
+            {
+                Transform child = root.GetChild(i);
+
+                if (child.name == childName)
+                    return child;
+
+                Transform nested = FindChildTransform(child, childName);
 
                 if (nested != null)
                     return nested;

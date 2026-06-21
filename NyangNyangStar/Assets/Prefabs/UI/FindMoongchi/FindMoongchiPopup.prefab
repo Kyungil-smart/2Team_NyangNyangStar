@@ -4875,6 +4875,7 @@ MonoBehaviour:
   _noticePopup: {fileID: 4640483840487407664}
   _errorPopup: {fileID: 4320216273485927884}
   _dataManager: {fileID: 3608201681325411485}
+  _progressController: {fileID: 0}
   _eventCoin: 1000
   _searchChance: 99
   _energySpendProgress: 0
@@ -4889,7 +4890,7 @@ MonoBehaviour:
   _toolItemIds: 142700002e27000023270000
   _autoBindButtonClickSfx: 1
   _buttonSfxBinder: {fileID: 0}
-  _debugInfiniteToolUse: 1
+  _debugInfiniteToolUse: 0
   _debugToolDisplayCount: 9
 --- !u!114 &3608201681325411485
 MonoBehaviour:
@@ -4907,6 +4908,7 @@ MonoBehaviour:
   _missionSO: {fileID: 11400000, guid: 6bda86720f38d754d90064dfc7ed81e9, type: 2}
   _profileSO: {fileID: 11400000, guid: dc6f03ddae9535e46946ff019e0327a3, type: 2}
   _progressSO: {fileID: 11400000, guid: 01f5084cbd2817c42abeb68841e73649, type: 2}
+  _resourcesSO: {fileID: 0}
   _notifyLoadedOnStart: 1
   _warnWhenStaticDataMissing: 1
 --- !u!114 &3443712003501962296

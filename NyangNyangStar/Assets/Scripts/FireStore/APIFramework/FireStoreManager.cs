@@ -86,6 +86,7 @@ public class FireStoreManager : MonoBehaviour
             }
 
             IsInitialized = true;
+            _ = Core.Managers.PlayerResourceManager.Instance.RefreshAsync();
             Debug.Log("[FireStoreManager] InitAsync 완료");
         }
         catch (System.Exception e)
@@ -260,6 +261,22 @@ public class FireStoreManager : MonoBehaviour
             throw new System.InvalidOperationException("FireStoreManager가 아직 초기화되지 않았습니다.");
 
         return new FirestoreRequestContext(m_DataDictionary[type]);
+    }
+
+    public bool TryGetStore<T>(out T store) where T : BaseFireStore
+    {
+        store = null;
+
+        if (rootSOs == null)
+            return false;
+
+        foreach (BaseFireStore root in rootSOs)
+        {
+            if (root != null && root.TryFindStore(out store))
+                return true;
+        }
+
+        return false;
     }
 
     public void ClearSession()

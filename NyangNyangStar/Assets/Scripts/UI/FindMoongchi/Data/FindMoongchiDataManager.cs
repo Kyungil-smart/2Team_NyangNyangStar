@@ -159,9 +159,9 @@ namespace UI.FindMoongchi
             bool hadValidCycle = loaded.CurrentCycleStageIDs != null &&
                                  loaded.CurrentCycleStageIDs.Count == 5;
 
-            EnsureStageCycleReady(loaded);
-
             bool resetApplied = FindMoongchiProgressResetLogic.ApplyResetsIfNeeded(loaded, _missionSO);
+
+            EnsureStageCycleReady(loaded);
 
             _progress = loaded;
             _isProgressReady = true;

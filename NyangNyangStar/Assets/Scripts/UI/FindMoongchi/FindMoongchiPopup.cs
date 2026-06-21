@@ -29,7 +29,7 @@ namespace UI.FindMoongchi
         [SerializeField] private FindMoongchiProgressController _progressController;
 
         [Header("임시 유저 값 - Firestore 연결 전")]
-        [SerializeField] private int _eventCoin = 1000;
+        [SerializeField] private int _eventCoin;
         [SerializeField] private int _searchChance = FindMoongchiConstants.DailySearchChance;
         [SerializeField] private int _energySpendProgress;
         [SerializeField] private int _currentWeek = 1;
@@ -252,7 +252,7 @@ namespace UI.FindMoongchi
                 _progressController = GetComponentInChildren<FindMoongchiProgressController>(true);
 
             if (_progressController == null)
-                _progressController = FindFirstObjectByType<FindMoongchiProgressController>();
+                _progressController = gameObject.AddComponent<FindMoongchiProgressController>();
 
             if (_progressController == null)
             {

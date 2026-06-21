@@ -15,7 +15,7 @@ namespace UI.FindMoongchi
         public const int ToolId03 = 10019;
         public const int ToolSlotCount = 3;
 
-        public const int DailySearchChance = 2;
+        public const int DailySearchChance = 10;
         public const int EnergySpendTarget = 20;
 
         public static readonly int[] DefaultToolItemIds =

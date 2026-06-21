@@ -1,5 +1,6 @@
 using Core.Managers;
 using TMPro;
+using UI.Common;
 using UI;
 using UI.Base;
 using UI.MergeBoard;
@@ -34,6 +35,7 @@ public class MainUI : UIScene
     private MainUISprite _mainUISprite;
     private MergeBoardController _mergeBoardController;
     private ScratchingTimeManager _scratchingTimeManager;
+    private PlayerResourceDisplay _resourceDisplay;
     private UIPopup _nyangStargramPopup;
     private NotebookPopupUI _notebookPopup;
 
@@ -84,6 +86,7 @@ public class MainUI : UIScene
 
         _mainUISprite = GetComponent<MainUISprite>();
         _mainUISprite?.Init();
+        EnsureResourceDisplay();
 
         InitPopups();
         SubscribeUserIdChanged();
@@ -174,6 +177,18 @@ public class MainUI : UIScene
 
         if (_workshopMergeBoardButton != null)
             _workshopMergeBoardButton.onClick.AddListener(OpenMergeBoard);
+    }
+
+    private void EnsureResourceDisplay()
+    {
+        if (_resourceDisplay == null)
+            _resourceDisplay = GetComponent<PlayerResourceDisplay>();
+
+        if (_resourceDisplay == null)
+            _resourceDisplay = gameObject.AddComponent<PlayerResourceDisplay>();
+
+        _resourceDisplay.ResolveReferencesFrom(transform);
+        _ = PlayerResourceManager.Instance.RefreshAsync();
     }
 
     private void OpenMergeBoard()
