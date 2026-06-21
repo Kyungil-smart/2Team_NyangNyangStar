@@ -31,7 +31,7 @@ public class NyangStargramPostUISprite : UIBase
         //profile뷰
         SetSprite(NyangStargramPostUIImages.PostHeaderpanel, "NYS_TopBar");
         SetSprite(NyangStargramPostUIImages.BackButton, "Btn_Back");
-        SetSprite(NyangStargramPostUIImages.Viewport, "NYS_Content");
+        SetSprite(NyangStargramPostUIImages.HomePostPanel, "NYS_Content");
         SetSprite(NyangStargramPostUIImages.VerifyIconFront, "NYS_Btn_Profile", new Color32(0, 0, 0, 255));
         SetSprite(NyangStargramPostUIImages.VerifyIcon, "NYS_ProfileBadge");
         //SetSprite(NyangStargramPostUIImages.LikeButton, "NYS_Btn_Heart_Empty");
@@ -71,7 +71,7 @@ public class NyangStargramPostUISprite : UIBase
         backGroundpanel,
         PostHeaderpanel,
         BackButton,
-        Viewport,
+        HomePostPanel,
         VerifyIconFront,
         VerifyIcon,
         PostImage,

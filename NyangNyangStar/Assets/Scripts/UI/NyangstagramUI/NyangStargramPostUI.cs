@@ -74,7 +74,7 @@ public class NyangStargramPostUI : UIPopup
     private void AddHideSelfButton(Button button)
     {
         if (button == null) return;
-        button.onClick.AddListener(ClosePopup);
+        button.onClick.AddListener(ClosePostPopup);
     }
 
     //모든 팝업 다닫기
@@ -132,7 +132,7 @@ public class NyangStargramPostUI : UIPopup
             .SetEase(Ease.OutSine);
     }
 
-    private void ClosePopup()
+    private void ClosePostPopup()
     {
         if (_panel == null) return;
         _panel.DOScale(Vector3.one * _popupScale, _popupScaleDuration)
