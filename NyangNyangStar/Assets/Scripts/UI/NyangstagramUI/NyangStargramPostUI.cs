@@ -1,14 +1,8 @@
-using Core.Managers;
 using DG.Tweening;
-using System;
-using System.Collections;
-using System.Collections.Generic;
 using TMPro;
-using UI;
 using UI.Base;
 using UnityEngine;
 using UnityEngine.UI;
-using Util;
 
 public class NyangStargramPostUI : UIPopup
 {
@@ -45,11 +39,14 @@ public class NyangStargramPostUI : UIPopup
         BindButtons();
         ReFreshLikeCountText();
 
-        _nyangStargramPostUISprite = GetComponent<NyangStargramPostUISprite>();
-        _nyangStargramPostUISprite.Init();
-
         DebugTool.Log("NyangstagramUI Init 실행됨", DebugType.UI, this);
     }
+
+    public void SetPhoto(Sprite sprite)
+    {
+        _nyangStargramPostUISprite.SetPhoto(sprite);
+    }
+
     private void BindButtons()
     {
         //if (_storyButton != null)
@@ -66,15 +63,10 @@ public class NyangStargramPostUI : UIPopup
 
     }
 
-    private void OnDisable()
-    {
-
-    }
-
     private void AddHideSelfButton(Button button)
     {
         if (button == null) return;
-        button.onClick.AddListener(ClosePopup);
+        button.onClick.AddListener(ClosePostPopup);
     }
 
     //모든 팝업 다닫기
@@ -90,7 +82,7 @@ public class NyangStargramPostUI : UIPopup
 
     private void AddLikeButton(Button button)
     {
-        if(button == null) return;
+        if (button == null) return;
         button.onClick.AddListener(OnClickLikeButton);
     }
 
@@ -105,7 +97,7 @@ public class NyangStargramPostUI : UIPopup
         else
         {
             _likeCount++;
-            _isLiked= true;
+            _isLiked = true;
         }
 
         ReFreshLikeCountText();
@@ -132,7 +124,7 @@ public class NyangStargramPostUI : UIPopup
             .SetEase(Ease.OutSine);
     }
 
-    private void ClosePopup()
+    private void ClosePostPopup()
     {
         if (_panel == null) return;
         _panel.DOScale(Vector3.one * _popupScale, _popupScaleDuration)

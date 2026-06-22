@@ -1,7 +1,6 @@
 using Core.Managers;
 using System.Collections.Generic;
 using TMPro;
-using UI;
 using UI.Base;
 using UnityEngine;
 using UnityEngine.UI;
@@ -11,7 +10,6 @@ public class NyangstagramMainUI : UIPopup
 {
     [Header("버튼")]
     [Tooltip("스토리 버튼")][SerializeField] private Button _storyButton;
-    [Tooltip("이미지 Post 버튼")][SerializeField] private Button _image;
     [Tooltip("홈 버튼")][SerializeField] private Button _homeButton;
     [Tooltip("테그 버튼")][SerializeField] private Button _tagButton;
     [Tooltip("게시물 추가 버튼")][SerializeField] private Button _addPostButton;
@@ -31,10 +29,16 @@ public class NyangstagramMainUI : UIPopup
     [SerializeField] private GameObject _homeView;
     [SerializeField] private GameObject _profileView;
 
+    [Header("게시물")]
+    [SerializeField] private Transform _postContent;
+    [SerializeField] private NyangStargramPostSlotUI _postSlotPrefab;
+
     private readonly Dictionary<string, UIPopup> _cachedPopups = new();
+    private readonly List<NyangStargramPostSlotUI> _postSlots = new();
     private bool _isInitialized;
 
     private NyangstagramMainUISprite _nyangstagramMainUISprite;
+
     public override void Init()
     {
         if (_isInitialized)
@@ -48,7 +52,6 @@ public class NyangstagramMainUI : UIPopup
         Bind<Button>(typeof(NyangstagramButton));
 
         _storyButton = Get<Button>((int)NyangstagramButton.StoryButton);
-        _image = Get<Button>((int)NyangstagramButton.Image);
         _homeButton = Get<Button>((int)NyangstagramButton.HomeButton);
         _tagButton = Get<Button>((int)NyangstagramButton.TagButton);
         _addPostButton = Get<Button>((int)NyangstagramButton.AddPostButton);
@@ -74,6 +77,8 @@ public class NyangstagramMainUI : UIPopup
         _nyangstagramMainUISprite = GetComponent<NyangstagramMainUISprite>();
         _nyangstagramMainUISprite.Init();
 
+        ReFreshLikeCountText();
+
         DebugTool.Log("NyangstagramMainUI Init 완료", DebugType.UI, this);
     }
 
@@ -81,7 +86,7 @@ public class NyangstagramMainUI : UIPopup
     {
         // 자기 자신(NyangStargramHomeProfile)은 여기서 다시 로드하면 안 된다.
         // 이 스크립트가 붙은 메인 UI는 이미 열려있는 1개로 취급한다.
-        InitPopup(KeyContainer.Prefabs.NyangStargramPostPopUpUI, _image);
+        InitPopup(KeyContainer.Prefabs.NyangStargramPostPopUpUI, null);
         InitPopup(KeyContainer.Prefabs.NyangStargramNPCProfilePopUpUI, _accountButton);
         InitPopup(KeyContainer.Prefabs.NyangStargramAddPostPopUpUI, _addPostButton);
         InitPopup(KeyContainer.Prefabs.NyangStargramNoticePopUpUI, _notificationButton);
@@ -116,6 +121,11 @@ public class NyangstagramMainUI : UIPopup
                 _cachedPopups[key] = popup;
                 popup.gameObject.SetActive(false);
 
+                if (popup is NyangStargramAddPostUI addPostUI)
+                {
+                    addPostUI.SetMainUI(this);
+                }
+
                 if (openButton != null)
                     AddPopupButton(openButton, popup);
 
@@ -124,6 +134,32 @@ public class NyangstagramMainUI : UIPopup
             false
         );
     }
+
+    public void AddPost(NyangNyangSnapSavedPhotoData photoData, Sprite sprite)
+    {
+        NyangStargramPostSlotUI slot = Instantiate(_postSlotPrefab, _postContent);
+
+        slot.Init();
+        slot.SetData(sprite, OpenPostPopup);
+        slot.transform.SetSiblingIndex(0);
+
+        _postSlots.Add(slot);
+
+        DebugTool.Log($"게시물 추가 : {photoData.photoId}", DebugType.UI, this);
+    }
+
+    private void OpenPostPopup(Sprite sprite)
+    {
+        if (!_cachedPopups.TryGetValue(KeyContainer.Prefabs.NyangStargramPostPopUpUI, out UIPopup popup)) return;
+
+        if (popup is NyangStargramPostUI postUI)
+        {
+            postUI.SetPhoto(sprite);
+        }
+
+        ShowCachedPopup(popup);
+    }
+
     private void BindButtons()
     {
         //if (_storyButton != null)
@@ -283,11 +319,6 @@ public class NyangstagramMainUI : UIPopup
         _likeCountText.text = $"Like {_likeCount}";
     }
 
-    private void OnDisable()
-    {
-
-    }
-
     private void OnDestroy()
     {
         NyangstagramUIRouter.OnRequestOpenPopup -= ShowCachedPopup;
@@ -300,7 +331,6 @@ public class NyangstagramMainUI : UIPopup
 public enum NyangstagramButton
 {
     StoryButton,
-    Image,
     HomeButton,
     TagButton,
     AddPostButton,
