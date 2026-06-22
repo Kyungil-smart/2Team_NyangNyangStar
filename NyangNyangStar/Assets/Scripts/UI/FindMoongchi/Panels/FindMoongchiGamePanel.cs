@@ -146,7 +146,7 @@ namespace UI.FindMoongchi
 
             SetText(_weekText, $"{data.CurrentWeek}주차");
             SetText(_remainTimeText, data.RemainTimeText);
-            SetText(_searchChanceText, data.SearchChance.ToString());
+            SetText(_searchChanceText, "탐색 기회 : " + data.SearchChance.ToString());
             RefreshEnergyProgress(data.EnergySpendProgress, data.EnergySpendTarget);
 
             HashSet<int> previousRevealedTiles = new(_revealedTiles);
@@ -158,6 +158,7 @@ namespace UI.FindMoongchi
                     continue;
 
                 _revealedTiles.Add(tileIndex);
+                
             }
 
             RefreshTargetVisuals(data.TargetVisuals);
