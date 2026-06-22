@@ -59,6 +59,7 @@ public class NyangNyangSnapResultUI : UIPopup
     private IReadOnlyList<NyangNyangSnapCaptureRecord> _records;
     private Sequence _resultSequence;
     private NyangNyangSnapUI _snapUI;
+    private RewardedAdsButton _rewardedAdsButton;
     private bool _isSaving;
     private bool _isRewardGranted;
 
@@ -74,6 +75,7 @@ public class NyangNyangSnapResultUI : UIPopup
         _resultSprite = GetComponent<NyangNyangSnapResultUISprite>();
         _collectionSprite = GetComponent<ResultCollectionPanelSprite>();
         _rewardSprite = GetComponent<RewardPanelSprite>();
+        _rewardedAdsButton = GetComponent<RewardedAdsButton>();
 
         if (_resultSprite != null)
             _resultSprite.Init();
@@ -91,7 +93,7 @@ public class NyangNyangSnapResultUI : UIPopup
     {
         AddSelectPhotosButton(_selectPhotosButton);
         AddSaveButton(_saveButton);
-        AddRetryButton(_retryButton);
+        InitRewardedAdButton();
         AddMainButton(_mainButton);
     }
 
@@ -104,7 +106,6 @@ public class NyangNyangSnapResultUI : UIPopup
     {
         if (_selectPhotosButton != null) _selectPhotosButton.onClick.RemoveAllListeners();
         if (_saveButton != null) _saveButton.onClick.RemoveAllListeners();
-        if (_retryButton != null) _retryButton.onClick.RemoveAllListeners();
         if (_mainButton != null) _mainButton.onClick.RemoveAllListeners();
     }
 
@@ -282,19 +283,20 @@ public class NyangNyangSnapResultUI : UIPopup
         return path;
     }
 
-    private void AddRetryButton(Button button)
+    private void InitRewardedAdButton()
     {
-        if (button == null) return;
+        _rewardedAdsButton.SetButton(_retryButton);
+        _rewardedAdsButton.SetOnAdCompleted(RetryAfterAd);
+    }
 
-        button.onClick.AddListener(() =>
-        {
-            KillResultSequence();
+    private void RetryAfterAd()
+    {
+        KillResultSequence();
 
-            _snapUI.RetrySnap();
-            gameObject.SetActive(false);
+        _snapUI.RetrySnap();
+        gameObject.SetActive(false);
 
-            DebugTool.Log("[NyangNyangSnapResultUI] Retry 클릭", DebugType.UI, this);
-        });
+        DebugTool.Log("[NyangNyangSnapResultUI] 광고 완료 후 Retry", DebugType.UI, this);
     }
 
     private void AddMainButton(Button button)
@@ -303,6 +305,7 @@ public class NyangNyangSnapResultUI : UIPopup
 
         button.onClick.AddListener(() =>
         {
+            GameManager.Audio.PlaySfx("Main_SFX_Touch");
             KillResultSequence();
 
             _snapUI.BackToMain();
