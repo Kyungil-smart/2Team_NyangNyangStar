@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using UI;
 using UI.Base;
 using UnityEngine;
@@ -11,6 +10,8 @@ public class NyangStargramAlbumSlotSprite : UIBase
 
     private Image _photoImage;
     private Image _checkMark;
+
+    private Sprite _photoSprite;
 
     public Sprite PhotoSprite => _photoImage != null ? _photoImage.sprite : null;
 
@@ -44,25 +45,21 @@ public class NyangStargramAlbumSlotSprite : UIBase
         _spriteController[(int)image].ChangeSprite(key);
     }
 
-    public void SetPhoto(string imagePath)
+    public async void SetPhoto(string storagePath)
     {
-        if (!File.Exists(imagePath))
-            return;
+        if (string.IsNullOrEmpty(storagePath)) return;
 
-        byte[] bytes = File.ReadAllBytes(imagePath);
+        Sprite sprite = await FirebaseStorageHelper.LoadUserSpriteAsync(storagePath);
 
-        Texture2D texture = new Texture2D(1, 1);
-        texture.LoadImage(bytes);
+        if (sprite == null) return;
 
-        Sprite sprite = Sprite.Create(
-            texture,
-            new Rect(0, 0, texture.width, texture.height),
-            new Vector2(0.5f, 0.5f)
-        );
+        ReleasePhoto();
+
+        _photoSprite = sprite;
 
         if (_photoImage != null)
         {
-            _photoImage.sprite = sprite;
+            _photoImage.sprite = _photoSprite;
             _photoImage.color = Color.white;
         }
     }
@@ -80,6 +77,22 @@ public class NyangStargramAlbumSlotSprite : UIBase
         _photoImage.color = isDark
             ? new Color(0.35f, 0.35f, 0.35f, 1f)
             : Color.white;
+    }
+
+    private void ReleasePhoto()
+    {
+        if (_photoSprite == null) return;
+
+        if (_photoSprite.texture != null)
+            Destroy(_photoSprite.texture);
+
+        Destroy(_photoSprite);
+        _photoSprite = null;
+    }
+
+    private void OnDestroy()
+    {
+        ReleasePhoto();
     }
 }
 
