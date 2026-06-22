@@ -39,6 +39,7 @@ public partial class ScratchingTimeManager : UIBase
     [SerializeField] private RectTransform _rectTransform;
 
     private bool HasSelectedStage => _selectedStage > 0;
+    private bool _isClosingScratchingTimeUI;
     private bool _isUiTransitioning;       // 화면 전환 애니메이션 중 중복 입력 방지
     private bool _isInitialized;             // Init() 1회 실행 여부
     private bool _isWaitingForDataReady;     // LocalDataAccess.OnReady 구독 중 여부
@@ -67,8 +68,7 @@ public partial class ScratchingTimeManager : UIBase
     {
         if (_selectionController != null)
         {
-            _selectionController.OnCloseClicked += CloseEventView;
-            _selectionController.OnCloseClicked += CloseScratchingTimeUI;
+            _selectionController.OnCloseClicked += CloseScratchingTimeFromSelection;
             _selectionController.OnStageSelected += SelectStage;
             _selectionController.OnStageStartClicked += StartStage;
         }
@@ -96,8 +96,7 @@ public partial class ScratchingTimeManager : UIBase
     {
         if (_selectionController != null)
         {
-            _selectionController.OnCloseClicked -= CloseEventView;
-            _selectionController.OnCloseClicked -= CloseScratchingTimeUI;
+            _selectionController.OnCloseClicked -= CloseScratchingTimeFromSelection;
             _selectionController.OnStageSelected -= SelectStage;
             _selectionController.OnStageStartClicked -= StartStage;
         }
@@ -166,6 +165,7 @@ public partial class ScratchingTimeManager : UIBase
 
     public void OpenScratchingTimeUI()
     {
+        _isClosingScratchingTimeUI = false;
         gameObject.SetActive(true);
         _moongchiStatController?.ReloadMoongchiProgressForSession();
         ReloadScratchingProgressForSession();
@@ -181,16 +181,39 @@ public partial class ScratchingTimeManager : UIBase
         _rectTransform.DOScale(Vector3.one, 0.2f).SetEase(Ease.InOutCubic);
     }
 
+    private void CloseScratchingTimeFromSelection()
+    {
+        if (_isClosingScratchingTimeUI)
+            return;
+
+        _isStarted = false;
+        StopBattleInterestDrain();
+        _selectedStage = 0;
+        _selectedStageType = StageType.None;
+
+        _resultPopupController?.HidePopup();
+        HideBattleScreens();
+        CloseScratchingTimeUI();
+    }
+
     public void CloseScratchingTimeUI()
     {
         if (_rectTransform == null)
             return;
 
+        if (_isClosingScratchingTimeUI)
+            return;
+
+        _isClosingScratchingTimeUI = true;
         _rectTransform.DOKill();
         _rectTransform
             .DOScale(Vector3.zero, 0.2f)
             .SetEase(Ease.OutCirc)
-            .OnComplete(SendScratchingTimeBehindMainUI);
+            .OnComplete(() =>
+            {
+                _isClosingScratchingTimeUI = false;
+                SendScratchingTimeBehindMainUI();
+            });
     }
 
     private void BringScratchingTimeToFront()
@@ -221,6 +244,8 @@ public partial class ScratchingTimeManager : UIBase
 
     public void HideImmediately()
     {
+        _isClosingScratchingTimeUI = false;
+
         if (_rectTransform != null)
         {
             _rectTransform.DOKill();
