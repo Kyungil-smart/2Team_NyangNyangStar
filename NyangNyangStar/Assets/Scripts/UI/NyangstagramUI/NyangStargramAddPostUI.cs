@@ -1,14 +1,11 @@
 using Core.Managers;
 using DG.Tweening;
-using System;
-using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using TMPro;
-using UI;
 using UI.Base;
 using UnityEngine;
 using UnityEngine.UI;
-using Util;
 
 public class NyangStargramAddPostUI : UIPopup
 {
@@ -16,125 +13,201 @@ public class NyangStargramAddPostUI : UIPopup
     [SerializeField] private RectTransform _panel;
     [SerializeField] private float _popupScaleDuration = 0.1f;
 
-
     [Header("버튼")]
-    [Tooltip("패널닫기 버튼")][SerializeField] private Button _backButton;
-    [Tooltip("냥스타그램 닫기 버튼")][SerializeField] private Button _nyangstagramCloseButton;
-
-    [Header("새 게시물 업드로 버튼")]
+    [SerializeField] private Button _backButton;
+    [SerializeField] private Button _nyangstagramCloseButton;
     [SerializeField] private Button _newImageUploadButton;
-
 
     [Header("드롭다운")]
     [SerializeField] private TMP_Dropdown _albumDropdown;
 
-    [Header("이미지")]
+    [Header("선택 이미지")]
     [SerializeField] private Image _newPostImage;
-    [SerializeField] private List<Button> _albumImageButton = new();
+
+    [Header("사진 데이터")]
+    [SerializeField] private NyangNyangSnapPhotoAlbumSO _photoAlbumSO;
+
+    [Header("앨범 슬롯")]
     [SerializeField] private Transform _albumButtonRoots;
+    [SerializeField] private NyangStargramAlbumSlotUI _albumSlotPrefab;
+
+    private readonly Dictionary<string, NyangStargramAlbumSlotUI> _albumSlotDic = new();
+    private readonly HashSet<string> _uploadedPhotoIds = new();
+
+    private NyangstagramMainUI _mainUI;
+    private NyangStargramAlbumSlotUI _selectedSlot;
+    private NyangNyangSnapSavedPhotoData _selectedPhotoData;
+    private Sprite _selectedPhotoSprite;
+    private bool _hasSelectedPhoto;
 
     private NyangStargramAddPostUISprite _nyangStargramAddPostUISprite;
+
     public override void Init()
     {
         Bind<Button>(typeof(NyangStargramAddPostUIButton));
 
         _backButton = Get<Button>((int)NyangStargramAddPostUIButton.BackButton);
         _nyangstagramCloseButton = Get<Button>((int)NyangStargramAddPostUIButton.NyangstagramCloseButton);
+        _newImageUploadButton = Get<Button>((int)NyangStargramAddPostUIButton.NewImageUploadButton);
+
         _albumDropdown = UIBase.FindChild<TMP_Dropdown>(gameObject, "Dropdown", true);
         _newPostImage = UIBase.FindChild<Image>(gameObject, "New Post Image", true);
         _albumButtonRoots = UIBase.FindChild<Transform>(gameObject, "AlbumContent", true);
 
         BindButtons();
         BindDropdown();
-        BindAlbumImages();
 
         _nyangStargramAddPostUISprite = GetComponent<NyangStargramAddPostUISprite>();
         _nyangStargramAddPostUISprite.Init();
 
-        DebugTool.Log("NyangstagramUI Init 실행됨", DebugType.UI, this);
+        DebugTool.Log("NyangStargramAddPostUI Init 실행됨", DebugType.UI, this);
     }
+
+    public void SetMainUI(NyangstagramMainUI mainUI)
+    {
+        _mainUI = mainUI;
+    }
+
+    private void OnEnable()
+    {
+        _selectedSlot = null;
+        _selectedPhotoSprite = null;
+        _hasSelectedPhoto = false;
+
+        if (_newPostImage != null)
+            _newPostImage.sprite = null;
+
+        RefreshAlbumSlots();
+    }
+
+    private async void RefreshAlbumSlots()
+    {
+        await _photoAlbumSO.UpdateFromServerAsync(false);
+
+        List<NyangNyangSnapSavedPhotoData> sortedPhotos = _photoAlbumSO.Photos
+            .OrderByDescending(x => x.createdAt)
+            .ToList();
+
+        HashSet<string> currentPhotoIds = new();
+
+        for (int i = 0; i < sortedPhotos.Count; i++)
+        {
+            NyangNyangSnapSavedPhotoData photoData = sortedPhotos[i];
+
+            currentPhotoIds.Add(photoData.photoId);
+
+            if (!_albumSlotDic.TryGetValue(photoData.photoId, out NyangStargramAlbumSlotUI slot))
+            {
+                slot = CreateAlbumSlot(photoData.photoId);
+            }
+
+            bool isUploaded = _uploadedPhotoIds.Contains(photoData.photoId);
+
+            slot.SetData(photoData, isUploaded);
+            slot.transform.SetSiblingIndex(i);
+        }
+
+        RemoveDeletedAlbumSlots(currentPhotoIds);
+    }
+
+    private NyangStargramAlbumSlotUI CreateAlbumSlot(string photoId)
+    {
+        NyangStargramAlbumSlotUI slot = Instantiate(_albumSlotPrefab, _albumButtonRoots);
+
+        slot.Init();
+        slot.SetAddPostUI(this);
+
+        _albumSlotDic.Add(photoId, slot);
+
+        return slot;
+    }
+
+    private void RemoveDeletedAlbumSlots(HashSet<string> currentPhotoIds)
+    {
+        List<string> removeIds = new();
+
+        foreach (KeyValuePair<string, NyangStargramAlbumSlotUI> pair in _albumSlotDic)
+        {
+            if (!currentPhotoIds.Contains(pair.Key))
+                removeIds.Add(pair.Key);
+        }
+
+        foreach (string photoId in removeIds)
+        {
+            if (_albumSlotDic[photoId] != null)
+                Destroy(_albumSlotDic[photoId].gameObject);
+
+            _albumSlotDic.Remove(photoId);
+            _uploadedPhotoIds.Remove(photoId);
+        }
+    }
+
+    public void SelectAlbumImage(NyangStargramAlbumSlotUI slot, NyangNyangSnapSavedPhotoData photoData, Sprite sprite)
+    {
+        if (_selectedSlot != null)
+            _selectedSlot.SetSelected(false);
+
+        _selectedSlot = slot;
+        _selectedSlot.SetSelected(true);
+
+        _selectedPhotoData = photoData;
+        _selectedPhotoSprite = sprite;
+        _hasSelectedPhoto = true;
+
+        _newPostImage.sprite = sprite;
+        _newPostImage.color = Color.white;
+
+        GameManager.Audio.PlaySfx("Main_SFX_Touch");
+
+        DebugTool.Log($"선택한 사진: {photoData.photoId}", DebugType.UI, this);
+    }
+
     private void BindButtons()
     {
-        //if (_storyButton != null)
-        //    _storyButton.onClick.AddListener(() => GameManager.UI.ShowPopupUI<UIPopup>(KeyContainer.Prefabs.ShopPopupUI));
-
         AddHideSelfButton(_backButton);
         AddCloseAllButton(_nyangstagramCloseButton);
         AddUploadButton(_newImageUploadButton);
-
-
-        //if (_tagButton != null)
-        //    _tagButton.onClick.AddListener(() => GameManager.UI.ShowPopupUI<UIPopup>(KeyContainer.Prefabs.ShopPopupUI));
-
-
     }
-    private void OnDisable()
-    {
-    }
+
     private void BindDropdown()
     {
-        if( _albumDropdown == null) return;
+        if (_albumDropdown == null) return;
 
         _albumDropdown.ClearOptions();
+
         List<string> options = new()
         {
             "모든 사진",
             "뭉치",
             "일상"
         };
+
         _albumDropdown.AddOptions(options);
+        _albumDropdown.onValueChanged.RemoveAllListeners();
         _albumDropdown.onValueChanged.AddListener(OnChangeAlbumFilter);
     }
-    private void OnChangeAlbumFilter(int intdex)
+
+    private void OnChangeAlbumFilter(int index)
     {
-        if(_albumDropdown == null) return;
-        if(intdex < 0 || intdex >= _albumDropdown.options.Count) return;
-        string selectedOption = _albumDropdown.options[intdex].text;
-        
-    }
+        if (_albumDropdown == null) return;
+        if (index < 0 || index >= _albumDropdown.options.Count) return;
 
-    private void BindAlbumImages()
-    {
-        _albumImageButton.Clear();
-
-        Button[] albumButtons = _albumButtonRoots.GetComponentsInChildren<Button>(true);
-        foreach (Button buttons in albumButtons)
-        {
-           Image albumImage = buttons.GetComponent<Image>();
-            if(albumImage == null)
-            {
-                albumImage = buttons.GetComponentInChildren<Image>();
-            }
-
-            Image selectedImage = albumImage;
-            buttons.onClick.RemoveAllListeners();
-            buttons.onClick.AddListener(() => SelectAlbumImage(selectedImage));
-            _albumImageButton.Add(buttons);
-
-        }
-    }
-
-    private void SelectAlbumImage(Image image)
-    {
-        if (_newPostImage == null) return;
-        if( image == null || image.sprite == null) return;
-        _newPostImage.sprite = image.sprite;
-        _newPostImage.color = Color.white;
-        _newPostImage.preserveAspect = true;
+        string selectedOption = _albumDropdown.options[index].text;
+        DebugTool.Log($"앨범 필터 선택: {selectedOption}", DebugType.UI, this);
     }
 
     private void AddHideSelfButton(Button button)
     {
         if (button == null) return;
+
         button.onClick.RemoveAllListeners();
         button.onClick.AddListener(CloseAddPostPopup);
     }
 
-
-    //모든 팝업 다닫기
     private void AddCloseAllButton(Button button)
     {
         if (button == null) return;
+
         button.onClick.RemoveAllListeners();
         button.onClick.AddListener(() =>
         {
@@ -142,38 +215,58 @@ public class NyangStargramAddPostUI : UIPopup
         });
     }
 
-    private void HideSelf()
-    {
-        gameObject.SetActive(false);
-    }
-
     private void AddUploadButton(Button button)
     {
-        if(button == null) return;
+        if (button == null) return;
+
         button.onClick.RemoveAllListeners();
         button.onClick.AddListener(OnClickUploadButton);
     }
 
     private void OnClickUploadButton()
     {
-        DebugTool.Log("게시물 업로드 / 아직 미구현", DebugType.UI, this);
+        if (!_hasSelectedPhoto)
+            return;
+
+        if (_mainUI == null)
+        {
+            DebugTool.Warning("NyangstagramMainUI 연결이 없습니다.", DebugType.UI, this);
+            return;
+        }
+
+        _mainUI.AddPost(_selectedPhotoData, _selectedPhotoSprite);
+
+        _uploadedPhotoIds.Add(_selectedPhotoData.photoId);
+
+        if (_selectedSlot != null)
+        {
+            _selectedSlot.SetUploaded(true);
+            _selectedSlot = null;
+        }
+
+        DebugTool.Log($"게시물 업로드: {_selectedPhotoData.photoId}", DebugType.UI, this);
+
+        _hasSelectedPhoto = false;
+
+        CloseAddPostPopup();
     }
+
     public override void PlayOpenAnimation()
     {
         if (_panel == null) return;
 
-        _panel.anchoredPosition = new Vector2(0f, -1000f);
-        _panel.DOAnchorPos(Vector2.zero, _popupScaleDuration)
-            .SetEase(Ease.OutSine);
+        //_panel.anchoredPosition = new Vector2(0f, -1000f);
+        //_panel.DOAnchorPos(Vector2.zero, _popupScaleDuration)
+        //    .SetEase(Ease.OutSine);
     }
 
     private void CloseAddPostPopup()
     {
         if (_panel == null) return;
-
-        _panel.DOAnchorPos(new Vector2(0f, -1000f), _popupScaleDuration)
-            .SetEase(Ease.OutSine).OnComplete(() => gameObject.SetActive(false));
-
+        gameObject.SetActive(false);
+        //_panel.DOAnchorPos(new Vector2(0f, -1000f), _popupScaleDuration)
+        //    .SetEase(Ease.OutSine)
+        //    .OnComplete(() => gameObject.SetActive(false));
     }
 }
 

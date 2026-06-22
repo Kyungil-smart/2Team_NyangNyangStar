@@ -3,8 +3,6 @@ using UI;
 using UI.Base;
 using UnityEngine;
 using UnityEngine.UI;
-using static NyangNyangSnapSprite;
-using static UnityEngine.Rendering.DebugUI;
 
 public class NyangStargramAddPostUISprite : UIBase
 {
@@ -41,10 +39,6 @@ public class NyangStargramAddPostUISprite : UIBase
 
         //네비게이션 버튼
         SetSprite(NyangStargramAddPostUIImages.NyangstagramCloseButton, "NYS_Btn_Exit");
-
-
-
-
     }
 
     private void SetSprite(NyangStargramAddPostUIImages image, string key)
@@ -71,8 +65,5 @@ public enum NyangStargramAddPostUIImages
     PostImagePanel,
     엘범,
     NyangstagramCloseButton,
-
-    
-
 
 }

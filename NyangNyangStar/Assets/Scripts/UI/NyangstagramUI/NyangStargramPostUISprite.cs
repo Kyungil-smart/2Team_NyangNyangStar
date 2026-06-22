@@ -10,6 +10,8 @@ public class NyangStargramPostUISprite : UIBase
     private const string LikeFilledSpriteKey = "NYS_Btn_Heart_Filled";
 
     private UISpriteController[] _spriteController;
+    private Image _postImage;
+
     public override void Init()
     {
         Bind<Image>(typeof(NyangStargramPostUIImages));
@@ -19,6 +21,8 @@ public class NyangStargramPostUISprite : UIBase
         {
             _spriteController[i] = new UISpriteController(GetImage(i));
         }
+
+        _postImage = GetImage((int)NyangStargramPostUIImages.PostImage);
 
         SetSprites();
     }
@@ -41,11 +45,8 @@ public class NyangStargramPostUISprite : UIBase
 
         //네비게이션 버튼
         SetSprite(NyangStargramPostUIImages.NyangstagramCloseButton, "NYS_Btn_Exit");
-
-
-
-
     }
+
     public void SetLikeSprite(bool isLiked)
     {
         string spriteKey = isLiked ? LikeFilledSpriteKey : LikeEmptySpriteKey;
@@ -53,6 +54,16 @@ public class NyangStargramPostUISprite : UIBase
         SetSprite(NyangStargramPostUIImages.LikeButton, spriteKey);
 
         DebugTool.Log($"좋아요 아이콘 변경: {spriteKey}", DebugType.UI, this);
+    }
+
+    public void SetPhoto(Sprite sprite)
+    {
+        if (_postImage == null || sprite == null)
+            return;
+
+        _postImage.sprite = sprite;
+        _postImage.preserveAspect = true;
+        _postImage.color = Color.white;
     }
 
     private void SetSprite(NyangStargramPostUIImages image, string key)
@@ -65,7 +76,17 @@ public class NyangStargramPostUISprite : UIBase
         _spriteController[(int)image].ChangeColor(color);
         _spriteController[(int)image].ChangeSprite(key);
     }
-    
+
+    private void OnDestroy()
+    {
+        if (_spriteController == null) return;
+
+        foreach (UISpriteController controller in _spriteController)
+        {
+            controller?.ReleaseSprite();
+        }
+    }
+
     public enum NyangStargramPostUIImages
     {
         backGroundpanel,
