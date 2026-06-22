@@ -4375,6 +4375,8 @@ GameObject:
   - component: {fileID: 3397088369678099227}
   - component: {fileID: 6638747879918465667}
   - component: {fileID: 2367109233391087859}
+  - component: {fileID: 5951928940139545843}
+  - component: {fileID: 988560305261223022}
   m_Layer: 5
   m_Name: NyangNyangSnapResultCanvas
   m_TagString: Untagged
@@ -4538,6 +4540,35 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e6b0573a6ba9a2c4c8580056213cb5f9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &5951928940139545843
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5809593576090187732}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e368971c8a732b245926befe0903db8d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _androidGameId: 6140262
+  _iOSGameId: 6140263
+  _testMode: 1
+--- !u!114 &988560305261223022
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5809593576090187732}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b6f988986d552cc42ac0abef42e2134c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _androidAdUnitId: Rewarded_Android
+  _iOSAdUnitId: Rewarded_iOS
 --- !u!1 &5905555581559353347
 GameObject:
   m_ObjectHideFlags: 0
