@@ -32,8 +32,8 @@ public class CatPhotoSlotUI : UIBase
     public void SetData(NyangNyangSnapSavedPhotoData photoData)
     {
         _photoData = photoData;
-        Debug.Log($"[CatPhotoSlotUI] SetData 호출 / id:{photoData.photoId} / star:{photoData.starCount} / path:{photoData.imageUrl}");
-        _sprite.SetPhoto(photoData.imageUrl);
+        Debug.Log($"[CatPhotoSlotUI] SetData 호출 / id:{photoData.photoId} / star:{photoData.starCount} / storagePath:{photoData.storagePath}");
+        _sprite.SetPhoto(photoData.storagePath);
         _sprite.SetStar(photoData.starCount);
     }
 

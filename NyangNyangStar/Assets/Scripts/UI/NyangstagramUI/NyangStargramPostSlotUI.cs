@@ -9,8 +9,8 @@ public class NyangStargramPostSlotUI : UIBase
 
     private NyangStargramPostSlotSprite _sprite;
 
-    private Sprite _photoSprite;
-    private Action<Sprite> _onClick;
+    private NyangNyangSnapSavedPhotoData _photoData;
+    private Action<NyangNyangSnapSavedPhotoData> _onClick;
 
     public override void Init()
     {
@@ -25,17 +25,17 @@ public class NyangStargramPostSlotUI : UIBase
         _sprite.Init();
     }
 
-    public void SetData(Sprite sprite, Action<Sprite> onClick)
+    public void SetData(NyangNyangSnapSavedPhotoData photoData, Action<NyangNyangSnapSavedPhotoData> onClick)
     {
-        _photoSprite = sprite;
+        _photoData = photoData;
         _onClick = onClick;
 
-        _sprite.SetPhoto(sprite);
+        _sprite.SetPhoto(photoData.storagePath);
     }
 
     private void OnClickSlot()
     {
-        _onClick?.Invoke(_photoSprite);
+        _onClick?.Invoke(_photoData);
     }
 
     private void OnDestroy()
