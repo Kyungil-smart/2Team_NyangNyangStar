@@ -22,6 +22,7 @@ public class ScratchingTimeUISprite : UIBase
     private const string CloudFace = "ST_BG_Cloud_Face";
     private const string CloudLeft = "ST_BG_Cloud_Left";
     private const string TileCats = "BG_Tile_Cats";
+    private const string ProfileProfileImages2 = "Profile_ProfileImages_2";
 
     // ScratchingTimeUI_Sprite 프리팹 기준 경로별 Addressable 매핑
     private static readonly Dictionary<string, string> SpriteKeysByPath = new()
@@ -36,7 +37,7 @@ public class ScratchingTimeUISprite : UIBase
         ["EventPopupPanel/ExitButton"] = CloseButton,
         ["EventPopupPanel/LevelSection/LevelRow/Panel/Background"] = ShapeRectangle,
         ["EventPopupPanel/LevelSection/LevelRow/Panel/Background/Image"] = CloudFace,
-        ["EventPopupPanel/LevelSection/LevelRow/Panel/Background/Outline"] = ShapeRectangleOutline,
+        ["EventPopupPanel/LevelSection/LevelRow/Panel/Background/Outline"] = ProfileProfileImages2,
         ["EventPopupPanel/LevelSection/Panel/InfoPanel/Background"] = ShapeRectangle,
         ["EventPopupPanel/LevelSection/Panel/InfoPanel/Background/Outline"] = ShapeRectangleOutline,
         ["EventPopupPanel/LevelSection/Panel/Panel (1)/Slider/Fill Area/Fill"] = ShapeRectangle,
@@ -93,6 +94,7 @@ public class ScratchingTimeUISprite : UIBase
         RegisterSpriteKeyIfMissing(CloudFace, AddressableGroupType.Scratching);
         RegisterSpriteKeyIfMissing(CloudLeft, AddressableGroupType.Scratching);
         RegisterSpriteKeyIfMissing(TileCats, AddressableGroupType.Common);
+        RegisterSpriteKeyIfMissing(ProfileProfileImages2, AddressableGroupType.Common);
     }
 
     private static void RegisterSpriteKeyIfMissing(string key, AddressableGroupType groupType)
