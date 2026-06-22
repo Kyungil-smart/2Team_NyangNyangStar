@@ -20,6 +20,9 @@ namespace UI.FindMoongchi
 
         [Header("유저 진행 데이터")] [SerializeField] private FindMoongchiProgressFirestoreSO _progressSO;
 
+        [Header("이벤트 기간")]
+        [SerializeField] private FindMoongchiEventScheduleSO _eventScheduleSO;
+
         [Header("보상 지급")]
         [Tooltip("에너지/골드 지급에 사용합니다. UsersSO 서브컬렉션 ResourcesSO를 연결하세요.")]
         [SerializeField] private ResourcesSO _resourcesSO;
@@ -33,6 +36,7 @@ namespace UI.FindMoongchi
         public MoongchiMissionSO MissionSO => _missionSO;
         public MoongchiProfileSO ProfileSO => _profileSO;
         public FindMoongchiProgressFirestoreSO ProgressSO => _progressSO;
+        public FindMoongchiEventScheduleSO EventScheduleSO => _eventScheduleSO;
 
         public bool IsLoaded { get; private set; }
 
@@ -43,6 +47,8 @@ namespace UI.FindMoongchi
         private FindMoongchiProgressRuntimeData _progress;
         private bool _isProgressReady;
         private int _progressLoadVersion;
+        private string _progressUserId = string.Empty;
+        private string _loadingProgressUserId = string.Empty;
 
         private bool _isWaitingForGlobalDataReady;
 
@@ -129,6 +135,16 @@ namespace UI.FindMoongchi
 
         private void HandleUserIdChanged(string userId)
         {
+            string normalizedUserId = NormalizeUserId(userId);
+
+            if (string.Equals(normalizedUserId, _progressUserId, StringComparison.Ordinal) ||
+                string.Equals(normalizedUserId, _loadingProgressUserId, StringComparison.Ordinal))
+            {
+                DebugTool.Log($"[FindMoongchiDataManager] 동일 유저 진행 데이터 무효화 생략: UserId={normalizedUserId}", DebugType.Data, this);
+                return;
+            }
+
+            _progressUserId = normalizedUserId;
             InvalidateProgress();
         }
 
@@ -147,11 +163,23 @@ namespace UI.FindMoongchi
             if (_isProgressReady && _progress != null)
                 return true;
 
+            string loadUserId = GetCurrentProgressUserId();
+            _loadingProgressUserId = loadUserId;
+
             int loadVersion = ++_progressLoadVersion;
             FindMoongchiProgressRuntimeData loaded = await LoadProgressAsync();
+            string currentUserId = GetCurrentProgressUserId();
+            _loadingProgressUserId = string.Empty;
 
-            if (loadVersion != _progressLoadVersion)
+            if (loadVersion != _progressLoadVersion &&
+                !string.Equals(loadUserId, currentUserId, StringComparison.Ordinal))
+            {
+                DebugTool.Warning(
+                    $"[FindMoongchiDataManager] 진행 데이터 로드 중 유저가 변경되어 결과를 폐기합니다. LoadUser={loadUserId}, CurrentUser={currentUserId}",
+                    DebugType.Data,
+                    this);
                 return false;
+            }
 
             if (loaded == null)
                 return false;
@@ -159,12 +187,16 @@ namespace UI.FindMoongchi
             bool hadValidCycle = loaded.CurrentCycleStageIDs != null &&
                                  loaded.CurrentCycleStageIDs.Count == 5;
 
-            bool resetApplied = FindMoongchiProgressResetLogic.ApplyResetsIfNeeded(loaded, _missionSO);
+            bool resetApplied = FindMoongchiProgressResetLogic.ApplyResetsIfNeeded(
+                loaded,
+                _missionSO,
+                _eventScheduleSO);
 
             EnsureStageCycleReady(loaded);
 
             _progress = loaded;
             _isProgressReady = true;
+            _progressUserId = currentUserId;
 
             bool energyBonusApplied = TryGrantEnergySpendBonus();
 
@@ -181,6 +213,24 @@ namespace UI.FindMoongchi
             _progressLoadVersion++;
             _isProgressReady = false;
             _progress = null;
+        }
+
+        private static string GetCurrentProgressUserId()
+        {
+            if (FireStoreManager.Instance != null &&
+                !string.IsNullOrEmpty(FireStoreManager.Instance.CurrentUserId))
+            {
+                return FireStoreManager.Instance.CurrentUserId;
+            }
+
+            return AuthManager.Instance != null
+                ? NormalizeUserId(AuthManager.Instance.CurrentUserId)
+                : string.Empty;
+        }
+
+        private static string NormalizeUserId(string userId)
+        {
+            return userId ?? string.Empty;
         }
 
         // 현재 메모리상 Progress를 Firestore에 저장
@@ -839,6 +889,11 @@ namespace UI.FindMoongchi
             else if (!HasProfileData())
             {
                 DebugTool.Warning("[FindMoongchiDataManager] 프로필 데이터가 비어있습니다. SheetLoader 설정을 확인해주세요.", DebugType.Data, this);
+            }
+
+            if (_eventScheduleSO == null)
+            {
+                DebugTool.Warning("[FindMoongchiDataManager] 이벤트 기간 SO가 할당되지 않았습니다.", DebugType.Data, this);
             }
         }
     }

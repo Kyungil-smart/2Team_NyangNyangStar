@@ -13,7 +13,8 @@ namespace Data.ScriptableObjects.MoongchiSO
 
         public static bool ApplyResetsIfNeeded(
             FindMoongchiProgressRuntimeData progress,
-            MoongchiMissionSO missionSO)
+            MoongchiMissionSO missionSO,
+            FindMoongchiEventScheduleSO eventScheduleSO)
         {
             if (progress == null)
                 return false;
@@ -32,20 +33,8 @@ namespace Data.ScriptableObjects.MoongchiSO
                 changed = true;
             }
 
-            if (progress.LastWeeklyResetUnixTime <= 0)
-            {
-                progress.LastWeeklyResetUnixTime = GetWeeklyAnchorUnixTime(now);
+            if (ApplyWeeklyResetsIfNeeded(progress, missionSO, now, eventScheduleSO))
                 changed = true;
-
-                DebugTool.Log(
-                    $"[FindMoongchiProgressResetLogic] 주간 초기화 기준 시각 설정 (신규 유저, CurrentWeek={progress.CurrentWeek} 유지)",
-                    DebugType.Data);
-            }
-            else if (ShouldResetWeekly(progress.LastWeeklyResetUnixTime, now))
-            {
-                ApplyWeeklyReset(progress, missionSO, now);
-                changed = true;
-            }
 
             return changed;
         }
@@ -60,14 +49,67 @@ namespace Data.ScriptableObjects.MoongchiSO
             return progress?.DailyEnergySpendProgress ?? 0;
         }
 
+        private static bool ApplyWeeklyResetsIfNeeded(
+            FindMoongchiProgressRuntimeData progress,
+            MoongchiMissionSO missionSO,
+            long nowUnixTime,
+            FindMoongchiEventScheduleSO eventScheduleSO)
+        {
+            if (eventScheduleSO == null)
+            {
+                DebugTool.Warning(
+                    "[FindMoongchiProgressResetLogic] 이벤트 기간 SO가 없어 주차 동기화를 건너뜁니다.",
+                    DebugType.Data);
+                return false;
+            }
+
+            int expectedWeek = FindMoongchiEventScheduleLogic.GetCurrentEventWeek(
+                eventScheduleSO,
+                nowUnixTime,
+                MaxEventWeek);
+            long currentWeekAnchor = FindMoongchiEventScheduleLogic.GetEventWeekAnchorUnixTime(
+                eventScheduleSO,
+                nowUnixTime);
+
+            if (progress.LastWeeklyResetUnixTime <= 0)
+            {
+                progress.LastWeeklyResetUnixTime = currentWeekAnchor;
+
+                if (progress.CurrentWeek != expectedWeek)
+                    progress.CurrentWeek = expectedWeek;
+
+                DebugTool.Log(
+                    $"[FindMoongchiProgressResetLogic] 이벤트 주차 기준 시각 설정 (신규 유저, CurrentWeek={progress.CurrentWeek})",
+                    DebugType.Data);
+                return true;
+            }
+
+            long lastWeekAnchor = FindMoongchiEventScheduleLogic.GetEventWeekAnchorUnixTime(
+                eventScheduleSO,
+                progress.LastWeeklyResetUnixTime);
+
+            if (lastWeekAnchor < currentWeekAnchor)
+            {
+                ApplyWeeklyReset(progress, missionSO, nowUnixTime, eventScheduleSO);
+                return true;
+            }
+
+            if (progress.CurrentWeek != expectedWeek)
+            {
+                progress.CurrentWeek = expectedWeek;
+
+                DebugTool.Log(
+                    $"[FindMoongchiProgressResetLogic] 주차 동기화: CurrentWeek={progress.CurrentWeek}",
+                    DebugType.Data);
+                return true;
+            }
+
+            return false;
+        }
+
         private static bool ShouldResetDaily(long lastResetUnixTime, long nowUnixTime)
         {
             return GetDailyAnchorUnixTime(lastResetUnixTime) < GetDailyAnchorUnixTime(nowUnixTime);
-        }
-
-        private static bool ShouldResetWeekly(long lastResetUnixTime, long nowUnixTime)
-        {
-            return GetWeeklyAnchorUnixTime(lastResetUnixTime) < GetWeeklyAnchorUnixTime(nowUnixTime);
         }
 
         private static void ApplyDailyReset(
@@ -88,16 +130,20 @@ namespace Data.ScriptableObjects.MoongchiSO
         private static void ApplyWeeklyReset(
             FindMoongchiProgressRuntimeData progress,
             MoongchiMissionSO missionSO,
-            long nowUnixTime)
+            long nowUnixTime,
+            FindMoongchiEventScheduleSO eventScheduleSO)
         {
             ClearMissionProgressByType(progress, missionSO, MoongchiMissionType.WEEKLY);
             ClearMissionProgressByType(progress, missionSO, MoongchiMissionType.WEEKLY_1ST);
             ClearMissionProgressByType(progress, missionSO, MoongchiMissionType.WEEKLY_2ND);
 
-            if (progress.CurrentWeek < MaxEventWeek)
-                progress.CurrentWeek++;
-
-            progress.LastWeeklyResetUnixTime = GetWeeklyAnchorUnixTime(nowUnixTime);
+            progress.CurrentWeek = FindMoongchiEventScheduleLogic.GetCurrentEventWeek(
+                eventScheduleSO,
+                nowUnixTime,
+                MaxEventWeek);
+            progress.LastWeeklyResetUnixTime = FindMoongchiEventScheduleLogic.GetEventWeekAnchorUnixTime(
+                eventScheduleSO,
+                nowUnixTime);
 
             DebugTool.Log(
                 $"[FindMoongchiProgressResetLogic] 주간 진행 데이터 초기화: CurrentWeek={progress.CurrentWeek}",
@@ -130,22 +176,6 @@ namespace Data.ScriptableObjects.MoongchiSO
             DateTimeOffset kst = DateTimeOffset.FromUnixTimeSeconds(unixSeconds).ToOffset(KstOffset);
             DateTimeOffset dayStart = new DateTimeOffset(kst.Year, kst.Month, kst.Day, 0, 0, 0, KstOffset);
             return dayStart.ToUnixTimeSeconds();
-        }
-
-        private static long GetWeeklyAnchorUnixTime(long unixSeconds)
-        {
-            DateTimeOffset kst = DateTimeOffset.FromUnixTimeSeconds(unixSeconds).ToOffset(KstOffset);
-            int daysFromMonday = ((int)kst.DayOfWeek + 6) % 7;
-            DateTimeOffset weekStart = new DateTimeOffset(
-                kst.Year,
-                kst.Month,
-                kst.Day,
-                0,
-                0,
-                0,
-                KstOffset).AddDays(-daysFromMonday);
-
-            return weekStart.ToUnixTimeSeconds();
         }
     }
 }
