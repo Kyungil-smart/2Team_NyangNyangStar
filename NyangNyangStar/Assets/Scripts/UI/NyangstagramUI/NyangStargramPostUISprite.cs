@@ -12,6 +12,8 @@ public class NyangStargramPostUISprite : UIBase
     private UISpriteController[] _spriteController;
     private Image _postImage;
 
+    private Sprite _postSprite;
+
     public override void Init()
     {
         Bind<Image>(typeof(NyangStargramPostUIImages));
@@ -56,14 +58,24 @@ public class NyangStargramPostUISprite : UIBase
         DebugTool.Log($"좋아요 아이콘 변경: {spriteKey}", DebugType.UI, this);
     }
 
-    public void SetPhoto(Sprite sprite)
+    public async void SetPhoto(string storagePath)
     {
-        if (_postImage == null || sprite == null)
-            return;
+        if (string.IsNullOrEmpty(storagePath)) return;
 
-        _postImage.sprite = sprite;
-        _postImage.preserveAspect = true;
-        _postImage.color = Color.white;
+        Sprite sprite = await FirebaseStorageHelper.LoadUserSpriteAsync(storagePath);
+
+        if (sprite == null) return;
+
+        ReleasePostSprite();
+
+        _postSprite = sprite;
+
+        if (_postImage != null)
+        {
+            _postImage.sprite = _postSprite;
+            _postImage.preserveAspect = true;
+            _postImage.color = Color.white;
+        }
     }
 
     private void SetSprite(NyangStargramPostUIImages image, string key)
@@ -77,8 +89,21 @@ public class NyangStargramPostUISprite : UIBase
         _spriteController[(int)image].ChangeSprite(key);
     }
 
+    private void ReleasePostSprite()
+    {
+        if (_postSprite == null) return;
+
+        if (_postSprite.texture != null)
+            Destroy(_postSprite.texture);
+
+        Destroy(_postSprite);
+        _postSprite = null;
+    }
+
     private void OnDestroy()
     {
+        ReleasePostSprite();
+
         if (_spriteController == null) return;
 
         foreach (UISpriteController controller in _spriteController)

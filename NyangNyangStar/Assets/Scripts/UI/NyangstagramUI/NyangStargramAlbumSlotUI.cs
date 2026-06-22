@@ -41,7 +41,7 @@ public class NyangStargramAlbumSlotUI : UIBase
         _photoData = photoData;
         _isUploaded = isUploaded;
 
-        _sprite.SetPhoto(photoData.imageUrl);
+        _sprite.SetPhoto(photoData.storagePath);
 
         SetSelected(false);
         SetUploaded(_isUploaded);

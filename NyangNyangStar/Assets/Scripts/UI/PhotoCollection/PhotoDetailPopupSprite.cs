@@ -20,6 +20,8 @@ public class PhotoDetailPopupSprite : UIBase
     private Image _star5;
     private Image[] _stars;
 
+    private Sprite _photoSprite;
+
     public override void Init()
     {
         Bind<Image>(typeof(PhotoDetailPopupImages));
@@ -55,25 +57,20 @@ public class PhotoDetailPopupSprite : UIBase
         _spriteController[(int)image].ChangeSprite(key);
     }
 
-    public void SetPhoto(string imagePath)
+    public async void SetPhoto(string storagePath)
     {
-        if (!File.Exists(imagePath)) return;
+        if (string.IsNullOrEmpty(storagePath)) return;
 
-        byte[] bytes = File.ReadAllBytes(imagePath);
+        Sprite sprite = await FirebaseStorageHelper.LoadUserSpriteAsync(storagePath);
 
-        Texture2D texture = new Texture2D(1, 1);
-        texture.LoadImage(bytes);
+        if (sprite == null) return;
 
-        Sprite sprite = Sprite.Create(
-            texture,
-            new Rect(0, 0, texture.width, texture.height),
-            new Vector2(0.5f, 0.5f)
-        );
+        ReleasePhoto();
+
+        _photoSprite = sprite;
 
         if (_catImage != null)
-        {
-            _catImage.sprite = sprite;
-        }
+            _catImage.sprite = _photoSprite;
     }
 
     public void SetStar(int starCount)
@@ -86,6 +83,22 @@ public class PhotoDetailPopupSprite : UIBase
 
             _stars[i].gameObject.SetActive(i < starCount);
         }
+    }
+
+    private void ReleasePhoto()
+    {
+        if (_photoSprite == null) return;
+
+        if (_photoSprite.texture != null)
+            Destroy(_photoSprite.texture);
+
+        Destroy(_photoSprite);
+        _photoSprite = null;
+    }
+
+    private void OnDestroy()
+    {
+        ReleasePhoto();
     }
 }
 

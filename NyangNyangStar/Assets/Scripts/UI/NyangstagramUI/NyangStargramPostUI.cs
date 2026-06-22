@@ -35,16 +35,15 @@ public class NyangStargramPostUI : UIPopup
         _nyangStargramPostUISprite.Init();
         _nyangStargramPostUISprite.SetLikeSprite(_isLiked);
 
-
         BindButtons();
         ReFreshLikeCountText();
 
         DebugTool.Log("NyangstagramUI Init 실행됨", DebugType.UI, this);
     }
 
-    public void SetPhoto(Sprite sprite)
+    public void SetPhoto(string storagePath)
     {
-        _nyangStargramPostUISprite.SetPhoto(sprite);
+        _nyangStargramPostUISprite.SetPhoto(storagePath);
     }
 
     private void BindButtons()
@@ -56,11 +55,8 @@ public class NyangStargramPostUI : UIPopup
         AddCloseAllButton(_nyangstagramCloseButton);
         AddLikeButton(_likeButton);
 
-
         //if (_tagButton != null)
         //    _tagButton.onClick.AddListener(() => GameManager.UI.ShowPopupUI<UIPopup>(KeyContainer.Prefabs.ShopPopupUI));
-
-
     }
 
     private void AddHideSelfButton(Button button)

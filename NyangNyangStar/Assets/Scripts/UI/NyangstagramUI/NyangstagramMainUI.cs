@@ -17,6 +17,7 @@ public class NyangstagramMainUI : UIPopup
     [Tooltip("프로필 버튼")][SerializeField] private Button _profileButton;
     [Tooltip("냥스타그램 나가기 버튼")][SerializeField] private Button _nyangstagramCloseButton;
     [Tooltip("DM Button")][SerializeField] private Button _dmButton;
+    [Tooltip("Home DM Button")][SerializeField] private Button _dmHomeButton;
     [Tooltip("계정명 버튼")][SerializeField] private Button _accountButton;
     [Tooltip("좋아요 버튼")][SerializeField] private Button _likeButton;
     [Tooltip("좋아요 text")][SerializeField] private TMP_Text _likeCountText;
@@ -59,6 +60,7 @@ public class NyangstagramMainUI : UIPopup
         _profileButton = Get<Button>((int)NyangstagramButton.ProfileButton);
         _nyangstagramCloseButton = Get<Button>((int)NyangstagramButton.NyangstagramCloseButton);
         _dmButton = Get<Button>((int)NyangstagramButton.DMButton);
+        _dmHomeButton = Get<Button>((int)NyangstagramButton.HomeDMButton);
         _accountButton = Get<Button>((int)NyangstagramButton.AccountNameTextButton);
         _likeButton = Get<Button>((int)NyangstagramButton.LikeButton);
         _likeCountText = UIBase.FindChild<TMP_Text>(gameObject, "Like Count", true);
@@ -91,7 +93,13 @@ public class NyangstagramMainUI : UIPopup
         InitPopup(KeyContainer.Prefabs.NyangStargramAddPostPopUpUI, _addPostButton);
         InitPopup(KeyContainer.Prefabs.NyangStargramNoticePopUpUI, _notificationButton);
         InitPopup(KeyContainer.Prefabs.NyangStargramDMListPopUpUI, _dmButton);
+        InitPopup(KeyContainer.Prefabs.NyangStargramDMListPopUpUI, _dmHomeButton);
+
         InitPopup(KeyContainer.Prefabs.NyangStargramDMchatPopUpUI, null);
+    }
+    private void OnEnable()
+    {
+        SetProfileView();
     }
 
     private void InitPopup(string key, Button openButton)
@@ -135,12 +143,12 @@ public class NyangstagramMainUI : UIPopup
         );
     }
 
-    public void AddPost(NyangNyangSnapSavedPhotoData photoData, Sprite sprite)
+    public void AddPost(NyangNyangSnapSavedPhotoData photoData)
     {
         NyangStargramPostSlotUI slot = Instantiate(_postSlotPrefab, _postContent);
 
         slot.Init();
-        slot.SetData(sprite, OpenPostPopup);
+        slot.SetData(photoData, OpenPostPopup);
         slot.transform.SetSiblingIndex(0);
 
         _postSlots.Add(slot);
@@ -148,13 +156,13 @@ public class NyangstagramMainUI : UIPopup
         DebugTool.Log($"게시물 추가 : {photoData.photoId}", DebugType.UI, this);
     }
 
-    private void OpenPostPopup(Sprite sprite)
+    private void OpenPostPopup(NyangNyangSnapSavedPhotoData photoData)
     {
         if (!_cachedPopups.TryGetValue(KeyContainer.Prefabs.NyangStargramPostPopUpUI, out UIPopup popup)) return;
 
         if (popup is NyangStargramPostUI postUI)
         {
-            postUI.SetPhoto(sprite);
+            postUI.SetPhoto(photoData.storagePath);
         }
 
         ShowCachedPopup(popup);
@@ -338,6 +346,7 @@ public enum NyangstagramButton
     ProfileButton,
     NyangstagramCloseButton,
     DMButton,
+    HomeDMButton,
     AccountNameTextButton,
     LikeButton
 }

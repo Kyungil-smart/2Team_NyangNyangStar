@@ -36,16 +36,18 @@ public class NyangstagramMainUISprite : UIBase
         SetSprite(NyangstagramMainUIImages.Prifilepanel, "NYS_Content");
         SetSprite(NyangstagramMainUIImages.ImageFrame, "NYS_Profile_Frame");
         SetSprite(NyangstagramMainUIImages.Image, "NYS_Profile_User_01");
+        SetSprite(NyangstagramMainUIImages.DMButton, "NYS_Btn_DM");
+
 
 
         //홈 뷰
         SetSprite(NyangstagramMainUIImages.HomeHeaderPanel, "NYS_TopBar");
         SetSprite(NyangstagramMainUIImages.HomeHeaderImage, "NYS_TitleLogo");
-        SetSprite(NyangstagramMainUIImages.DMButton, "NYS_Btn_DM");
+        SetSprite(NyangstagramMainUIImages.HomeDMButton, "NYS_Btn_DM");
         SetSprite(NyangstagramMainUIImages.VerifyIconFront, "NYS_Profile_User_01");
         SetSprite(NyangstagramMainUIImages.VerifyIcon, "NYS_ProfileBadge");
         SetSprite(NyangstagramMainUIImages.LikeButton, LikeEmptySpriteKey);
-        SetSprite(NyangstagramMainUIImages.NPCImage, "NYS_Profile_User_01");
+        SetSprite(NyangstagramMainUIImages.NPCImage, "NYS_Btn_Profile", new Color32(160, 0, 255, 255));
         SetSprite(NyangstagramMainUIImages.Viewport, "NYS_Content");
 
         
@@ -83,6 +85,7 @@ public enum NyangstagramMainUIImages
     Panel,
     HomeHeaderPanel,
     HomeHeaderImage,
+    HomeDMButton,
     DMButton,
     VerifyIconFront,
     VerifyIcon,

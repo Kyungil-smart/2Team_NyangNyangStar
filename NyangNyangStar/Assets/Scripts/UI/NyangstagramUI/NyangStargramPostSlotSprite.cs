@@ -9,6 +9,8 @@ public class NyangStargramPostSlotSprite : UIBase
     private UISpriteController[] _spriteController;
     private Image _photoImage;
 
+    private Sprite _photoSprite;
+
     public override void Init()
     {
         Bind<Image>(typeof(NyangStargramPostSlotImages));
@@ -35,18 +37,37 @@ public class NyangStargramPostSlotSprite : UIBase
         _spriteController[(int)image].ChangeSprite(key);
     }
 
-    public void SetPhoto(Sprite sprite)
+    public async void SetPhoto(string storagePath)
     {
-        if (_photoImage == null || sprite == null)
-            return;
+        if (string.IsNullOrEmpty(storagePath)) return;
 
-        _photoImage.sprite = sprite;
+        Sprite sprite = await FirebaseStorageHelper.LoadUserSpriteAsync(storagePath);
+        if (sprite == null) return;
+
+        ReleasePhoto();
+
+        _photoSprite = sprite;
+
+        if (_photoImage != null)
+            _photoImage.sprite = _photoSprite;
+    }
+
+    private void ReleasePhoto()
+    {
+        if (_photoSprite == null) return;
+
+        if (_photoSprite.texture != null)
+            Destroy(_photoSprite.texture);
+
+        Destroy(_photoSprite);
+        _photoSprite = null;
     }
 
     private void OnDestroy()
     {
-        if (_spriteController == null)
-            return;
+        ReleasePhoto();
+
+        if (_spriteController == null) return;
 
         foreach (UISpriteController controller in _spriteController)
         {

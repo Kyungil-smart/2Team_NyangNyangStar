@@ -1,6 +1,5 @@
 using Core.Managers;
 using System;
-using System.IO;
 using UI.Base;
 using UnityEngine;
 using UnityEngine.UI;
@@ -45,7 +44,7 @@ public class PhotoDetailPopupUI : UIPopup
     {
         _photoData = photoData;
 
-        _sprite.SetPhoto(photoData.imageUrl);
+        _sprite.SetPhoto(photoData.storagePath);
         _sprite.SetStar(photoData.starCount);
     }
 
@@ -94,13 +93,14 @@ public class PhotoDetailPopupUI : UIPopup
 
     private async void DeletePhoto()
     {
-        if (File.Exists(_photoData.imageUrl))
+        if (!string.IsNullOrEmpty(_photoData.storagePath))
         {
-            File.Delete(_photoData.imageUrl);
+            bool deleted = await FirebaseStorageHelper.DeleteUserImageAsync(_photoData.storagePath);
 
-            #if UNITY_EDITOR
-            UnityEditor.AssetDatabase.Refresh();
-            #endif
+            DebugTool.Log(
+                $"[PhotoDetailPopupUI] 사진 삭제 {(deleted ? "성공" : "실패")}: {_photoData.storagePath}",
+                DebugType.Network,
+                this);
         }
 
         _photoAlbumSO.RemovePhoto(_photoData.photoId);

@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using TMPro;
 using UI;
 using UI.Base;
@@ -18,6 +17,8 @@ public class CatPhotoSlotSprite : UIBase
     private Image _star2;
     private Image _star3;
     private TMP_Text _starCountText;
+
+    private Sprite _photoSprite;
 
     public override void Init()
     {
@@ -53,25 +54,20 @@ public class CatPhotoSlotSprite : UIBase
         _spriteController[(int)image].ChangeSprite(key);
     }
 
-    public void SetPhoto(string imagePath)
+    public async void SetPhoto(string storagePath)
     {
-        if (!File.Exists(imagePath)) return;
+        if (string.IsNullOrEmpty(storagePath)) return;
 
-        byte[] bytes = File.ReadAllBytes(imagePath);
+        Sprite sprite = await FirebaseStorageHelper.LoadUserSpriteAsync(storagePath);
 
-        Texture2D texture = new Texture2D(1,1);
-        texture.LoadImage(bytes);
+        if (sprite == null) return;
 
-        Sprite sprite = Sprite.Create(
-            texture,
-            new Rect(0, 0, texture.width, texture.height),
-            new Vector2(0.5f, 0.5f)
-        );
+        ReleasePhoto();
+
+        _photoSprite = sprite;
 
         if (_catImage != null)
-        {
-            _catImage.sprite = sprite;
-        }
+            _catImage.sprite = _photoSprite;
     }
 
     public void SetStar(int starCount)
@@ -103,6 +99,22 @@ public class CatPhotoSlotSprite : UIBase
         _star1.gameObject.SetActive(star1);
         _star2.gameObject.SetActive(star2);
         _star3.gameObject.SetActive(star3);
+    }
+
+    private void ReleasePhoto()
+    {
+        if (_photoSprite == null) return;
+
+        if (_photoSprite.texture != null)
+            Destroy(_photoSprite.texture);
+
+        Destroy(_photoSprite);
+        _photoSprite = null;
+    }
+
+    private void OnDestroy()
+    {
+        ReleasePhoto();
     }
 }
 

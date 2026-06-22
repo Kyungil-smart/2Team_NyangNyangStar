@@ -234,7 +234,7 @@ public class NyangStargramAddPostUI : UIPopup
             return;
         }
 
-        _mainUI.AddPost(_selectedPhotoData, _selectedPhotoSprite);
+        _mainUI.AddPost(_selectedPhotoData);
 
         _uploadedPhotoIds.Add(_selectedPhotoData.photoId);
 
