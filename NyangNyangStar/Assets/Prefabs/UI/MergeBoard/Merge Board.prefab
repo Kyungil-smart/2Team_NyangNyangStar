@@ -319,8 +319,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3a31c0f3e5df4d13851f14ef2dd68737, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   _boardSystem: {fileID: 1933188620078206294}
   _mergeBoardFirestore: {fileID: 11400000, guid: 7aa4ad0242b992e4283c9aa473891fac, type: 2}
   _queueSlotViews:
@@ -859,8 +859,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 66ee2e8c1e174e8fa99662c8b52a27ce, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   _button: {fileID: 1223444473648031831}
   _resourceType: 0
   _amount: 100
@@ -2129,8 +2129,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 233a54b2441c4ae0af862432a41d3bc6, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   _resourcesSO: {fileID: 11400000, guid: 8b1517c2c8fd42b41a195195545b6c9f, type: 2}
   _energyText: {fileID: 8488130808541826254}
   _energyIcon: {fileID: 1624460037900935664}
@@ -2200,8 +2200,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
@@ -2522,8 +2522,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 0.9359775, b: 0.9043126, a: 1}
   m_RaycastTarget: 1
@@ -2717,8 +2717,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 0}
   m_RaycastTarget: 1
@@ -2808,8 +2808,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
@@ -3171,8 +3171,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
@@ -3290,8 +3290,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
@@ -3733,8 +3733,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!114 &6302177633541813435 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 5363878372257078561, guid: 20604f06e6d394942b7482710bab1a36, type: 3}
@@ -3744,8 +3744,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!224 &8554713936115682255 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 7763630572196405845, guid: 20604f06e6d394942b7482710bab1a36, type: 3}
@@ -3974,8 +3974,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!224 &3983042336443506308 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 7763630572196405845, guid: 20604f06e6d394942b7482710bab1a36, type: 3}
@@ -3990,8 +3990,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &9084759471027257421
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -4016,6 +4016,14 @@ PrefabInstance:
       propertyPath: _specialItemBoardSystem
       value: 
       objectReference: {fileID: 6520057897396630295}
+    - target: {fileID: 4041150538008155550, guid: 3de316d8114e3b649bf197d9f3286756, type: 3}
+      propertyPath: _generateItemEnergyCost
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 4041150538008155550, guid: 3de316d8114e3b649bf197d9f3286756, type: 3}
+      propertyPath: _specialItemBoardSystem
+      value: 
+      objectReference: {fileID: 6520057897396630295}
     - target: {fileID: 4972214568497510174, guid: 3de316d8114e3b649bf197d9f3286756, type: 3}
       propertyPath: _boardSystem
       value: 
@@ -4032,14 +4040,6 @@ PrefabInstance:
       propertyPath: _testReceiveButton
       value: 
       objectReference: {fileID: 6602850170933857246}
-    - target: {fileID: 4041150538008155550, guid: 3de316d8114e3b649bf197d9f3286756, type: 3}
-      propertyPath: _generateItemEnergyCost
-      value: 5
-      objectReference: {fileID: 0}
-    - target: {fileID: 4041150538008155550, guid: 3de316d8114e3b649bf197d9f3286756, type: 3}
-      propertyPath: _specialItemBoardSystem
-      value: 
-      objectReference: {fileID: 6520057897396630295}
     - target: {fileID: 5142774498657601557, guid: 3de316d8114e3b649bf197d9f3286756, type: 3}
       propertyPath: m_LocalPosition.x
       value: -132.44028
@@ -4108,8 +4108,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f06293f8cedcfce43b4f836a4a2a707a, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   _boardSystem: {fileID: 1933188620078206294}
   _specialItemBoardSystem: {fileID: 6520057897396630295}
   _rewardQueue: {fileID: 3324999696245031561}
@@ -4119,6 +4119,7 @@ MonoBehaviour:
   _specialStore: {fileID: 11400000, guid: 0f3458433aa918a489001c0c87543b41, type: 2}
   _itemIdInputField: {fileID: 674147720004455596}
   _testReceiveButton: {fileID: 6602850170933857246}
+  _generateItemEnergyCost: 10
 --- !u!4 &4129029772688656472 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 5142774498657601557, guid: 3de316d8114e3b649bf197d9f3286756, type: 3}
@@ -4246,8 +4247,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!114 &6281655783788663070 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 2968024738519117855, guid: 20604f06e6d394942b7482710bab1a36, type: 3}
@@ -4257,5 +4258,5 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
