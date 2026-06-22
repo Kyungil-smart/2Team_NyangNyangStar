@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Firebase.Storage;
+using UnityEngine;
 
 
 public static class FirebaseStorageHelper
@@ -14,7 +15,7 @@ public static class FirebaseStorageHelper
     public readonly struct StorageUploadResult
     {
         public readonly bool Success;
-        public readonly string StoragePath;   // 진실의 기준: 쿼리/삭제/재다운로드에 사용
+        public readonly string StoragePath;   // 저장/재다운로드/삭제에 그대로 다시 넘기는 상대 경로(Users/{uid}/ 제외)
         public readonly string DownloadUrl;   // 표시용 https URL(캐시 용도). 실패 시 빈 문자열
         public readonly string ErrorMessage;  // 실패 사유(성공 시 빈 문자열)
 
@@ -53,7 +54,8 @@ public static class FirebaseStorageHelper
             MetadataChange metadata = new() { ContentType = contentType };
             await reference.PutBytesAsync(data, metadata);
 
-            string storagePath = reference.Path;
+            // 저장값은 상대 경로(Users/{uid}/ 제외) — 다운로드/삭제에 그대로 다시 넘기면 된다.
+            string storagePath = NormalizeRelative(relativePath);
 
             string downloadUrl = string.Empty;
             try
@@ -120,14 +122,17 @@ public static class FirebaseStorageHelper
 
     // ───────────────────────── 조회 / 삭제 ─────────────────────────
 
-    /// <summary>저장해 둔 storagePath로 표시용 download URL을 다시 얻는다.</summary>
-    public static async Task<string> GetDownloadUrlAsync(string storagePath)
+    /// <summary>저장해 둔 relativePath로 표시용 download URL을 다시 얻는다(업로드와 같은 상대 경로).</summary>
+    public static async Task<string> GetDownloadUrlAsync(string relativePath)
     {
-        if (string.IsNullOrEmpty(storagePath)) return string.Empty;
+        if (!TryGetUserId(out string uid, out _)) return string.Empty;
+
+        string fullPath = BuildUserPath(uid, relativePath);
+        if (string.IsNullOrEmpty(fullPath)) return string.Empty;
 
         try
         {
-            StorageReference reference = FirebaseStorage.DefaultInstance.GetReference(storagePath);
+            StorageReference reference = FirebaseStorage.DefaultInstance.GetReference(fullPath);
             Uri url = await reference.GetDownloadUrlAsync();
             return url != null ? url.ToString() : string.Empty;
         }
@@ -138,14 +143,53 @@ public static class FirebaseStorageHelper
         }
     }
 
-    /// <summary>storagePath의 이미지를 삭제한다. 성공 여부를 반환.</summary>
-    public static async Task<bool> DeleteUserImageAsync(string storagePath)
+    /// <summary>
+    /// relativePath의 이미지를 받아 Sprite로 만들어 반환한다(인게임 표시용). 실패 시 null.
+    /// 업로드와 같은 상대 경로(Users/{uid}/ 제외)를 넘긴다.
+    /// 주의: 반환된 Sprite의 texture는 호출부가 다 쓴 뒤 Destroy 해야 메모리 누수가 없다.
+    /// maxBytes: 다운로드 허용 최대 크기(메모리 폭주 방지). 기본 5MB.
+    /// </summary>
+    public static async Task<Sprite> LoadUserSpriteAsync(string relativePath, long maxBytes = 5 * 1024 * 1024)
     {
-        if (string.IsNullOrEmpty(storagePath)) return false;
+        if (!TryGetUserId(out string uid, out _)) return null;
+
+        string fullPath = BuildUserPath(uid, relativePath);
+        if (string.IsNullOrEmpty(fullPath)) return null;
 
         try
         {
-            StorageReference reference = FirebaseStorage.DefaultInstance.GetReference(storagePath);
+            StorageReference reference = FirebaseStorage.DefaultInstance.GetReference(fullPath);
+            byte[] bytes = await reference.GetBytesAsync(maxBytes);
+            if (bytes == null || bytes.Length == 0) return null;
+
+            Texture2D tex = new(2, 2);
+            if (!tex.LoadImage(bytes)) // PNG/JPG 자동 디코드. 실패 시 정리 후 null
+            {
+                UnityEngine.Object.Destroy(tex);
+                DebugTool.Warning($"[FirebaseStorageHelper] 이미지 디코드 실패: {fullPath}", DebugType.Network);
+                return null;
+            }
+
+            return Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f));
+        }
+        catch (Exception ex)
+        {
+            DebugTool.Warning($"[FirebaseStorageHelper] LoadUserSprite 실패: {ex.Message}", DebugType.Network);
+            return null;
+        }
+    }
+
+    /// <summary>relativePath의 이미지를 삭제한다(업로드와 같은 상대 경로). 성공 여부를 반환.</summary>
+    public static async Task<bool> DeleteUserImageAsync(string relativePath)
+    {
+        if (!TryGetUserId(out string uid, out _)) return false;
+
+        string fullPath = BuildUserPath(uid, relativePath);
+        if (string.IsNullOrEmpty(fullPath)) return false;
+
+        try
+        {
+            StorageReference reference = FirebaseStorage.DefaultInstance.GetReference(fullPath);
             await reference.DeleteAsync();
             return true;
         }
@@ -172,12 +216,17 @@ public static class FirebaseStorageHelper
         return true;
     }
 
-    /// <summary>"Users/{uid}/{relativePath}" 조합. 앞뒤 슬래시를 정리한다.</summary>
-    private static string BuildUserPath(string uid, string relativePath)
+    /// <summary>relativePath 정규화: 역슬래시→슬래시, 앞뒤 슬래시 제거. 비면 빈 문자열.</summary>
+    private static string NormalizeRelative(string relativePath)
     {
         if (string.IsNullOrWhiteSpace(relativePath)) return string.Empty;
+        return relativePath.Replace('\\', '/').Trim('/');
+    }
 
-        string trimmed = relativePath.Replace('\\', '/').Trim('/');
+    /// <summary>"Users/{uid}/{relativePath}" 전체 경로 조합.</summary>
+    private static string BuildUserPath(string uid, string relativePath)
+    {
+        string trimmed = NormalizeRelative(relativePath);
         if (string.IsNullOrEmpty(trimmed)) return string.Empty;
 
         return $"{UserRoot}/{uid}/{trimmed}";
