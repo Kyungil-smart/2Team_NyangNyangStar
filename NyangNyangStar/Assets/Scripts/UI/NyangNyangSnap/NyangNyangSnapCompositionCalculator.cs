@@ -10,6 +10,11 @@ public class NyangNyangSnapCompositionCalculator : MonoBehaviour
     private const float NearDistanceRate = 0.15f;
     private const float MidDistanceRate = 0.25f;
 
+    // 구도 마커 랜덤 생성 제한 영역
+    private const float TargetAreaWidth = 1080f;
+    private const float TargetAreaHeight = 1300f;
+    private const float TargetAreaPosY = 60f;
+
     [Header("Capture")]
     [Tooltip("RenderTexture 촬영에 사용하는 카메라")]
     [SerializeField] private Camera _captureCamera;
@@ -47,16 +52,25 @@ public class NyangNyangSnapCompositionCalculator : MonoBehaviour
         Rect rootRect = _photoRoot.rect;
         Rect targetRect = _targetPointRect.rect;
 
-        float horizontalPadding = rootRect.width * _horizontalPaddingRate;
-        float verticalPadding = rootRect.height * _verticalPaddingRate;
+        float horizontalPadding = TargetAreaWidth * _horizontalPaddingRate;
+
+        float verticalPadding = TargetAreaHeight * _verticalPaddingRate;
 
         float halfTargetWidth = targetRect.width * 0.5f;
+
         float halfTargetHeight = targetRect.height * 0.5f;
 
-        float minX = rootRect.xMin + horizontalPadding + halfTargetWidth;
-        float maxX = rootRect.xMax - horizontalPadding - halfTargetWidth;
-        float minY = rootRect.yMin + verticalPadding + halfTargetHeight;
-        float maxY = rootRect.yMax - verticalPadding - halfTargetHeight;
+        float areaHalfWidth = TargetAreaWidth * 0.5f;
+
+        float areaHalfHeight = TargetAreaHeight * 0.5f;
+
+        float minX = -areaHalfWidth +horizontalPadding + halfTargetWidth;
+
+        float maxX = areaHalfWidth - horizontalPadding - halfTargetWidth;
+
+        float minY = TargetAreaPosY - areaHalfHeight + verticalPadding + halfTargetHeight;
+
+        float maxY = TargetAreaPosY + areaHalfHeight - verticalPadding - halfTargetHeight;
 
         if (minX > maxX || minY > maxY)
         {

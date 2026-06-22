@@ -39,6 +39,11 @@ public class NyangNyangSnapCatController : MonoBehaviour
     [Min(0f)]
     [SerializeField] private float _moveDuration = 2f;
 
+    private const float SpawnAreaWidth = 1080f;
+    private const float SpawnAreaHeight = 1300f;
+    private const float SpawnAreaPosY = 60f;
+
+
     [Tooltip("고양이가 도구와 완전히 겹치지 않도록 적용할 위치 보정값")]
     [SerializeField] private Vector2 _toolOffset = Vector2.zero;
 
@@ -213,31 +218,21 @@ public class NyangNyangSnapCatController : MonoBehaviour
         Rect areaRect = _moveArea.rect;
         Rect catRect = _catRectTransform.rect;
 
-        float halfWidth =
-            catRect.width * 0.5f;
+        float halfWidth = catRect.width * 0.5f;
 
-        float halfHeight =
-            catRect.height * 0.5f;
+        float halfHeight = catRect.height * 0.5f;
 
-        float minX =
-            areaRect.xMin +
-            halfWidth +
-            _spawnPadding.x;
+        float areaHalfWidth = SpawnAreaWidth * 0.5f;
+        float areaHalfHeight = SpawnAreaHeight * 0.5f;
 
-        float maxX =
-            areaRect.xMax -
-            halfWidth -
-            _spawnPadding.x;
 
-        float minY =
-            areaRect.yMin +
-            halfHeight +
-            _spawnPadding.y;
+        float minX = - areaHalfWidth + halfWidth + _spawnPadding.x;
 
-        float maxY =
-            areaRect.yMax -
-            halfHeight -
-            _spawnPadding.y;
+        float maxX = areaHalfWidth - halfWidth - _spawnPadding.x;
+
+        float minY = SpawnAreaPosY - areaHalfHeight + halfHeight + _spawnPadding.y;
+
+        float maxY = SpawnAreaPosY + areaHalfHeight - halfHeight - _spawnPadding.y;
 
         if (minX > maxX || minY > maxY)
         {

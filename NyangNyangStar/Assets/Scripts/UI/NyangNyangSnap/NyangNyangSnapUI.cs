@@ -556,8 +556,18 @@ public class NyangNyangSnapUI : UIPopup
                     this
                 );
 
+                if (_snackPopup != null)
+                {
+                    _snackPopup.gameObject.SetActive(false);
+                }
+                if (_toyPopup != null)
+                {
+                    _toyPopup.gameObject.SetActive(false);
+                }
+
                 // 결과창으로 넘어갔으므로 냥냥스냅 Canvas 비활성화
                 gameObject.SetActive(false);
+              
             }
         );
     }
