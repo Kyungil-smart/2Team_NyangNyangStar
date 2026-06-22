@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Core.Managers;
 using Data.ScriptableObjects.MoongchiSO;
+using TMPro;
 using UI.Base;
 using UnityEngine;
 
@@ -28,12 +29,15 @@ namespace UI.FindMoongchi
         [Tooltip("데이터 담당자가 만든 Firestore 진행 컨트롤러입니다. 비워두면 자동으로 찾습니다.")]
         [SerializeField] private FindMoongchiProgressController _progressController;
 
+        [Header("Event Time UI")]
+        [SerializeField] private TMP_Text _periodText;
+        [SerializeField] private string _periodTextColorHex = "7A3A2E";
+
         [Header("임시 유저 값 - Firestore 연결 전")]
         [SerializeField] private int _eventCoin;
         [SerializeField] private int _searchChance = FindMoongchiConstants.DailySearchChance;
         [SerializeField] private int _energySpendProgress;
         [SerializeField] private int _currentWeek = 1;
-        [SerializeField] private string _remainTimeText = "1d 12h";
         [SerializeField] private bool _completedMissionMock;
 
         [Header("임시 미니게임 스테이지 - SO/Firestore 연결 전")]
@@ -106,6 +110,7 @@ namespace UI.FindMoongchi
 
             DebugTool.Log("[FindMoongchiPopup] 초기화 완료", DebugType.FindMoongchi, this);
             ShowPanel(FindMoongchiPanelType.Main);
+            RefreshEventTimeUi();
             _ = EnsureProgressReadyAndRefreshAsync();
         }
 
@@ -132,6 +137,7 @@ namespace UI.FindMoongchi
             SetActive(_shopPanel, panelType == FindMoongchiPanelType.Shop);
 
             CloseAllModal();
+            RefreshEventTimeUi();
 
             switch (panelType)
             {
@@ -220,6 +226,20 @@ namespace UI.FindMoongchi
 
             if (_modalLayer == null && _purchasePopup != null)
                 _modalLayer = _purchasePopup.transform.parent != null ? _purchasePopup.transform.parent.gameObject : null;
+
+            if (_periodText == null)
+            {
+                TMP_Text[] texts = GetComponentsInChildren<TMP_Text>(true);
+
+                for (int i = 0; i < texts.Length; i++)
+                {
+                    if (texts[i] != null && texts[i].name == "PeriodText")
+                    {
+                        _periodText = texts[i];
+                        break;
+                    }
+                }
+            }
 
             DebugTool.Log(
                 "[FindMoongchiPopup] 참조 확인\n" +
@@ -529,6 +549,8 @@ namespace UI.FindMoongchi
 
         private void RefreshCurrentPanel()
         {
+            RefreshEventTimeUi();
+
             switch (_currentPanelType)
             {
                 case FindMoongchiPanelType.Game:
@@ -940,11 +962,33 @@ namespace UI.FindMoongchi
                 _gameLogic,
                 _resolvedToolItemIds,
                 GetCurrentWeek(),
-                _remainTimeText,
+                GetRemainTimeText(),
                 GetCurrentSearchChance(),
                 GetCurrentEnergySpendProgress(),
                 _debugInfiniteToolUse,
                 _debugToolDisplayCount);
+        }
+
+        private FindMoongchiEventScheduleSO GetEventScheduleSO()
+        {
+            return _dataManager != null ? _dataManager.EventScheduleSO : null;
+        }
+
+        private void RefreshEventTimeUi()
+        {
+            FindMoongchiEventScheduleSO schedule = GetEventScheduleSO();
+
+            if (_periodText != null)
+            {
+                _periodText.text = FindMoongchiEventScheduleLogic.FormatPeriodRichText(
+                    schedule,
+                    _periodTextColorHex);
+            }
+        }
+
+        private string GetRemainTimeText()
+        {
+            return FindMoongchiEventScheduleLogic.FormatRemainTimeText(GetEventScheduleSO());
         }
 
         private void RefreshMissionPanel()

@@ -4876,11 +4876,12 @@ MonoBehaviour:
   _errorPopup: {fileID: 4320216273485927884}
   _dataManager: {fileID: 3608201681325411485}
   _progressController: {fileID: 0}
+  _periodText: {fileID: 2887150432461245836}
+  _periodTextColorHex: 7A3A2E
   _eventCoin: 0
   _searchChance: 10
   _energySpendProgress: 0
   _currentWeek: 1
-  _remainTimeText: 1d 12h
   _completedMissionMock: 0
   _currentStageId: 0
   _useRandomStageCycleMock: 1
@@ -4908,6 +4909,7 @@ MonoBehaviour:
   _missionSO: {fileID: 11400000, guid: 6bda86720f38d754d90064dfc7ed81e9, type: 2}
   _profileSO: {fileID: 11400000, guid: dc6f03ddae9535e46946ff019e0327a3, type: 2}
   _progressSO: {fileID: 11400000, guid: 01f5084cbd2817c42abeb68841e73649, type: 2}
+  _eventScheduleSO: {fileID: 11400000, guid: d5e6f7a8b9c012345678901234567890, type: 2}
   _resourcesSO: {fileID: 0}
   _notifyLoadedOnStart: 1
   _warnWhenStaticDataMissing: 1

@@ -20,6 +20,9 @@ namespace UI.FindMoongchi
 
         [Header("유저 진행 데이터")] [SerializeField] private FindMoongchiProgressFirestoreSO _progressSO;
 
+        [Header("이벤트 기간")]
+        [SerializeField] private FindMoongchiEventScheduleSO _eventScheduleSO;
+
         [Header("보상 지급")]
         [Tooltip("에너지/골드 지급에 사용합니다. UsersSO 서브컬렉션 ResourcesSO를 연결하세요.")]
         [SerializeField] private ResourcesSO _resourcesSO;
@@ -33,6 +36,7 @@ namespace UI.FindMoongchi
         public MoongchiMissionSO MissionSO => _missionSO;
         public MoongchiProfileSO ProfileSO => _profileSO;
         public FindMoongchiProgressFirestoreSO ProgressSO => _progressSO;
+        public FindMoongchiEventScheduleSO EventScheduleSO => _eventScheduleSO;
 
         public bool IsLoaded { get; private set; }
 
@@ -839,6 +843,11 @@ namespace UI.FindMoongchi
             else if (!HasProfileData())
             {
                 DebugTool.Warning("[FindMoongchiDataManager] 프로필 데이터가 비어있습니다. SheetLoader 설정을 확인해주세요.", DebugType.Data, this);
+            }
+
+            if (_eventScheduleSO == null)
+            {
+                DebugTool.Warning("[FindMoongchiDataManager] 이벤트 기간 SO가 할당되지 않았습니다.", DebugType.Data, this);
             }
         }
     }
