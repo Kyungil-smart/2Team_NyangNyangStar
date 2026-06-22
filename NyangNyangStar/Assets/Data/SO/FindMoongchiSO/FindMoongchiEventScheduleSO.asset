@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _startYear: 2026
   _startMonth: 6
-  _startDay: 15
+  _startDay: 16
   _endYear: 2026
-  _endMonth: 7
-  _endDay: 2
+  _endMonth: 6
+  _endDay: 30
