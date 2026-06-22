@@ -38,6 +38,8 @@ public class MainUI : UIScene
     private PlayerResourceDisplay _resourceDisplay;
     private UIPopup _nyangStargramPopup;
     private NotebookPopupUI _notebookPopup;
+    private bool _isMergeBoardTransitioning;
+    private bool _isMergeBoardVisible;
 
     [SerializeField] private UsersSO _usersSO;
     [SerializeField] private TMP_Text _uidText;
@@ -199,6 +201,9 @@ public class MainUI : UIScene
             return;
         }
 
+        if (_isMergeBoardTransitioning || _isMergeBoardVisible)
+            return;
+
         _scratchingTimeManager?.HideImmediately();
 
         if (ScreenTransitionManager.Instance == null)
@@ -207,10 +212,11 @@ public class MainUI : UIScene
             return;
         }
 
+        BeginMergeBoardTransition();
         ScreenTransitionManager.Instance.Cover(() =>
         {
             SetMergeBoardVisible(true);
-            ScreenTransitionManager.Instance.Reveal();
+            ScreenTransitionManager.Instance.Reveal(EndMergeBoardTransition);
         });
 
         GameManager.Audio.PlaySfx("Main_SFX_Touch");
@@ -221,23 +227,49 @@ public class MainUI : UIScene
         if (_mergeBoardController == null)
             return;
 
+        if (_isMergeBoardTransitioning || !_isMergeBoardVisible)
+            return;
+
         if (ScreenTransitionManager.Instance == null)
         {
             SetMergeBoardVisible(false);
             return;
         }
 
+        BeginMergeBoardTransition();
         ScreenTransitionManager.Instance.Cover(() =>
         {
             SetMergeBoardVisible(false);
-            ScreenTransitionManager.Instance.Reveal();
+            ScreenTransitionManager.Instance.Reveal(EndMergeBoardTransition);
         });
 
         GameManager.Audio.PlaySfx("Main_SFX_Touch");
     }
 
+    private void BeginMergeBoardTransition()
+    {
+        _isMergeBoardTransitioning = true;
+        SetMergeBoardButtonsInteractable(false);
+    }
+
+    private void EndMergeBoardTransition()
+    {
+        _isMergeBoardTransitioning = false;
+        SetMergeBoardButtonsInteractable(true);
+    }
+
+    private void SetMergeBoardButtonsInteractable(bool interactable)
+    {
+        if (_mainMergeBoardButton != null)
+            _mainMergeBoardButton.interactable = interactable;
+
+        if (_workshopMergeBoardButton != null)
+            _workshopMergeBoardButton.interactable = interactable;
+    }
+
     private void SetMergeBoardVisible(bool isOpen)
     {
+        _isMergeBoardVisible = isOpen;
         _mergeBoardController.SetVisible(isOpen);
 
         if (_mainUICanvas != null)

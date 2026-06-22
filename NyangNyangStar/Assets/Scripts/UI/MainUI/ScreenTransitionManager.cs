@@ -15,12 +15,16 @@ namespace UI.Transition
 
         [Header("Option")]
         [SerializeField] private float _screenHeight = 1920f;
-        [SerializeField] private float _coverDuration = 0.5f;
-        [SerializeField] private float _revealDuration = 0.3f;
+        [SerializeField] private float _coverDuration = 0.35f;
+        [SerializeField] private float _revealDuration = 0.2f;
+        [SerializeField] private float _revealDelay = 0.15f;
         [SerializeField] private int _sortingOrder = 9999;
 
         private Tween _tween;
         private bool _isCovered;
+        private bool _isTransitioning;
+
+        public bool IsTransitioning => _isTransitioning;
 
         private void Awake()
         {
@@ -55,6 +59,7 @@ namespace UI.Transition
         {
             if (_coverRect == null)
             {
+                _isTransitioning = false;
                 onComplete?.Invoke();
                 return;
             }
@@ -62,6 +67,7 @@ namespace UI.Transition
             _tween?.Kill();
 
             SetBlock(true);
+            _isTransitioning = true;
             _isCovered = false;
 
             _coverRect.anchoredPosition = new Vector2(0f, _screenHeight);
@@ -73,6 +79,7 @@ namespace UI.Transition
                 .OnComplete(() =>
                 {
                     _isCovered = true;
+                    _isTransitioning = false;
                     onComplete?.Invoke();
                 });
         }
@@ -81,6 +88,7 @@ namespace UI.Transition
         {
             if (_coverRect == null)
             {
+                _isTransitioning = false;
                 onComplete?.Invoke();
                 return;
             }
@@ -95,12 +103,13 @@ namespace UI.Transition
             _tween?.Kill();
 
             SetBlock(true);
+            _isTransitioning = true;
             _coverRect.anchoredPosition = Vector2.zero;
 
             _tween = _coverRect
                 .DOAnchorPos(new Vector2(0f, _screenHeight), _revealDuration)
                 .SetEase(Ease.OutSine)
-                .SetDelay(0.5f)
+                .SetDelay(_revealDelay)
                 .SetUpdate(true)
                 .OnComplete(() =>
                 {
@@ -117,6 +126,7 @@ namespace UI.Transition
                 _coverRect.anchoredPosition = Vector2.zero;
 
             _isCovered = true;
+            _isTransitioning = false;
             SetBlock(true);
         }
 
@@ -128,6 +138,7 @@ namespace UI.Transition
                 _coverRect.anchoredPosition = new Vector2(0f, _screenHeight);
 
             _isCovered = false;
+            _isTransitioning = false;
             SetBlock(false);
         }
 

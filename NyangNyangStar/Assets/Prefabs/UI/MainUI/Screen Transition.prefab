@@ -239,6 +239,7 @@ MonoBehaviour:
   _canvasGroup: {fileID: 673223897216146609}
   _coverRect: {fileID: 3778632922630688372}
   _screenHeight: 1920
-  _coverDuration: 0.5
-  _revealDuration: 0.3
+  _coverDuration: 0.35
+  _revealDuration: 0.2
+  _revealDelay: 0.15
   _sortingOrder: 9999
