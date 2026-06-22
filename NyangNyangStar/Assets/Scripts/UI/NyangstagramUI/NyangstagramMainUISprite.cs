@@ -3,11 +3,9 @@ using UI;
 using UI.Base;
 using UnityEngine;
 using UnityEngine.UI;
-using static NyangNyangSnapSprite;
 
 public class NyangstagramMainUISprite : UIBase
 {
-
     private const string LikeEmptySpriteKey = "NYS_Btn_Heart_Empty";
     private const string LikeFilledSpriteKey = "NYS_Btn_Heart_Filled";
 
@@ -58,10 +56,6 @@ public class NyangstagramMainUISprite : UIBase
         SetSprite(NyangstagramMainUIImages.NotificationButton, "NYS_Btn_Notification", new Color32(160, 0, 255, 255));
         SetSprite(NyangstagramMainUIImages.ProfileButton, "NYS_Btn_Profile", new Color32(160, 0, 255, 255));
         SetSprite(NyangstagramMainUIImages.NyangstagramCloseButton, "NYS_Btn_Exit");
-
-
-
-
     }
 
     private void SetSprite(NyangstagramMainUIImages image, string key)
