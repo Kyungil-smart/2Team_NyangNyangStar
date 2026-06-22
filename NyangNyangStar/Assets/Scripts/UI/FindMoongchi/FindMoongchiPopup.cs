@@ -51,7 +51,8 @@ namespace UI.FindMoongchi
 
         [Header("탐색 도구 ID - 순서 고정")]
         [Tooltip("0: 가로 한 줄 도구, 1: 세로 한 줄 도구, 2: 4x4 사각형 도구. ID만 바꾸고 순서는 바꾸지 마세요.")]
-        [SerializeField] private int[] _toolItemIds =
+        [SerializeField]
+        private int[] _toolItemIds =
         {
             FindMoongchiConstants.ToolId01,
             FindMoongchiConstants.ToolId02,
@@ -984,7 +985,15 @@ namespace UI.FindMoongchi
 
         private int GetCurrentWeek()
         {
-            return IsProgressReady ? _progressController.CurrentWeek : _currentWeek;
+            if (IsProgressReady)
+                return _progressController.CurrentWeek;
+
+            FindMoongchiEventScheduleSO schedule = GetEventScheduleSO();
+
+            if (schedule != null)
+                return FindMoongchiEventScheduleLogic.GetCurrentEventWeek(schedule);
+
+            return _currentWeek;
         }
 
         private FindMoongchiGameViewData BuildGameViewData()
