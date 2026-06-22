@@ -7,7 +7,7 @@ namespace UI.FindMoongchi
 {
     // FindMoongchiPopup 등 UI는 진행값 -> 코인, 탐색기회, 미션, 상점, 보드 사용
     // 미션/상점 목록(시트 정적 데이터)은 DataManager.ShopSO, MissionSO 등 기존 API를 그대로 사용
-    
+
     // 1. 팝업 열 때 await EnsureLoadedAsync()
     // 2. SyncGameLogicFromProgress(_gameLogic)
     // 3. OnProgressChanged 구독 후 패널 갱신
