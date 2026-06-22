@@ -16,6 +16,7 @@ dependencies {
     implementation 'com.google.firebase:firebase-firestore-unity:13.12.0' // Assets/Firebase/Editor/FirestoreDependencies.xml:23
     implementation 'com.google.firebase:firebase-storage:22.0.1' // Assets/Firebase/Editor/StorageDependencies.xml:16
     implementation 'com.google.firebase:firebase-storage-unity:13.12.0' // Assets/Firebase/Editor/StorageDependencies.xml:23
+    implementation 'com.unity3d.ads:unity-ads:[4.17.0,4.18[' // Packages/com.unity.ads/Editor/Source/Dependencies.xml:7
 // Android Resolver Dependencies End
 **DEPS**}
 
