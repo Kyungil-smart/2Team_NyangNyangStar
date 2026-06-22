@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.UI;
 
 
 public class FirebaseStorageHelperTester : MonoBehaviour
@@ -19,6 +20,16 @@ public class FirebaseStorageHelperTester : MonoBehaviour
     [Tooltip("업로드 후 storagePath로 download URL 재조회 / 삭제까지 테스트")]
     [SerializeField] private bool _testDownloadAndDelete = false;
 
+    [Header("다운로드 / 표시 테스트")]
+    [Tooltip("업로드 후 다시 받아 Sprite로 표시까지 테스트")]
+    [SerializeField] private bool _testLoadAndShow = false;
+
+    [Tooltip("다운로드한 Sprite를 띄울 Image (비워두면 콘솔 로그로만 확인)")]
+    [SerializeField] private Image _previewTarget;
+
+    [Tooltip("수동 다운로드 표시 테스트용 상대 경로 예: StorageTest/xxx.png (Users/{uid}/ 제외)")]
+    [SerializeField] private string _manualRelativePath;
+
     // ───────────── 진입점 (버튼 OnClick / 컨텍스트 메뉴) ─────────────
 
     [ContextMenu("1) 단일 업로드 테스트")]
@@ -26,6 +37,9 @@ public class FirebaseStorageHelperTester : MonoBehaviour
 
     [ContextMenu("2) 다중 업로드 테스트")]
     public void RunMultiUploadTest() => _ = MultiUploadAsync();
+
+    [ContextMenu("3) 수동 경로 다운로드 표시")]
+    public void RunLoadManualPathTest() => _ = LoadManualPathAsync();
 
     // ───────────── 테스트 본체 ────────────
 
@@ -41,6 +55,9 @@ public class FirebaseStorageHelperTester : MonoBehaviour
         var result = await FirebaseStorageHelper.UploadUserImageAsync($"StorageTest/{id}.png", png);
 
         LogResult(0, result);
+
+        if (result.Success && _testLoadAndShow)
+            await ShowOnPreviewAsync(result.StoragePath);
 
         if (result.Success && _testDownloadAndDelete)
             await DownloadAndDeleteAsync(result.StoragePath);
@@ -78,6 +95,13 @@ public class FirebaseStorageHelperTester : MonoBehaviour
 
         Debug.Log($"[Tester] 다중 업로드 완료: {success}/{results.Length} 성공");
 
+        if (_testLoadAndShow)
+        {
+            // 첫 성공 1장만 미리보기에 표시
+            for (int i = 0; i < results.Length; i++)
+                if (results[i].Success) { await ShowOnPreviewAsync(results[i].StoragePath); break; }
+        }
+
         if (_testDownloadAndDelete)
         {
             for (int i = 0; i < results.Length; i++)
@@ -86,13 +110,53 @@ public class FirebaseStorageHelperTester : MonoBehaviour
         }
     }
 
-    private async Task DownloadAndDeleteAsync(string storagePath)
+    private async Task DownloadAndDeleteAsync(string relativePath)
     {
-        string url = await FirebaseStorageHelper.GetDownloadUrlAsync(storagePath);
-        Debug.Log($"[Tester] 재조회 URL: {storagePath}\n  → {url}");
+        string url = await FirebaseStorageHelper.GetDownloadUrlAsync(relativePath);
+        Debug.Log($"[Tester] 재조회 URL: {relativePath}\n  → {url}");
 
-        bool deleted = await FirebaseStorageHelper.DeleteUserImageAsync(storagePath);
-        Debug.Log($"[Tester] 삭제 {(deleted ? "성공" : "실패")}: {storagePath}");
+        bool deleted = await FirebaseStorageHelper.DeleteUserImageAsync(relativePath);
+        Debug.Log($"[Tester] 삭제 {(deleted ? "성공" : "실패")}: {relativePath}");
+    }
+
+    private async Task LoadManualPathAsync()
+    {
+        if (!IsReady()) return;
+
+        if (string.IsNullOrEmpty(_manualRelativePath))
+        {
+            Debug.LogWarning("[Tester] _manualRelativePath를 입력하세요. 예: StorageTest/xxx.png (Users/{uid}/ 제외)");
+            return;
+        }
+
+        await ShowOnPreviewAsync(_manualRelativePath);
+    }
+
+    /// <summary>relativePath로 Sprite를 받아 _previewTarget에 표시. 교체 시 이전 텍스처는 Destroy.</summary>
+    private async Task ShowOnPreviewAsync(string relativePath)
+    {
+        Sprite sprite = await FirebaseStorageHelper.LoadUserSpriteAsync(relativePath);
+        if (sprite == null)
+        {
+            Debug.LogError($"[Tester] Sprite 로드 실패: {relativePath}");
+            return;
+        }
+
+        if (_previewTarget != null)
+        {
+            // 이전 미리보기 텍스처 정리 (누수 방지)
+            if (_previewTarget.sprite != null && _previewTarget.sprite.texture != null)
+                Destroy(_previewTarget.sprite.texture);
+
+            _previewTarget.sprite = sprite;
+            _previewTarget.preserveAspect = true;
+        }
+        else
+        {
+            Debug.LogWarning("[Tester] _previewTarget(Image)가 비어 있어 콘솔 로그로만 확인합니다.");
+        }
+
+        Debug.Log($"[Tester] Sprite 로드 성공: {relativePath} ({sprite.texture.width}x{sprite.texture.height})");
     }
 
     // ───────────── 유틸 ─────────────
