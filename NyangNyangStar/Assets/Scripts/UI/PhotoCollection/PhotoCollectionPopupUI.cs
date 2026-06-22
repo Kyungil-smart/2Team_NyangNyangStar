@@ -167,8 +167,8 @@ public class PhotoCollectionPopupUI : UIPopup
 
     private void BindButtons()
     {
-        if (_closeButton != null) _closeButton.onClick.AddListener(() => CloseAllPopups());
-        if (_background != null) _background.onClick.AddListener(() => CloseAllPopups());
+        if (_closeButton != null) _closeButton.onClick.AddListener(CloseAllPopups);
+        if (_background != null) _background.onClick.AddListener(CloseAllPopups);
         if (_backButton != null) _backButton.onClick.AddListener(ClosePhotoCollectionPopup);
         if (_filterButton != null) _filterButton.onClick.AddListener(ToggleFilterPanel);
         if (_filterCloseButton != null) _filterCloseButton.onClick.AddListener(ToggleFilterPanel);
