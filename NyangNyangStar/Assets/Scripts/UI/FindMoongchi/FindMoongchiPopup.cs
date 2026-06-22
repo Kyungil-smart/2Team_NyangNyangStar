@@ -608,6 +608,13 @@ namespace UI.FindMoongchi
                 return;
             }
 
+            if (_gameLogic.IsStageCleared)
+            {
+                DebugTool.Log("[FindMoongchiPopup] 이미 클리어된 스테이지라 도구 사용을 막고 클리어 알림을 복원합니다.", DebugType.FindMoongchi, this);
+                RestoreStageClearNoticeIfNeeded();
+                return;
+            }
+
             if (_isStageClearWaitingForRestart)
             {
                 DebugTool.Log("[FindMoongchiPopup] 클리어 완료 후 다시하기 대기 중이라 도구 사용을 막습니다.", DebugType.FindMoongchi, this);
@@ -933,6 +940,30 @@ namespace UI.FindMoongchi
             DebugTool.Log($"[FindMoongchiPopup] 게임 패널 갱신: Stage={_gameLogic.CurrentStageId}, Board={data.BoardWidth}x{data.BoardHeight}, 탐색기회={data.SearchChance}, 공개타일={data.RevealedTileIndices.Count}, 도구={data.Tools.Count}, 목표이미지={data.TargetVisuals.Count}, 발견목표={_gameLogic.FoundTargetCount}/{_gameLogic.TargetCount}, 연출={animateNewReveals}, 디버그무한도구={_debugInfiniteToolUse}", DebugType.FindMoongchi, this);
             _gamePanel?.SetData(data, animateNewReveals);
             RefreshButtonSfxBindings();
+            RestoreStageClearNoticeIfNeeded();
+        }
+
+        private void RestoreStageClearNoticeIfNeeded()
+        {
+            if (_currentPanelType != FindMoongchiPanelType.Game)
+                return;
+
+            if (!_gameLogic.IsStageCleared)
+            {
+                _isStageClearWaitingForRestart = false;
+                return;
+            }
+
+            if (!_isStageClearWaitingForRestart)
+            {
+                DebugTool.Log(
+                    $"[FindMoongchiPopup] 클리어된 스테이지 상태를 복원했습니다. 다시하기 입력을 기다립니다. StageId={_gameLogic.CurrentStageId}",
+                    DebugType.FindMoongchi,
+                    this);
+            }
+
+            _isStageClearWaitingForRestart = true;
+            OpenStageClearNotice();
         }
 
 

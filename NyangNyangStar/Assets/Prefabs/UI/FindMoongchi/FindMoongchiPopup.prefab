@@ -1716,7 +1716,7 @@ MonoBehaviour:
   - {fileID: 8562254858243216556}
   - {fileID: 553579023761392622}
   - {fileID: 8240102487201269447}
-  _showFoundMark: 0
+  _showFoundMark: 1
   _foundMarkSpriteKey: FM_Icon_Correct
   _foundMarkSize: {x: 90, y: 90}
   _foundMarkOffset: {x: 0, y: 0}

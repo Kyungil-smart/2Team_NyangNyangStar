@@ -94,10 +94,10 @@ MonoBehaviour:
   _showFoundMark: 1
   _foundMark: {fileID: 0}
   _foundMarkImage: {fileID: 6404636836359304506}
-  _foundMarkSpriteKey: FM_Icon_Correct
+  _foundMarkSpriteKey: FM_Icon_Check
   _fitFoundMarkToIcon: 1
-  _foundMarkSize: {x: 90, y: 90}
-  _foundMarkScale: 1
+  _foundMarkSize: {x: 72, y: 72}
+  _foundMarkScale: 0.55
   _foundMarkOffset: {x: 0, y: 0}
   _createFoundMarkIfMissing: 1
   _hiddenColor: {r: 0.12, g: 0.12, b: 0.12, a: 1}
