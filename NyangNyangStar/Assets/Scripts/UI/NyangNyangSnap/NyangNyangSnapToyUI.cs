@@ -77,6 +77,10 @@ public class NyangNyangSnapToyUI : UIPopup
     private bool _isPlacementDragging;
     private bool _isScrollDragging;
 
+
+    private NyangNyangSnapToyUISprite _nyangNyangSnapToyUISprite;
+
+
     public override void Init()
     {
         Bind<Button>(typeof(NyangNyangSnapToyButtons));
@@ -85,11 +89,15 @@ public class NyangNyangSnapToyUI : UIPopup
         _backPanel = Get<Button>((int)NyangNyangSnapToyButtons.BackPanel);
         _closeButton = Get<Button>((int)NyangNyangSnapToyButtons.CloseButton);
 
+        _nyangNyangSnapToyUISprite = GetComponent<NyangNyangSnapToyUISprite>();
+        _nyangNyangSnapToyUISprite.Init();
+
         AutoAssignScrollRect();
         AutoAssignPlacementController();
         InitPopups();
 
         _isInitialized = true;
+
 
         LoadToyButtons();
     }

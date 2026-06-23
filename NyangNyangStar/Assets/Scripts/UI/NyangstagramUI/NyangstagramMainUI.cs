@@ -39,6 +39,7 @@ public class NyangstagramMainUI : UIPopup
     private bool _isInitialized;
 
     private NyangstagramMainUISprite _nyangstagramMainUISprite;
+    private NyangstagramTab _currentMainTab = NyangstagramTab.Profile;
 
     public override void Init()
     {
@@ -74,10 +75,14 @@ public class NyangstagramMainUI : UIPopup
 
         PreloadPopups();
 
-        SetProfileView();
-
         _nyangstagramMainUISprite = GetComponent<NyangstagramMainUISprite>();
-        _nyangstagramMainUISprite.Init();
+
+        if (_nyangstagramMainUISprite != null)
+        {
+            _nyangstagramMainUISprite.Init();
+        }
+
+        SetProfileView();
 
         ReFreshLikeCountText();
 
@@ -134,8 +139,15 @@ public class NyangstagramMainUI : UIPopup
                     addPostUI.SetMainUI(this);
                 }
 
+                if (popup is NyangStargramNotificationUI notificationUI)
+                {
+                    notificationUI.SetMainUI(this);
+                }
+
                 if (openButton != null)
+                {
                     AddPopupButton(openButton, popup);
+                }
 
                 DebugTool.Log($"냥스타그램 팝업 캐싱 완료: {key}", DebugType.UI, this);
             },
@@ -187,21 +199,72 @@ public class NyangstagramMainUI : UIPopup
         if (button == null || popup == null) return;
 
         button.onClick.RemoveAllListeners();
-        button.onClick.AddListener(() => ShowCachedPopup(popup));
+        button.onClick.AddListener(() =>
+        {
+            SetPopupTab(button);
+            ShowCachedPopup(popup);
+        });
+    }
+    private void SetPopupTab(Button button)
+    {
+        if (button == _addPostButton)
+        {
+            SetSelectedTab(NyangstagramTab.AddPost);
+            return;
+        }
+
+        if (button == _notificationButton)
+        {
+            SetSelectedTab(NyangstagramTab.Notification);
+        }
     }
 
+    private void SetMainTab(NyangstagramTab tab)
+    {
+        _currentMainTab = tab;
+        SetSelectedTab(tab);
+    }
+
+    private void SetSelectedTab(NyangstagramTab tab)
+    {
+        if (_nyangstagramMainUISprite == null)
+            return;
+
+        _nyangstagramMainUISprite.SetSelectedTab(tab);
+    }
+
+    public void RestoreMainTab()
+    {
+        SetSelectedTab(_currentMainTab);
+    }
     private void BindViewButtons()
     {
-        AddViewButton(_homeButton, true, false);
-        AddViewButton(_profileButton, false, true);
+        AddViewButton(
+            _homeButton,
+            true,
+            false,
+            NyangstagramTab.Home
+        );
+
+        AddViewButton(
+            _profileButton,
+            false,
+            true,
+            NyangstagramTab.Profile
+        );
     }
 
-    private void AddViewButton(Button button, bool homeActive, bool profileActive)
+    private void AddViewButton( Button button, bool homeActive, bool profileActive,NyangstagramTab selectedTab)
     {
         if (button == null) return;
 
         button.onClick.RemoveAllListeners();
-        button.onClick.AddListener(() => SetView(homeActive, profileActive));
+
+        button.onClick.AddListener(() =>
+        {
+            SetView(homeActive, profileActive);
+            SetMainTab(selectedTab);
+        });
     }
 
     private void BindCloseButton()
@@ -273,11 +336,13 @@ public class NyangstagramMainUI : UIPopup
     private void SetHomeView()
     {
         SetView(true, false);
+        SetMainTab(NyangstagramTab.Home);
     }
 
     private void SetProfileView()
     {
         SetView(false, true);
+        SetMainTab(NyangstagramTab.Profile);
     }
 
     private void SetView(bool homeActive, bool profileActive)
