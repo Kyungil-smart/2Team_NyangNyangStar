@@ -183,6 +183,10 @@ namespace Data.Loader
             if (_pendingSheetCount <= 0)
             {
                 ReportSheetProgress("시트 로드 완료");
+                LocalDataAccess.Instance.Game.RegisterNyangNyangSnapData(
+                    nyangNyangSnapBackgroundSo,
+                    nyangNyangSnapPoseSo,
+                    nyangNyangSnapToolSo);
                 LocalDataAccess.Instance.Game.MarkReady();
             }
         }

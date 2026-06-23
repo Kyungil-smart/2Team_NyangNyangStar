@@ -28,6 +28,7 @@ public class FireStoreManager : MonoBehaviour
 
     public bool IsInitialized { get; private set; }
     public string CurrentUserId { get; private set; } = string.Empty;
+    public bool HasDatabaseContext => db != null && !string.IsNullOrEmpty(CurrentUserId);
 
     private void Awake()
     {
@@ -277,6 +278,15 @@ public class FireStoreManager : MonoBehaviour
         }
 
         return false;
+    }
+
+    public bool TryBindStore(BaseFireStore store)
+    {
+        if (store == null || !HasDatabaseContext)
+            return false;
+
+        store.InitDataBase(db, CurrentUserId);
+        return true;
     }
 
     public void ClearSession()

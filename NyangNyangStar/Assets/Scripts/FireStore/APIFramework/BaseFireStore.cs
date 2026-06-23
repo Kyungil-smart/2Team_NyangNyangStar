@@ -50,11 +50,21 @@ public abstract class BaseFireStore : ScriptableObject
     protected FirebaseFirestore db;
     protected string m_UserId;
 
+    public bool IsDatabaseReady => db != null && !string.IsNullOrEmpty(m_UserId);
 
+    public bool TryEnsureDatabaseReady()
+    {
+        if (IsDatabaseReady)
+            return true;
 
+        FireStoreManager manager = FireStoreManager.Instance;
+        return manager != null && manager.TryBindStore(this);
+    }
 
     protected virtual DocumentReference GetDocumentRef()
     {
+        TryEnsureDatabaseReady();
+
         var attr = (FirestorePathAttribute)System.Attribute
             .GetCustomAttribute(GetType(), typeof(FirestorePathAttribute));
         string template = attr != null ? attr.Template : null;
