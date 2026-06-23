@@ -9,6 +9,8 @@ using Util;
 
 public class PhotoCollectionPopupUI : UIPopup
 {
+    private const int PhotoColumnCount = 4;
+
     [Header("닫기 버튼")]
     [Tooltip("뒤로 가기")][SerializeField] private Button _backButton;
     [Tooltip("닫기 버튼")][SerializeField] private Button _closeButton;
@@ -57,6 +59,8 @@ public class PhotoCollectionPopupUI : UIPopup
         _starToggles = new Toggle[] { _star1Toggle, _star2Toggle, _star3Toggle, _star4Toggle, _star5Toggle };
         BindFilterToggles();
 
+        RefreshPhotoGridCellSize();
+
         BindButtons();
         InitPhotoDetailPopup();
 
@@ -83,7 +87,33 @@ public class PhotoCollectionPopupUI : UIPopup
         if (_filterPanel != null)
             _filterPanel.SetActive(false);
         MainUI.Instance?.SetPhotoAlert(false);
+
+        RefreshPhotoGridCellSize();
         RefreshPhotoSlots();
+    }
+
+    private void RefreshPhotoGridCellSize()
+    {
+        if (_content == null) return;
+
+        RectTransform contentRect = _content as RectTransform;
+        GridLayoutGroup grid = _content.GetComponent<GridLayoutGroup>();
+
+        if (contentRect == null || grid == null)
+            return;
+
+        float contentWidth = contentRect.rect.width;
+
+        float padding = grid.padding.left + grid.padding.right;
+        float spacing = grid.spacing.x * (PhotoColumnCount - 1);
+
+        float cellWidth = (contentWidth - padding - spacing) / PhotoColumnCount;
+        float cellHeight = cellWidth * 16f / 9f;
+
+        grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+        grid.constraintCount = PhotoColumnCount;
+
+        grid.cellSize = new Vector2(cellWidth, cellHeight);
     }
 
     public void SetSelectedCatPopup(SelectedCatPopupUI popup)
@@ -134,7 +164,7 @@ public class PhotoCollectionPopupUI : UIPopup
                 slot = CreateSlot(photoData.photoId);
             }
 
-            if(slot == null) continue;
+            if (slot == null) continue;
 
             slot.SetDetailPopup(_detailPopup);
             slot.SetData(photoData);
@@ -227,7 +257,7 @@ public class PhotoCollectionPopupUI : UIPopup
     {
         foreach (Toggle toggle in _starToggles)
         {
-            toggle.onValueChanged.AddListener(isOn => 
+            toggle.onValueChanged.AddListener(isOn =>
             {
                 DebugTool.Log($"{toggle.name} : {isOn}", DebugType.UI, this);
                 ApplyStarFilter();

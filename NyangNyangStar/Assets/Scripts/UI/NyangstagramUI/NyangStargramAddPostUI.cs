@@ -9,6 +9,8 @@ using UnityEngine.UI;
 
 public class NyangStargramAddPostUI : UIPopup
 {
+    private const int AlbumColumnCount = 4;
+
     [Header("DoTween 설정")]
     [SerializeField] private RectTransform _panel;
     [SerializeField] private float _popupScaleDuration = 0.1f;
@@ -28,7 +30,7 @@ public class NyangStargramAddPostUI : UIPopup
     [SerializeField] private NyangNyangSnapPhotoAlbumSO _photoAlbumSO;
 
     [Header("앨범 슬롯")]
-    [SerializeField] private Transform _albumButtonRoots;
+    [SerializeField] private Transform _albumContent;
     [SerializeField] private NyangStargramAlbumSlotUI _albumSlotPrefab;
 
     private readonly Dictionary<string, NyangStargramAlbumSlotUI> _albumSlotDic = new();
@@ -52,7 +54,9 @@ public class NyangStargramAddPostUI : UIPopup
 
         _albumDropdown = UIBase.FindChild<TMP_Dropdown>(gameObject, "Dropdown", true);
         _newPostImage = UIBase.FindChild<Image>(gameObject, "New Post Image", true);
-        _albumButtonRoots = UIBase.FindChild<Transform>(gameObject, "AlbumContent", true);
+        _albumContent = UIBase.FindChild<Transform>(gameObject, "AlbumContent", true);
+
+        RefreshAlbumGridCellSize();
 
         BindButtons();
         BindDropdown();
@@ -61,6 +65,24 @@ public class NyangStargramAddPostUI : UIPopup
         _nyangStargramAddPostUISprite.Init();
 
         DebugTool.Log("NyangStargramAddPostUI Init 실행됨", DebugType.UI, this);
+    }
+
+    private void RefreshAlbumGridCellSize()
+    {
+        RectTransform contentRect = _albumContent as RectTransform;
+        GridLayoutGroup grid = _albumContent.GetComponent<GridLayoutGroup>();
+
+        if (contentRect == null || grid == null) return;
+
+        float contentWidth = contentRect.rect.width;
+        float padding = grid.padding.left + grid.padding.right;
+        float spacing = grid.spacing.x * (AlbumColumnCount - 1);
+
+        float cellSize = (contentWidth - padding - spacing) / AlbumColumnCount;
+
+        grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+        grid.constraintCount = AlbumColumnCount;
+        grid.cellSize = new Vector2(cellSize, cellSize);
     }
 
     public void SetMainUI(NyangstagramMainUI mainUI)
@@ -77,6 +99,7 @@ public class NyangStargramAddPostUI : UIPopup
         if (_newPostImage != null)
             _newPostImage.sprite = null;
 
+        RefreshAlbumGridCellSize();
         RefreshAlbumSlots();
     }
 
@@ -138,7 +161,7 @@ public class NyangStargramAddPostUI : UIPopup
 
     private NyangStargramAlbumSlotUI CreateAlbumSlot(string photoId)
     {
-        NyangStargramAlbumSlotUI slot = Instantiate(_albumSlotPrefab, _albumButtonRoots);
+        NyangStargramAlbumSlotUI slot = Instantiate(_albumSlotPrefab, _albumContent);
 
         slot.Init();
         slot.SetAddPostUI(this);
