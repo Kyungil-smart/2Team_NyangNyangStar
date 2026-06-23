@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Core.Managers;
 using TMPro;
 using UI;
@@ -31,17 +32,28 @@ namespace UI.Common
         [SerializeField] private bool _loadIconsOnEnable = true;
         [SerializeField] private bool _showLabels;
 
+        [Header("Safe Area")]
+        [SerializeField] private bool _applyTopSafeAreaPadding = true;
+        [SerializeField] private float _minimumTallMobileTopInsetPixels = 32f;
+        [SerializeField] private float _topSafeAreaSpacingPixels = 8f;
+        [SerializeField] private float _maximumTopSafeAreaOffsetPixels = 40f;
+
         private UISpriteController _energyIconController;
         private UISpriteController _coinIconController;
         private UISpriteController _jewelIconController;
+        private RectTransform[] _topSafeAreaTargets = Array.Empty<RectTransform>();
+        private Vector2[] _topSafeAreaBasePositions = Array.Empty<Vector2>();
 
         private void Awake()
         {
             if (_autoFindReferences)
                 ResolveReferencesFrom(transform);
+            else
+                ResolveTopSafeAreaTargets(transform);
 
             BindResourceSO();
             LoadIcons();
+            ApplyTopSafeAreaPadding();
         }
 
         private void OnEnable()
@@ -55,11 +67,18 @@ namespace UI.Common
 
             if (_refreshOnEnable)
                 _ = PlayerResourceManager.Instance.RefreshAsync();
+
+            ApplyTopSafeAreaPadding();
         }
 
         private void OnDisable()
         {
             PlayerResourceManager.Instance.ResourcesChanged -= RefreshDisplay;
+        }
+
+        private void Update()
+        {
+            ApplyTopSafeAreaPadding();
         }
 
         public void ResolveTextsFrom(Transform root)
@@ -81,8 +100,10 @@ namespace UI.Common
             _coinText ??= FindText(root, "CoinText");
             _jewelText ??= FindText(root, "JewelText", "GemText");
 
+            ResolveTopSafeAreaTargets(root);
             LoadIcons();
             RefreshDisplay();
+            ApplyTopSafeAreaPadding();
         }
 
         public void SetTexts(TMP_Text coinText, TMP_Text jewelText, TMP_Text energyText, bool showLabels = false)
@@ -91,7 +112,9 @@ namespace UI.Common
             _jewelText = jewelText;
             _energyText = energyText;
             _showLabels = showLabels;
+            ResolveTopSafeAreaTargets(transform);
             RefreshDisplay();
+            ApplyTopSafeAreaPadding();
         }
 
         public void SetReferences(
@@ -110,8 +133,10 @@ namespace UI.Common
             _jewelText = jewelText;
             _jewelIcon = jewelIcon;
             _showLabels = showLabels;
+            ResolveTopSafeAreaTargets(transform);
             LoadIcons();
             RefreshDisplay();
+            ApplyTopSafeAreaPadding();
         }
 
         public void RefreshDisplay()
@@ -154,6 +179,147 @@ namespace UI.Common
                 return;
 
             text.text = _showLabels ? $"{label} {amount}" : amount.ToString();
+        }
+
+        private void ResolveTopSafeAreaTargets(Transform root)
+        {
+            if (!_applyTopSafeAreaPadding || root == null)
+                return;
+
+            ResetTopSafeAreaPadding();
+
+            List<RectTransform> targets = new();
+            RectTransform resourceGroup = FindTopAnchoredRect(root, "Resources");
+
+            if (resourceGroup != null)
+            {
+                targets.Add(resourceGroup);
+            }
+            else
+            {
+                AddTopAnchoredTarget(targets, FindChild(root, "EnergyBox"));
+                AddTopAnchoredTarget(targets, FindChild(root, "CoinBox"));
+                AddTopAnchoredTarget(targets, FindChild(root, "JewelBox"));
+                AddTopAnchoredTarget(targets, FindChild(root, "GemBox"));
+                AddTopAnchoredTarget(targets, FindChild(root, "Energy"));
+                AddTopAnchoredTarget(targets, FindChild(root, "Coin"));
+                AddTopAnchoredTarget(targets, FindChild(root, "Jewel"));
+                AddTopAnchoredTarget(targets, FindChild(root, "Gem"));
+            }
+
+            if (targets.Count == 0)
+                AddTopAnchoredTarget(targets, transform);
+
+            _topSafeAreaTargets = targets.ToArray();
+            _topSafeAreaBasePositions = new Vector2[_topSafeAreaTargets.Length];
+
+            for (int i = 0; i < _topSafeAreaTargets.Length; i++)
+                _topSafeAreaBasePositions[i] = _topSafeAreaTargets[i].anchoredPosition;
+        }
+
+        private void ApplyTopSafeAreaPadding()
+        {
+            if (!_applyTopSafeAreaPadding || _topSafeAreaTargets == null || _topSafeAreaTargets.Length == 0)
+                return;
+
+            float topInsetPixels = GetTopInsetPixels();
+            float spacingPixels = topInsetPixels > 0f ? _topSafeAreaSpacingPixels : 0f;
+            float offsetPixels = Mathf.Min(topInsetPixels + spacingPixels, _maximumTopSafeAreaOffsetPixels);
+
+            for (int i = 0; i < _topSafeAreaTargets.Length; i++)
+            {
+                RectTransform target = _topSafeAreaTargets[i];
+
+                if (target == null || i >= _topSafeAreaBasePositions.Length)
+                    continue;
+
+                Vector2 basePosition = _topSafeAreaBasePositions[i];
+                float scaleFactor = GetCanvasScaleFactor(target);
+                float offset = offsetPixels / scaleFactor;
+                float direction = basePosition.y <= 0f ? -1f : 1f;
+                target.anchoredPosition = new Vector2(basePosition.x, basePosition.y + direction * offset);
+            }
+        }
+
+        private void ResetTopSafeAreaPadding()
+        {
+            if (_topSafeAreaTargets == null || _topSafeAreaBasePositions == null)
+                return;
+
+            for (int i = 0; i < _topSafeAreaTargets.Length; i++)
+            {
+                if (_topSafeAreaTargets[i] == null || i >= _topSafeAreaBasePositions.Length)
+                    continue;
+
+                _topSafeAreaTargets[i].anchoredPosition = _topSafeAreaBasePositions[i];
+            }
+        }
+
+        private float GetTopInsetPixels()
+        {
+            if (Screen.width <= 0 || Screen.height <= 0)
+                return 0f;
+
+            Rect safeArea = Screen.safeArea;
+            float topInset = Mathf.Max(0f, Screen.height - safeArea.yMax);
+
+            if (Application.isMobilePlatform && IsTallScreen())
+                topInset = Mathf.Max(topInset, _minimumTallMobileTopInsetPixels);
+
+            return topInset;
+        }
+
+        private static bool IsTallScreen()
+        {
+            float shortSide = Mathf.Min(Screen.width, Screen.height);
+
+            if (shortSide <= 0f)
+                return false;
+
+            float longSide = Mathf.Max(Screen.width, Screen.height);
+            return longSide / shortSide > 1.9f;
+        }
+
+        private static float GetCanvasScaleFactor(RectTransform target)
+        {
+            Canvas canvas = target.GetComponentInParent<Canvas>();
+
+            if (canvas == null || canvas.scaleFactor <= 0f)
+                return 1f;
+
+            return canvas.scaleFactor;
+        }
+
+        private static RectTransform FindTopAnchoredRect(Transform root, string name)
+        {
+            Transform child = FindChild(root, name);
+
+            if (child == null)
+                return null;
+
+            RectTransform rectTransform = child.GetComponent<RectTransform>();
+            return IsTopAnchored(rectTransform) ? rectTransform : null;
+        }
+
+        private static void AddTopAnchoredTarget(List<RectTransform> targets, Transform target)
+        {
+            if (target == null)
+                return;
+
+            RectTransform rectTransform = target.GetComponent<RectTransform>();
+
+            if (!IsTopAnchored(rectTransform) || targets.Contains(rectTransform))
+                return;
+
+            targets.Add(rectTransform);
+        }
+
+        private static bool IsTopAnchored(RectTransform rectTransform)
+        {
+            if (rectTransform == null)
+                return false;
+
+            return rectTransform.anchorMin.y >= 0.95f && rectTransform.anchorMax.y >= 0.95f;
         }
 
         private static void ResolveSlot(
