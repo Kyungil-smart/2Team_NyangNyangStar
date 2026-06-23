@@ -24,6 +24,8 @@ public class NyangStargramNotificationUI : UIPopup
 
 
     private NyangStargramNotificationUISprite _nyangStargramNotificationUISprite;
+    private NyangstagramMainUI _mainUI;
+
     public override void Init()
     {
         Bind<Button>(typeof(NyangStargramNotificationUIButton));
@@ -31,19 +33,33 @@ public class NyangStargramNotificationUI : UIPopup
         _notice = Get<Button>((int)NyangStargramNotificationUIButton.Notice);
         _homeButton = Get<Button>((int)NyangStargramNotificationUIButton.HomeButton);
         _tagButton = Get<Button>((int)NyangStargramNotificationUIButton.TagButton);
+        
         _addPostButton = Get<Button>((int)NyangStargramNotificationUIButton.AddPostButton);
+        _notificationButton = Get<Button>((int)NyangStargramNotificationUIButton.NotificationButton);
         _profileButton = Get<Button>((int)NyangStargramNotificationUIButton.ProfileButton);
+        
         _nyangstagramCloseButton = Get<Button>((int)NyangStargramNotificationUIButton.NyangstagramCloseButton);
         _backButton = Get<Button>((int)NyangStargramNotificationUIButton.BackButton);
 
 
         BindButtons();
 
-        _nyangStargramNotificationUISprite = GetComponent<NyangStargramNotificationUISprite>();
-        _nyangStargramNotificationUISprite.Init();
+        _nyangStargramNotificationUISprite =
+     GetComponent<NyangStargramNotificationUISprite>();
+
+        if (_nyangStargramNotificationUISprite != null)
+        {
+            _nyangStargramNotificationUISprite.Init();
+            _nyangStargramNotificationUISprite.SetNotificationTab();
+        }
 
         DebugTool.Log("NyangstagramUI Init 실행됨", DebugType.UI, this);
     }
+    public void SetMainUI(NyangstagramMainUI mainUI)
+    {
+        _mainUI = mainUI;
+    }
+
     private void BindButtons()
     {
         //if (_storyButton != null)
@@ -98,14 +114,23 @@ public class NyangStargramNotificationUI : UIPopup
         button.onClick.AddListener(() =>
         {
             HideSelf();
-            NyangstagramUIRouter.RequestHomeView();
+            NyangstagramUIRouter.RequestProfileView();
         });
     }
     private void AddHideSelfButton(Button button)
     {
         if (button == null) return;
+
         button.onClick.RemoveAllListeners();
-        button.onClick.AddListener(HideSelf);
+        button.onClick.AddListener(() =>
+        {
+            if (_mainUI != null)
+            {
+                _mainUI.RestoreMainTab();
+            }
+
+            HideSelf();
+        });
     }
 
     private void AddCloseAllButton(Button button)

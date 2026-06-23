@@ -9,6 +9,9 @@ public class NyangStargramNotificationUISprite : UIBase
 {
     private UISpriteController[] _spriteController;
 
+    private const byte SelectedTabAlpha = 255;
+    private const byte UnselectedTabAlpha = 90;
+
     public override void Init()
     {
         Bind<Image>(typeof(NyangStargramNotificationUIImages));
@@ -42,12 +45,81 @@ public class NyangStargramNotificationUISprite : UIBase
         SetSprite(NyangStargramNotificationUIImages.ProfileButton, "NYS_Btn_Profile", new Color32(160, 0, 255, 255));
         SetSprite(NyangStargramNotificationUIImages.NyangstagramCloseButton, "NYS_Btn_Exit");
 
+        SetNotificationTab();
+    }
+    public void SetNotificationTab()
+    {
+        SetTabAlpha(
+            NyangStargramNotificationUIImages.HomeButton,
+            false
+        );
 
+        SetTabAlpha(
+            NyangStargramNotificationUIImages.TagButton,
+            false
+        );
 
+        SetTabAlpha(
+            NyangStargramNotificationUIImages.AddPostButton,
+            false
+        );
 
+        SetTabAlpha(
+            NyangStargramNotificationUIImages.NotificationButton,
+            true
+        );
 
+        SetTabAlpha(
+            NyangStargramNotificationUIImages.ProfileButton,
+            false
+        );
     }
 
+    private void SetTabAlpha(
+        NyangStargramNotificationUIImages imageType,
+        bool isSelected)
+    {
+        Image image = GetImage((int)imageType);
+
+        if (image == null)
+        {
+            Debug.LogWarning(
+                $"[NyangStargramNotificationUISprite] " +
+                $"하단 탭 이미지를 찾지 못했습니다: {imageType}"
+            );
+
+            return;
+        }
+
+        float alpha = isSelected
+            ? SelectedTabAlpha / 255f
+            : UnselectedTabAlpha / 255f;
+
+        Button button = image.GetComponent<Button>();
+
+        if (button != null)
+        {
+            ColorBlock colors = button.colors;
+
+            colors.normalColor = SetAlpha(colors.normalColor, alpha);
+            colors.highlightedColor = SetAlpha(colors.highlightedColor, alpha);
+            colors.pressedColor = SetAlpha(colors.pressedColor, alpha);
+            colors.selectedColor = SetAlpha(colors.selectedColor, alpha);
+            colors.disabledColor = SetAlpha(colors.disabledColor, alpha);
+
+            button.colors = colors;
+        }
+
+        Color imageColor = image.color;
+        imageColor.a = alpha;
+        image.color = imageColor;
+    }
+
+    private Color SetAlpha(Color color, float alpha)
+    {
+        color.a = alpha;
+        return color;
+    }
     private void SetSprite(NyangStargramNotificationUIImages image, string key)
     {
         _spriteController[(int)image].ChangeSprite(key);
