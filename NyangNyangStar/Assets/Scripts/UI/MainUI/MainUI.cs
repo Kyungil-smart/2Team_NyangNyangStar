@@ -1,3 +1,5 @@
+using System.Collections;
+using System.Threading.Tasks;
 using Core.Managers;
 using TMPro;
 using UI.Common;
@@ -352,15 +354,20 @@ public class MainUI : UIScene
     {
         if (ScreenTransitionManager.Instance == null)
         {
-            LogoutProcess();
+            StartCoroutine(LogoutProcessCoroutine());
             return;
         }
 
-        ScreenTransitionManager.Instance.Cover(LogoutProcess);
+        ScreenTransitionManager.Instance.Cover(() => StartCoroutine(LogoutProcessCoroutine()));
     }
 
-    private void LogoutProcess()
+    private IEnumerator LogoutProcessCoroutine()
     {
+        Task recordTask = UserSessionTimeService.RecordLogoutAsync();
+
+        while (!recordTask.IsCompleted)
+            yield return null;
+
         AuthManager auth = AuthManager.Instance;
 
         if (auth != null)
