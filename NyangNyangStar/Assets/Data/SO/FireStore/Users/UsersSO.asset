@@ -32,5 +32,5 @@ MonoBehaviour:
   uploadPost: 0
   followerNumber: 0
   followingNumber: 0
-  lastLogin: 0
-  lastLogout: 0
+  lastLogin: 
+  lastLogout: 
