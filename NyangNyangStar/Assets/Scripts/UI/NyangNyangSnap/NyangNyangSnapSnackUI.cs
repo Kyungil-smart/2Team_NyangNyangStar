@@ -77,6 +77,7 @@ public class NyangNyangSnapSnackUI : UIPopup
     private bool _isPlacementDragging;
     private bool _isScrollDragging;
 
+    private NyangNyangSnapSnackUISprite _nyangNyangSnapSnackUISprite;
     public override void Init()
     {
         Bind<Button>(typeof(NyangNyangSnapSnackButtons));
@@ -84,6 +85,9 @@ public class NyangNyangSnapSnackUI : UIPopup
         _snackButton = Get<Button>((int)NyangNyangSnapSnackButtons.SnackButton);
         _backPanel = Get<Button>((int)NyangNyangSnapSnackButtons.BackPanel);
         _closeButton = Get<Button>((int)NyangNyangSnapSnackButtons.CloseButton);
+
+        _nyangNyangSnapSnackUISprite = GetComponent<NyangNyangSnapSnackUISprite>();
+        _nyangNyangSnapSnackUISprite.Init();
 
         AutoAssignScrollRect();
         AutoAssignPlacementController();
@@ -93,6 +97,7 @@ public class NyangNyangSnapSnackUI : UIPopup
         _isInitialized = true;
 
         LoadSnackButtons();
+
     }
 
     private void OnEnable()

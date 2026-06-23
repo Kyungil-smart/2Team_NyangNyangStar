@@ -10,6 +10,9 @@ namespace Data.Modules
     {
         private Dictionary<int, KeyContainerSo> _keyContainerDict = new();
         private ItemDatabaseSo _mergeBoardItemDatabase;
+        private NyangNyangSnapBackgroundSO _nyangNyangSnapBackgroundSO;
+        private NyangNyangSnapPoseSO _nyangNyangSnapPoseSO;
+        private NyangNyangSnapToolSO _nyangNyangSnapToolSO;
 
         public bool IsReady { get; private set; }
 
@@ -42,6 +45,36 @@ namespace Data.Modules
 
             int dataCount = itemDatabase != null ? itemDatabase.DataCount : 0;
             DebugTool.Log($"[GameDataModule] MergeBoard ItemDatabase 등록 ({dataCount}개)", DebugType.Data);
+        }
+
+        public void RegisterNyangNyangSnapData(
+            NyangNyangSnapBackgroundSO backgroundSO,
+            NyangNyangSnapPoseSO poseSO,
+            NyangNyangSnapToolSO toolSO)
+        {
+            _nyangNyangSnapBackgroundSO = backgroundSO;
+            _nyangNyangSnapPoseSO = poseSO;
+            _nyangNyangSnapToolSO = toolSO;
+
+            DebugTool.Log("[GameDataModule] 냥냥스냅 데이터 SO 등록 완료", DebugType.Data);
+        }
+
+        public bool TryGetNyangNyangSnapBackgroundSO(out NyangNyangSnapBackgroundSO backgroundSO)
+        {
+            backgroundSO = _nyangNyangSnapBackgroundSO;
+            return backgroundSO != null;
+        }
+
+        public bool TryGetNyangNyangSnapPoseSO(out NyangNyangSnapPoseSO poseSO)
+        {
+            poseSO = _nyangNyangSnapPoseSO;
+            return poseSO != null;
+        }
+
+        public bool TryGetNyangNyangSnapToolSO(out NyangNyangSnapToolSO toolSO)
+        {
+            toolSO = _nyangNyangSnapToolSO;
+            return toolSO != null;
         }
 
         public bool TryGetMergeBoardItemById(int itemID, out ItemData itemData)
@@ -126,6 +159,9 @@ namespace Data.Modules
             IsReady = false;
             _onReady = null;
             _mergeBoardItemDatabase = null;
+            _nyangNyangSnapBackgroundSO = null;
+            _nyangNyangSnapPoseSO = null;
+            _nyangNyangSnapToolSO = null;
             _keyContainerDict.Clear();
 
             DebugTool.Log("[GameDataModule] 데이터 초기화 완료", DebugType.Data);
@@ -135,6 +171,9 @@ namespace Data.Modules
         {
             _onReady = null;
             _mergeBoardItemDatabase = null;
+            _nyangNyangSnapBackgroundSO = null;
+            _nyangNyangSnapPoseSO = null;
+            _nyangNyangSnapToolSO = null;
         }
     }
 }

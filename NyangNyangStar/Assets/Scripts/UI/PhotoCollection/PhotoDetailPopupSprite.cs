@@ -47,6 +47,7 @@ public class PhotoDetailPopupSprite : UIBase
     private void SetSprites()
     {
         SetSprite(PhotoDetailPopupImages.Panel, "Snap_Panel_Note");
+        SetSprite(PhotoDetailPopupImages.BackButton, "Btn_Back");
         SetSprite(PhotoDetailPopupImages.CloseButton, "Btn_Close");
         SetSprite(PhotoDetailPopupImages.UploadButton, "Btn_Nyangstagram");
         SetSprite(PhotoDetailPopupImages.DeleteButton, "Snap_Btn_Delete");
@@ -105,6 +106,7 @@ public class PhotoDetailPopupSprite : UIBase
 public enum PhotoDetailPopupImages
 {
     Panel,
+    BackButton,
     CloseButton,
     CatImage,
     Star1, Star2, Star3, Star4, Star5,

@@ -7,6 +7,7 @@ using UnityEngine.UI;
 public class PhotoDetailPopupUI : UIPopup
 {
     [Header("닫기 버튼")]
+    [Tooltip("뒤로 가기")][SerializeField] private Button _backButton;
     [Tooltip("닫기 버튼")][SerializeField] private Button _closeButton;
     [Tooltip("배경")][SerializeField] private Button _background;
 
@@ -31,6 +32,7 @@ public class PhotoDetailPopupUI : UIPopup
 
         _closeButton = GetButton((int)PhotoDetailPopupButtons.CloseButton);
         _background = GetButton((int)PhotoDetailPopupButtons.Background);
+        _backButton = GetButton((int)PhotoDetailPopupButtons.BackButton);
         _uploadButton = GetButton((int)PhotoDetailPopupButtons.UploadButton);
         _deleteButton = GetButton((int)PhotoDetailPopupButtons.DeleteButton);
 
@@ -55,9 +57,10 @@ public class PhotoDetailPopupUI : UIPopup
 
     private void BindButtons()
     {
-        if (_closeButton != null) _closeButton.onClick.AddListener(() => ClosePhotoDetailPopup());
-        if (_background != null) _background.onClick.AddListener(() => ClosePhotoDetailPopup());
-        if (_uploadButton != null) _uploadButton.onClick.AddListener(() => OpenNyangstagram());
+        if (_closeButton != null) _closeButton.onClick.AddListener(CloseAllPopups);
+        if (_background != null) _background.onClick.AddListener(CloseAllPopups);
+        if (_backButton != null) _backButton.onClick.AddListener(ClosePhotoDetailPopup);
+        if (_uploadButton != null) _uploadButton.onClick.AddListener(OpenNyangstagram);
         if (_deleteButton != null) _deleteButton.onClick.AddListener(() => DeletePhoto());
     }
 
@@ -84,15 +87,30 @@ public class PhotoDetailPopupUI : UIPopup
         GameManager.Audio.PlaySfx("Main_SFX_Touch");
     }
 
+    private void CloseAllPopups()
+    {
+        HidePhotoDetailPopup();
+
+        GameManager.Audio.PlaySfx("Main_SFX_Touch");
+    }
+
     private void OpenNyangstagram()
+    {
+        HidePhotoDetailPopup();
+        MainUI.Instance.OpenNyangStargramPopup();
+    }
+
+    private void HidePhotoDetailPopup()
     {
         _photoCollectionPopup.HidePhotoCollectionPopup();
         gameObject.SetActive(false);
-        MainUI.Instance.OpenNyangStargramPopup();
     }
 
     private async void DeletePhoto()
     {
+        if (!EnsurePhotoAlbumReady())
+            return;
+
         if (!string.IsNullOrEmpty(_photoData.storagePath))
         {
             bool deleted = await FirebaseStorageHelper.DeleteUserImageAsync(_photoData.storagePath);
@@ -103,13 +121,36 @@ public class PhotoDetailPopupUI : UIPopup
                 this);
         }
 
-        _photoAlbumSO.RemovePhoto(_photoData.photoId);
-        await _photoAlbumSO.UpdateDataAsync();
+        try
+        {
+            _photoAlbumSO.RemovePhoto(_photoData.photoId);
+            await _photoAlbumSO.UpdateDataAsync();
+        }
+        catch (Exception e)
+        {
+            DebugTool.Warning($"[PhotoDetailPopupUI] 사진 메타데이터 삭제 실패: {e.Message}", DebugType.Network, this);
+            return;
+        }
 
         OnDeleted?.Invoke();
 
         GameManager.Audio.PlaySfx("Main_SFX_Touch");
         gameObject.SetActive(false);
+    }
+
+    private bool EnsurePhotoAlbumReady()
+    {
+        if (_photoAlbumSO == null)
+        {
+            DebugTool.Warning("[PhotoDetailPopupUI] PhotoAlbumSO가 연결되지 않았습니다.", DebugType.UI, this);
+            return false;
+        }
+
+        if (_photoAlbumSO.TryEnsureDatabaseReady())
+            return true;
+
+        DebugTool.Warning("[PhotoDetailPopupUI] Firestore 준비 전이라 사진 삭제를 건너뜁니다.", DebugType.UI, this);
+        return false;
     }
 }
 
@@ -117,6 +158,7 @@ public enum PhotoDetailPopupButtons
 {
     CloseButton,
     Background,
+    BackButton,
     UploadButton,
     DeleteButton
 }

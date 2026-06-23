@@ -54,6 +54,8 @@ public class NyangNyangSnapBackgroundSO : SoBase, ISheetParsable
 
     public NyangNyangSnapBackgroundData GetRandomBackgroundData(int stage)
     {
+        EnsureLookupReady();
+
         if (!_backgroundDataDic.TryGetValue(
                 stage,
                 out List<NyangNyangSnapBackgroundData> backgrounds))
@@ -94,5 +96,22 @@ public class NyangNyangSnapBackgroundSO : SoBase, ISheetParsable
         }
 
         DebugTool.Log(log.ToString(), DebugType.Data);
+    }
+
+    private void EnsureLookupReady()
+    {
+        if (_backgroundDataDic.Count > 0 || _backgroundData == null || _backgroundData.Count == 0)
+            return;
+
+        foreach (NyangNyangSnapBackgroundData data in _backgroundData)
+        {
+            if (data == null)
+                continue;
+
+            if (!_backgroundDataDic.ContainsKey(data.Stage))
+                _backgroundDataDic[data.Stage] = new List<NyangNyangSnapBackgroundData>();
+
+            _backgroundDataDic[data.Stage].Add(data);
+        }
     }
 }

@@ -230,7 +230,7 @@ GameObject:
   - component: {fileID: 5570892465454681334}
   - component: {fileID: 642169659173376932}
   m_Layer: 5
-  m_Name: Scroll View
+  m_Name: ScrollView
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -918,6 +918,7 @@ GameObject:
   - component: {fileID: 7047846758630758569}
   - component: {fileID: 4003642129832129623}
   - component: {fileID: 757914859118167850}
+  - component: {fileID: 2979741624914146542}
   m_Layer: 5
   m_Name: NyangNyangSnapToyCanvas
   m_TagString: Untagged
@@ -1026,10 +1027,24 @@ MonoBehaviour:
   _itemDatabaseSO: {fileID: 11400000, guid: 0073675bff47ab64e8be560c0d594644, type: 2}
   _toolSO: {fileID: 11400000, guid: 2522bd42372e16c43984c7db3cb8a73a, type: 2}
   _content: {fileID: 1923638363375360635}
-  _placementController: {fileID: 0}
+  _scrollRect: {fileID: 0}
+  _placementController: {fileID: 7050640827036175901, guid: 1680ae63f692b624c9dc5536b29235d9, type: 3}
   _selectedScale: 1.1
   _selectTweenDuration: 0.15
   _selectEase: 27
+  _placementHoldDuration: 0.25
+--- !u!114 &2979741624914146542
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6594679732676974855}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9f4bdf30c85bdf749905c5ddc2ff8623, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &7432177222143384406
 GameObject:
   m_ObjectHideFlags: 0

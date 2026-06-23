@@ -82,7 +82,18 @@ public class NyangStargramAddPostUI : UIPopup
 
     private async void RefreshAlbumSlots()
     {
-        await _photoAlbumSO.UpdateFromServerAsync(false);
+        if (!EnsurePhotoAlbumReady())
+            return;
+
+        try
+        {
+            await _photoAlbumSO.UpdateFromServerAsync(false);
+        }
+        catch (System.Exception e)
+        {
+            DebugTool.Warning($"[NyangStargramAddPostUI] 앨범 새로고침 실패: {e.Message}", DebugType.UI, this);
+            return;
+        }
 
         List<NyangNyangSnapSavedPhotoData> sortedPhotos = _photoAlbumSO.Photos
             .OrderByDescending(x => x.createdAt)
@@ -108,6 +119,21 @@ public class NyangStargramAddPostUI : UIPopup
         }
 
         RemoveDeletedAlbumSlots(currentPhotoIds);
+    }
+
+    private bool EnsurePhotoAlbumReady()
+    {
+        if (_photoAlbumSO == null)
+        {
+            DebugTool.Warning("[NyangStargramAddPostUI] PhotoAlbumSO가 연결되지 않았습니다.", DebugType.UI, this);
+            return false;
+        }
+
+        if (_photoAlbumSO.TryEnsureDatabaseReady())
+            return true;
+
+        DebugTool.Warning("[NyangStargramAddPostUI] Firestore 준비 전이라 앨범 새로고침을 건너뜁니다.", DebugType.UI, this);
+        return false;
     }
 
     private NyangStargramAlbumSlotUI CreateAlbumSlot(string photoId)
@@ -263,12 +289,17 @@ public class NyangStargramAddPostUI : UIPopup
     private void CloseAddPostPopup()
     {
         if (_panel == null) return;
+
+        if (_mainUI != null)
+        {
+            _mainUI.RestoreMainTab();
+        }
+
         gameObject.SetActive(false);
-        //_panel.DOAnchorPos(new Vector2(0f, -1000f), _popupScaleDuration)
-        //    .SetEase(Ease.OutSine)
-        //    .OnComplete(() => gameObject.SetActive(false));
     }
+
 }
+
 
 public enum NyangStargramAddPostUIButton
 {

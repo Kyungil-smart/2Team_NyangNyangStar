@@ -150,6 +150,9 @@ public class NyangNyangSnapResultUI : UIPopup
 
             if (selectedRecords != null && selectedRecords.Count > 0)
             {
+                if (!EnsurePhotoAlbumReady())
+                    return;
+
                 // Storage 업로드 사진용 리스트
                 List<(string relativePath, byte[] data)> uploadItems = new();
                 // 점수 정보 저장용 리스트
@@ -212,7 +215,19 @@ public class NyangNyangSnapResultUI : UIPopup
 
                     if (savedCount > 0)
                     {
-                        await _photoAlbumSO.UpdateDataAsync();
+                        try
+                        {
+                            await _photoAlbumSO.UpdateDataAsync();
+                        }
+                        catch (Exception e)
+                        {
+                            DebugTool.Warning(
+                                $"[NyangNyangSnapResultUI] 사진 메타데이터 저장 실패: {e.Message}",
+                                DebugType.Network,
+                                this);
+                            return;
+                        }
+
                         MainUI.Instance?.SetPhotoAlert(true);
 
                         DebugTool.Log(
@@ -249,6 +264,21 @@ public class NyangNyangSnapResultUI : UIPopup
             if (_saveButton != null)
                 _saveButton.interactable = true;
         }
+    }
+
+    private bool EnsurePhotoAlbumReady()
+    {
+        if (_photoAlbumSO == null)
+        {
+            DebugTool.Warning("[NyangNyangSnapResultUI] PhotoAlbumSO가 연결되지 않았습니다.", DebugType.UI, this);
+            return false;
+        }
+
+        if (_photoAlbumSO.TryEnsureDatabaseReady())
+            return true;
+
+        DebugTool.Warning("[NyangNyangSnapResultUI] Firestore 준비 전이라 사진 저장을 건너뜁니다.", DebugType.UI, this);
+        return false;
     }
 
     private async Task<bool> GrantJewelRewardAsync()
