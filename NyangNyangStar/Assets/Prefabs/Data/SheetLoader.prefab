@@ -60,6 +60,8 @@ MonoBehaviour:
     <Type>k__BackingField: 2
   - <URL>k__BackingField: https://docs.google.com/spreadsheets/d/1Eat_qUKSYptXHbRKL7qy8Ko-XytjoS5dzaVKSlag87I/edit?gid=784171720#gid=784171720
     <Type>k__BackingField: 2
+  - <URL>k__BackingField: https://docs.google.com/spreadsheets/d/1Eat_qUKSYptXHbRKL7qy8Ko-XytjoS5dzaVKSlag87I/edit?gid=1042300270#gid=1042300270
+    <Type>k__BackingField: 2
   keySo:
   - {fileID: 11400000, guid: ef7329f5a4722ca49b5345cf692ac5bf, type: 2}
   - {fileID: 11400000, guid: 3ba2b810f2d048e4ba5d51cefa1e8a1a, type: 2}
@@ -68,6 +70,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 17e3456b885ccc7439b581a322ab9df0, type: 2}
   - {fileID: 11400000, guid: 00f1f33b5666a8e468275c7550425d8c, type: 2}
   - {fileID: 11400000, guid: a798843624f41a248b19ee39807d26d2, type: 2}
+  - {fileID: 11400000, guid: 3efb7b45b77155e40a6b7a3d6d678216, type: 2}
   scratchingURL:
     <URL>k__BackingField: https://docs.google.com/spreadsheets/d/1hD2NCEzCWr2aml-_aqHsHZu_8HeZ0xCLpMDt_A9NfoU/edit?gid=0#gid=0
     <Type>k__BackingField: 2
