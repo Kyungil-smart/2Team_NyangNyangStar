@@ -8,6 +8,8 @@ using Util;
 
 public class NyangstagramMainUI : UIPopup
 {
+    private const int PostColumnCount = 3;
+
     [Header("버튼")]
     [Tooltip("스토리 버튼")][SerializeField] private Button _storyButton;
     [Tooltip("홈 버튼")][SerializeField] private Button _homeButton;
@@ -66,6 +68,7 @@ public class NyangstagramMainUI : UIPopup
         _likeButton = Get<Button>((int)NyangstagramButton.LikeButton);
         _likeCountText = UIBase.FindChild<TMP_Text>(gameObject, "Like Count", true);
 
+        RefreshPostGridCellSize();
 
         BindViewButtons();
         BindCloseButton();
@@ -105,6 +108,24 @@ public class NyangstagramMainUI : UIPopup
     private void OnEnable()
     {
         SetProfileView();
+    }
+
+    private void RefreshPostGridCellSize()
+    {
+        RectTransform contentRect = _postContent as RectTransform;
+        GridLayoutGroup grid = _postContent.GetComponent<GridLayoutGroup>();
+
+        if (contentRect == null || grid == null) return;
+
+        float contentWidth = contentRect.rect.width;
+        float padding = grid.padding.left + grid.padding.right;
+        float spacing = grid.spacing.x * (PostColumnCount - 1);
+
+        float cellSize = (contentWidth - padding - spacing) / PostColumnCount;
+
+        grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+        grid.constraintCount = PostColumnCount;
+        grid.cellSize = new Vector2(cellSize, cellSize);
     }
 
     private void InitPopup(string key, Button openButton)
@@ -254,7 +275,7 @@ public class NyangstagramMainUI : UIPopup
         );
     }
 
-    private void AddViewButton( Button button, bool homeActive, bool profileActive,NyangstagramTab selectedTab)
+    private void AddViewButton(Button button, bool homeActive, bool profileActive, NyangstagramTab selectedTab)
     {
         if (button == null) return;
 
