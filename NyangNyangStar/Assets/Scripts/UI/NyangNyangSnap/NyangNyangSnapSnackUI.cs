@@ -67,6 +67,7 @@ public class NyangNyangSnapSnackUI : UIPopup
     private Vector3 _selectedButtonOriginalScale = Vector3.one;
 
     private Coroutine _holdCoroutine;
+    private Coroutine _loadButtonsCoroutine;
 
     private NyangNyangSnapInventoryItem _pressedItem;
     private Button _pressedButton;
@@ -96,7 +97,7 @@ public class NyangNyangSnapSnackUI : UIPopup
 
         _isInitialized = true;
 
-        LoadSnackButtons();
+        RequestLoadSnackButtons();
 
     }
 
@@ -108,11 +109,12 @@ public class NyangNyangSnapSnackUI : UIPopup
         AutoAssignScrollRect();
         AutoAssignPlacementController();
         RegisterPlacementEvents();
-        LoadSnackButtons();
+        RequestLoadSnackButtons();
     }
 
     private void OnDisable()
     {
+        StopLoadButtonsCoroutine();
         CancelHold();
 
         if (_scrollRect != null)
@@ -217,6 +219,89 @@ public class NyangNyangSnapSnackUI : UIPopup
             _closeButton.onClick.RemoveAllListeners();
             _closeButton.onClick.AddListener(ClosePopup);
         }
+    }
+
+    private void RequestLoadSnackButtons()
+    {
+        StopLoadButtonsCoroutine();
+
+        if (!isActiveAndEnabled)
+            return;
+
+        _loadButtonsCoroutine = StartCoroutine(LoadSnackButtonsWhenReady());
+    }
+
+    private IEnumerator LoadSnackButtonsWhenReady()
+    {
+        if (!ValidateLoadReferences())
+        {
+            _loadButtonsCoroutine = null;
+            yield break;
+        }
+
+        const float retryInterval = 0.25f;
+        const float timeout = 5f;
+        float elapsedTime = 0f;
+
+        DebugTool.Log(
+            "[NyangNyangSnapSnackUI] 모바일 보유 아이템 조회 대기 시작",
+            DebugType.UI,
+            this
+        );
+
+        while (isActiveAndEnabled &&
+               !HasOwnedSnackItem() &&
+               elapsedTime < timeout)
+        {
+            yield return new WaitForSecondsRealtime(retryInterval);
+            elapsedTime += retryInterval;
+        }
+
+        if (!isActiveAndEnabled)
+        {
+            _loadButtonsCoroutine = null;
+            yield break;
+        }
+
+        LoadSnackButtons();
+        _loadButtonsCoroutine = null;
+    }
+
+    private bool HasOwnedSnackItem()
+    {
+        IReadOnlyList<ItemData> itemList = _itemDatabaseSO.Items;
+
+        for (int i = 0; i < itemList.Count; i++)
+        {
+            ItemData itemData = itemList[i];
+
+            if (itemData == null || !itemData.HasItem)
+                continue;
+
+            if (!_toolSO.TryGetToolDataByItemID(itemData.ItemID, out NyangNyangSnapToolData toolData))
+                continue;
+
+            bool isSnackOrFood =
+                toolData.ItemToolType == NyangNyangSnapToolType.Snack ||
+                toolData.ItemToolType == NyangNyangSnapToolType.Food;
+
+            if (!isSnackOrFood)
+                continue;
+
+            if (MergeBoardItemService.Instance.GetOwnedItemCount(itemData.ItemID) > 0)
+                return true;
+        }
+
+        return false;
+    }
+
+    private void StopLoadButtonsCoroutine()
+    {
+        if (_loadButtonsCoroutine == null)
+            return;
+
+        StopCoroutine(_loadButtonsCoroutine);
+        _loadButtonsCoroutine = null;
     }
 
     private void LoadSnackButtons()
