@@ -429,7 +429,7 @@ MonoBehaviour:
   _albumDropdown: {fileID: 3609386969262791865}
   _newPostImage: {fileID: 3171826927304608}
   _photoAlbumSO: {fileID: 11400000, guid: 7684103119f56cb468b94264b4781452, type: 2}
-  _albumButtonRoots: {fileID: 4539887315127821709}
+  _albumContent: {fileID: 4539887315127821709}
   _albumSlotPrefab: {fileID: 5972116444966970632, guid: 8c3d5fb44372d1542bc088402cd49451, type: 3}
 --- !u!114 &-3628285157971783594
 MonoBehaviour:
