@@ -237,8 +237,6 @@ public class ScratchingTimeController : UIBase
             return;
 
         _isCloseRequested = true;
-        SetCloseButtonInteractable(false);
-        SetCloseInputBlocked(true);
         ClearSelectedButton();
         OnCloseClicked?.Invoke();
         GameManager.Audio.PlaySfx("Main_SFX_Touch");
@@ -247,6 +245,9 @@ public class ScratchingTimeController : UIBase
     // 단계 버튼 입력을 매니저에 전달
     private void SelectStage(int stage)
     {
+        if (_isCloseAnimating || _isCloseRequested)
+            return;
+
         ClearSelectedButton();
         GameManager.Audio.PlaySfx("Main_SFX_Touch");
         OnStageSelected?.Invoke(stage);
@@ -255,6 +256,9 @@ public class ScratchingTimeController : UIBase
     // 선택한 단계의 일일/주간 START 버튼 입력을 매니저에 전달
     private void StartSelectedStage(StageType stageType)
     {
+        if (_isCloseAnimating || _isCloseRequested)
+            return;
+
         ClearSelectedButton();
         HideErrorPanel();
         OnStageStartClicked?.Invoke(stageType);
