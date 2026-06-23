@@ -1,5 +1,6 @@
 using Data.LibrarySystem;
 using Data.ScriptableObjects.MergeBoard;
+using Services.Enums;
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -11,6 +12,7 @@ namespace UI.MergeBoard
     public class BoardRewardQueue : MonoBehaviour
     {
         [SerializeField] private BoardSystem _boardSystem;
+        [SerializeField] private SpecialItemBoardSystem _specialItemBoardSystem;
         [SerializeField] private MergeBoardRewardQueueSO _mergeBoardFirestore;
         [SerializeField] private List<RewardQueueSlotView> _queueSlotViews = new();
         [SerializeField] private TMP_Text _countText;
@@ -75,9 +77,9 @@ namespace UI.MergeBoard
             if (itemData == null || !itemData.HasItem)
                 return false;
 
-            if (itemData.ItemType != Services.Enums.ItemType.Common)
+            if (itemData.ItemType != ItemType.Common && itemData.ItemType != ItemType.Special)
             {
-                DebugTool.Warning("보상 큐에는 Common 타입 아이템만 추가할 수 있습니다.", DebugType.Board, this);
+                DebugTool.Warning($"보상 큐에는 Common 또는 Special 타입 아이템만 추가할 수 있습니다. Type:{itemData.ItemType}", DebugType.Board, this);
                 return false;
             }
 
@@ -116,37 +118,98 @@ namespace UI.MergeBoard
             if (_rewardQueue.Count <= 0)
                 return;
 
-            if (_boardSystem == null)
-            {
-                DebugTool.Warning("BoardSystem이 연결되지 않았습니다.", DebugType.Board, this);
-                return;
-            }
-
             ItemData itemData = _rewardQueue.Peek();
 
             _isProcessing = true;
 
             try
             {
-                ItemSlot addedSlot = await _boardSystem.TryAddItemFromQueueAndSelectAsync(itemData);
+                bool moved = false;
 
-                if (addedSlot == null)
+                if (itemData.ItemType == ItemType.Special)
                 {
-                    ShowAlert("보드판 공간이 부족합니다.");
-                    return;
+                    moved = await TryMoveTopSpecialItemAsync(itemData);
                 }
+                else if (itemData.ItemType == ItemType.Common)
+                {
+                    moved = await TryMoveTopCommonItemAsync(itemData);
+                }
+                else
+                {
+                    DebugTool.Warning($"보상 큐에서 처리할 수 없는 아이템 타입입니다. ID:{itemData.ItemID}, Type:{itemData.ItemType}", DebugType.Board, this);
+                    ShowAlert("처리할 수 없는 아이템입니다.");
+                }
+
+                if (!moved)
+                    return;
 
                 _rewardQueue.Dequeue();
 
                 RefreshView();
                 RequestSaveQueue();
 
-                DebugTool.Log($"보상 큐 Pop 완료 / 남은 개수: {_rewardQueue.Count}", DebugType.Board, this);
+                DebugTool.Log($"보상 큐 Pop 완료 / ID:{itemData.ItemID}, Type:{itemData.ItemType}, 남은 개수: {_rewardQueue.Count}", DebugType.Board, this);
             }
             finally
             {
                 _isProcessing = false;
             }
+        }
+
+        private async Task<bool> TryMoveTopCommonItemAsync(ItemData itemData)
+        {
+            if (_boardSystem == null)
+                _boardSystem = FindFirstObjectByType<BoardSystem>();
+
+            if (_boardSystem == null)
+            {
+                DebugTool.Warning("BoardSystem이 연결되지 않았습니다.", DebugType.Board, this);
+                ShowAlert("보드가 준비되지 않았습니다.");
+                return false;
+            }
+
+            ItemSlot addedSlot = await _boardSystem.TryAddItemFromQueueAndSelectAsync(itemData);
+
+            if (addedSlot == null)
+            {
+                ShowAlert("보드판 공간이 부족합니다.");
+                return false;
+            }
+
+            return true;
+        }
+
+        private async Task<bool> TryMoveTopSpecialItemAsync(ItemData itemData)
+        {
+            if (_specialItemBoardSystem == null)
+                _specialItemBoardSystem = FindFirstObjectByType<SpecialItemBoardSystem>();
+
+            if (_specialItemBoardSystem == null)
+            {
+                DebugTool.Warning("SpecialItemBoardSystem이 연결되지 않았습니다.", DebugType.Board, this);
+                ShowAlert("특수 아이템 보드가 준비되지 않았습니다.");
+                return false;
+            }
+
+            if (!_specialItemBoardSystem.IsServerDataLoaded)
+                await _specialItemBoardSystem.LoadSpecialBoardFromServerAsync();
+
+            if (!_specialItemBoardSystem.IsServerDataLoaded)
+            {
+                DebugTool.Warning("특수 아이템 보드 서버 데이터 로드 전에는 아이템을 넣을 수 없습니다.", DebugType.Board, this);
+                ShowAlert("특수 아이템 보드 로드 중입니다.");
+                return false;
+            }
+
+            bool added = await _specialItemBoardSystem.TryAddSpecialItemAsync(itemData, 1);
+
+            if (!added)
+            {
+                ShowAlert("특수 아이템 슬롯 공간이 부족합니다.");
+                return false;
+            }
+
+            return true;
         }
 
         public async Task LoadQueueFromServerAsync(bool normalizeDocumentIds = false)
