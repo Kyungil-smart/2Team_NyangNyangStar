@@ -205,17 +205,26 @@ namespace Data.ScriptableObjects.MergeBoard
             if (sourceData == null || !sourceData.HasItem)
                 return ItemData.Empty;
 
-            ItemData runtimeData = sourceData.Clone();
-
             RebuildItemDictionaryIfNeeded();
 
-            if (_itemDict.TryGetValue(sourceData.ItemID, out ItemData originData) && originData != null)
+            if (_itemDict.TryGetValue(sourceData.ItemID, out ItemData originData) &&
+                originData != null &&
+                originData.HasItem)
             {
+                // Firestore에는 과거 저장 데이터가 남아 있을 수 있습니다.
+                // 예: ItemName이 실제 표시 이름이 아니라 StringID로 저장된 경우.
+                // 런타임에서는 항상 현재 ItemDatabase 기준의 이름/레벨/타입/AddressableKey를 사용합니다.
+                ItemData runtimeData = originData.Clone();
+
                 if (originData.ItemSprite != null)
                     runtimeData.SetSprite(originData.ItemSprite);
+                else if (sourceData.ItemSprite != null)
+                    runtimeData.SetSprite(sourceData.ItemSprite);
+
+                return runtimeData;
             }
 
-            return runtimeData;
+            return sourceData.Clone();
         }
 
         public void PrintData()
