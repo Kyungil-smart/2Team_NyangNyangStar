@@ -202,18 +202,24 @@ namespace UI.MergeBoard
             }
 
             if (_mergeBoardFirestore == null)
+                FireStoreManager.Instance.TryGetStore(out _mergeBoardFirestore);
+
+            if (_mergeBoardFirestore == null)
             {
-                DebugTool.Warning("MergeBoardFirestoreSO가 인스펙터에 연결되지 않았습니다.", DebugType.Board, this);
+                DebugTool.Warning("MergeBoardRewardQueueSO가 인스펙터 또는 FireStoreManager에 연결되지 않았습니다.", DebugType.Board, this);
                 return false;
             }
 
             if (!_mergeBoardFirestore.IsReady)
+                _mergeBoardFirestore.TryEnsureDatabaseReady();
+
+            if (!_mergeBoardFirestore.IsReady)
             {
-                DebugTool.Warning("MergeBoardFirestoreSO가 아직 준비되지 않았습니다.", DebugType.Board, this);
+                DebugTool.Warning("MergeBoardRewardQueueSO가 아직 준비되지 않았습니다.", DebugType.Board, this);
                 return false;
             }
 
-            DebugTool.Log("MergeBoardFirestoreSO 연결 완료", DebugType.Board, this);
+            DebugTool.Log("MergeBoardRewardQueueSO 연결 완료", DebugType.Board, this);
             return true;
         }
 

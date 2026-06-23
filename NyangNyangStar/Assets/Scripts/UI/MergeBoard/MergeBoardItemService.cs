@@ -40,6 +40,13 @@ namespace UI.MergeBoard
         [Min(0)]
         [SerializeField] private int _generateItemEnergyCost = 5;
 
+        [Header("Runtime Wait")]
+        [Min(0.1f)]
+        [SerializeField] private float _runtimeDataWaitTimeoutSeconds = 5f;
+
+        [Header("Runtime Diagnostics")]
+        [SerializeField] private bool _enableRuntimeDiagnostics = true;
+
         private const int GeneralBoardSlotCount = 63;
 
         private bool _isAddingItem;
@@ -55,19 +62,50 @@ namespace UI.MergeBoard
 
             Instance = this;
             ResolveReferences();
+            RuntimeLog("Awake 완료");
+        }
+
+        protected virtual void OnEnable()
+        {
+            BindTestReceiveButton(logMissing: false);
         }
 
         protected virtual void Start()
         {
+            BindTestReceiveButton(logMissing: true);
+        }
+
+        protected virtual void OnDisable()
+        {
+            UnbindTestReceiveButton();
+        }
+
+        private void BindTestReceiveButton(bool logMissing)
+        {
+            ResolveTestReceiveButton();
+
             if (_testReceiveButton != null)
             {
                 _testReceiveButton.onClick.RemoveListener(ReceiveRandomTestItem);
                 _testReceiveButton.onClick.AddListener(ReceiveRandomTestItem);
+
+                if (logMissing)
+                    RuntimeLog($"아이템 생성 버튼 바인딩 완료: {_testReceiveButton.name}");
             }
             else
             {
-                DebugTool.Warning("테스트 아이템 생성 버튼이 연결되지 않았습니다.", DebugType.Board, this);
+                if (logMissing)
+                {
+                    DebugTool.Warning("테스트 아이템 생성 버튼이 연결되지 않았습니다.", DebugType.Board, this);
+                    RuntimeWarning("테스트 아이템 생성 버튼이 연결되지 않았습니다. 인스펙터의 Test Receive Button 연결을 확인하세요.");
+                }
             }
+        }
+
+        private void UnbindTestReceiveButton()
+        {
+            if (_testReceiveButton != null)
+                _testReceiveButton.onClick.RemoveListener(ReceiveRandomTestItem);
         }
 
         public void RegisterBoardSystem(BoardSystem boardSystem)
@@ -242,6 +280,7 @@ namespace UI.MergeBoard
 
         public async Task<bool> ReceiveRandomTestItemAsync()
         {
+            RuntimeLog("아이템 생성 버튼 클릭됨");
             DebugTool.Log("아이템 생성 버튼 클릭됨", DebugType.Board, this);
 
             if (!CanUseItemService())
@@ -252,6 +291,7 @@ namespace UI.MergeBoard
                 if (!TryGetItemDataById(itemID, out ItemData inputItemData))
                 {
                     DebugTool.Warning($"{itemID} ID에 해당하는 아이템 데이터를 찾을 수 없습니다.", DebugType.Board, this);
+                    RuntimeWarning($"{itemID} ID에 해당하는 아이템 데이터를 찾을 수 없습니다.");
                     return false;
                 }
 
@@ -264,6 +304,7 @@ namespace UI.MergeBoard
             if (!TryGetRandomCommonItem(out ItemData itemData))
             {
                 DebugTool.Warning("생성 가능한 Common 아이템 데이터가 없습니다.", DebugType.Board, this);
+                RuntimeWarning("생성 가능한 Common 아이템 데이터가 없습니다.");
                 return false;
             }
 
@@ -273,11 +314,15 @@ namespace UI.MergeBoard
         public async Task<bool> GenerateItemByEnergyAsync(ItemData itemData, int count = 1)
         {
             if (_isAddingItem)
+            {
+                RuntimeWarning("이미 아이템 생성 처리 중입니다.");
                 return false;
+            }
 
             if (itemData == null || !itemData.HasItem)
             {
                 DebugTool.Warning("유효하지 않은 아이템 데이터입니다.", DebugType.Board, this);
+                ShowBoardAlert("유효하지 않은 아이템입니다.");
                 return false;
             }
 
@@ -288,6 +333,14 @@ namespace UI.MergeBoard
 
             try
             {
+                RuntimeLog($"아이템 생성 처리 시작 / ID:{itemData.ItemID}, Count:{safeCount}, EnergyCost:{energyCost}, Type:{itemData.ItemType}");
+
+                if (!CanUseItemService())
+                    return false;
+
+                if (!await WaitForTargetStoreReadyAsync(itemData))
+                    return false;
+
                 if (!await TrySpendGenerateEnergyAsync(energyCost))
                     return false;
 
@@ -295,11 +348,13 @@ namespace UI.MergeBoard
 
                 if (!added)
                 {
+                    RuntimeWarning($"아이템 추가 실패로 에너지 환불 처리 / ID:{itemData.ItemID}, Count:{safeCount}, Refund:{energyCost}");
                     await RefundGenerateEnergyAsync(energyCost);
                     return false;
                 }
 
                 await NotifyFindMoongchiEnergySpentAsync(energyCost);
+                RuntimeLog($"아이템 생성 완료 / ID:{itemData.ItemID}, Count:{safeCount}");
                 return true;
             }
             finally
@@ -312,8 +367,23 @@ namespace UI.MergeBoard
         {
             ResolveReferences();
 
-            if (_rewardQueue != null && _rewardQueue.IsLoaded)
-                return await _rewardQueue.EnqueueItemAsync(itemData, count);
+            if (_rewardQueue != null)
+            {
+                if (!_rewardQueue.IsLoaded && !await WaitForRewardQueueLoadedAsync())
+                    return false;
+
+                if (_rewardQueue.IsLoaded)
+                {
+                    bool queued = await _rewardQueue.EnqueueItemAsync(itemData, count);
+
+                    if (queued)
+                        RuntimeLog($"보상 큐 추가 완료 / ID:{itemData.ItemID}, Count:{count}");
+                    else
+                        RuntimeWarning($"보상 큐 추가 실패 / ID:{itemData.ItemID}, Count:{count}");
+
+                    return queued;
+                }
+            }
 
             if (!TryResolveStores())
                 return false;
@@ -326,6 +396,7 @@ namespace UI.MergeBoard
 
             await _rewardQueueStore.SaveRewardQueueAsync(queueItems);
             DebugTool.Log($"보상 큐 직접 저장 완료 / ID:{itemData.ItemID}, Count:{count}", DebugType.Board, this);
+            RuntimeLog($"보상 큐 직접 저장 완료 / ID:{itemData.ItemID}, Count:{count}");
             return true;
         }
 
@@ -333,8 +404,14 @@ namespace UI.MergeBoard
         {
             ResolveReferences();
 
-            if (_specialItemBoardSystem != null && _specialItemBoardSystem.IsServerDataLoaded)
-                return await _specialItemBoardSystem.TryAddSpecialItemAsync(itemData, count);
+            if (_specialItemBoardSystem != null)
+            {
+                if (!_specialItemBoardSystem.IsServerDataLoaded && !await WaitForSpecialBoardLoadedAsync())
+                    return false;
+
+                if (_specialItemBoardSystem.IsServerDataLoaded)
+                    return await _specialItemBoardSystem.TryAddSpecialItemAsync(itemData, count);
+            }
 
             if (!TryResolveStores())
                 return false;
@@ -345,6 +422,7 @@ namespace UI.MergeBoard
             if (slotNumber == -1)
             {
                 DebugTool.Warning("특수 아이템 보드 공간이 부족합니다.", DebugType.Board, this);
+                RuntimeWarning("특수 아이템 보드 공간이 부족합니다.");
                 return false;
             }
 
@@ -355,7 +433,90 @@ namespace UI.MergeBoard
             specialBoard[slotNumber] = newSlotData;
             await _specialStore.SaveSpecialSlotAsync(slotNumber, newSlotData);
             DebugTool.Log($"특수 아이템 직접 저장 완료 / ID:{itemData.ItemID}, Count:{count}", DebugType.Board, this);
+            RuntimeLog($"특수 아이템 직접 저장 완료 / ID:{itemData.ItemID}, Count:{count}");
             return true;
+        }
+
+        private async Task<bool> WaitForTargetStoreReadyAsync(ItemData itemData)
+        {
+            if (itemData == null || !itemData.HasItem)
+                return false;
+
+            if (itemData.ItemType == ItemType.Common)
+                return await WaitForRewardQueueLoadedAsync();
+
+            if (itemData.ItemType == ItemType.Special)
+                return await WaitForSpecialBoardLoadedAsync();
+
+            return true;
+        }
+
+        private async Task<bool> WaitForRewardQueueLoadedAsync()
+        {
+            ResolveReferences();
+
+            if (_rewardQueue == null || _rewardQueue.IsLoaded)
+                return true;
+
+            if (TryResolveStores())
+            {
+                RuntimeLog("보상 큐가 미로드 상태라 즉시 서버 로드를 시도합니다.");
+                await _rewardQueue.LoadQueueFromServerAsync();
+
+                if (_rewardQueue == null || _rewardQueue.IsLoaded)
+                    return true;
+            }
+
+            float startTime = Time.realtimeSinceStartup;
+            float timeout = Mathf.Max(0.1f, _runtimeDataWaitTimeoutSeconds);
+
+            while (_rewardQueue != null && !_rewardQueue.IsLoaded && Time.realtimeSinceStartup - startTime < timeout)
+            {
+                await Task.Yield();
+                ResolveReferences();
+            }
+
+            if (_rewardQueue == null || _rewardQueue.IsLoaded)
+                return true;
+
+            DebugTool.Warning("보상 큐 서버 데이터 로드 전에는 아이템을 생성할 수 없습니다.", DebugType.Board, this);
+            RuntimeWarning("보상 큐 서버 데이터 로드 전에는 아이템을 생성할 수 없습니다.");
+            ShowBoardAlert("보상 큐 로드 중입니다.");
+            return false;
+        }
+
+        private async Task<bool> WaitForSpecialBoardLoadedAsync()
+        {
+            ResolveReferences();
+
+            if (_specialItemBoardSystem == null || _specialItemBoardSystem.IsServerDataLoaded)
+                return true;
+
+            if (TryResolveStores())
+            {
+                RuntimeLog("특수 아이템 보드가 미로드 상태라 즉시 서버 로드를 시도합니다.");
+                await _specialItemBoardSystem.LoadSpecialBoardFromServerAsync();
+
+                if (_specialItemBoardSystem == null || _specialItemBoardSystem.IsServerDataLoaded)
+                    return true;
+            }
+
+            float startTime = Time.realtimeSinceStartup;
+            float timeout = Mathf.Max(0.1f, _runtimeDataWaitTimeoutSeconds);
+
+            while (_specialItemBoardSystem != null && !_specialItemBoardSystem.IsServerDataLoaded && Time.realtimeSinceStartup - startTime < timeout)
+            {
+                await Task.Yield();
+                ResolveReferences();
+            }
+
+            if (_specialItemBoardSystem == null || _specialItemBoardSystem.IsServerDataLoaded)
+                return true;
+
+            DebugTool.Warning("특수 아이템 보드 서버 데이터 로드 전에는 아이템을 생성할 수 없습니다.", DebugType.Board, this);
+            RuntimeWarning("특수 아이템 보드 서버 데이터 로드 전에는 아이템을 생성할 수 없습니다.");
+            ShowBoardAlert("보드 데이터 로드 중입니다.");
+            return false;
         }
 
         private async Task<bool> TrySpendGenerateEnergyAsync(int energyCost)
@@ -371,6 +532,12 @@ namespace UI.MergeBoard
                     $"아이템 생성에 필요한 에너지가 부족합니다. 필요:{energyCost}, 보유:{PlayerResourceManager.Instance.Energy}",
                     DebugType.Board,
                     this);
+                RuntimeWarning($"아이템 생성에 필요한 에너지가 부족합니다. 필요:{energyCost}, 보유:{PlayerResourceManager.Instance.Energy}");
+                ShowBoardAlert("에너지가 부족합니다.");
+            }
+            else
+            {
+                RuntimeLog($"아이템 생성 에너지 소비 완료 / Cost:{energyCost}, Remain:{PlayerResourceManager.Instance.Energy}");
             }
 
             return spent;
@@ -544,12 +711,16 @@ namespace UI.MergeBoard
             if (FireStoreManager.Instance == null || !FireStoreManager.Instance.IsInitialized)
             {
                 DebugTool.Warning("Firestore 초기화가 완료되지 않았습니다. 로그인 후 다시 시도하세요.", DebugType.Board, this);
+                RuntimeWarning("Firestore 초기화가 완료되지 않았습니다. 로그인 후 다시 시도하세요.");
+                ShowBoardAlert("서버 데이터 로드 중입니다.");
                 return false;
             }
 
             if (LocalDataAccess.Instance?.Game == null || !LocalDataAccess.Instance.Game.IsReady)
             {
                 DebugTool.Warning("아이템 데이터 로드 완료 전입니다.", DebugType.Board, this);
+                RuntimeWarning("아이템 데이터 로드 완료 전입니다.");
+                ShowBoardAlert("아이템 데이터 로드 중입니다.");
                 return false;
             }
 
@@ -568,6 +739,37 @@ namespace UI.MergeBoard
                 _rewardQueue = FindFirstObjectByType<BoardRewardQueue>();
         }
 
+        private void ResolveTestReceiveButton()
+        {
+            if (_testReceiveButton != null)
+                return;
+
+            Button[] childButtons = GetComponentsInChildren<Button>(true);
+
+            for (int i = 0; i < childButtons.Length; i++)
+            {
+                Button button = childButtons[i];
+
+                if (button == null)
+                    continue;
+
+                string buttonName = button.name.ToLowerInvariant();
+
+                if (buttonName.Contains("item") &&
+                    (buttonName.Contains("create") || buttonName.Contains("generate") || buttonName.Contains("receive") || buttonName.Contains("test")))
+                {
+                    _testReceiveButton = button;
+                    return;
+                }
+
+                if (button.name.Contains("아이템") && button.name.Contains("생성"))
+                {
+                    _testReceiveButton = button;
+                    return;
+                }
+            }
+        }
+
         private bool TryResolveStores()
         {
             if (FireStoreManager.Instance == null)
@@ -582,11 +784,29 @@ namespace UI.MergeBoard
                 return false;
             }
 
+            if (_boardSlotsStore == null)
+                FireStoreManager.Instance.TryGetStore(out _boardSlotsStore);
+
+            if (_rewardQueueStore == null)
+                FireStoreManager.Instance.TryGetStore(out _rewardQueueStore);
+
+            if (_specialStore == null)
+                FireStoreManager.Instance.TryGetStore(out _specialStore);
+
             if (_boardSlotsStore == null || _rewardQueueStore == null || _specialStore == null)
             {
-                DebugTool.Warning("머지보드 Store SO가 인스펙터에 연결되지 않았습니다.", DebugType.Board, this);
+                DebugTool.Warning("머지보드 Store SO가 인스펙터 또는 FireStoreManager에 연결되지 않았습니다.", DebugType.Board, this);
                 return false;
             }
+
+            if (!_boardSlotsStore.IsReady)
+                _boardSlotsStore.TryEnsureDatabaseReady();
+
+            if (!_rewardQueueStore.IsReady)
+                _rewardQueueStore.TryEnsureDatabaseReady();
+
+            if (!_specialStore.IsReady)
+                _specialStore.TryEnsureDatabaseReady();
 
             if (!_boardSlotsStore.IsReady || !_rewardQueueStore.IsReady || !_specialStore.IsReady)
             {
@@ -731,10 +951,38 @@ namespace UI.MergeBoard
             return remaining;
         }
 
+        private void ShowBoardAlert(string message)
+        {
+            ResolveReferences();
+
+            if (_rewardQueue != null)
+                _rewardQueue.ShowAlert(message);
+            else
+            {
+                DebugTool.Warning(message, DebugType.Board, this);
+                RuntimeWarning(message);
+            }
+        }
+
+        private void RuntimeLog(string message)
+        {
+            if (!_enableRuntimeDiagnostics)
+                return;
+
+            Debug.Log($"[MergeBoardItemService] {message}", this);
+        }
+
+        private void RuntimeWarning(string message)
+        {
+            if (!_enableRuntimeDiagnostics)
+                return;
+
+            Debug.LogWarning($"[MergeBoardItemService] {message}", this);
+        }
+
         protected virtual void OnDestroy()
         {
-            if (_testReceiveButton != null)
-                _testReceiveButton.onClick.RemoveListener(ReceiveRandomTestItem);
+            UnbindTestReceiveButton();
 
             if (Instance == this)
                 Instance = null;
