@@ -289,7 +289,7 @@ GameObject:
   - component: {fileID: 2078359459574537101}
   - component: {fileID: 6346663665622354322}
   m_Layer: 5
-  m_Name: Scroll View
+  m_Name: ScrollView
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -344,8 +344,8 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 10907, guid: 0000000000000000f000000000000000, type: 0}
-  m_Type: 1
+  m_Sprite: {fileID: 0}
+  m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 4
@@ -397,6 +397,7 @@ GameObject:
   - component: {fileID: 3776882853238264095}
   - component: {fileID: 5417655847041635844}
   - component: {fileID: 6213557211920793632}
+  - component: {fileID: 5043317717264562391}
   m_Layer: 5
   m_Name: NyangNyangSnapSnackCanvas
   m_TagString: Untagged
@@ -506,9 +507,23 @@ MonoBehaviour:
   _toolSO: {fileID: 11400000, guid: 2522bd42372e16c43984c7db3cb8a73a, type: 2}
   _content: {fileID: 6428129156561089854}
   _scrollRect: {fileID: 0}
-  _selectedScale: 1.1
-  _dragThreshold: 20
   _placementController: {fileID: 7050640827036175901, guid: 1680ae63f692b624c9dc5536b29235d9, type: 3}
+  _selectedScale: 1.1
+  _selectTweenDuration: 0.15
+  _selectEase: 27
+  _placementHoldDuration: 0.25
+--- !u!114 &5043317717264562391
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1688963298102287577}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dcd4a2981eb6a3f419cab752cb4db285, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1762641284729881100
 GameObject:
   m_ObjectHideFlags: 0
@@ -577,8 +592,8 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 10907, guid: 0000000000000000f000000000000000, type: 0}
-  m_Type: 1
+  m_Sprite: {fileID: 0}
+  m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 4
@@ -751,8 +766,8 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 5193644098957107978}
   m_HandleRect: {fileID: 3807420918629841592}
   m_Direction: 0
-  m_Value: 1
-  m_Size: 0.1
+  m_Value: 0
+  m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -844,7 +859,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Padding:
-    m_Left: 10
+    m_Left: 20
     m_Right: 0
     m_Top: 0
     m_Bottom: 0
@@ -1013,7 +1028,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
+  m_Sprite: {fileID: 0}
   m_Type: 1
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -1095,15 +1110,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 0, g: 0, b: 0, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
-  m_Type: 1
+  m_Sprite: {fileID: 0}
+  m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 4

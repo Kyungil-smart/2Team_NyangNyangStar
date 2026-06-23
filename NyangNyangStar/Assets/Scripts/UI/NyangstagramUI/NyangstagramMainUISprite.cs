@@ -9,6 +9,9 @@ public class NyangstagramMainUISprite : UIBase
     private const string LikeEmptySpriteKey = "NYS_Btn_Heart_Empty";
     private const string LikeFilledSpriteKey = "NYS_Btn_Heart_Filled";
 
+    private const byte _selectedTabAlpha = 255;
+    private const byte _unselectedTabAlpha = 90;
+
     private UISpriteController[] _spriteController;
 
     public override void Init()
@@ -70,6 +73,97 @@ public class NyangstagramMainUISprite : UIBase
         _spriteController[(int)image].ChangeColor(color);
         _spriteController[(int)image].ChangeSprite(key,true);
     }
+    public void SetSelectedTab(NyangstagramTab selectedTab)
+    {
+        SetTabAlpha(
+            NyangstagramMainUIImages.HomeButton,
+            selectedTab == NyangstagramTab.Home
+        );
+
+        SetTabAlpha(
+            NyangstagramMainUIImages.TagButton,
+            selectedTab == NyangstagramTab.Tag
+        );
+
+        SetTabAlpha(
+            NyangstagramMainUIImages.AddPostButton,
+            selectedTab == NyangstagramTab.AddPost
+        );
+
+        SetTabAlpha(
+            NyangstagramMainUIImages.NotificationButton,
+            selectedTab == NyangstagramTab.Notification
+        );
+
+        SetTabAlpha(
+            NyangstagramMainUIImages.ProfileButton,
+            selectedTab == NyangstagramTab.Profile
+        );
+
+        DebugTool.Log(
+            $"냥스타그램 하단 탭 변경: {selectedTab}",
+            DebugType.UI,
+            this
+        );
+    }
+
+    private void SetTabAlpha(
+        NyangstagramMainUIImages imageType,
+        bool isSelected)
+    {
+        Image image = GetImage((int)imageType);
+
+        if (image == null)
+        {
+            DebugTool.Warning(
+                $"하단 탭 Image를 찾지 못했습니다: {imageType}",
+                DebugType.UI,
+                this
+            );
+
+            return;
+        }
+
+        Button button = image.GetComponent<Button>();
+
+        if (button == null)
+        {
+            SetImageAlpha(image, isSelected);
+            return;
+        }
+
+        float alpha = isSelected
+            ? _selectedTabAlpha / 255f
+            : _unselectedTabAlpha / 255f;
+
+        ColorBlock colors = button.colors;
+
+        colors.normalColor = SetColorAlpha(colors.normalColor, alpha);
+        colors.highlightedColor = SetColorAlpha(colors.highlightedColor, alpha);
+        colors.pressedColor = SetColorAlpha(colors.pressedColor, alpha);
+        colors.selectedColor = SetColorAlpha(colors.selectedColor, alpha);
+        colors.disabledColor = SetColorAlpha(colors.disabledColor, alpha);
+
+        button.colors = colors;
+    }
+
+    private void SetImageAlpha(Image image, bool isSelected)
+    {
+        Color color = image.color;
+
+        color.a = isSelected
+            ? _selectedTabAlpha / 255f
+            : _unselectedTabAlpha / 255f;
+
+        image.color = color;
+    }
+
+    private Color SetColorAlpha(Color color, float alpha)
+    {
+        color.a = alpha;
+        return color;
+    }
+
     public void SetLikeSprite(bool isLiked)
     {
         string spriteKey = isLiked ? LikeFilledSpriteKey : LikeEmptySpriteKey;
@@ -103,4 +197,12 @@ public enum NyangstagramMainUIImages
     Prifilepanel,
     ImageFrame,
     Image,
+}
+public enum NyangstagramTab
+{
+    Home,
+    Tag,
+    AddPost,
+    Notification,
+    Profile
 }

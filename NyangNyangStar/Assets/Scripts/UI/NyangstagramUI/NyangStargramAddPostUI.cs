@@ -289,12 +289,17 @@ public class NyangStargramAddPostUI : UIPopup
     private void CloseAddPostPopup()
     {
         if (_panel == null) return;
+
+        if (_mainUI != null)
+        {
+            _mainUI.RestoreMainTab();
+        }
+
         gameObject.SetActive(false);
-        //_panel.DOAnchorPos(new Vector2(0f, -1000f), _popupScaleDuration)
-        //    .SetEase(Ease.OutSine)
-        //    .OnComplete(() => gameObject.SetActive(false));
     }
+
 }
+
 
 public enum NyangStargramAddPostUIButton
 {
