@@ -7,6 +7,7 @@ using UnityEngine.UI;
 public class PhotoDetailPopupUI : UIPopup
 {
     [Header("닫기 버튼")]
+    [Tooltip("뒤로 가기")][SerializeField] private Button _backButton;
     [Tooltip("닫기 버튼")][SerializeField] private Button _closeButton;
     [Tooltip("배경")][SerializeField] private Button _background;
 
@@ -31,6 +32,7 @@ public class PhotoDetailPopupUI : UIPopup
 
         _closeButton = GetButton((int)PhotoDetailPopupButtons.CloseButton);
         _background = GetButton((int)PhotoDetailPopupButtons.Background);
+        _backButton = GetButton((int)PhotoDetailPopupButtons.BackButton);
         _uploadButton = GetButton((int)PhotoDetailPopupButtons.UploadButton);
         _deleteButton = GetButton((int)PhotoDetailPopupButtons.DeleteButton);
 
@@ -55,9 +57,10 @@ public class PhotoDetailPopupUI : UIPopup
 
     private void BindButtons()
     {
-        if (_closeButton != null) _closeButton.onClick.AddListener(() => ClosePhotoDetailPopup());
-        if (_background != null) _background.onClick.AddListener(() => ClosePhotoDetailPopup());
-        if (_uploadButton != null) _uploadButton.onClick.AddListener(() => OpenNyangstagram());
+        if (_closeButton != null) _closeButton.onClick.AddListener(CloseAllPopups);
+        if (_background != null) _background.onClick.AddListener(CloseAllPopups);
+        if (_backButton != null) _backButton.onClick.AddListener(ClosePhotoDetailPopup);
+        if (_uploadButton != null) _uploadButton.onClick.AddListener(OpenNyangstagram);
         if (_deleteButton != null) _deleteButton.onClick.AddListener(() => DeletePhoto());
     }
 
@@ -84,11 +87,23 @@ public class PhotoDetailPopupUI : UIPopup
         GameManager.Audio.PlaySfx("Main_SFX_Touch");
     }
 
+    private void CloseAllPopups()
+    {
+        HidePhotoDetailPopup();
+
+        GameManager.Audio.PlaySfx("Main_SFX_Touch");
+    }
+
     private void OpenNyangstagram()
+    {
+        HidePhotoDetailPopup();
+        MainUI.Instance.OpenNyangStargramPopup();
+    }
+
+    private void HidePhotoDetailPopup()
     {
         _photoCollectionPopup.HidePhotoCollectionPopup();
         gameObject.SetActive(false);
-        MainUI.Instance.OpenNyangStargramPopup();
     }
 
     private async void DeletePhoto()
@@ -117,6 +132,7 @@ public enum PhotoDetailPopupButtons
 {
     CloseButton,
     Background,
+    BackButton,
     UploadButton,
     DeleteButton
 }
