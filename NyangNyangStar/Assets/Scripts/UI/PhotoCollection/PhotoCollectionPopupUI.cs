@@ -93,13 +93,22 @@ public class PhotoCollectionPopupUI : UIPopup
 
     private async void RefreshPhotoSlots()
     {
-        await RefreshPhotoSlotsAsync();
-
-        DebugTool.Log("사진 목록 새로고침", DebugType.UI, this);
+        try
+        {
+            await RefreshPhotoSlotsAsync();
+            DebugTool.Log("사진 목록 새로고침", DebugType.UI, this);
+        }
+        catch (System.Exception e)
+        {
+            DebugTool.Warning($"[PhotoCollectionPopupUI] 사진 목록 새로고침 실패: {e.Message}", DebugType.UI, this);
+        }
     }
 
     private async Task RefreshPhotoSlotsAsync()
     {
+        if (!EnsurePhotoAlbumReady())
+            return;
+
         // 서버에서 가져오기
         await _photoAlbumSO.UpdateFromServerAsync(false);
 
@@ -134,6 +143,21 @@ public class PhotoCollectionPopupUI : UIPopup
 
         RemoveDeletedSlots(serverPhotoIds);
         ApplyStarFilter();
+    }
+
+    private bool EnsurePhotoAlbumReady()
+    {
+        if (_photoAlbumSO == null)
+        {
+            DebugTool.Warning("[PhotoCollectionPopupUI] PhotoAlbumSO가 연결되지 않았습니다.", DebugType.UI, this);
+            return false;
+        }
+
+        if (_photoAlbumSO.TryEnsureDatabaseReady())
+            return true;
+
+        DebugTool.Warning("[PhotoCollectionPopupUI] Firestore 준비 전이라 사진 목록 갱신을 건너뜁니다.", DebugType.UI, this);
+        return false;
     }
 
     private CatPhotoSlotUI CreateSlot(string photoId)

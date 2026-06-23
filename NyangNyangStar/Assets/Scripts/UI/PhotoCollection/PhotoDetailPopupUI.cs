@@ -108,6 +108,9 @@ public class PhotoDetailPopupUI : UIPopup
 
     private async void DeletePhoto()
     {
+        if (!EnsurePhotoAlbumReady())
+            return;
+
         if (!string.IsNullOrEmpty(_photoData.storagePath))
         {
             bool deleted = await FirebaseStorageHelper.DeleteUserImageAsync(_photoData.storagePath);
@@ -118,13 +121,36 @@ public class PhotoDetailPopupUI : UIPopup
                 this);
         }
 
-        _photoAlbumSO.RemovePhoto(_photoData.photoId);
-        await _photoAlbumSO.UpdateDataAsync();
+        try
+        {
+            _photoAlbumSO.RemovePhoto(_photoData.photoId);
+            await _photoAlbumSO.UpdateDataAsync();
+        }
+        catch (Exception e)
+        {
+            DebugTool.Warning($"[PhotoDetailPopupUI] 사진 메타데이터 삭제 실패: {e.Message}", DebugType.Network, this);
+            return;
+        }
 
         OnDeleted?.Invoke();
 
         GameManager.Audio.PlaySfx("Main_SFX_Touch");
         gameObject.SetActive(false);
+    }
+
+    private bool EnsurePhotoAlbumReady()
+    {
+        if (_photoAlbumSO == null)
+        {
+            DebugTool.Warning("[PhotoDetailPopupUI] PhotoAlbumSO가 연결되지 않았습니다.", DebugType.UI, this);
+            return false;
+        }
+
+        if (_photoAlbumSO.TryEnsureDatabaseReady())
+            return true;
+
+        DebugTool.Warning("[PhotoDetailPopupUI] Firestore 준비 전이라 사진 삭제를 건너뜁니다.", DebugType.UI, this);
+        return false;
     }
 }
 

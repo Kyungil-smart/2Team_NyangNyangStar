@@ -74,11 +74,14 @@ public class NyangNyangSnapToolSO : SoBase, ISheetParsable
 
     public bool TryGetToolDataByItemID(int itemID, out NyangNyangSnapToolData data)
     {
+        EnsureLookupReady();
         return _toolDataByItemID.TryGetValue(itemID, out data);
     }
 
     public NyangNyangSnapToolData GetRandomToolData()
     {
+        EnsureLookupReady();
+
         if (_toolData == null || _toolData.Count == 0)
         {
             DebugTool.Warning("[NyangNyangSnapToolSO] 랜덤으로 가져올 도구 데이터가 없습니다.", DebugType.Data);
@@ -104,5 +107,19 @@ public class NyangNyangSnapToolSO : SoBase, ISheetParsable
         }
 
         DebugTool.Log(builder.ToString(), DebugType.Data);
+    }
+
+    private void EnsureLookupReady()
+    {
+        if (_toolDataByItemID.Count > 0 || _toolData == null || _toolData.Count == 0)
+            return;
+
+        foreach (NyangNyangSnapToolData data in _toolData)
+        {
+            if (data == null)
+                continue;
+
+            _toolDataByItemID[data.ItemID] = data;
+        }
     }
 }

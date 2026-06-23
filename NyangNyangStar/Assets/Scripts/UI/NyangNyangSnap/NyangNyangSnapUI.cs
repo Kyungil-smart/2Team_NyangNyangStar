@@ -1,4 +1,5 @@
 using Core.Managers;
+using Data.LibrarySystem;
 using DG.Tweening;
 using System.Collections.Generic;
 using TMPro;
@@ -82,6 +83,7 @@ public class NyangNyangSnapUI : UIPopup
         _toyPanelButton = Get<Button>((int)NyangNyangSnapButtons.ToyPanelButton);
 
         InitPopups();
+        ResolveRuntimeDataSources();
 
         AutoAssignCaptureComponents();
         AutoAssignPlacementController();
@@ -253,6 +255,8 @@ public class NyangNyangSnapUI : UIPopup
 
     private void OnClickPhotoButton()
     {
+        ResolveRuntimeDataSources();
+
         if (_isCapturing)
         {
             DebugTool.Log("[NyangNyangSnapUI] 현재 사진 캡처 중입니다.", DebugType.UI, this);
@@ -466,6 +470,7 @@ public class NyangNyangSnapUI : UIPopup
 
     private NyangNyangSnapPoseData GetPoseByPlacedItemOrNull()
     {
+        ResolveRuntimeDataSources();
         AutoAssignPlacementController();
 
         if (_placementController == null)
@@ -832,6 +837,7 @@ public class NyangNyangSnapUI : UIPopup
     }
     private void TryMoveCatToPlacedItem(int itemID)
     {
+        ResolveRuntimeDataSources();
         AutoAssignCatController();
         AutoAssignPlacementController();
 
@@ -974,6 +980,7 @@ public class NyangNyangSnapUI : UIPopup
         gameObject.SetActive(true);
 
         RegisterPlacementEvent();
+        ResolveRuntimeDataSources();
 
         _sprite.SetBackground(stage);
         _startPanel.SetActive(true);
@@ -1006,6 +1013,7 @@ public class NyangNyangSnapUI : UIPopup
         gameObject.SetActive(true);
 
         RegisterPlacementEvent();
+        ResolveRuntimeDataSources();
 
         _startPanel.SetActive(true);
         _startButton.SetActive(true);
@@ -1049,6 +1057,7 @@ public class NyangNyangSnapUI : UIPopup
     public void StartSnapCat()
     {
         RegisterPlacementEvent();
+        ResolveRuntimeDataSources();
 
         SetSnapCatActive(true);
 
@@ -1104,6 +1113,24 @@ public class NyangNyangSnapUI : UIPopup
             DebugType.UI,
             this
         );
+    }
+
+    private void ResolveRuntimeDataSources()
+    {
+        if (LocalDataAccess.Instance == null || LocalDataAccess.Instance.Game == null)
+            return;
+
+        if (LocalDataAccess.Instance.Game.TryGetNyangNyangSnapPoseSO(out NyangNyangSnapPoseSO loadedPoseSO) &&
+            loadedPoseSO != null)
+        {
+            _poseSO = loadedPoseSO;
+        }
+
+        if (LocalDataAccess.Instance.Game.TryGetNyangNyangSnapToolSO(out NyangNyangSnapToolSO loadedToolSO) &&
+            loadedToolSO != null)
+        {
+            _toolSO = loadedToolSO;
+        }
     }
 }
 

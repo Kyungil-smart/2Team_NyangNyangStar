@@ -88,6 +88,8 @@ public class NyangNyangSnapPoseSO : SoBase, ISheetParsable
 
     public NyangNyangSnapPoseData GetPoseData(int id)
     {
+        EnsureLookupReady();
+
         if (_poseDataDic.TryGetValue(id, out NyangNyangSnapPoseData data))
             return data;
 
@@ -97,11 +99,14 @@ public class NyangNyangSnapPoseSO : SoBase, ISheetParsable
 
     public bool TryGetPoseData(int id, out NyangNyangSnapPoseData data)
     {
+        EnsureLookupReady();
         return _poseDataDic.TryGetValue(id, out data);
     }
 
     public List<NyangNyangSnapPoseData> GetPoseDataByTool(int toolId)
     {
+        EnsureLookupReady();
+
         if (_toolPoseDataDic.TryGetValue(toolId, out List<NyangNyangSnapPoseData> list))
             return list;
 
@@ -150,6 +155,8 @@ public class NyangNyangSnapPoseSO : SoBase, ISheetParsable
 
     public int GetMaxPoseScore()
     {
+        EnsureLookupReady();
+
         int maxScore = 0;
 
         foreach (NyangNyangSnapPoseData data in _poseData)
@@ -180,5 +187,24 @@ public class NyangNyangSnapPoseSO : SoBase, ISheetParsable
         }
 
         DebugTool.Log(log.ToString(), DebugType.Data);
+    }
+
+    private void EnsureLookupReady()
+    {
+        if (_poseDataDic.Count > 0 || _poseData == null || _poseData.Count == 0)
+            return;
+
+        foreach (NyangNyangSnapPoseData data in _poseData)
+        {
+            if (data == null)
+                continue;
+
+            _poseDataDic[data.ID] = data;
+
+            if (!_toolPoseDataDic.ContainsKey(data.ToolId))
+                _toolPoseDataDic[data.ToolId] = new List<NyangNyangSnapPoseData>();
+
+            _toolPoseDataDic[data.ToolId].Add(data);
+        }
     }
 }
