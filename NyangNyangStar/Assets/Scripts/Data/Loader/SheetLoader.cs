@@ -58,6 +58,24 @@ namespace Data.Loader
         [Space(8)] [SerializeField] private int _pendingSheetCount;
         public int PendingSheetCount => _pendingSheetCount;
 
+        public bool TryGetFindMoongchiShopSO(out MoongchiShopSO shopSO)
+        {
+            shopSO = findMoongchiShopSo;
+            return shopSO != null;
+        }
+
+        public bool TryGetFindMoongchiMissionSO(out MoongchiMissionSO missionSO)
+        {
+            missionSO = findMoongchiMissionSo;
+            return missionSO != null;
+        }
+
+        public bool TryGetFindMoongchiProfileSO(out MoongchiProfileSO profileSO)
+        {
+            profileSO = findMoongchiProfileSo;
+            return profileSO != null;
+        }
+
         public event Action<float, string> OnSheetLoadProgressChanged;
 
         private int _totalLoadStepCount;
@@ -187,6 +205,12 @@ namespace Data.Loader
                     nyangNyangSnapBackgroundSo,
                     nyangNyangSnapPoseSo,
                     nyangNyangSnapToolSo);
+
+                LocalDataAccess.Instance.Game.RegisterFindMoongchiData(
+                    findMoongchiShopSo,
+                    findMoongchiMissionSo,
+                    findMoongchiProfileSo);
+
                 LocalDataAccess.Instance.Game.MarkReady();
             }
         }

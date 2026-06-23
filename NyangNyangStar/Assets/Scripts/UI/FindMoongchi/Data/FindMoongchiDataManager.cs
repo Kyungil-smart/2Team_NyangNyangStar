@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Data.LibrarySystem;
+using Data.Loader;
 using Data.ScriptableObjects.MoongchiSO;
 using UnityEngine;
 using UnityEngine.Serialization;
@@ -77,6 +78,7 @@ namespace UI.FindMoongchi
             // 기존 UI 흐름이 기다리는 로드 완료 이벤트 유지
             IsLoaded = false;
 
+            ResolveStaticDataReferences();
             ValidateStaticDataReferences();
 
             _shopSO?.PrintData();
@@ -732,6 +734,8 @@ namespace UI.FindMoongchi
 
         public IReadOnlyList<MoongchiMissionData> GetWeeklyMissions()
         {
+            ResolveStaticDataReferences();
+
             // 주간 미션 UI에서 사용하는 전체 주간 미션 목록
             // WEEKLY, WEEKLY_1ST, WEEKLY_2ND를 한 번에 모아서 반환
 
@@ -761,6 +765,8 @@ namespace UI.FindMoongchi
 
         public IReadOnlyList<MoongchiMissionData> GetMissionsByType(MoongchiMissionType missionType)
         {
+            ResolveStaticDataReferences();
+
             // 원하는 미션 타입만 골라서 가져갈 수 있는 공통 조회 메서드
             // SO가 연결되지 않았거나 로드 전이어도 null 대신 빈 목록을 반환
 
@@ -772,6 +778,8 @@ namespace UI.FindMoongchi
 
         public bool TryGetMission(int missionID, out MoongchiMissionData missionData)
         {
+            ResolveStaticDataReferences();
+
             // 특정 미션 ID 하나만 찾아야 할 때 사용하는 메서드
 
             missionData = null;
@@ -784,6 +792,8 @@ namespace UI.FindMoongchi
 
         public bool HasMissionData()
         {
+            ResolveStaticDataReferences();
+
             // 미션 UI를 그리기 전에 데이터가 실제로 있는지 확인할 때 사용
 
             return _missionSO != null &&
@@ -810,12 +820,15 @@ namespace UI.FindMoongchi
         // 상점 UI 상품 조회
         public IReadOnlyList<MoongchiShopItemData> GetShopItems()
         {
+            ResolveStaticDataReferences();
             return _shopSO != null ? _shopSO.ShopItems : EmptyShopItems;
         }
 
 
         public bool TryGetShopItem(int itemID, out MoongchiShopItemData itemData)
         {
+            ResolveStaticDataReferences();
+
             // 특정 상점 상품 ID 단건 조회
             // 구매 처리용
             itemData = null;
@@ -826,6 +839,8 @@ namespace UI.FindMoongchi
 
         public bool HasShopData()
         {
+            ResolveStaticDataReferences();
+
             // 상점 UI를 그리기 전에 상품 데이터가 실제로 있는지 확인할 때 사용
             return _shopSO != null &&
                    _shopSO.ShopItems != null &&
@@ -835,6 +850,8 @@ namespace UI.FindMoongchi
         // 상점 UI용 프로필 조회 API
         public IReadOnlyList<MoongchiProfileData> GetProfiles()
         {
+            ResolveStaticDataReferences();
+
             // 상점 상품 중 PROFILE 타입 상품을 표시할 때 사용할 프로필 목록
             // 프로필 전체 목록이 필요한 UI에서 사용
 
@@ -843,6 +860,8 @@ namespace UI.FindMoongchi
 
         public bool TryGetProfile(int profileID, out MoongchiProfileData profileData)
         {
+            ResolveStaticDataReferences();
+
             // 상점 상품의 ProductType이 PROFILE일 때,
             // ProductID를 ProfileID로 사용해서 프로필 정보를 찾는 용도
             profileData = null;
@@ -853,10 +872,197 @@ namespace UI.FindMoongchi
 
         public bool HasProfileData()
         {
+            ResolveStaticDataReferences();
+
             // 프로필 보상 데이터가 실제로 있는지 확인할 때 사용
             return _profileSO != null &&
                    _profileSO.Profiles != null &&
                    _profileSO.Profiles.Count > 0;
+        }
+
+        private void ResolveStaticDataReferences()
+        {
+            bool changed = false;
+
+            changed |= TryResolveStaticDataFromGameModule();
+            changed |= TryResolveStaticDataFromSheetLoader();
+
+            if (!changed)
+                return;
+
+            DebugTool.Log(
+                $"[FindMoongchiDataManager] 정적 데이터 SO 재연결 완료 / Shop={GetShopDataCount()}, Mission={GetMissionDataCount()}, Profile={GetProfileDataCount()}",
+                DebugType.Data,
+                this);
+        }
+
+        private bool TryResolveStaticDataFromGameModule()
+        {
+            if (LocalDataAccess.Instance?.Game == null)
+                return false;
+
+            bool changed = false;
+
+            if (LocalDataAccess.Instance.Game.TryGetFindMoongchiShopSO(out MoongchiShopSO shopSO))
+                changed |= TryApplyShopSO(shopSO, "GameDataModule");
+
+            if (LocalDataAccess.Instance.Game.TryGetFindMoongchiMissionSO(out MoongchiMissionSO missionSO))
+                changed |= TryApplyMissionSO(missionSO, "GameDataModule");
+
+            if (LocalDataAccess.Instance.Game.TryGetFindMoongchiProfileSO(out MoongchiProfileSO profileSO))
+                changed |= TryApplyProfileSO(profileSO, "GameDataModule");
+
+            return changed;
+        }
+
+        private bool TryResolveStaticDataFromSheetLoader()
+        {
+            SheetLoader sheetLoader = FindFirstObjectByType<SheetLoader>();
+
+            if (sheetLoader == null)
+                return false;
+
+            bool changed = false;
+
+            if (sheetLoader.TryGetFindMoongchiShopSO(out MoongchiShopSO shopSO))
+                changed |= TryApplyShopSO(shopSO, "SheetLoader");
+
+            if (sheetLoader.TryGetFindMoongchiMissionSO(out MoongchiMissionSO missionSO))
+                changed |= TryApplyMissionSO(missionSO, "SheetLoader");
+
+            if (sheetLoader.TryGetFindMoongchiProfileSO(out MoongchiProfileSO profileSO))
+                changed |= TryApplyProfileSO(profileSO, "SheetLoader");
+
+            return changed;
+        }
+
+        private bool TryApplyShopSO(MoongchiShopSO candidate, string source)
+        {
+            if (candidate == null || ReferenceEquals(_shopSO, candidate))
+                return false;
+
+            int currentScore = GetShopDataCount(_shopSO);
+            int candidateScore = GetShopDataCount(candidate);
+
+            if (_shopSO != null && currentScore > 0 && currentScore >= candidateScore)
+                return false;
+
+            _shopSO = candidate;
+
+            DebugTool.Log(
+                $"[FindMoongchiDataManager] 상점 SO 교체 / Source={source}, Count={currentScore}->{candidateScore}",
+                DebugType.Data,
+                this);
+
+            return true;
+        }
+
+        private bool TryApplyMissionSO(MoongchiMissionSO candidate, string source)
+        {
+            if (candidate == null || ReferenceEquals(_missionSO, candidate))
+                return false;
+
+            int currentDataCount = GetMissionDataCount(_missionSO);
+            int candidateDataCount = GetMissionDataCount(candidate);
+            int currentDisplayCount = GetDisplayMissionCount(_missionSO);
+            int candidateDisplayCount = GetDisplayMissionCount(candidate);
+
+            bool shouldReplace =
+                _missionSO == null ||
+                currentDisplayCount <= 0 && candidateDisplayCount > 0 ||
+                candidateDisplayCount > currentDisplayCount ||
+                currentDataCount <= 0 && candidateDataCount > 0;
+
+            if (!shouldReplace)
+                return false;
+
+            _missionSO = candidate;
+
+            DebugTool.Log(
+                $"[FindMoongchiDataManager] 미션 SO 교체 / Source={source}, Data={currentDataCount}->{candidateDataCount}, Display={currentDisplayCount}->{candidateDisplayCount}",
+                DebugType.Data,
+                this);
+
+            return true;
+        }
+
+        private bool TryApplyProfileSO(MoongchiProfileSO candidate, string source)
+        {
+            if (candidate == null || ReferenceEquals(_profileSO, candidate))
+                return false;
+
+            int currentScore = GetProfileDataCount(_profileSO);
+            int candidateScore = GetProfileDataCount(candidate);
+
+            if (_profileSO != null && currentScore > 0 && currentScore >= candidateScore)
+                return false;
+
+            _profileSO = candidate;
+
+            DebugTool.Log(
+                $"[FindMoongchiDataManager] 프로필 SO 교체 / Source={source}, Count={currentScore}->{candidateScore}",
+                DebugType.Data,
+                this);
+
+            return true;
+        }
+
+        private bool ShouldReplaceShopSO()
+        {
+            return _shopSO == null || GetShopDataCount() <= 0;
+        }
+
+        private bool ShouldReplaceMissionSO()
+        {
+            return _missionSO == null || GetDisplayMissionCount(_missionSO) <= 0;
+        }
+
+        private bool ShouldReplaceProfileSO()
+        {
+            return _profileSO == null || GetProfileDataCount() <= 0;
+        }
+
+        private int GetShopDataCount()
+        {
+            return GetShopDataCount(_shopSO);
+        }
+
+        private static int GetShopDataCount(MoongchiShopSO shopSO)
+        {
+            return shopSO?.ShopItems?.Count ?? 0;
+        }
+
+        private int GetMissionDataCount()
+        {
+            return GetMissionDataCount(_missionSO);
+        }
+
+        private static int GetMissionDataCount(MoongchiMissionSO missionSO)
+        {
+            return missionSO?.Missions?.Count ?? 0;
+        }
+
+        private static int GetDisplayMissionCount(MoongchiMissionSO missionSO)
+        {
+            if (missionSO == null)
+                return 0;
+
+            int count = 0;
+            count += missionSO.GetMissionsByType(MoongchiMissionType.DAILY)?.Count ?? 0;
+            count += missionSO.GetMissionsByType(MoongchiMissionType.WEEKLY)?.Count ?? 0;
+            count += missionSO.GetMissionsByType(MoongchiMissionType.WEEKLY_1ST)?.Count ?? 0;
+            count += missionSO.GetMissionsByType(MoongchiMissionType.WEEKLY_2ND)?.Count ?? 0;
+            return count;
+        }
+
+        private int GetProfileDataCount()
+        {
+            return GetProfileDataCount(_profileSO);
+        }
+
+        private static int GetProfileDataCount(MoongchiProfileSO profileSO)
+        {
+            return profileSO?.Profiles?.Count ?? 0;
         }
 
         private void ValidateStaticDataReferences()

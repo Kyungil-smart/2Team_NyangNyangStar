@@ -128,26 +128,47 @@ namespace UI.FindMoongchi
 
         private void ResolveSlotViews()
         {
-            if (_legacySlotViews.Count > 0 || _dailySlotViews.Count > 0 || _weeklySlotViews.Count > 0)
-                return;
+            ResolveContentRoots();
 
-            if (_contentRoot != null)
+            if (_legacySlotViews.Count == 0 && _contentRoot != null)
                 _legacySlotViews.AddRange(_contentRoot.GetComponentsInChildren<EventMissionSlotView>(true));
 
-            if (_dailyContentRoot != null)
+            if (_dailySlotViews.Count == 0 && _dailyContentRoot != null)
                 _dailySlotViews.AddRange(_dailyContentRoot.GetComponentsInChildren<EventMissionSlotView>(true));
 
-            if (_weeklyContentRoot != null)
+            if (_weeklySlotViews.Count == 0 && _weeklyContentRoot != null)
                 _weeklySlotViews.AddRange(_weeklyContentRoot.GetComponentsInChildren<EventMissionSlotView>(true));
 
             // 기존 프리팹에서 ContentRoot 하위 슬롯만 쓰는 경우를 보호합니다.
-            if (_contentRoot == null && _dailyContentRoot == null && _weeklyContentRoot == null)
+            if (_contentRoot == null && _dailyContentRoot == null && _weeklyContentRoot == null && _legacySlotViews.Count == 0)
                 _legacySlotViews.AddRange(GetComponentsInChildren<EventMissionSlotView>(true));
 
+            if (_missionSlotPrefab == null)
+            {
+                if (_legacySlotViews.Count > 0)
+                    _missionSlotPrefab = _legacySlotViews[0];
+                else if (_dailySlotViews.Count > 0)
+                    _missionSlotPrefab = _dailySlotViews[0];
+                else if (_weeklySlotViews.Count > 0)
+                    _missionSlotPrefab = _weeklySlotViews[0];
+            }
+
             DebugTool.Log(
-                $"[FindMoongchiMissionPanel] 기존 미션 슬롯 조회: Legacy={_legacySlotViews.Count}, Daily={_dailySlotViews.Count}, Weekly={_weeklySlotViews.Count}",
+                $"[FindMoongchiMissionPanel] 기존 미션 슬롯 조회: Legacy={_legacySlotViews.Count}, Daily={_dailySlotViews.Count}, Weekly={_weeklySlotViews.Count}, LegacyRoot={_contentRoot != null}, DailyRoot={_dailyContentRoot != null}, WeeklyRoot={_weeklyContentRoot != null}, Prefab={_missionSlotPrefab != null}",
                 DebugType.FindMoongchi,
                 this);
+        }
+
+        private void ResolveContentRoots()
+        {
+            if (_contentRoot == null)
+                _contentRoot = FindChildTransform(transform, "ContentRoot", "Content", "MissionContent", "MissionContentRoot");
+
+            if (_dailyContentRoot == null)
+                _dailyContentRoot = FindChildTransform(transform, "DailyContentRoot", "DailyContent", "DailyMissionContent", "DailyMissionContentRoot");
+
+            if (_weeklyContentRoot == null)
+                _weeklyContentRoot = FindChildTransform(transform, "WeeklyContentRoot", "WeeklyContent", "WeeklyMissionContent", "WeeklyMissionContentRoot");
         }
 
         private Transform ResolveLegacyContentRoot()
@@ -284,6 +305,30 @@ namespace UI.FindMoongchi
         {
             if (text != null)
                 text.gameObject.SetActive(visible);
+        }
+
+        private static Transform FindChildTransform(Transform root, params string[] names)
+        {
+            if (root == null || names == null || names.Length == 0)
+                return null;
+
+            for (int i = 0; i < root.childCount; i++)
+            {
+                Transform child = root.GetChild(i);
+
+                for (int nameIndex = 0; nameIndex < names.Length; nameIndex++)
+                {
+                    if (child.name == names[nameIndex])
+                        return child;
+                }
+
+                Transform nested = FindChildTransform(child, names);
+
+                if (nested != null)
+                    return nested;
+            }
+
+            return null;
         }
 
         private void HandleBackButtonClicked()
