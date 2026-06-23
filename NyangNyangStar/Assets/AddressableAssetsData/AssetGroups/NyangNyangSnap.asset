@@ -163,6 +163,12 @@ MonoBehaviour:
     m_SerializedLabels:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c77b8a5a9ce7b6e41bff7d0bebc7b3bd
+    m_Address: Snap_Icon_RangeCircle
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: d18ea216e994cfa4c8b73c0279298ec0
     m_Address: NyangNyangSnapStagePopupUI
     m_ReadOnly: 0
