@@ -1,0 +1,181 @@
+using System;
+using System.Collections.Generic;
+using UI.FindMoongchi;
+using UnityEngine;
+
+namespace Data.ScriptableObjects.MoongchiSO
+{
+    public static class FindMoongchiProgressResetLogic
+    {
+        private const int MaxEventWeek = 2;
+
+        private static readonly TimeSpan KstOffset = TimeSpan.FromHours(9);
+
+        public static bool ApplyResetsIfNeeded(
+            FindMoongchiProgressRuntimeData progress,
+            MoongchiMissionSO missionSO,
+            FindMoongchiEventScheduleSO eventScheduleSO)
+        {
+            if (progress == null)
+                return false;
+
+            long now = GetCurrentUnixTimeSeconds();
+            bool changed = false;
+
+            if (progress.LastDailyResetUnixTime <= 0)
+            {
+                ApplyDailyReset(progress, missionSO, now);
+                changed = true;
+            }
+            else if (ShouldResetDaily(progress.LastDailyResetUnixTime, now))
+            {
+                ApplyDailyReset(progress, missionSO, now);
+                changed = true;
+            }
+
+            if (ApplyWeeklyResetsIfNeeded(progress, missionSO, now, eventScheduleSO))
+                changed = true;
+
+            return changed;
+        }
+
+        public static long GetCurrentUnixTimeSeconds()
+        {
+            return DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        }
+
+        public static int GetDailyEnergySpendProgress(FindMoongchiProgressRuntimeData progress)
+        {
+            return progress?.DailyEnergySpendProgress ?? 0;
+        }
+
+        private static bool ApplyWeeklyResetsIfNeeded(
+            FindMoongchiProgressRuntimeData progress,
+            MoongchiMissionSO missionSO,
+            long nowUnixTime,
+            FindMoongchiEventScheduleSO eventScheduleSO)
+        {
+            if (eventScheduleSO == null)
+            {
+                DebugTool.Warning(
+                    "[FindMoongchiProgressResetLogic] 이벤트 기간 SO가 없어 주차 동기화를 건너뜁니다.",
+                    DebugType.Data);
+                return false;
+            }
+
+            int expectedWeek = FindMoongchiEventScheduleLogic.GetCurrentEventWeek(
+                eventScheduleSO,
+                nowUnixTime,
+                MaxEventWeek);
+            long currentWeekAnchor = FindMoongchiEventScheduleLogic.GetEventWeekAnchorUnixTime(
+                eventScheduleSO,
+                nowUnixTime);
+
+            if (progress.LastWeeklyResetUnixTime <= 0)
+            {
+                progress.LastWeeklyResetUnixTime = currentWeekAnchor;
+
+                if (progress.CurrentWeek != expectedWeek)
+                    progress.CurrentWeek = expectedWeek;
+
+                DebugTool.Log(
+                    $"[FindMoongchiProgressResetLogic] 이벤트 주차 기준 시각 설정 (신규 유저, CurrentWeek={progress.CurrentWeek})",
+                    DebugType.Data);
+                return true;
+            }
+
+            long lastWeekAnchor = FindMoongchiEventScheduleLogic.GetEventWeekAnchorUnixTime(
+                eventScheduleSO,
+                progress.LastWeeklyResetUnixTime);
+
+            if (lastWeekAnchor < currentWeekAnchor)
+            {
+                ApplyWeeklyReset(progress, missionSO, nowUnixTime, eventScheduleSO);
+                return true;
+            }
+
+            if (progress.CurrentWeek != expectedWeek)
+            {
+                progress.CurrentWeek = expectedWeek;
+
+                DebugTool.Log(
+                    $"[FindMoongchiProgressResetLogic] 주차 동기화: CurrentWeek={progress.CurrentWeek}",
+                    DebugType.Data);
+                return true;
+            }
+
+            return false;
+        }
+
+        private static bool ShouldResetDaily(long lastResetUnixTime, long nowUnixTime)
+        {
+            return GetDailyAnchorUnixTime(lastResetUnixTime) < GetDailyAnchorUnixTime(nowUnixTime);
+        }
+
+        private static void ApplyDailyReset(
+            FindMoongchiProgressRuntimeData progress,
+            MoongchiMissionSO missionSO,
+            long nowUnixTime)
+        {
+            ClearMissionProgressByType(progress, missionSO, MoongchiMissionType.DAILY);
+
+            progress.SearchChance = FindMoongchiConstants.DailySearchChance;
+            progress.TodayBonusSearchChanceCount = 0;
+            progress.DailyEnergySpendProgress = 0;
+            progress.LastDailyResetUnixTime = GetDailyAnchorUnixTime(nowUnixTime);
+
+            DebugTool.Log("[FindMoongchiProgressResetLogic] 일일 진행 데이터 초기화", DebugType.Data);
+        }
+
+        private static void ApplyWeeklyReset(
+            FindMoongchiProgressRuntimeData progress,
+            MoongchiMissionSO missionSO,
+            long nowUnixTime,
+            FindMoongchiEventScheduleSO eventScheduleSO)
+        {
+            ClearMissionProgressByType(progress, missionSO, MoongchiMissionType.WEEKLY);
+            ClearMissionProgressByType(progress, missionSO, MoongchiMissionType.WEEKLY_1ST);
+            ClearMissionProgressByType(progress, missionSO, MoongchiMissionType.WEEKLY_2ND);
+
+            progress.CurrentWeek = FindMoongchiEventScheduleLogic.GetCurrentEventWeek(
+                eventScheduleSO,
+                nowUnixTime,
+                MaxEventWeek);
+            progress.LastWeeklyResetUnixTime = FindMoongchiEventScheduleLogic.GetEventWeekAnchorUnixTime(
+                eventScheduleSO,
+                nowUnixTime);
+
+            DebugTool.Log(
+                $"[FindMoongchiProgressResetLogic] 주간 진행 데이터 초기화: CurrentWeek={progress.CurrentWeek}",
+                DebugType.Data);
+        }
+
+        private static void ClearMissionProgressByType(
+            FindMoongchiProgressRuntimeData progress,
+            MoongchiMissionSO missionSO,
+            MoongchiMissionType missionType)
+        {
+            if (progress?.MissionProgresses == null || missionSO == null)
+                return;
+
+            List<MoongchiMissionData> missions = missionSO.GetMissionsByType(missionType);
+
+            for (int i = 0; i < missions.Count; i++)
+            {
+                MoongchiMissionData mission = missions[i];
+
+                if (mission == null)
+                    continue;
+
+                FindMoongchiProgressHelper.RemoveMissionProgress(progress, mission.ID);
+            }
+        }
+
+        private static long GetDailyAnchorUnixTime(long unixSeconds)
+        {
+            DateTimeOffset kst = DateTimeOffset.FromUnixTimeSeconds(unixSeconds).ToOffset(KstOffset);
+            DateTimeOffset dayStart = new DateTimeOffset(kst.Year, kst.Month, kst.Day, 0, 0, 0, KstOffset);
+            return dayStart.ToUnixTimeSeconds();
+        }
+    }
+}

@@ -28,15 +28,43 @@ public abstract class BaseFireStore : ScriptableObject
             if (s != null && seen.Add(s)) yield return s;
     }
 
+    public bool TryFindStore<T>(out T store) where T : BaseFireStore
+    {
+        if (this is T self)
+        {
+            store = self;
+            return true;
+        }
+
+        foreach (BaseFireStore sub in AllSubCollections())
+        {
+            if (sub != null && sub.TryFindStore(out store))
+                return true;
+        }
+
+        store = null;
+        return false;
+    }
+
 
     protected FirebaseFirestore db;
     protected string m_UserId;
 
+    public bool IsDatabaseReady => db != null && !string.IsNullOrEmpty(m_UserId);
 
+    public bool TryEnsureDatabaseReady()
+    {
+        if (IsDatabaseReady)
+            return true;
 
+        FireStoreManager manager = FireStoreManager.Instance;
+        return manager != null && manager.TryBindStore(this);
+    }
 
     protected virtual DocumentReference GetDocumentRef()
     {
+        TryEnsureDatabaseReady();
+
         var attr = (FirestorePathAttribute)System.Attribute
             .GetCustomAttribute(GetType(), typeof(FirestorePathAttribute));
         string template = attr != null ? attr.Template : null;

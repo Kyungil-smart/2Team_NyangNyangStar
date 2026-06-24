@@ -12,9 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dc079ba996ed0094f9dca1194a488fdc, type: 3}
   m_Name: ArrayTestFullSO
   m_EditorClassIdentifier: 
-  m_DocumentId: 
+  m_DocumentId: ArrayTestFull
   m_EnumType: 0
   subCollections: []
   logs: []
-  stages: []
   waves: []
+  stages: []

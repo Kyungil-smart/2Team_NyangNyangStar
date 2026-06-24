@@ -64,6 +64,12 @@ MonoBehaviour:
     m_SerializedLabels:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 225de473c08735348827b2949f99d5d5
+    m_Address: Main_Btn_Home
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 24e64e53a59dd8444b27d491af32a533
     m_Address: Main_Btn_Storybook
     m_ReadOnly: 0
@@ -142,11 +148,6 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: a66bb77bd248a20418a50ee3ee98fdaf
-    m_Address: NotebookPopupUI
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: ad6b79f89b06dd64bbc98ee20a751f88
     m_Address: Main_Btn_Mergeboard
     m_ReadOnly: 0
@@ -178,12 +179,6 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: b8584585b9e078a4caa0498da6833983
     m_Address: Main_Icon_Energy
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - Sprite
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: b8e6032c3d97316489254df64ea7e67c
-    m_Address: Main_Btn_Event_Scratching
     m_ReadOnly: 0
     m_SerializedLabels:
     - Sprite
@@ -230,6 +225,18 @@ MonoBehaviour:
     m_Address: RoulettePopupUI
     m_ReadOnly: 0
     m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: eda95428e19fdaa4dafc6276cfb7d274
+    m_Address: Main_Btn_Event_FindMoongchi
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: eec7c209208d22642bb85fc10897e4c5
+    m_Address: Main_Btn_Event_Scratching
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
     FlaggedDuringContentUpdateRestriction: 0
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: 567802e293b80b747b23153796443c26, type: 2}

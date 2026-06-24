@@ -10,6 +10,10 @@ public class NyangStargramPostUISprite : UIBase
     private const string LikeFilledSpriteKey = "NYS_Btn_Heart_Filled";
 
     private UISpriteController[] _spriteController;
+    private Image _postImage;
+
+    private Sprite _postSprite;
+
     public override void Init()
     {
         Bind<Image>(typeof(NyangStargramPostUIImages));
@@ -19,6 +23,8 @@ public class NyangStargramPostUISprite : UIBase
         {
             _spriteController[i] = new UISpriteController(GetImage(i));
         }
+
+        _postImage = GetImage((int)NyangStargramPostUIImages.PostImage);
 
         SetSprites();
     }
@@ -31,7 +37,7 @@ public class NyangStargramPostUISprite : UIBase
         //profile뷰
         SetSprite(NyangStargramPostUIImages.PostHeaderpanel, "NYS_TopBar");
         SetSprite(NyangStargramPostUIImages.BackButton, "Btn_Back");
-        SetSprite(NyangStargramPostUIImages.Viewport, "NYS_Content");
+        SetSprite(NyangStargramPostUIImages.HomePostPanel, "NYS_Content");
         SetSprite(NyangStargramPostUIImages.VerifyIconFront, "NYS_Btn_Profile", new Color32(0, 0, 0, 255));
         SetSprite(NyangStargramPostUIImages.VerifyIcon, "NYS_ProfileBadge");
         //SetSprite(NyangStargramPostUIImages.LikeButton, "NYS_Btn_Heart_Empty");
@@ -41,11 +47,8 @@ public class NyangStargramPostUISprite : UIBase
 
         //네비게이션 버튼
         SetSprite(NyangStargramPostUIImages.NyangstagramCloseButton, "NYS_Btn_Exit");
-
-
-
-
     }
+
     public void SetLikeSprite(bool isLiked)
     {
         string spriteKey = isLiked ? LikeFilledSpriteKey : LikeEmptySpriteKey;
@@ -53,6 +56,26 @@ public class NyangStargramPostUISprite : UIBase
         SetSprite(NyangStargramPostUIImages.LikeButton, spriteKey);
 
         DebugTool.Log($"좋아요 아이콘 변경: {spriteKey}", DebugType.UI, this);
+    }
+
+    public async void SetPhoto(string storagePath)
+    {
+        if (string.IsNullOrEmpty(storagePath)) return;
+
+        Sprite sprite = await FirebaseStorageHelper.LoadUserSpriteAsync(storagePath);
+
+        if (sprite == null) return;
+
+        ReleasePostSprite();
+
+        _postSprite = sprite;
+
+        if (_postImage != null)
+        {
+            _postImage.sprite = _postSprite;
+            _postImage.preserveAspect = true;
+            _postImage.color = Color.white;
+        }
     }
 
     private void SetSprite(NyangStargramPostUIImages image, string key)
@@ -65,13 +88,36 @@ public class NyangStargramPostUISprite : UIBase
         _spriteController[(int)image].ChangeColor(color);
         _spriteController[(int)image].ChangeSprite(key);
     }
-    
+
+    private void ReleasePostSprite()
+    {
+        if (_postSprite == null) return;
+
+        if (_postSprite.texture != null)
+            Destroy(_postSprite.texture);
+
+        Destroy(_postSprite);
+        _postSprite = null;
+    }
+
+    private void OnDestroy()
+    {
+        ReleasePostSprite();
+
+        if (_spriteController == null) return;
+
+        foreach (UISpriteController controller in _spriteController)
+        {
+            controller?.ReleaseSprite();
+        }
+    }
+
     public enum NyangStargramPostUIImages
     {
         backGroundpanel,
         PostHeaderpanel,
         BackButton,
-        Viewport,
+        HomePostPanel,
         VerifyIconFront,
         VerifyIcon,
         PostImage,

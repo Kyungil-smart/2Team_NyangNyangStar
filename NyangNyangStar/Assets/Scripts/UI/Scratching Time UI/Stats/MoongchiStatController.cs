@@ -150,19 +150,10 @@ public class MoongchiStatController : UIBase
             return false;
         }
 
-        MoongchiProgressSO resolvedProgress =
-            FireStoreManager.Instance.GetData<MoongchiProgressSO>(DataType.MoongchiProgess);
-
-        if (resolvedProgress == null)
+        if (_moongchiProgress == null)
         {
-            DebugTool.Warning("FireStoreManager에서 MoongchiProgressSO를 찾을 수 없습니다.", DebugType.ScratchingTime, this);
+            DebugTool.Warning("MoongchiProgressSO가 인스펙터에 연결되지 않았습니다.", DebugType.ScratchingTime, this);
             return false;
-        }
-
-        if (!ReferenceEquals(_moongchiProgress, resolvedProgress))
-        {
-            _moongchiProgress = resolvedProgress;
-            DebugTool.Log("MoongchiProgressSO 연결 완료", DebugType.ScratchingTime, this);
         }
 
         return true;

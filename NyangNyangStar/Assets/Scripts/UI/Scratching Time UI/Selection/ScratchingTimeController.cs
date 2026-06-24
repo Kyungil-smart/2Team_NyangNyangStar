@@ -28,6 +28,10 @@ public class ScratchingTimeController : UIBase
     private CanvasGroup _closeCanvasGroup;
     private Sequence _closeSequence;
     private bool _isCloseAnimating;
+    private bool _isCloseRequested;
+    private EventTrigger _closeButtonEventTrigger;
+    private EventTrigger.Entry _closePointerDownEntry;
+    private UnityAction<BaseEventData> _closePointerDownAction;
 
     [Header("Stage Button")]
     [SerializeField] private Button[] _stageButtons = new Button[4];
@@ -92,7 +96,7 @@ public class ScratchingTimeController : UIBase
 
         if (_closeButton != null)
         {
-            _closeButton.onClick.AddListener(RaiseCloseClicked);
+            RegisterCloseButtonEvent();
             hasRegisteredButton = true;
         }
 
@@ -130,8 +134,7 @@ public class ScratchingTimeController : UIBase
     // 등록된 단계 버튼과 일일/주간 START 버튼 이벤트를 해제
     private void UnregisterButtonEvents()
     {
-        if (_closeButton != null)
-            _closeButton.onClick.RemoveListener(RaiseCloseClicked);
+        UnregisterCloseButtonEvent();
 
         if (_stageButtons != null)
         {
@@ -158,10 +161,12 @@ public class ScratchingTimeController : UIBase
     {
         KillCloseTween();
         _isCloseAnimating = false;
+        _isCloseRequested = false;
         gameObject.SetActive(true);
         EnsureCloseTweenTargets();
         UIPanelCloseTween.PrepareShow(_closeRoot, _closeCanvasGroup, 1f);
         SetCloseInputBlocked(false);
+        SetCloseButtonInteractable(true);
     }
 
     // 선택 화면을 즉시 숨김
@@ -169,7 +174,9 @@ public class ScratchingTimeController : UIBase
     {
         KillCloseTween();
         _isCloseAnimating = false;
+        _isCloseRequested = false;
         SetCloseInputBlocked(false);
+        SetCloseButtonInteractable(true);
         gameObject.SetActive(false);
     }
 
@@ -226,9 +233,10 @@ public class ScratchingTimeController : UIBase
     // 닫기 버튼 입력을 매니저에 전달
     private void RaiseCloseClicked()
     {
-        if (_isCloseAnimating)
+        if (_isCloseAnimating || _isCloseRequested)
             return;
 
+        _isCloseRequested = true;
         ClearSelectedButton();
         OnCloseClicked?.Invoke();
         GameManager.Audio.PlaySfx("Main_SFX_Touch");
@@ -237,6 +245,9 @@ public class ScratchingTimeController : UIBase
     // 단계 버튼 입력을 매니저에 전달
     private void SelectStage(int stage)
     {
+        if (_isCloseAnimating || _isCloseRequested)
+            return;
+
         ClearSelectedButton();
         GameManager.Audio.PlaySfx("Main_SFX_Touch");
         OnStageSelected?.Invoke(stage);
@@ -245,6 +256,9 @@ public class ScratchingTimeController : UIBase
     // 선택한 단계의 일일/주간 START 버튼 입력을 매니저에 전달
     private void StartSelectedStage(StageType stageType)
     {
+        if (_isCloseAnimating || _isCloseRequested)
+            return;
+
         ClearSelectedButton();
         HideErrorPanel();
         OnStageStartClicked?.Invoke(stageType);
@@ -454,6 +468,42 @@ public class ScratchingTimeController : UIBase
 
         _closeCanvasGroup.interactable = !blocked;
         _closeCanvasGroup.blocksRaycasts = !blocked;
+    }
+
+    private void SetCloseButtonInteractable(bool interactable)
+    {
+        if (_closeButton != null)
+            _closeButton.interactable = interactable;
+    }
+
+    private void RegisterCloseButtonEvent()
+    {
+        _closePointerDownAction ??= _ => RaiseCloseClicked();
+
+        _closeButtonEventTrigger = _closeButton.GetComponent<EventTrigger>();
+        if (_closeButtonEventTrigger == null)
+            _closeButtonEventTrigger = _closeButton.gameObject.AddComponent<EventTrigger>();
+
+        if (_closePointerDownEntry != null)
+            _closeButtonEventTrigger.triggers.Remove(_closePointerDownEntry);
+
+        _closePointerDownEntry = new EventTrigger.Entry
+        {
+            eventID = EventTriggerType.PointerDown
+        };
+        _closePointerDownEntry.callback.AddListener(_closePointerDownAction);
+        _closeButtonEventTrigger.triggers.Add(_closePointerDownEntry);
+    }
+
+    private void UnregisterCloseButtonEvent()
+    {
+        if (_closeButtonEventTrigger != null && _closePointerDownEntry != null)
+            _closeButtonEventTrigger.triggers.Remove(_closePointerDownEntry);
+
+        if (_closePointerDownEntry != null)
+            _closePointerDownEntry.callback.RemoveListener(_closePointerDownAction);
+
+        _closePointerDownEntry = null;
     }
 
     private void KillCloseTween()

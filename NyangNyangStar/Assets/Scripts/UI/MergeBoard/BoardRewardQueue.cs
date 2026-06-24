@@ -1,5 +1,6 @@
 using Data.LibrarySystem;
 using Data.ScriptableObjects.MergeBoard;
+using Services.Enums;
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -11,7 +12,8 @@ namespace UI.MergeBoard
     public class BoardRewardQueue : MonoBehaviour
     {
         [SerializeField] private BoardSystem _boardSystem;
-        [SerializeField] private MergeBoardFirestoreSo _mergeBoardFirestore;
+        [SerializeField] private SpecialItemBoardSystem _specialItemBoardSystem;
+        [SerializeField] private MergeBoardRewardQueueSO _mergeBoardFirestore;
         [SerializeField] private List<RewardQueueSlotView> _queueSlotViews = new();
         [SerializeField] private TMP_Text _countText;
 
@@ -30,6 +32,16 @@ namespace UI.MergeBoard
 
         public bool IsLoaded { get; private set; }
 
+        private void OnEnable()
+        {
+            ClearAlert();
+        }
+
+        private void OnDisable()
+        {
+            ClearAlert();
+        }
+
         private void Start()
         {
             for (int i = 0; i < _queueSlotViews.Count; i++)
@@ -41,13 +53,12 @@ namespace UI.MergeBoard
                 _queueSlotViews[i].Init(this, isTopSlot);
             }
 
-            if (_alertText != null)
-                _alertText.gameObject.SetActive(false);
+            ClearAlert();
 
             RefreshView();
 
-            if (BoardItemReceiver.Instance != null)
-                BoardItemReceiver.Instance.RegisterRewardQueue(this);
+            if (MergeBoardItemService.Instance != null)
+                MergeBoardItemService.Instance.RegisterRewardQueue(this);
         }
 
         public Task<bool> EnqueueItemAsync(ItemData itemData)
@@ -66,9 +77,9 @@ namespace UI.MergeBoard
             if (itemData == null || !itemData.HasItem)
                 return false;
 
-            if (itemData.ItemType != Services.Enums.ItemType.Common)
+            if (itemData.ItemType != ItemType.Common && itemData.ItemType != ItemType.Special)
             {
-                DebugTool.Warning("보상 큐에는 Common 타입 아이템만 추가할 수 있습니다.", DebugType.Board, this);
+                DebugTool.Warning($"보상 큐에는 Common 또는 Special 타입 아이템만 추가할 수 있습니다. Type:{itemData.ItemType}", DebugType.Board, this);
                 return false;
             }
 
@@ -107,37 +118,98 @@ namespace UI.MergeBoard
             if (_rewardQueue.Count <= 0)
                 return;
 
-            if (_boardSystem == null)
-            {
-                DebugTool.Warning("BoardSystem이 연결되지 않았습니다.", DebugType.Board, this);
-                return;
-            }
-
             ItemData itemData = _rewardQueue.Peek();
 
             _isProcessing = true;
 
             try
             {
-                ItemSlot addedSlot = await _boardSystem.TryAddItemFromQueueAndSelectAsync(itemData);
+                bool moved = false;
 
-                if (addedSlot == null)
+                if (itemData.ItemType == ItemType.Special)
                 {
-                    ShowAlert("보드판 공간이 부족합니다.");
-                    return;
+                    moved = await TryMoveTopSpecialItemAsync(itemData);
                 }
+                else if (itemData.ItemType == ItemType.Common)
+                {
+                    moved = await TryMoveTopCommonItemAsync(itemData);
+                }
+                else
+                {
+                    DebugTool.Warning($"보상 큐에서 처리할 수 없는 아이템 타입입니다. ID:{itemData.ItemID}, Type:{itemData.ItemType}", DebugType.Board, this);
+                    ShowAlert("처리할 수 없는 아이템입니다.");
+                }
+
+                if (!moved)
+                    return;
 
                 _rewardQueue.Dequeue();
 
                 RefreshView();
                 RequestSaveQueue();
 
-                DebugTool.Log($"보상 큐 Pop 완료 / 남은 개수: {_rewardQueue.Count}", DebugType.Board, this);
+                DebugTool.Log($"보상 큐 Pop 완료 / ID:{itemData.ItemID}, Type:{itemData.ItemType}, 남은 개수: {_rewardQueue.Count}", DebugType.Board, this);
             }
             finally
             {
                 _isProcessing = false;
             }
+        }
+
+        private async Task<bool> TryMoveTopCommonItemAsync(ItemData itemData)
+        {
+            if (_boardSystem == null)
+                _boardSystem = FindFirstObjectByType<BoardSystem>();
+
+            if (_boardSystem == null)
+            {
+                DebugTool.Warning("BoardSystem이 연결되지 않았습니다.", DebugType.Board, this);
+                ShowAlert("보드가 준비되지 않았습니다.");
+                return false;
+            }
+
+            ItemSlot addedSlot = await _boardSystem.TryAddItemFromQueueAndSelectAsync(itemData);
+
+            if (addedSlot == null)
+            {
+                ShowAlert("보드판 공간이 부족합니다.");
+                return false;
+            }
+
+            return true;
+        }
+
+        private async Task<bool> TryMoveTopSpecialItemAsync(ItemData itemData)
+        {
+            if (_specialItemBoardSystem == null)
+                _specialItemBoardSystem = FindFirstObjectByType<SpecialItemBoardSystem>();
+
+            if (_specialItemBoardSystem == null)
+            {
+                DebugTool.Warning("SpecialItemBoardSystem이 연결되지 않았습니다.", DebugType.Board, this);
+                ShowAlert("특수 아이템 보드가 준비되지 않았습니다.");
+                return false;
+            }
+
+            if (!_specialItemBoardSystem.IsServerDataLoaded)
+                await _specialItemBoardSystem.LoadSpecialBoardFromServerAsync();
+
+            if (!_specialItemBoardSystem.IsServerDataLoaded)
+            {
+                DebugTool.Warning("특수 아이템 보드 서버 데이터 로드 전에는 아이템을 넣을 수 없습니다.", DebugType.Board, this);
+                ShowAlert("특수 아이템 보드 로드 중입니다.");
+                return false;
+            }
+
+            bool added = await _specialItemBoardSystem.TryAddSpecialItemAsync(itemData, 1);
+
+            if (!added)
+            {
+                ShowAlert("특수 아이템 슬롯 공간이 부족합니다.");
+                return false;
+            }
+
+            return true;
         }
 
         public async Task LoadQueueFromServerAsync(bool normalizeDocumentIds = false)
@@ -192,21 +264,25 @@ namespace UI.MergeBoard
                 return false;
             }
 
-            _mergeBoardFirestore = FireStoreManager.Instance.GetData<MergeBoardFirestoreSo>(DataType.MergeBoard);
+            if (_mergeBoardFirestore == null)
+                FireStoreManager.Instance.TryGetStore(out _mergeBoardFirestore);
 
             if (_mergeBoardFirestore == null)
             {
-                DebugTool.Warning("FireStoreManager에서 MergeBoardFirestoreSO를 찾을 수 없습니다.", DebugType.Board, this);
+                DebugTool.Warning("MergeBoardRewardQueueSO가 인스펙터 또는 FireStoreManager에 연결되지 않았습니다.", DebugType.Board, this);
                 return false;
             }
 
             if (!_mergeBoardFirestore.IsReady)
+                _mergeBoardFirestore.TryEnsureDatabaseReady();
+
+            if (!_mergeBoardFirestore.IsReady)
             {
-                DebugTool.Warning("MergeBoardFirestoreSO가 아직 준비되지 않았습니다.", DebugType.Board, this);
+                DebugTool.Warning("MergeBoardRewardQueueSO가 아직 준비되지 않았습니다.", DebugType.Board, this);
                 return false;
             }
 
-            DebugTool.Log("MergeBoardFirestoreSO 연결 완료", DebugType.Board, this);
+            DebugTool.Log("MergeBoardRewardQueueSO 연결 완료", DebugType.Board, this);
             return true;
         }
 
@@ -261,6 +337,74 @@ namespace UI.MergeBoard
             }
         }
 
+
+        public int GetItemCountById(int itemID)
+        {
+            if (itemID <= 0)
+                return 0;
+
+            int count = 0;
+
+            foreach (ItemData itemData in _rewardQueue)
+            {
+                if (itemData != null && itemData.HasItem && itemData.ItemID == itemID)
+                    count++;
+            }
+
+            return count;
+        }
+
+        public async Task<int> ConsumeItemsByIdAsync(int itemID, int count = 1)
+        {
+            if (!IsLoaded)
+            {
+                DebugTool.Warning("보상 큐 서버 데이터 로드 전에는 아이템을 소비할 수 없습니다.", DebugType.Board, this);
+                return 0;
+            }
+
+            if (itemID <= 0)
+                return 0;
+
+            int safeCount = Mathf.Max(1, count);
+            int availableCount = GetItemCountById(itemID);
+
+            if (availableCount < safeCount)
+            {
+                DebugTool.Warning($"보상 큐에 소비할 아이템 수량이 부족합니다. ID:{itemID}, 필요:{safeCount}, 보유:{availableCount}", DebugType.Board, this);
+                return 0;
+            }
+
+            Queue<ItemData> newQueue = new Queue<ItemData>();
+            int consumedCount = 0;
+
+            while (_rewardQueue.Count > 0)
+            {
+                ItemData itemData = _rewardQueue.Dequeue();
+
+                if (consumedCount < safeCount && itemData != null && itemData.HasItem && itemData.ItemID == itemID)
+                {
+                    consumedCount++;
+                    continue;
+                }
+
+                newQueue.Enqueue(itemData);
+            }
+
+            while (newQueue.Count > 0)
+                _rewardQueue.Enqueue(newQueue.Dequeue());
+
+            RefreshView();
+
+            if (ResolveMergeBoardFirestore())
+            {
+                List<ItemData> snapshot = new List<ItemData>(_rewardQueue);
+                await _mergeBoardFirestore.SaveRewardQueueAsync(snapshot);
+            }
+
+            DebugTool.Log($"보상 큐 아이템 소비 완료 / ID:{itemID}, Count:{consumedCount}", DebugType.Board, this);
+            return consumedCount;
+        }
+
         public void ShowAlert(string message)
         {
             if (_alertText == null)
@@ -269,10 +413,30 @@ namespace UI.MergeBoard
                 return;
             }
 
-            if (_alertCoroutine != null)
-                StopCoroutine(_alertCoroutine);
+            if (!isActiveAndEnabled)
+            {
+                ClearAlert();
+                DebugTool.Warning(message, DebugType.Board, this);
+                return;
+            }
 
+            ClearAlert();
             _alertCoroutine = StartCoroutine(AlertRoutine(message));
+        }
+
+        public void ClearAlert()
+        {
+            if (_alertCoroutine != null)
+            {
+                StopCoroutine(_alertCoroutine);
+                _alertCoroutine = null;
+            }
+
+            if (_alertText == null)
+                return;
+
+            _alertText.text = string.Empty;
+            _alertText.gameObject.SetActive(false);
         }
 
         private IEnumerator AlertRoutine(string message)
@@ -282,8 +446,7 @@ namespace UI.MergeBoard
 
             yield return new WaitForSeconds(_alertDuration);
 
-            _alertText.gameObject.SetActive(false);
-            _alertCoroutine = null;
+            ClearAlert();
         }
 
         private void RefreshView()

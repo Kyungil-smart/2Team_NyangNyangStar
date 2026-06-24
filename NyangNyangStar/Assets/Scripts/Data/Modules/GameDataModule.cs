@@ -1,5 +1,6 @@
 using Data.ScriptableObjects.KeyContainerSO;
 using Data.ScriptableObjects.MergeBoard;
+using Data.ScriptableObjects.MoongchiSO;
 using Services.Enums;
 using System;
 using System.Collections.Generic;
@@ -10,6 +11,12 @@ namespace Data.Modules
     {
         private Dictionary<int, KeyContainerSo> _keyContainerDict = new();
         private ItemDatabaseSo _mergeBoardItemDatabase;
+        private NyangNyangSnapBackgroundSO _nyangNyangSnapBackgroundSO;
+        private NyangNyangSnapPoseSO _nyangNyangSnapPoseSO;
+        private NyangNyangSnapToolSO _nyangNyangSnapToolSO;
+        private MoongchiShopSO _findMoongchiShopSO;
+        private MoongchiMissionSO _findMoongchiMissionSO;
+        private MoongchiProfileSO _findMoongchiProfileSO;
 
         public bool IsReady { get; private set; }
 
@@ -42,6 +49,72 @@ namespace Data.Modules
 
             int dataCount = itemDatabase != null ? itemDatabase.DataCount : 0;
             DebugTool.Log($"[GameDataModule] MergeBoard ItemDatabase 등록 ({dataCount}개)", DebugType.Data);
+        }
+
+        public void RegisterNyangNyangSnapData(
+            NyangNyangSnapBackgroundSO backgroundSO,
+            NyangNyangSnapPoseSO poseSO,
+            NyangNyangSnapToolSO toolSO)
+        {
+            _nyangNyangSnapBackgroundSO = backgroundSO;
+            _nyangNyangSnapPoseSO = poseSO;
+            _nyangNyangSnapToolSO = toolSO;
+
+            DebugTool.Log("[GameDataModule] 냥냥스냅 데이터 SO 등록 완료", DebugType.Data);
+        }
+
+        public void RegisterFindMoongchiData(
+            MoongchiShopSO shopSO,
+            MoongchiMissionSO missionSO,
+            MoongchiProfileSO profileSO)
+        {
+            _findMoongchiShopSO = shopSO;
+            _findMoongchiMissionSO = missionSO;
+            _findMoongchiProfileSO = profileSO;
+
+            int shopCount = shopSO != null ? shopSO.ShopItems.Count : 0;
+            int missionCount = missionSO != null ? missionSO.Missions.Count : 0;
+            int profileCount = profileSO != null ? profileSO.Profiles.Count : 0;
+
+            DebugTool.Log(
+                $"[GameDataModule] 뭉치를 찾아라 데이터 SO 등록 완료 / Shop={shopCount}, Mission={missionCount}, Profile={profileCount}",
+                DebugType.Data);
+        }
+
+        public bool TryGetFindMoongchiShopSO(out MoongchiShopSO shopSO)
+        {
+            shopSO = _findMoongchiShopSO;
+            return shopSO != null;
+        }
+
+        public bool TryGetFindMoongchiMissionSO(out MoongchiMissionSO missionSO)
+        {
+            missionSO = _findMoongchiMissionSO;
+            return missionSO != null;
+        }
+
+        public bool TryGetFindMoongchiProfileSO(out MoongchiProfileSO profileSO)
+        {
+            profileSO = _findMoongchiProfileSO;
+            return profileSO != null;
+        }
+
+        public bool TryGetNyangNyangSnapBackgroundSO(out NyangNyangSnapBackgroundSO backgroundSO)
+        {
+            backgroundSO = _nyangNyangSnapBackgroundSO;
+            return backgroundSO != null;
+        }
+
+        public bool TryGetNyangNyangSnapPoseSO(out NyangNyangSnapPoseSO poseSO)
+        {
+            poseSO = _nyangNyangSnapPoseSO;
+            return poseSO != null;
+        }
+
+        public bool TryGetNyangNyangSnapToolSO(out NyangNyangSnapToolSO toolSO)
+        {
+            toolSO = _nyangNyangSnapToolSO;
+            return toolSO != null;
         }
 
         public bool TryGetMergeBoardItemById(int itemID, out ItemData itemData)
@@ -126,6 +199,12 @@ namespace Data.Modules
             IsReady = false;
             _onReady = null;
             _mergeBoardItemDatabase = null;
+            _nyangNyangSnapBackgroundSO = null;
+            _nyangNyangSnapPoseSO = null;
+            _nyangNyangSnapToolSO = null;
+            _findMoongchiShopSO = null;
+            _findMoongchiMissionSO = null;
+            _findMoongchiProfileSO = null;
             _keyContainerDict.Clear();
 
             DebugTool.Log("[GameDataModule] 데이터 초기화 완료", DebugType.Data);
@@ -135,6 +214,12 @@ namespace Data.Modules
         {
             _onReady = null;
             _mergeBoardItemDatabase = null;
+            _nyangNyangSnapBackgroundSO = null;
+            _nyangNyangSnapPoseSO = null;
+            _nyangNyangSnapToolSO = null;
+            _findMoongchiShopSO = null;
+            _findMoongchiMissionSO = null;
+            _findMoongchiProfileSO = null;
         }
     }
 }

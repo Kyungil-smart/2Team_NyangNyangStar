@@ -1,5 +1,8 @@
+using System.Collections;
+using System.Threading.Tasks;
 using Core.Managers;
 using TMPro;
+using UI.Common;
 using UI;
 using UI.Base;
 using UI.MergeBoard;
@@ -28,11 +31,18 @@ public class MainUI : UIScene
     [Tooltip("공방 머지 보드판")][SerializeField] private Button _workshopMergeBoardButton;
     [Tooltip("기본 머지 보드판")][SerializeField] private Button _mainMergeBoardButton;
     [Tooltip("로그 아웃")][SerializeField] private Button _logOutButton;
+    
+    [Tooltip("뭉치를 찾아라")] [SerializeField] private Button _findMoongchiButton;
 
     private MainUISprite _mainUISprite;
     private MergeBoardController _mergeBoardController;
     private ScratchingTimeManager _scratchingTimeManager;
-    
+    private PlayerResourceDisplay _resourceDisplay;
+    private UIPopup _nyangStargramPopup;
+    private NotebookPopupUI _notebookPopup;
+    private bool _isMergeBoardTransitioning;
+    private bool _isMergeBoardVisible;
+
     [SerializeField] private UsersSO _usersSO;
     [SerializeField] private TMP_Text _uidText;
 
@@ -70,6 +80,7 @@ public class MainUI : UIScene
         _workshopMergeBoardButton = Get<Button>((int)MainUIButtons.WorkshopMergeBoardButton);
         _mainMergeBoardButton = Get<Button>((int)MainUIButtons.MainMergeBoardButton);
         _logOutButton = Get<Button>((int)MainUIButtons.LogOutButton);
+        _findMoongchiButton = Get<Button>((int)MainUIButtons.FindMoongchiButton);
 
         if (_mainUICanvas != null)
         {
@@ -79,10 +90,12 @@ public class MainUI : UIScene
 
         _mainUISprite = GetComponent<MainUISprite>();
         _mainUISprite?.Init();
+        EnsureResourceDisplay();
 
         InitPopups();
         SubscribeUserIdChanged();
         UpdateUidText();
+        SetPhotoAlert(false);
     }
 
     private void InitPopups()
@@ -93,11 +106,12 @@ public class MainUI : UIScene
         InitPopup(KeyContainer.Prefabs.SettingsPopupUI, _settingsButton);
         InitPopup(KeyContainer.Prefabs.CollectionPopupUI, _collectionButton);
         InitPopup(KeyContainer.Prefabs.StoryBookPopupUI, _storyBookButton);
-        InitPopup(KeyContainer.Prefabs.NotebookPopupUI, _notebookButton);
+        InitNotebookPopup();
         InitPopup(KeyContainer.Prefabs.RoulettePopupUI, _rouletteButton);
         InitPopup(KeyContainer.Prefabs.AffinityPopupUI, _affinityButton);
         InitPopup(KeyContainer.Prefabs.NyangNyangSnapStagePopUpUI, _nyangNyangSnapButton);
-        InitPopup(KeyContainer.Prefabs.NyangStargramHomeProfile, _meowMeowStarButton);
+        InitNyangStargramPopup();
+        InitPopup(KeyContainer.Prefabs.FindMoongchiPopupUI, _findMoongchiButton);
 
         if (_logOutButton != null)
             _logOutButton.onClick.AddListener(LogOutButton);
@@ -121,6 +135,7 @@ public class MainUI : UIScene
         RemovePopupButton(_affinityButton);
         RemovePopupButton(_nyangNyangSnapButton);
         RemovePopupButton(_meowMeowStarButton);
+        RemovePopupButton(_findMoongchiButton);
 
         if (_mainMergeBoardButton != null)
             _mainMergeBoardButton.onClick.RemoveAllListeners();
@@ -168,6 +183,18 @@ public class MainUI : UIScene
             _workshopMergeBoardButton.onClick.AddListener(OpenMergeBoard);
     }
 
+    private void EnsureResourceDisplay()
+    {
+        if (_resourceDisplay == null)
+            _resourceDisplay = GetComponent<PlayerResourceDisplay>();
+
+        if (_resourceDisplay == null)
+            _resourceDisplay = gameObject.AddComponent<PlayerResourceDisplay>();
+
+        _resourceDisplay.ResolveReferencesFrom(transform);
+        _ = PlayerResourceManager.Instance.RefreshAsync();
+    }
+
     private void OpenMergeBoard()
     {
         if (_mergeBoardController == null)
@@ -175,6 +202,9 @@ public class MainUI : UIScene
             DebugTool.Warning("MergeBoardController가 아직 로드되지 않았습니다.", DebugType.Board);
             return;
         }
+
+        if (_isMergeBoardTransitioning || _isMergeBoardVisible)
+            return;
 
         _scratchingTimeManager?.HideImmediately();
 
@@ -184,10 +214,11 @@ public class MainUI : UIScene
             return;
         }
 
+        BeginMergeBoardTransition();
         ScreenTransitionManager.Instance.Cover(() =>
         {
             SetMergeBoardVisible(true);
-            ScreenTransitionManager.Instance.Reveal();
+            ScreenTransitionManager.Instance.Reveal(EndMergeBoardTransition);
         });
 
         GameManager.Audio.PlaySfx("Main_SFX_Touch");
@@ -198,23 +229,49 @@ public class MainUI : UIScene
         if (_mergeBoardController == null)
             return;
 
+        if (_isMergeBoardTransitioning || !_isMergeBoardVisible)
+            return;
+
         if (ScreenTransitionManager.Instance == null)
         {
             SetMergeBoardVisible(false);
             return;
         }
 
+        BeginMergeBoardTransition();
         ScreenTransitionManager.Instance.Cover(() =>
         {
             SetMergeBoardVisible(false);
-            ScreenTransitionManager.Instance.Reveal();
+            ScreenTransitionManager.Instance.Reveal(EndMergeBoardTransition);
         });
 
         GameManager.Audio.PlaySfx("Main_SFX_Touch");
     }
 
+    private void BeginMergeBoardTransition()
+    {
+        _isMergeBoardTransitioning = true;
+        SetMergeBoardButtonsInteractable(false);
+    }
+
+    private void EndMergeBoardTransition()
+    {
+        _isMergeBoardTransitioning = false;
+        SetMergeBoardButtonsInteractable(true);
+    }
+
+    private void SetMergeBoardButtonsInteractable(bool interactable)
+    {
+        if (_mainMergeBoardButton != null)
+            _mainMergeBoardButton.interactable = interactable;
+
+        if (_workshopMergeBoardButton != null)
+            _workshopMergeBoardButton.interactable = interactable;
+    }
+
     private void SetMergeBoardVisible(bool isOpen)
     {
+        _isMergeBoardVisible = isOpen;
         _mergeBoardController.SetVisible(isOpen);
 
         if (_mainUICanvas != null)
@@ -297,15 +354,20 @@ public class MainUI : UIScene
     {
         if (ScreenTransitionManager.Instance == null)
         {
-            LogoutProcess();
+            StartCoroutine(LogoutProcessCoroutine());
             return;
         }
 
-        ScreenTransitionManager.Instance.Cover(LogoutProcess);
+        ScreenTransitionManager.Instance.Cover(() => StartCoroutine(LogoutProcessCoroutine()));
     }
 
-    private void LogoutProcess()
+    private IEnumerator LogoutProcessCoroutine()
     {
+        Task recordTask = UserSessionTimeService.RecordLogoutAsync();
+
+        while (!recordTask.IsCompleted)
+            yield return null;
+
         AuthManager auth = AuthManager.Instance;
 
         if (auth != null)
@@ -319,6 +381,28 @@ public class MainUI : UIScene
     private void InitPopup(string key, Button button)
     {
         GameManager.UI.ShowPopupUI<UIPopup>(key, onLoaded => AddPopupButton(button, onLoaded), false);
+    }
+
+    private void InitNotebookPopup()
+    {
+        GameManager.UI.ShowPopupUI<NotebookPopupUI>(KeyContainer.Prefabs.NotebookPopupUI,
+            onLoaded =>
+            {
+                _notebookPopup = onLoaded;
+                AddPopupButton(_notebookButton, onLoaded);
+            },
+            false);
+    }
+
+    private void InitNyangStargramPopup()
+    {
+        GameManager.UI.ShowPopupUI<UIPopup>(KeyContainer.Prefabs.NyangStargramHomeProfile,
+            onLoaded =>
+            {
+                _nyangStargramPopup = onLoaded;
+                AddPopupButton(_meowMeowStarButton, onLoaded);
+            },
+            false);
     }
 
     private void AddPopupButton(Button button, UIPopup popup)
@@ -349,6 +433,19 @@ public class MainUI : UIScene
 
         popup.PlayOpenAnimation();
     }
+
+    public void SetPhotoAlert(bool isOn)
+    {
+        _mainUISprite?.SetNotebookAlert(isOn);
+        _notebookPopup?.SetPhotoAlert(isOn);
+    }
+
+    public void OpenNyangStargramPopup()
+    {
+        _nyangStargramPopup.gameObject.SetActive(true);
+        PlayPopupOpenAnimation(_nyangStargramPopup);
+        GameManager.Audio.PlaySfx("Main_SFX_Touch");
+    }
 }
 
 public enum MainUIButtons
@@ -368,4 +465,5 @@ public enum MainUIButtons
     WorkshopMergeBoardButton,
     MainMergeBoardButton,
     LogOutButton,
+    FindMoongchiButton,
 }

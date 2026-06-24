@@ -12,6 +12,7 @@ namespace Core.Managers
     public class UiManager : ISubManager
     {
         private const int PopupStartorder = 10;
+        private static readonly Vector2 ReferenceResolution = new Vector2(1080f, 1920f);
         private int _order = PopupStartorder;
 
         private Stack<UIPopup> _popupStack = new();
@@ -49,13 +50,10 @@ namespace Core.Managers
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
             canvas.overrideSorting = sort;
 
-            CanvasScaler canvasScaler = canvas.GetComponent<CanvasScaler>();
-            if (canvasScaler == null)
-                canvasScaler = go.AddComponent<CanvasScaler>();
+            if (canvas.GetComponent<CanvasScaler>() == null)
+                go.AddComponent<CanvasScaler>();
 
-            // canvasScaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-            // canvasScaler.referenceResolution = new Vector2(1080, 1920);
-            // canvasScaler.matchWidthOrHeight = 0.5f;
+            ConfigureCanvasScalers(go);
 
             if (sort)
             {
@@ -71,6 +69,7 @@ namespace Core.Managers
         private void SetSortingOrder(GameObject go)
         {
             Canvas[] canvases = go.GetComponentsInChildren<Canvas>(true);
+            ConfigureCanvasScalers(go);
 
             foreach (Canvas canvas in canvases)
             {
@@ -79,6 +78,37 @@ namespace Core.Managers
             }
 
             _order++;
+        }
+
+        private static void ConfigureCanvasScalers(GameObject go)
+        {
+            if (go == null)
+                return;
+
+            Canvas[] canvases = go.GetComponentsInChildren<Canvas>(true);
+
+            foreach (Canvas canvas in canvases)
+            {
+                if (canvas == null)
+                    continue;
+
+                CanvasScaler canvasScaler = canvas.GetComponent<CanvasScaler>();
+                if (canvasScaler == null)
+                    canvasScaler = canvas.gameObject.AddComponent<CanvasScaler>();
+
+                ConfigureCanvasScaler(canvasScaler);
+            }
+        }
+
+        private static void ConfigureCanvasScaler(CanvasScaler canvasScaler)
+        {
+            if (canvasScaler == null)
+                return;
+
+            canvasScaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            canvasScaler.referenceResolution = ReferenceResolution;
+            canvasScaler.screenMatchMode = CanvasScaler.ScreenMatchMode.Expand;
+            canvasScaler.matchWidthOrHeight = 0f;
         }
 
         public void ShowSceneUI<T>(string name = null, Action<T> onLoaded = null) where T : UIScene

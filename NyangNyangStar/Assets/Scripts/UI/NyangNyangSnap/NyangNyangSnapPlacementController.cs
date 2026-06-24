@@ -1,0 +1,951 @@
+using System;
+using System.Collections;
+using TMPro;
+using UnityEngine;
+using UnityEngine.UI;
+using Util;
+
+public class NyangNyangSnapPlacementController : MonoBehaviour
+{
+    private enum ToyPlacementState
+    {
+        None,
+        ToySelected,
+        MarkerPlaced,
+        Dragging
+    }
+
+    private enum SnackPlacementState
+    {
+        None,
+        Selected,
+        Dragging,
+        WaitingForCat
+    }
+
+    [Header("입력 및 배치 영역")]
+    [Tooltip("장난감 목표 위치를 선택할 화면상의 UI 영역입니다.")]
+    [SerializeField] private RectTransform _clickArea;
+
+    [Tooltip("사진에 실제 아이템 이미지가 생성될 영역입니다.")]
+    [SerializeField] private RectTransform _placementArea;
+
+    [Header("미리보기 이미지")]
+    [Tooltip("드래그 중 표시할 장난감 이미지입니다. 비워두면 자동 생성됩니다.")]
+    [SerializeField] private Image _previewImage;
+
+    [Tooltip("마커 범위 밖에서 적용할 미리보기 알파값입니다.")]
+    [Range(0f, 1f)]
+    [SerializeField] private float _invalidPreviewAlpha = 0.5f;
+
+    [Header("장난감 마커")]
+    [Tooltip("선택한 목표 위치를 표시할 마커입니다.")]
+    [SerializeField] private Image _markerImage;
+
+    [Tooltip("ToolSO 범위를 찾지 못했을 때 사용할 기본 드롭 반경입니다.")]
+    [Min(1f)]
+    [SerializeField] private float _markerDropRadius = 100f;
+
+    [Header("도구 범위 표시")]
+    [Tooltip("마커 주변의 드롭 허용 범위를 표시할 원형 이미지입니다.")]
+    [SerializeField] private Image _rangeImage;
+
+    [Tooltip("ItemID에 맞는 ItemRange를 가져올 Tool SO입니다.")]
+    [SerializeField] private NyangNyangSnapToolSO _toolSO;
+
+    [Tooltip("ItemRange를 UI 거리로 변환할 배율입니다.")]
+    [Min(0.1f)]
+    [SerializeField] private float _itemRangeScale = 10f;
+
+    [Header("간식 정지 감지")]
+    [Tooltip("드래그 중 간식이 이 시간 이상 멈춰 있어야 고양이가 반응합니다.")]
+    [Min(0.1f)]
+    [SerializeField] private float _snackStationaryDuration = 2f;
+
+    [Tooltip("이 거리 이상 움직이면 간식 정지 시간을 초기화합니다.")]
+    [Min(0f)]
+    [SerializeField] private float _snackMoveThreshold = 5f;
+
+    [Header("배치 설정")]
+    [Tooltip("사진 영역에 생성될 아이템 이미지 크기입니다.")]
+    [SerializeField] private Vector2 _placedItemSize = new Vector2(160f, 160f);
+
+    [Header("실패 알림")]
+    [Tooltip("잘못 드롭했을 때 표시할 TMP 텍스트입니다.")]
+    [SerializeField] private TMP_Text _retryMessageText;
+
+    [Tooltip("실패 알림 표시 시간입니다.")]
+    [Min(0.1f)]
+    [SerializeField] private float _retryMessageDuration = 1.5f;
+
+    private Canvas _canvas;
+    private RectTransform _canvasRectTransform;
+    private Image _placedImage;
+    private Coroutine _retryMessageCoroutine;
+
+    private ToyPlacementState _toyState = ToyPlacementState.None;
+    private SnackPlacementState _snackState = SnackPlacementState.None;
+    private bool _lastPlacementWasSnack;
+
+    private int _selectedItemID = -1;
+    private string _selectedItemName = string.Empty;
+    private Sprite _selectedSprite;
+
+    private int _placedItemID = -1;
+
+    private Vector2 _markerCanvasPosition;
+    private Vector2 _markerPlacementPosition;
+
+    private Vector2 _lastSnackPosition;
+    private float _snackStationaryTime;
+    private bool _snackStationaryChecked;
+
+    public int SelectedItemID => _placedItemID;
+    public bool HasPlacedItem => _placedItemID > 0;
+    public RectTransform PlacedItemRectTransform => _placedImage != null ? _placedImage.rectTransform : null;
+    public bool LastPlacementWasSnack => _lastPlacementWasSnack;
+    public bool IsSnackDragging => _snackState == SnackPlacementState.Dragging;
+    public bool IsSnackWaitingForCat => _snackState == SnackPlacementState.WaitingForCat;
+
+    public event Action<int> OnItemPlaced;
+    public event Action OnToyDropFailed;
+
+    public event Action OnToyAlertStarted;
+    public event Action OnToyAlertEnded;
+
+    public event Action<int> OnSnackDragStarted;
+    public event Action<int, RectTransform, float> OnSnackDragUpdated;
+    public event Action<int> OnSnackDragCompleted;
+    public event Action OnSnackDragCanceled;
+
+    public event Action<RectTransform> OnPreviewMoved;
+
+    private void Awake()
+    {
+        AutoAssign();
+
+        SetPreviewActive(false);
+        SetMarkerActive(false);
+        SetRangeActive(false);
+        SetRetryMessageActive(false);
+        ApplyPhotoLayerOrder();
+    }
+
+    private void OnDisable()
+    {
+        SetPreviewAlpha(1f);
+        SetPreviewActive(false);
+        SetMarkerActive(false);
+        SetRangeActive(false);
+        SetRetryMessageActive(false);
+    }
+
+    private void Update()
+    {
+        HandleMarkerInput();
+        HandleSnackStationary();
+    }
+
+    public bool SelectToy(int itemID, string itemName, Sprite itemSprite)
+    {
+        if (!ValidateSelection(itemID, itemSprite))
+            return false;
+
+        bool isSameToy = _selectedItemID == itemID && _selectedSprite == itemSprite;
+
+        if (isSameToy &&
+            (_toyState == ToyPlacementState.MarkerPlaced ||
+             _toyState == ToyPlacementState.Dragging))
+        {
+            DebugTool.Log(
+                $"[NyangNyangSnapPlacementController] 동일 장난감 재선택 / 마커 유지 / ItemID:{itemID}",
+                DebugType.UI,
+                this
+            );
+
+            return true;
+        }
+
+        _selectedItemID = itemID;
+        _selectedItemName = itemName;
+        _selectedSprite = itemSprite;
+        _toyState = ToyPlacementState.ToySelected;
+        _snackState = SnackPlacementState.None;
+        _lastPlacementWasSnack = false;
+
+        SetPreviewAlpha(1f);
+        SetPreviewActive(false);
+        SetMarkerActive(false);
+        SetRangeActive(false);
+
+        DebugTool.Log(
+            $"[NyangNyangSnapPlacementController] 장난감 선택 완료 / ItemID:{itemID}, ItemName:{itemName}",
+            DebugType.UI,
+            this
+        );
+
+        return true;
+    }
+
+
+    public bool SelectSnack(int itemID, string itemName, Sprite itemSprite)
+    {
+        if (!ValidateSelection(itemID, itemSprite))
+            return false;
+
+        _selectedItemID = itemID;
+        _selectedItemName = itemName;
+        _selectedSprite = itemSprite;
+        _snackState = SnackPlacementState.Selected;
+        _toyState = ToyPlacementState.None;
+
+        SetPreviewAlpha(1f);
+        SetPreviewActive(false);
+        SetMarkerActive(false);
+        SetRangeActive(false);
+
+        DebugTool.Log(
+            $"[NyangNyangSnapPlacementController] 간식 선택 완료 / ItemID:{itemID}, ItemName:{itemName}",
+            DebugType.UI,
+            this
+        );
+
+        return true;
+    }
+
+    public bool BeginSnackDrag(Vector2 pointerPosition)
+    {
+        if (_snackState != SnackPlacementState.Selected ||
+            _previewImage == null ||
+            _selectedSprite == null ||
+            _placementArea == null)
+        {
+            return false;
+        }
+
+        _snackState = SnackPlacementState.Dragging;
+
+        // 간식과 고양이가 같은 PhotoCanvas 좌표계를 사용하도록 합니다.
+        _previewImage.rectTransform.SetParent(_placementArea, false);
+        _previewImage.rectTransform.anchorMin = new Vector2(0.5f, 0.5f);
+        _previewImage.rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
+        _previewImage.rectTransform.pivot = new Vector2(0.5f, 0.5f);
+        _previewImage.rectTransform.sizeDelta = _placedItemSize;
+
+        _previewImage.sprite = _selectedSprite;
+        _previewImage.preserveAspect = true;
+        _previewImage.raycastTarget = false;
+
+        SetPreviewAlpha(1f);
+        SetPreviewActive(true);
+        SetMarkerActive(false);
+        SetRangeActive(true);
+
+        ApplyPreviewLayerOrder();
+        UpdateSnackDrag(pointerPosition);
+
+        _lastSnackPosition = _previewImage.rectTransform.anchoredPosition;
+        ResetSnackStationaryTimer();
+        OnSnackDragStarted?.Invoke(_selectedItemID);
+
+        DebugTool.Log(
+            $"[NyangNyangSnapPlacementController] 간식 드래그 시작 / ItemID:{_selectedItemID}",
+            DebugType.UI,
+            this
+        );
+
+        return true;
+    }
+
+    public void UpdateSnackDrag(Vector2 pointerPosition)
+    {
+        if (_snackState != SnackPlacementState.Dragging)
+            return;
+
+        // RawImage 터치 위치를 실제 PhotoCanvas 배치 영역 좌표로 변환합니다.
+        if (!TryGetPlacementLocalPoint(pointerPosition, out Vector2 placementPosition))
+            return;
+
+        float movedDistance = Vector2.Distance(_lastSnackPosition, placementPosition);
+
+        _previewImage.rectTransform.anchoredPosition = placementPosition;
+        ShowRange(placementPosition);
+        OnPreviewMoved?.Invoke(_previewImage.rectTransform);
+
+        if (movedDistance >= _snackMoveThreshold)
+        {
+            _lastSnackPosition = placementPosition;
+            ResetSnackStationaryTimer();
+        }
+    }
+
+    private void HandleSnackStationary()
+    {
+        if (_snackState != SnackPlacementState.Dragging ||
+            _previewImage == null)
+        {
+            return;
+        }
+
+        _snackStationaryTime += Time.unscaledDeltaTime;
+
+        if (_snackStationaryTime < _snackStationaryDuration)
+            return;
+
+        // ALERT 연출과 간식 정지 시간이 동시에 끝나는 경우를 대비해
+        // 고양이 이동이 시작될 때까지 이동 가능 여부를 계속 전달합니다.
+        OnSnackDragUpdated?.Invoke(
+            _selectedItemID,
+            _previewImage.rectTransform,
+            GetCurrentDropRadius()
+        );
+
+        if (_snackStationaryChecked)
+            return;
+
+        _snackStationaryChecked = true;
+
+        DebugTool.Log(
+            $"[NyangNyangSnapPlacementController] 간식 2초 정지 확인 완료 / ItemID:{_selectedItemID}",
+            DebugType.UI,
+            this
+        );
+    }
+
+    private void ResetSnackStationaryTimer()
+    {
+        _snackStationaryTime = 0f;
+        _snackStationaryChecked = false;
+    }
+
+    public void LockSnackDrag()
+    {
+        if (_snackState != SnackPlacementState.Dragging)
+            return;
+
+        _snackState = SnackPlacementState.WaitingForCat;
+
+        DebugTool.Log(
+            $"[NyangNyangSnapPlacementController] 고양이 이동 시작으로 간식 위치 고정 / ItemID:{_selectedItemID}",
+            DebugType.UI,
+            this
+        );
+    }
+
+    public void CancelSnackDrag()
+    {
+        if (_snackState == SnackPlacementState.None)
+            return;
+
+        _snackState = SnackPlacementState.None;
+        ResetSnackStationaryTimer();
+
+        SetPreviewAlpha(1f);
+        SetPreviewActive(false);
+        SetRangeActive(false);
+
+        OnSnackDragCanceled?.Invoke();
+
+        DebugTool.Log(
+            $"[NyangNyangSnapPlacementController] 간식 드래그 취소 / ItemID:{_selectedItemID}",
+            DebugType.UI,
+            this
+        );
+    }
+
+    public bool CompleteSnackDrag(int itemID)
+    {
+        if (_snackState != SnackPlacementState.WaitingForCat || itemID != _selectedItemID)
+            return false;
+
+        if (_previewImage == null || _placementArea == null)
+            return false;
+
+        Vector2 placementPosition = _placementArea.InverseTransformPoint(_previewImage.rectTransform.position);
+        int completedItemID = _selectedItemID;
+
+        _lastPlacementWasSnack = true;
+        _snackState = SnackPlacementState.None;
+        ResetSnackStationaryTimer();
+        PlaceSelectedItem(placementPosition);
+
+        OnSnackDragCompleted?.Invoke(completedItemID);
+
+        return true;
+    }
+
+    public bool BeginSelection(int itemID, string itemName, Sprite itemSprite, Vector2 pointerPosition)
+    {
+        if (!ValidateSelection(itemID, itemSprite))
+            return false;
+
+        _selectedItemID = itemID;
+        _selectedItemName = itemName;
+        _selectedSprite = itemSprite;
+
+        if (_previewImage == null)
+            return false;
+
+        _previewImage.sprite = itemSprite;
+        _previewImage.preserveAspect = true;
+        _previewImage.raycastTarget = false;
+
+        SetPreviewAlpha(1f);
+        SetPreviewActive(true);
+        MovePreview(pointerPosition);
+
+        return true;
+    }
+
+
+    public bool BeginToyDrag(Vector2 pointerPosition)
+    {
+        if (_toyState != ToyPlacementState.MarkerPlaced)
+        {
+            DebugTool.Warning(
+                "[NyangNyangSnapPlacementController] 먼저 사진 영역을 터치해 마커를 표시해주세요.",
+                DebugType.UI,
+                this
+            );
+
+            return false;
+        }
+
+        if (_previewImage == null || _selectedSprite == null)
+            return false;
+
+        _toyState = ToyPlacementState.Dragging;
+
+        _previewImage.sprite = _selectedSprite;
+        _previewImage.preserveAspect = true;
+        _previewImage.raycastTarget = false;
+
+        SetPreviewAlpha(1f);
+        SetPreviewActive(true);
+
+        SetMarkerActive(true);
+        SetRangeActive(true);
+
+        _previewImage.transform.SetAsLastSibling();
+
+        UpdateToyDrag(pointerPosition);
+
+        DebugTool.Log(
+            $"[NyangNyangSnapPlacementController] 장난감 드래그 시작 / ItemID:{_selectedItemID}",
+            DebugType.UI,
+            this
+        );
+
+        return true;
+    }
+
+    public void UpdateToyDrag(Vector2 pointerPosition)
+    {
+        if (_toyState != ToyPlacementState.Dragging)
+            return;
+
+        if (!TryGetCanvasLocalPoint(pointerPosition, out Vector2 canvasPosition))
+            return;
+
+        _previewImage.rectTransform.anchoredPosition = canvasPosition;
+        OnPreviewMoved?.Invoke(_previewImage.rectTransform);
+        bool canDrop = Vector2.Distance(canvasPosition, _markerCanvasPosition) <= GetCurrentDropRadius();
+
+        SetPreviewAlpha(canDrop ? 1f : _invalidPreviewAlpha);
+    }
+
+    public bool EndToyDrag(Vector2 pointerPosition)
+    {
+        if (_toyState != ToyPlacementState.Dragging)
+            return false;
+
+        if (!TryGetCanvasLocalPoint(pointerPosition, out Vector2 canvasPosition))
+        {
+            FailToyDrop();
+            return false;
+        }
+
+        float distance = Vector2.Distance(canvasPosition, _markerCanvasPosition);
+
+        if (distance > GetCurrentDropRadius())
+        {
+            FailToyDrop();
+            return false;
+        }
+
+        _lastPlacementWasSnack = false;
+        PlaceSelectedItem(_markerPlacementPosition);
+
+        return true;
+    }
+
+    public void CancelSelection(bool notifyToyAlertEnded = true)
+    {
+        if (notifyToyAlertEnded &&
+            _toyState != ToyPlacementState.None)
+        {
+            OnToyAlertEnded?.Invoke();
+        }
+
+        _toyState = ToyPlacementState.None;
+        _snackState = SnackPlacementState.None;
+
+        _selectedItemID = -1;
+        _selectedItemName = string.Empty;
+        _selectedSprite = null;
+
+        SetPreviewAlpha(1f);
+        SetPreviewActive(false);
+        SetMarkerActive(false);
+        SetRangeActive(false);
+    }
+
+    public void ClearPlacedItem()
+    {
+        if (_placedImage != null)
+        {
+            Destroy(_placedImage.gameObject);
+            _placedImage = null;
+        }
+
+        _placedItemID = -1;
+    }
+
+    private void HandleMarkerInput()
+    {
+        if (_toyState != ToyPlacementState.ToySelected)
+            return;
+
+        if (!TryGetPointerDownPosition(out Vector2 pointerPosition))
+            return;
+
+        if (!RectTransformUtility.RectangleContainsScreenPoint(_clickArea, pointerPosition, GetEventCamera()))
+            return;
+
+        if (!TryGetPlacementLocalPoint(pointerPosition, out Vector2 placementPosition))
+            return;
+
+        if (!TryGetCanvasLocalPoint(pointerPosition, out Vector2 canvasPosition))
+            return;
+
+        _markerPlacementPosition = placementPosition;
+        _markerCanvasPosition = canvasPosition;
+        _toyState = ToyPlacementState.MarkerPlaced;
+
+        OnToyAlertStarted?.Invoke();
+
+        ShowMarker(canvasPosition);
+        ShowRange(canvasPosition);
+
+        DebugTool.Log(
+            $"[NyangNyangSnapPlacementController] 마커 표시 완료 / ItemID:{_selectedItemID}, Position:{placementPosition}",
+            DebugType.UI,
+            this
+        );
+    }
+
+    private bool TryGetPointerDownPosition(out Vector2 pointerPosition)
+    {
+        pointerPosition = Vector2.zero;
+
+        if (Input.touchCount > 0)
+        {
+            Touch touch = Input.GetTouch(0);
+
+            if (touch.phase != TouchPhase.Began)
+                return false;
+
+            pointerPosition = touch.position;
+
+            return true;
+        }
+
+        if (!Input.GetMouseButtonDown(0))
+            return false;
+
+        pointerPosition = Input.mousePosition;
+
+        return true;
+    }
+
+    private void PlaceSelectedItem(Vector2 localPoint)
+    {
+        if (_selectedItemID <= 0 || _selectedSprite == null || _placementArea == null)
+        {
+            DebugTool.Warning(
+                "[NyangNyangSnapPlacementController] 배치할 아이템 정보가 없습니다.",
+                DebugType.UI,
+                this
+            );
+
+            return;
+        }
+
+        ClearPlacedItem();
+
+        GameObject itemObject = new GameObject(
+            $"PlacedItem_{_selectedItemID}",
+            typeof(RectTransform),
+            typeof(Image)
+        );
+
+        itemObject.transform.SetParent(_placementArea, false);
+
+        RectTransform itemRect = itemObject.GetComponent<RectTransform>();
+
+        itemRect.anchorMin = new Vector2(0.5f, 0.5f);
+        itemRect.anchorMax = new Vector2(0.5f, 0.5f);
+        itemRect.pivot = new Vector2(0.5f, 0.5f);
+        itemRect.sizeDelta = _placedItemSize;
+        itemRect.anchoredPosition = localPoint;
+
+        _placedImage = itemObject.GetComponent<Image>();
+
+        _placedImage.sprite = _selectedSprite;
+        _placedImage.preserveAspect = true;
+        _placedImage.raycastTarget = false;
+
+        _placedItemID = _selectedItemID;
+
+        // BackPanel → 배치 도구 → Cat 순서를 강제로 유지합니다.
+        ApplyPhotoLayerOrder();
+
+        int placedItemID = _placedItemID;
+
+        // 정상 배치 완료는 ALERT 취소가 아니므로 종료 이벤트를 보내지 않습니다.
+        CancelSelection(false);
+
+        OnItemPlaced?.Invoke(placedItemID);
+
+        DebugTool.Log(
+            $"[NyangNyangSnapPlacementController] 아이템 배치 완료 / ItemID:{placedItemID}, Position:{localPoint}",
+            DebugType.UI,
+            this
+        );
+    }
+
+
+    private void ApplyPhotoLayerOrder()
+    {
+        if (_placementArea == null)
+            return;
+
+        Transform backPanel = FindChildByName(_placementArea, "BackPanel");
+        Transform cat = FindChildByName(_placementArea, "Cat");
+
+        // BackPanel은 같은 부모 안에서 항상 가장 뒤로 보냅니다.
+        if (backPanel != null)
+            backPanel.SetAsFirstSibling();
+
+        // 배치된 도구는 Cat 바로 뒤에 위치시킵니다.
+        if (_placedImage != null && cat != null && _placedImage.transform.parent == cat.parent)
+        {
+            _placedImage.transform.SetSiblingIndex(cat.GetSiblingIndex());
+        }
+
+        // Cat은 같은 부모 안에서 항상 가장 앞으로 가져옵니다.
+        if (cat != null)
+            cat.SetAsLastSibling();
+    }
+
+    private void ApplyPreviewLayerOrder()
+    {
+        if (_previewImage == null || _placementArea == null)
+            return;
+
+        Transform cat = FindChildByName(_placementArea, "Cat");
+
+        if (cat != null && _previewImage.transform.parent == cat.parent)
+        {
+            _previewImage.transform.SetSiblingIndex(cat.GetSiblingIndex());
+            cat.SetAsLastSibling();
+            return;
+        }
+
+        _previewImage.transform.SetAsLastSibling();
+    }
+
+    private Transform FindChildByName(Transform root, string objectName)
+    {
+        if (root == null)
+            return null;
+
+        RectTransform[] children = root.GetComponentsInChildren<RectTransform>(true);
+
+        foreach (RectTransform child in children)
+        {
+            if (child.name == objectName)
+                return child;
+        }
+
+        return null;
+    }
+
+    private void FailToyDrop()
+    {
+        _toyState = ToyPlacementState.MarkerPlaced;
+
+        SetPreviewAlpha(1f);
+        SetPreviewActive(false);
+
+        SetMarkerActive(true);
+        SetRangeActive(true);
+
+        ShowRetryMessage();
+
+        OnToyDropFailed?.Invoke();
+
+        DebugTool.Warning(
+            $"[NyangNyangSnapPlacementController] 마커 범위 밖에 놓았습니다. ItemID:{_selectedItemID}",
+            DebugType.UI,
+            this
+        );
+    }
+
+    private bool ValidateSelection(int itemID, Sprite itemSprite)
+    {
+        AutoAssign();
+
+        if (itemID <= 0)
+        {
+            DebugTool.Warning(
+                "[NyangNyangSnapPlacementController] 잘못된 ItemID입니다.",
+                DebugType.UI,
+                this
+            );
+
+            return false;
+        }
+
+        if (itemSprite == null)
+        {
+            DebugTool.Warning(
+                $"[NyangNyangSnapPlacementController] Sprite가 없습니다. ItemID:{itemID}",
+                DebugType.UI,
+                this
+            );
+
+            return false;
+        }
+
+        if (_clickArea == null || _placementArea == null)
+        {
+            DebugTool.Warning(
+                "[NyangNyangSnapPlacementController] ClickArea 또는 PlacementArea가 연결되지 않았습니다.",
+                DebugType.UI,
+                this
+            );
+
+            return false;
+        }
+
+        return true;
+    }
+
+    private float GetCurrentDropRadius()
+    {
+        if (_toolSO != null &&
+            _toolSO.TryGetToolDataByItemID(_selectedItemID, out NyangNyangSnapToolData toolData))
+        {
+            return toolData.ItemRange * _itemRangeScale;
+        }
+
+        return _markerDropRadius;
+    }
+
+    private bool TryGetPlacementLocalPoint(Vector2 screenPosition, out Vector2 placementLocalPoint)
+    {
+        placementLocalPoint = Vector2.zero;
+
+        if (_clickArea == null || _placementArea == null)
+            return false;
+
+        Camera eventCamera = GetEventCamera();
+
+        if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(
+                _clickArea,
+                screenPosition,
+                eventCamera,
+                out Vector2 clickLocalPoint))
+        {
+            return false;
+        }
+
+        if (!_clickArea.rect.Contains(clickLocalPoint))
+            return false;
+
+        float normalizedX = Mathf.InverseLerp(_clickArea.rect.xMin, _clickArea.rect.xMax, clickLocalPoint.x);
+        float normalizedY = Mathf.InverseLerp(_clickArea.rect.yMin, _clickArea.rect.yMax, clickLocalPoint.y);
+
+        Rect placementRect = _placementArea.rect;
+
+        placementLocalPoint = new Vector2(
+            Mathf.Lerp(placementRect.xMin, placementRect.xMax, normalizedX),
+            Mathf.Lerp(placementRect.yMin, placementRect.yMax, normalizedY)
+        );
+
+        return true;
+    }
+
+    private bool TryGetCanvasLocalPoint(Vector2 screenPosition, out Vector2 canvasLocalPoint)
+    {
+        canvasLocalPoint = Vector2.zero;
+
+        if (_canvasRectTransform == null)
+            return false;
+
+        return RectTransformUtility.ScreenPointToLocalPointInRectangle(
+            _canvasRectTransform,
+            screenPosition,
+            GetEventCamera(),
+            out canvasLocalPoint
+        );
+    }
+
+    private void MovePreview(Vector2 screenPosition)
+    {
+        if (_previewImage == null)
+            return;
+
+        if (!TryGetCanvasLocalPoint(screenPosition, out Vector2 canvasPosition))
+            return;
+
+        _previewImage.rectTransform.anchoredPosition = canvasPosition;
+    }
+
+    private void AutoAssign()
+    {
+        if (_canvas == null && _clickArea != null)
+            _canvas = _clickArea.GetComponentInParent<Canvas>();
+
+        if (_canvas != null && _canvasRectTransform == null)
+            _canvasRectTransform = _canvas.GetComponent<RectTransform>();
+
+        if (_previewImage == null)
+            _previewImage = CreateRuntimeImage("SelectedItemPreview", _placedItemSize);
+    }
+
+    private Image CreateRuntimeImage(string objectName, Vector2 size)
+    {
+        if (_canvas == null)
+            return null;
+
+        GameObject imageObject = new GameObject(
+            objectName,
+            typeof(RectTransform),
+            typeof(Image)
+        );
+
+        imageObject.transform.SetParent(_canvas.transform, false);
+        imageObject.transform.SetAsLastSibling();
+
+        RectTransform rectTransform = imageObject.GetComponent<RectTransform>();
+
+        rectTransform.anchorMin = new Vector2(0.5f, 0.5f);
+        rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
+        rectTransform.pivot = new Vector2(0.5f, 0.5f);
+        rectTransform.sizeDelta = size;
+
+        Image image = imageObject.GetComponent<Image>();
+
+        image.raycastTarget = false;
+        image.preserveAspect = true;
+        image.gameObject.SetActive(false);
+
+        return image;
+    }
+
+    private void ShowMarker(Vector2 canvasPosition)
+    {
+        if (_markerImage == null)
+            return;
+
+        _markerImage.rectTransform.anchoredPosition = canvasPosition;
+        _markerImage.raycastTarget = false;
+
+        SetMarkerActive(true);
+    }
+
+    private void ShowRange(Vector2 canvasPosition)
+    {
+        if (_rangeImage == null)
+            return;
+
+        float radius = GetCurrentDropRadius();
+        float diameter = radius * 2f;
+
+        _rangeImage.rectTransform.sizeDelta = new Vector2(diameter, diameter);
+        _rangeImage.rectTransform.anchoredPosition = canvasPosition;
+        _rangeImage.raycastTarget = false;
+
+        SetRangeActive(true);
+    }
+
+    private void ShowRetryMessage()
+    {
+        if (_retryMessageText == null)
+            return;
+
+        if (_retryMessageCoroutine != null)
+            StopCoroutine(_retryMessageCoroutine);
+
+        _retryMessageCoroutine = StartCoroutine(RetryMessageRoutine());
+    }
+
+    private IEnumerator RetryMessageRoutine()
+    {
+        _retryMessageText.text = "다시 하세요.";
+
+        SetRetryMessageActive(true);
+
+        yield return new WaitForSeconds(_retryMessageDuration);
+
+        SetRetryMessageActive(false);
+
+        _retryMessageCoroutine = null;
+    }
+
+    private void SetPreviewAlpha(float alpha)
+    {
+        if (_previewImage == null)
+            return;
+
+        Color color = _previewImage.color;
+
+        color.a = alpha;
+
+        _previewImage.color = color;
+    }
+
+    private void SetPreviewActive(bool isActive)
+    {
+        if (_previewImage != null)
+            _previewImage.gameObject.SetActive(isActive);
+    }
+
+    private void SetMarkerActive(bool isActive)
+    {
+        if (_markerImage != null)
+            _markerImage.gameObject.SetActive(isActive);
+    }
+
+    private void SetRangeActive(bool isActive)
+    {
+        if (_rangeImage != null)
+            _rangeImage.gameObject.SetActive(isActive);
+    }
+
+    private void SetRetryMessageActive(bool isActive)
+    {
+        if (_retryMessageText != null)
+            _retryMessageText.gameObject.SetActive(isActive);
+    }
+
+    private Camera GetEventCamera()
+    {
+        if (_canvas == null || _canvas.renderMode == RenderMode.ScreenSpaceOverlay)
+            return null;
+
+        return _canvas.worldCamera;
+    }
+}

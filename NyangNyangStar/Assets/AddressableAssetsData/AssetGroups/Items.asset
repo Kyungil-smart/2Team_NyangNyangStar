@@ -17,6 +17,30 @@ MonoBehaviour:
     m_SerializedData: []
   m_GUID: 70bacfadd8d1fec40b0b4f26bd3628b1
   m_SerializeEntries:
+  - m_GUID: 0122a2c120dc7104b9ea79eae4d8e89d
+    m_Address: Item_Use_NNBox_1
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 0867cfe3685f136469ebaec83fbfbb05
+    m_Address: Item_Sand_Tofu
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 0ecb3aa8bf696bc4f98a6ceb340ae471
+    m_Address: Item_Sand_Pile
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 13f129b4bb2701b4582c9c5a99f18b58
+    m_Address: Item_Water_Bottle
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 1b31e64b1031716468a5ba57915b48b5
     m_Address: Item_Food_FishPouch
     m_ReadOnly: 0
@@ -83,8 +107,26 @@ MonoBehaviour:
     m_SerializedLabels:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4f6858f7424728c4e9253e1047e8624c
+    m_Address: Item_Use_MagicScissors
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 5d0cebab855793944bcec97a695de707
     m_Address: Item_Toy_FeatherWand
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5dc390e4e69ff6641b2b9fc4144f3c0b
+    m_Address: Item_Water_Cup_02
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 63b65006c191b1045824431acb4e3ec7
+    m_Address: Item_Water_Drop_01
     m_ReadOnly: 0
     m_SerializedLabels:
     - Sprite
@@ -113,6 +155,12 @@ MonoBehaviour:
     m_SerializedLabels:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 83881af1dbff05246b73554326f3f8f6
+    m_Address: Item_Sand_Bentonite
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 83af6f82ad515b449b87c900485e07ce
     m_Address: Item_Toy_BellWand
     m_ReadOnly: 0
@@ -131,14 +179,44 @@ MonoBehaviour:
     m_SerializedLabels:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8c43e3a55c11afa4a9197224057fe3d1
+    m_Address: Item_Use_Clock
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8ce331f4662dde64385b1fe572acfa5f
+    m_Address: Item_Water_Cup_01
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 97ca79e8513a1b8498966344d31f2eb1
     m_Address: Item_Treat_Slice
     m_ReadOnly: 0
     m_SerializedLabels:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9ac959a6dd5c05b4e839eb1bf46861ed
+    m_Address: Item_Sand_Cassava
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9c232de3ae1909e4d9eecc2bfb0b5abf
+    m_Address: Item_Use_MagicHat
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: a7cda038443c51045819db6c4429d4f7
     m_Address: Item_Food_Kibble
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ae619edee95c20242b78253edb0dffeb
+    m_Address: Item_Use_EnergyBall
     m_ReadOnly: 0
     m_SerializedLabels:
     - Sprite
@@ -161,6 +239,12 @@ MonoBehaviour:
     m_SerializedLabels:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b5fa590662bbac24f812d4191a11712f
+    m_Address: Item_Water_Drop_02
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: b7d495bfaa1dddf48ac21e3db1db1b18
     m_Address: Item_Toy_SnakeToy
     m_ReadOnly: 0
@@ -173,8 +257,20 @@ MonoBehaviour:
     m_SerializedLabels:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d2eb2fa743e4fd044ada4ba65d14ad56
+    m_Address: Item_Use_Piggybank_2
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: ddfba4785519d984eb7a499b2ac817cc
     m_Address: Item_Toy_RoboticToy
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e02ae4cffa83bdf44b08277d5b34a7e9
+    m_Address: Item_Use_NNBox_2
     m_ReadOnly: 0
     m_SerializedLabels:
     - Sprite

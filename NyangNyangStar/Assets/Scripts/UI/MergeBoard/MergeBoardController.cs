@@ -1,6 +1,7 @@
 using Core.Managers;
 using Data.ScriptableObjects.MergeBoard;
 using System.Threading.Tasks;
+using UI.Common;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -11,6 +12,8 @@ namespace UI.MergeBoard
         [Header("보드 창")]
         [SerializeField] private GameObject _boardRoot;
         [SerializeField] private MergeBoardLoader _mergeBoardLoader;
+        [SerializeField] private BoardRewardQueue _boardRewardQueue;
+        [SerializeField] private PlayerResourceDisplay _resourceDisplay;
         [SerializeField] private Button _closeButton;
 
         [Header("옵션")]
@@ -45,11 +48,15 @@ namespace UI.MergeBoard
 
             _boardRoot.SetActive(true);
             IsOpen = true;
+            EnsureResourceDisplay();
 
             await Task.Yield();
 
             if (_mergeBoardLoader == null)
                 _mergeBoardLoader = _boardRoot.GetComponentInChildren<MergeBoardLoader>(true);
+
+            CacheRewardQueue();
+            _boardRewardQueue?.ClearAlert();
 
             if (_mergeBoardLoader == null)
             {
@@ -73,16 +80,49 @@ namespace UI.MergeBoard
         
         public void SetVisible(bool isOpen)
         {
+            CacheRewardQueue();
+            _boardRewardQueue?.ClearAlert();
+
             IsOpen = isOpen;
 
             if (_boardRoot != null)
                 _boardRoot.SetActive(isOpen);
+
+            if (isOpen)
+            {
+                EnsureResourceDisplay();
+                _boardRewardQueue?.ClearAlert();
+            }
+        }
+
+        private void CacheRewardQueue()
+        {
+            if (_boardRewardQueue != null || _boardRoot == null)
+                return;
+
+            _boardRewardQueue = _boardRoot.GetComponentInChildren<BoardRewardQueue>(true);
         }
 
         public void ForceReloadOnNextOpen()
         {
             if (_mergeBoardLoader != null)
                 _mergeBoardLoader.ResetLoadedState();
+        }
+
+        private void EnsureResourceDisplay()
+        {
+            if (_resourceDisplay == null && _boardRoot != null)
+                _resourceDisplay = _boardRoot.GetComponentInChildren<PlayerResourceDisplay>(true);
+
+            if (_resourceDisplay == null)
+                _resourceDisplay = GetComponentInChildren<PlayerResourceDisplay>(true);
+
+            if (_resourceDisplay == null)
+                return;
+
+            _resourceDisplay.ResolveReferencesFrom(_resourceDisplay.transform);
+            _resourceDisplay.RefreshDisplay();
+            _ = PlayerResourceManager.Instance.RefreshAsync();
         }
     }
 }

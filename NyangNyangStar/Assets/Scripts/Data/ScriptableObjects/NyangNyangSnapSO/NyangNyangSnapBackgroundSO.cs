@@ -8,7 +8,7 @@ using UnityEngine;
 public class NyangNyangSnapBackgroundSO : SoBase, ISheetParsable
 {
     [Header("냥냥스냅 배경 데이터")]
-    [Tooltip("배경ID, 배경 이름, 배경 등급, 스테이지, 배경 Key")]
+    [Tooltip("배경ID, 배경 이름, 배경 등급, 스테이지, 점수, 배경 Key")]
     [SerializeField] private List<NyangNyangSnapBackgroundData> _backgroundData = new();
     private Dictionary<int, List<NyangNyangSnapBackgroundData>> _backgroundDataDic = new();
 
@@ -27,7 +27,8 @@ public class NyangNyangSnapBackgroundSO : SoBase, ISheetParsable
             cols[1].Trim(),
             ConvertGrade(cols[2].Trim()),
             int.Parse(cols[3].Trim()),
-            cols[4].Trim());
+            int.Parse(cols[4].Trim()),
+            cols[5].Trim());
 
         _backgroundData.Add(data);
 
@@ -51,16 +52,32 @@ public class NyangNyangSnapBackgroundSO : SoBase, ISheetParsable
         }
     }
 
-    public string GetRandomBackgroundKey(int stage)
+    public NyangNyangSnapBackgroundData GetRandomBackgroundData(int stage)
     {
-        if (!_backgroundDataDic.ContainsKey(stage)) return string.Empty;
+        EnsureLookupReady();
 
-        List<NyangNyangSnapBackgroundData> backgrounds = _backgroundDataDic[stage];
+        if (!_backgroundDataDic.TryGetValue(
+                stage,
+                out List<NyangNyangSnapBackgroundData> backgrounds))
+        {
+            return null;
+        }
 
-        if(backgrounds == null) return string.Empty;
+        if (backgrounds == null || backgrounds.Count == 0)
+            return null;
 
         int randomIndex = Random.Range(0, backgrounds.Count);
-        return backgrounds[randomIndex].BackgroundKey;
+        return backgrounds[randomIndex];
+    }
+
+    public string GetRandomBackgroundKey(int stage)
+    {
+        NyangNyangSnapBackgroundData backgroundData =
+            GetRandomBackgroundData(stage);
+
+        return backgroundData != null
+            ? backgroundData.BackgroundKey
+            : string.Empty;
     }
 
     public void PrintData()
@@ -70,13 +87,31 @@ public class NyangNyangSnapBackgroundSO : SoBase, ISheetParsable
 
         foreach (NyangNyangSnapBackgroundData backgroundData in _backgroundData)
         {
-            log.AppendLine($"배경 ID: {backgroundData.BackgroundId}" + 
+            log.AppendLine($"배경 ID: {backgroundData.BackgroundId}," + 
                            $"배경 이름: {backgroundData.BackgroundName}, " +
-                           $"배경 등급: {backgroundData.BackgroundGrade}" + 
-                           $"스테이지: {backgroundData.Stage}" + 
+                           $"배경 등급: {backgroundData.BackgroundGrade}," + 
+                           $"스테이지: {backgroundData.Stage}," +
+                           $"점수: {backgroundData.Score}," +
                            $"배경 Key: {backgroundData.BackgroundKey}");
         }
 
         DebugTool.Log(log.ToString(), DebugType.Data);
+    }
+
+    private void EnsureLookupReady()
+    {
+        if (_backgroundDataDic.Count > 0 || _backgroundData == null || _backgroundData.Count == 0)
+            return;
+
+        foreach (NyangNyangSnapBackgroundData data in _backgroundData)
+        {
+            if (data == null)
+                continue;
+
+            if (!_backgroundDataDic.ContainsKey(data.Stage))
+                _backgroundDataDic[data.Stage] = new List<NyangNyangSnapBackgroundData>();
+
+            _backgroundDataDic[data.Stage].Add(data);
+        }
     }
 }

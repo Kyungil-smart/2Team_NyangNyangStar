@@ -5,7 +5,7 @@ using UnityEngine;
 public class ModifyingDataTEST : MonoBehaviour
 {
     [SerializeField] ResourcesSO resourcesSO;
-    [SerializeField] WorkShopStorageSO workShopStorageSO;
+
     // Start is called before the first frame update
     void Start()
     {

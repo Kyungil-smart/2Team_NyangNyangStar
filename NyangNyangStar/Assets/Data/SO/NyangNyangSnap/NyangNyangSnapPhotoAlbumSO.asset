@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dcd1f30dd4317c74aaf99aedaf016aca, type: 3}
+  m_Name: NyangNyangSnapPhotoAlbumSO
+  m_EditorClassIdentifier: 
+  m_DocumentId: NyangNyangSnap
+  m_EnumType: 0
+  subCollections: []
+  photos: []

@@ -8,5 +8,8 @@
         Nyangstagram,
         Scratching,
         Snap,
+        Finding,
+        Items,
+        Nyangquarium,
     }
 }

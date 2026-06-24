@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Threading.Tasks;
 using Core.Managers;
 using TMPro;
 using UI.Transition;
@@ -24,6 +25,7 @@ namespace UI.Login
 
         private Coroutine _refreshCoroutine;
         private bool _subscribed;
+        private bool _loginTimeRecorded;
 
         private void Awake()
         {
@@ -80,14 +82,26 @@ namespace UI.Login
             if (_logoutButton != null)
             {
                 _logoutButton.onClick.RemoveAllListeners();
-                _logoutButton.onClick.AddListener(() =>
-                {
-                    if (AuthManager.Instance != null)
-                        AuthManager.Instance.LogoutAndClearSession();
-                    else
-                        GameManager.ClearSession();
-                });
+                _logoutButton.onClick.AddListener(OnClickLogoutButton);
             }
+        }
+
+        private void OnClickLogoutButton()
+        {
+            StartCoroutine(LogoutCoroutine());
+        }
+
+        private IEnumerator LogoutCoroutine()
+        {
+            Task recordTask = UserSessionTimeService.RecordLogoutAsync();
+
+            while (!recordTask.IsCompleted)
+                yield return null;
+
+            if (AuthManager.Instance != null)
+                AuthManager.Instance.LogoutAndClearSession();
+            else
+                GameManager.ClearSession();
         }
 
         private IEnumerator RefreshLoginUiWhenAuthReady()
@@ -110,6 +124,7 @@ namespace UI.Login
 
         private void OnClickLoginButton()
         {
+            _loginTimeRecorded = false;
             SetLoginButtonVisible(false);
             SetLoadingVisible(true);
 
@@ -167,7 +182,19 @@ namespace UI.Login
             if (_statusText != null)
                 _statusText.text = message;
 
+            if (progress >= 1f)
+                TryRecordLoginTimeOnce();
+
             RefreshLoginButtonVisible();
+        }
+
+        private void TryRecordLoginTimeOnce()
+        {
+            if (_loginTimeRecorded)
+                return;
+
+            _loginTimeRecorded = true;
+            _ = UserSessionTimeService.RecordLoginAsync();
         }
 
         private void SetLoadingProgress(float progress)
