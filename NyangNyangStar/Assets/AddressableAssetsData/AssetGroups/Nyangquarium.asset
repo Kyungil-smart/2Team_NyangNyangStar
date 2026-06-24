@@ -53,6 +53,11 @@ MonoBehaviour:
     m_SerializedLabels:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6df76ecea50357c40afaefbb2f59e94c
+    m_Address: NyangquariumUI
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 7b593c069369f5c48bc18b9162f09fb0
     m_Address: NQ_Marker_clear
     m_ReadOnly: 0
