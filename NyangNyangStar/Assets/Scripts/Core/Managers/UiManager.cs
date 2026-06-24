@@ -159,7 +159,12 @@ namespace Core.Managers
                 });
         }
 
-        public void ShowPopupUI<T>(string name = null, Action<T> onLoaded = null, bool setActive = true, bool addCanvas = true) where T : UIPopup
+        public void ShowPopupUI<T>(
+            string name = null,
+            Action<T> onLoaded = null,
+            bool setActive = true,
+            bool addCanvas = true,
+            Action<string> onFailed = null) where T : UIPopup
         {
             EnsureRoot();
 
@@ -210,6 +215,7 @@ namespace Core.Managers
                 failedKey =>
                 {
                     DebugTool.Warning($"{failedKey} : 팝업 UI 로드 실패", DebugType.Missing);
+                    onFailed?.Invoke(failedKey);
                 });
         }
 
