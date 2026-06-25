@@ -65,6 +65,12 @@ namespace Util
             // 스크래칭 타임 UI 프리팹
             public const string ScratchingTime = "ScratchingTimeScreen";
 
+            //냥쿠아리움
+            public const string NyangQuariumMainUI = "NyangQuariumMainCanvas";
+            public const string NyangQuariumMulMeongUI = "MulMeongCanvas";
+            public const string NyangQuariumFreshLayoutUI = "NyangQuariumFreshLayoutCanvas";
+            public const string NyangQuariumOceanLayoutUI = "NyangQuariumOceanLayoutCanvas";
+
             // 냥쿠아 리움 UI 프리팹
             public const string Nyangquarium = "NyangquariumUI";
         }
@@ -302,6 +308,11 @@ namespace Util
             // 뭉치를 찾아라
             PrefabKeyDict.Add(Prefabs.FindMoongchiPopupUI, new List<GameObject>());
 
+            //냥쿠아리움
+            PrefabKeyDict.Add(Prefabs.NyangQuariumMainUI, new List<GameObject>());
+            PrefabKeyDict.Add(Prefabs.NyangQuariumMulMeongUI, new List<GameObject>());
+            PrefabKeyDict.Add(Prefabs.NyangQuariumFreshLayoutUI, new List<GameObject>());
+            PrefabKeyDict.Add(Prefabs.NyangQuariumOceanLayoutUI, new List<GameObject>());
             PrefabKeyDict.Add(Prefabs.Nyangquarium, new List<GameObject>());
         }
 
