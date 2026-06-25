@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 4008920998386946012}
   - component: {fileID: 4665566756209549379}
   m_Layer: 5
-  m_Name: AquariumButton
+  m_Name: WaterGazeButton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -979,17 +979,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4d9f154ac5a84d2ca70b61abcb42a491, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _storyButton: {fileID: 0}
-  _boardQuestButton: {fileID: 0}
+  _boardButton: {fileID: 0}
   _collectionButton: {fileID: 0}
   _layoutButton: {fileID: 0}
-  _aquariumButton: {fileID: 0}
+  _waterGazeButton: {fileID: 0}
   _backButton: {fileID: 0}
-  _storyKey: 
-  _boardQuestKey: 
+  _boardKey:
   _collectionKey: 
   _layoutKey: 
-  _aquariumKey: 
+  _waterGazeKey:
+  _storyKey:
   _canvasGroup: {fileID: 0}
   _contentRoot: {fileID: 0}
   _openDuration: 0.2

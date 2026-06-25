@@ -4,6 +4,7 @@ using DG.Tweening;
 using UI.Base;
 using UI.Transition;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 using Util;
 
@@ -12,20 +13,26 @@ namespace UI.NyangQuarium
     public sealed class NyangquariumHubUI : UIPopup
     {
         [Header("허브 버튼")]
-        [SerializeField] private Button _storyButton;
-        [SerializeField] private Button _boardQuestButton;
+        [FormerlySerializedAs("_boardQuestButton")]
+        [SerializeField] private Button _boardButton;
         [SerializeField] private Button _collectionButton;
         [SerializeField] private Button _layoutButton;
-        [SerializeField] private Button _aquariumButton;
+        [FormerlySerializedAs("_aquariumButton")]
+        [SerializeField] private Button _waterGazeButton;
         [SerializeField] private Button _backButton;
 
         [Header("콘텐츠 Addressables 주소")]
         [Tooltip("주소가 비어 있는 콘텐츠 버튼은 비활성화됩니다.")]
-        [SerializeField] private string _storyKey;
-        [SerializeField] private string _boardQuestKey;
+        [FormerlySerializedAs("_boardQuestKey")]
+        [SerializeField] private string _boardKey;
         [SerializeField] private string _collectionKey;
         [SerializeField] private string _layoutKey;
-        [SerializeField] private string _aquariumKey;
+        [FormerlySerializedAs("_aquariumKey")]
+        [SerializeField] private string _waterGazeKey;
+
+        [Header("최초 진입 스토리 연결")]
+        [Tooltip("허브 버튼이 아니라 최초 진입 이벤트에서 OpenStory를 호출할 때 사용합니다.")]
+        [SerializeField] private string _storyKey;
 
         [Header("연출")]
         [SerializeField] private CanvasGroup _canvasGroup;
@@ -70,10 +77,10 @@ namespace UI.NyangQuarium
         }
 
         public void OpenStory() => OpenContent(_storyKey);
-        public void OpenBoardQuest() => OpenContent(_boardQuestKey);
+        public void OpenBoard() => OpenContent(_boardKey);
         public void OpenCollection() => OpenContent(_collectionKey);
         public void OpenLayout() => OpenContent(_layoutKey);
-        public void OpenAquarium() => OpenContent(_aquariumKey);
+        public void OpenWaterGaze() => OpenContent(_waterGazeKey);
 
         public void ReturnToHub()
         {
@@ -194,11 +201,10 @@ namespace UI.NyangQuarium
 
         private void ResolveReferences()
         {
-            _storyButton ??= FindButton("StoryButton", "StoryContentButton");
-            _boardQuestButton ??= FindButton("BoardQuestButton", "MergeGameButton", "QuestButton");
+            _boardButton ??= FindButton("BoardButton", "MergeGameButton", "BoardQuestButton");
             _collectionButton ??= FindButton("CollectionButton", "FishCollectionButton");
             _layoutButton ??= FindButton("LayoutButton", "AquariumLayoutButton");
-            _aquariumButton ??= FindButton("AquariumButton", "WaterGazeButton");
+            _waterGazeButton ??= FindButton("WaterGazeButton", "AquariumButton");
             _backButton ??= FindButton("BackButton", "CloseButton", "ExitButton");
             ResolveAnimationReferences();
         }
@@ -231,11 +237,10 @@ namespace UI.NyangQuarium
 
         private void BindButtons()
         {
-            BindButton(_storyButton, OpenStory);
-            BindButton(_boardQuestButton, OpenBoardQuest);
+            BindButton(_boardButton, OpenBoard);
             BindButton(_collectionButton, OpenCollection);
             BindButton(_layoutButton, OpenLayout);
-            BindButton(_aquariumButton, OpenAquarium);
+            BindButton(_waterGazeButton, OpenWaterGaze);
             BindButton(_backButton, CloseHub);
         }
 
@@ -250,20 +255,18 @@ namespace UI.NyangQuarium
 
         private void RefreshButtonStates()
         {
-            SetRouteButtonState(_storyButton, _storyKey);
-            SetRouteButtonState(_boardQuestButton, _boardQuestKey);
+            SetRouteButtonState(_boardButton, _boardKey);
             SetRouteButtonState(_collectionButton, _collectionKey);
             SetRouteButtonState(_layoutButton, _layoutKey);
-            SetRouteButtonState(_aquariumButton, _aquariumKey);
+            SetRouteButtonState(_waterGazeButton, _waterGazeKey);
         }
 
         private void SetButtonsInteractable(bool interactable)
         {
-            SetInteractable(_storyButton, interactable);
-            SetInteractable(_boardQuestButton, interactable);
+            SetInteractable(_boardButton, interactable);
             SetInteractable(_collectionButton, interactable);
             SetInteractable(_layoutButton, interactable);
-            SetInteractable(_aquariumButton, interactable);
+            SetInteractable(_waterGazeButton, interactable);
             SetInteractable(_backButton, interactable);
         }
 
