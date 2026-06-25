@@ -472,9 +472,9 @@ public class MainUI : UIScene
 
     private void ShowNyangquariumPopupImmediately(UIPopup popup)
     {
-        if (popup is NyangquariumHubUI hubUI)
+        if (popup is NyangquariumMainUIManager mainManager)
         {
-            hubUI.ShowImmediately();
+            mainManager.ShowImmediately();
             return;
         }
 
