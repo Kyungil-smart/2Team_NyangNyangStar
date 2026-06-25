@@ -87,7 +87,7 @@ namespace UI.NyangQuarium.Quest
                 this);
         }
 
-        // 알람 클릭 → 퀘스트 상세 팝업 열기
+        // 알람 클릭 -> 퀘스트 상세 팝업 열기
         private void OnClickAlarm()
         {
             if (_currentQuest == null)
@@ -101,7 +101,7 @@ namespace UI.NyangQuarium.Quest
                 DebugType.UI,
                 this);
 
-            // TODO: NyangQuariumQuestDetailPopup 연결
+            NyangQuariumQuestPopupOpener.Open(_currentQuest);
         }
     }
 }

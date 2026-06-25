@@ -3,15 +3,19 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Core.Managers;
 using Data.ScriptableObjects.NyangQuariumSO;
+using UI.MergeBoard;
 using UnityEngine;
 
 namespace UI.NyangQuarium.Quest
 {
     public class NyangQuariumQuestManager : MonoBehaviour
     {
+        
+        // NyangQuariumQuestManager -> 퀘스트 상태 관리
         public static NyangQuariumQuestManager Instance { get; private set; }
 
         [Header("Quest Data")]
+        [SerializeField] private NyangQuariumSheetLoader _sheetLoader;
         [SerializeField] private NyangQuariumQuestSO _questSO;
 
         [Header("Intro Quest")]
@@ -51,6 +55,8 @@ namespace UI.NyangQuarium.Quest
         // 특정 퀘스트를 현재 활성 퀘스트로 설정
         public bool ActivateQuest(int questId)
         {
+            ResolveQuestSO();
+
             if (_questSO == null)
             {
                 DebugTool.Warning("[NyangQuariumQuestManager] QuestSO가 연결되지 않았습니다.", DebugType.UI, this);
@@ -101,6 +107,7 @@ namespace UI.NyangQuarium.Quest
         public bool TryGetActiveQuest(out NyangQuariumQuestData quest)
         {
             quest = null;
+            ResolveQuestSO();
 
             if (_questSO == null || _activeQuestId <= 0)
                 return false;
@@ -117,7 +124,13 @@ namespace UI.NyangQuarium.Quest
             return CanCompleteQuest(quest);
         }
 
-        // 퀘스트 조건 검사 (현재는 코인 조건만 처리)
+        // 단일 조건(아이템/코인) 보유 여부 — 상세 팝업 조건 아이콘 체크 표시용
+        public bool HasConditionResource(string condition, int amount)
+        {
+            return CanCompleteCondition(condition, amount);
+        }
+
+        // 퀘스트 조건 검사
         public bool CanCompleteQuest(NyangQuariumQuestData quest)
         {
             if (quest == null)
@@ -152,9 +165,21 @@ namespace UI.NyangQuarium.Quest
                 return hasEnough;
             }
 
-            // 머지 아이템 조건은 MergeBoardItemService 연결 후 처리
+            if (int.TryParse(condition, out int itemId))
+            {
+                int owned = GetOwnedMergeItemCount(itemId);
+                bool hasEnough = owned >= amount;
+
+                DebugTool.Log(
+                    $"[NyangQuariumQuestManager] 아이템 조건 확인. ItemId:{itemId}, Need:{amount}, Has:{owned}, Result:{hasEnough}",
+                    DebugType.UI,
+                    this);
+
+                return hasEnough;
+            }
+
             DebugTool.Warning(
-                $"[NyangQuariumQuestManager] 아직 지원하지 않는 조건입니다. Condition:{condition}, Amount:{amount}",
+                $"[NyangQuariumQuestManager] 지원하지 않는 조건입니다. Condition:{condition}, Amount:{amount}",
                 DebugType.UI,
                 this);
             return false;
@@ -224,18 +249,59 @@ namespace UI.NyangQuarium.Quest
                 return spent;
             }
 
-            // 머지 아이템 소비는 다음 단계에서 연결
+            if (int.TryParse(condition, out int itemId))
+            {
+                if (MergeBoardItemService.Instance == null)
+                {
+                    DebugTool.Warning(
+                        $"[NyangQuariumQuestManager] MergeBoardItemService 없음. ItemId:{itemId}",
+                        DebugType.UI,
+                        this);
+                    return false;
+                }
+
+                bool consumed = await MergeBoardItemService.Instance.ConsumeItemByIdAsync(itemId, amount);
+
+                DebugTool.Log(
+                    $"[NyangQuariumQuestManager] 아이템 소비. ItemId:{itemId}, Amount:{amount}, Success:{consumed}",
+                    DebugType.UI,
+                    this);
+
+                return consumed;
+            }
+
             DebugTool.Warning(
-                $"[NyangQuariumQuestManager] 아직 지원하지 않는 조건 소비입니다. Condition:{condition}, Amount:{amount}",
+                $"[NyangQuariumQuestManager] 지원하지 않는 조건 소비입니다. Condition:{condition}, Amount:{amount}",
                 DebugType.UI,
                 this);
             return false;
         }
 
+        private static int GetOwnedMergeItemCount(int itemId)
+        {
+            return MergeBoardItemService.Instance != null
+                ? MergeBoardItemService.Instance.GetOwnedItemCount(itemId)
+                : 0;
+        }
+
         private bool IsCoinCondition(string condition)
         {
-            return condition.Equals("Coin", StringComparison.OrdinalIgnoreCase) ||
-                   condition.Equals("코인", StringComparison.OrdinalIgnoreCase);
+            return condition != null &&
+                   (condition.Equals("Coin", StringComparison.OrdinalIgnoreCase) ||
+                    condition.Equals("코인", StringComparison.OrdinalIgnoreCase));
+        }
+
+        // SheetLoader에서 같은 SO를 채우므로, 비어 있으면 로더에서 가져옴
+        private void ResolveQuestSO()
+        {
+            if (_questSO != null)
+                return;
+
+            if (_sheetLoader == null)
+                _sheetLoader = NyangQuariumSheetLoader.Instance;
+
+            if (_sheetLoader != null)
+                _questSO = _sheetLoader.QuestSO;
         }
     }
 }
