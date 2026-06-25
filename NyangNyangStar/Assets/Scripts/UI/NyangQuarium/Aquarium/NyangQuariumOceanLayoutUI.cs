@@ -87,7 +87,7 @@ public class NyangQuariumOceanLayoutUI : UIPopup
         if (_freshLayoutUI == null)
             return;
 
-        NyangquariumHubUI.Active?.RegisterOwnedContent(_freshLayoutUI, false);
+        NyangquariumMainUIManager.Active?.RegisterOwnedContent(_freshLayoutUI, false);
     }
 
     private T FindSiblingLayout<T>() where T : UIPopup
@@ -115,8 +115,8 @@ public class NyangQuariumOceanLayoutUI : UIPopup
                 return;
             }
 
-            if (NyangquariumHubUI.Active != null)
-                NyangquariumHubUI.Active.ReturnToHub();
+            if (NyangquariumMainUIManager.Active != null)
+                NyangquariumMainUIManager.Active.ReturnToMain();
             else
                 gameObject.SetActive(false);
         });
@@ -142,7 +142,7 @@ public class NyangQuariumOceanLayoutUI : UIPopup
 
             _freshLayoutUI.gameObject.SetActive(true);
             _freshLayoutUI.PlayOpenAnimation();
-            NyangquariumHubUI.Active?.RegisterOwnedContent(_freshLayoutUI);
+            NyangquariumMainUIManager.Active?.RegisterOwnedContent(_freshLayoutUI);
 
             gameObject.SetActive(false);
 

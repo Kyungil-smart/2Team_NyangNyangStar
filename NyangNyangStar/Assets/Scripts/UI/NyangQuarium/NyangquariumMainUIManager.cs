@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using Core.Managers;
 using DG.Tweening;
@@ -11,9 +12,9 @@ using Util;
 
 namespace UI.NyangQuarium
 {
-    public sealed class NyangquariumHubUI : UIPopup
+    public sealed class NyangquariumMainUIManager : UIPopup
     {
-        [Header("허브 버튼")]
+        [Header("메인 버튼")]
         [FormerlySerializedAs("_boardQuestButton")]
         [SerializeField] private Button _boardButton;
         [SerializeField] private Button _collectionButton;
@@ -23,9 +24,10 @@ namespace UI.NyangQuarium
         [SerializeField] private Button _backButton;
 
         [Header("하위 콘텐츠 오브젝트 연결")]
-        [Tooltip("기본 허브 버튼 묶음입니다. 비워두면 ContentButtons를 자동으로 찾습니다.")]
-        [SerializeField] private GameObject _hubMenuRoot;
-        [Tooltip("허브 버튼이 아니라 최초 진입 이벤트에서 OpenStory를 호출할 때 사용합니다.")]
+        [Tooltip("기본 메인 버튼 묶음입니다. 비워두면 ContentButtons를 자동으로 찾습니다.")]
+        [FormerlySerializedAs("_hubMenuRoot")]
+        [SerializeField] private GameObject _mainMenuRoot;
+        [Tooltip("메인 버튼이 아니라 최초 진입 이벤트에서 OpenStory를 호출할 때 사용합니다.")]
         [SerializeField] private GameObject _storyContent;
         [FormerlySerializedAs("_boardQuestContent")]
         [SerializeField] private GameObject _boardContent;
@@ -40,6 +42,7 @@ namespace UI.NyangQuarium
         [Header("수조 선택 버튼")]
         [SerializeField] private Button _freshAquariumButton;
         [SerializeField] private Button _oceanAquariumButton;
+        [SerializeField] private Button _aquariumSelectBackButton;
 
         [Header("기본 화면 Addressables 스프라이트")]
         [FormerlySerializedAs("_tankImage")]
@@ -53,6 +56,8 @@ namespace UI.NyangQuarium
         [SerializeField] private string _layoutSpriteKey = "NQ_Btn_Tank";
         [SerializeField] private string _waterGazeSpriteKey = "NQ_Btn_AquaView";
         [SerializeField] private string _backSpriteKey = "NQ_Btn_Back";
+        [SerializeField] private string _freshAquariumSpriteKey = "NQ_Btn_FishFresh";
+        [SerializeField] private string _oceanAquariumSpriteKey = "NQ_Btn_FishSalt";
 
         [Header("연출")]
         [SerializeField] private CanvasGroup _canvasGroup;
@@ -64,7 +69,7 @@ namespace UI.NyangQuarium
 
         private GameObject _activeContent;
         private bool _isTransitioning;
-        private NyangquariumHubEntryMode _pendingAquariumEntryMode = NyangquariumHubEntryMode.Layout;
+        private NyangquariumEntryMode _pendingAquariumEntryMode = NyangquariumEntryMode.Layout;
         private UISpriteController _backgroundSprite;
         private UISpriteController _titleLogoSprite;
         private UISpriteController _boardSprite;
@@ -72,10 +77,13 @@ namespace UI.NyangQuarium
         private UISpriteController _layoutSprite;
         private UISpriteController _waterGazeSprite;
         private UISpriteController _backSprite;
+        private UISpriteController _freshAquariumSprite;
+        private UISpriteController _oceanAquariumSprite;
+        private UISpriteController _aquariumSelectBackSprite;
         private readonly List<GameObject> _ownedContents = new();
         private readonly HashSet<UIPopup> _initializedChildPopups = new();
 
-        public static NyangquariumHubUI Active { get; private set; }
+        public static NyangquariumMainUIManager Active { get; private set; }
 
         public override void Init()
         {
@@ -84,7 +92,7 @@ namespace UI.NyangQuarium
             BindButtons();
             BindAquariumSelectButtons();
             BindAddressableSprites();
-            ShowHubViewImmediately();
+            ShowMainViewImmediately();
             RefreshButtonStates();
         }
 
@@ -92,12 +100,12 @@ namespace UI.NyangQuarium
         {
             Active = this;
             ResolveAnimationReferences();
-            ShowHubViewImmediately();
+            ShowMainViewImmediately();
 
             if (_canvasGroup == null || _contentRoot == null)
             {
                 DebugTool.Warning(
-                    "[NyangquariumHubUI] 오픈 연출에 필요한 CanvasGroup 또는 RectTransform을 찾지 못했습니다.",
+                    "[NyangquariumMainUIManager] 오픈 연출에 필요한 CanvasGroup 또는 RectTransform을 찾지 못했습니다.",
                     DebugType.UI,
                     this);
                 return;
@@ -134,17 +142,17 @@ namespace UI.NyangQuarium
             if (_contentRoot != null)
                 _contentRoot.localScale = Vector3.one;
 
-            ShowHubViewImmediately();
+            ShowMainViewImmediately();
             RefreshButtonStates();
         }
 
-        public void OpenStory() => OpenChildContent(_storyContent, NyangquariumHubEntryMode.Story);
-        public void OpenBoard() => OpenChildContent(_boardContent, NyangquariumHubEntryMode.Board);
-        public void OpenCollection() => OpenChildContent(_collectionContent, NyangquariumHubEntryMode.Collection);
-        public void OpenLayout() => OpenAquariumSelect(NyangquariumHubEntryMode.Layout);
-        public void OpenWaterGaze() => OpenAquariumSelect(NyangquariumHubEntryMode.WaterGaze);
+        public void OpenStory() => OpenChildContent(_storyContent, NyangquariumEntryMode.Story);
+        public void OpenBoard() => OpenChildContent(_boardContent, NyangquariumEntryMode.Board);
+        public void OpenCollection() => OpenChildContent(_collectionContent, NyangquariumEntryMode.Collection);
+        public void OpenLayout() => OpenAquariumSelect(NyangquariumEntryMode.Layout);
+        public void OpenWaterGaze() => OpenAquariumSelect(NyangquariumEntryMode.WaterGaze);
 
-        public void ReturnToHub()
+        public void ReturnToMain()
         {
             if (_isTransitioning)
                 return;
@@ -152,7 +160,7 @@ namespace UI.NyangQuarium
             PlayClickSfx();
             RunCoveredTransition(() =>
             {
-                ShowHubViewImmediately();
+                ShowMainViewImmediately();
             });
         }
 
@@ -173,7 +181,7 @@ namespace UI.NyangQuarium
                 _activeContent = content;
         }
 
-        public void CloseHub()
+        public void CloseMain()
         {
             if (_isTransitioning)
                 return;
@@ -182,15 +190,37 @@ namespace UI.NyangQuarium
             RunCoveredTransition(() =>
             {
                 HideChildContents();
-                SetHubMenuVisible(true);
+                SetMainMenuVisible(true);
                 gameObject.SetActive(false);
             });
         }
 
-        private void OpenAquariumSelect(NyangquariumHubEntryMode entryMode)
+        private void OpenAquariumSelect(NyangquariumEntryMode entryMode)
         {
+            if (_isTransitioning || _aquariumSelectRoot == null)
+                return;
+
+            PlayClickSfx();
             _pendingAquariumEntryMode = entryMode;
-            OpenChildContent(_aquariumSelectRoot, entryMode);
+            NyangquariumEntryContext.Set(entryMode);
+
+            HideChildContents();
+            SetMainMenuVisible(false);
+            RegisterOwnedContent(_aquariumSelectRoot);
+            InitializeChildContent(_aquariumSelectRoot);
+            NotifyEntryMode(_aquariumSelectRoot, entryMode);
+            ShowChildContentImmediately(_aquariumSelectRoot);
+            RefreshButtonStates();
+        }
+
+        private void ReturnFromAquariumSelectToMain()
+        {
+            if (_isTransitioning)
+                return;
+
+            PlayClickSfx();
+            ShowMainViewImmediately();
+            RefreshButtonStates();
         }
 
         public void OpenFreshAquarium()
@@ -199,7 +229,7 @@ namespace UI.NyangQuarium
         public void OpenOceanAquarium()
             => OpenChildContent(_oceanAquariumContent, _pendingAquariumEntryMode);
 
-        private void OpenChildContent(GameObject content, NyangquariumHubEntryMode entryMode)
+        private void OpenChildContent(GameObject content, NyangquariumEntryMode entryMode)
         {
             if (_isTransitioning || content == null)
                 return;
@@ -211,9 +241,9 @@ namespace UI.NyangQuarium
 
             void ShowContent()
             {
-                NyangquariumHubEntryContext.Set(entryMode);
+                NyangquariumEntryContext.Set(entryMode);
                 HideChildContents();
-                SetHubMenuVisible(false);
+                SetMainMenuVisible(false);
                 RegisterOwnedContent(content);
                 InitializeChildContent(content);
                 NotifyEntryMode(content, entryMode);
@@ -282,11 +312,11 @@ namespace UI.NyangQuarium
         private ScreenTransitionManager GetTransition()
             => _useScreenTransition ? ScreenTransitionManager.Instance : null;
 
-        private void ShowHubViewImmediately()
+        private void ShowMainViewImmediately()
         {
             gameObject.SetActive(true);
             HideChildContents();
-            SetHubMenuVisible(true);
+            SetMainMenuVisible(true);
         }
 
         private void HideChildContents()
@@ -309,10 +339,10 @@ namespace UI.NyangQuarium
             _activeContent = null;
         }
 
-        private void SetHubMenuVisible(bool isVisible)
+        private void SetMainMenuVisible(bool isVisible)
         {
-            if (_hubMenuRoot != null)
-                _hubMenuRoot.SetActive(isVisible);
+            if (_mainMenuRoot != null)
+                _mainMenuRoot.SetActive(isVisible);
         }
 
         private static void SetContentActive(GameObject content, bool isActive)
@@ -390,9 +420,6 @@ namespace UI.NyangQuarium
             if (_waterGazeButton == null)
                 _waterGazeButton = FindButton("WaterGazeButton", "AquariumButton");
 
-            if (_backButton == null)
-                _backButton = FindButton("BackButton", "CloseButton", "ExitButton");
-
             if (_backgroundImage == null)
                 _backgroundImage = FindImage("Background", "BackgroundImage");
 
@@ -400,22 +427,32 @@ namespace UI.NyangQuarium
                 _titleLogoImage = FindImage("LogoImage", "TitleLogoImage", "TitleImage", "NyangquariumTitle");
 
             ResolveChildContentReferences();
+
+            if (_backButton == null)
+                _backButton = FindButtonIn(_mainMenuRoot, "BackButton", "CloseButton", "ExitButton")
+                    ?? FindButton("BackButton", "CloseButton", "ExitButton");
+
             ResolveAnimationReferences();
         }
 
         private void ResolveChildContentReferences()
         {
-            if (_hubMenuRoot == null)
-                _hubMenuRoot = FindGameObject("ContentButtons", "ControlPanel");
+            if (_mainMenuRoot == null)
+                _mainMenuRoot = FindGameObject("ContentButtons", "ControlPanel");
 
             if (_aquariumSelectRoot == null)
                 _aquariumSelectRoot = FindGameObject("SelectAquariumButton", "AquariumSelectPanel", "AquariumSelectionUI");
 
             if (_freshAquariumButton == null)
-                _freshAquariumButton = FindButton("FreshAquariumButton", "FreshWaterAquariumButton", "FreshButton");
+                _freshAquariumButton = FindButtonIn(_aquariumSelectRoot, "FreshAquariumButton", "FreshWaterAquariumButton", "FreshButton")
+                    ?? FindButton("FreshAquariumButton", "FreshWaterAquariumButton", "FreshButton");
 
             if (_oceanAquariumButton == null)
-                _oceanAquariumButton = FindButton("OceanAquariumButton", "SaltAquariumButton", "OceanButton");
+                _oceanAquariumButton = FindButtonIn(_aquariumSelectRoot, "OceanAquariumButton", "SaltAquariumButton", "OceanButton")
+                    ?? FindButton("OceanAquariumButton", "SaltAquariumButton", "OceanButton");
+
+            if (_aquariumSelectBackButton == null)
+                _aquariumSelectBackButton = FindButtonIn(_aquariumSelectRoot, "BackButton", "AquariumSelectBackButton", "SelectBackButton");
         }
 
         private void ResolveAnimationReferences()
@@ -433,6 +470,22 @@ namespace UI.NyangQuarium
         private Button FindButton(params string[] names)
         {
             Button[] buttons = GetComponentsInChildren<Button>(true);
+            return FindButtonIn(buttons, names);
+        }
+
+        private static Button FindButtonIn(GameObject root, params string[] names)
+        {
+            if (root == null)
+                return null;
+
+            Button[] buttons = root.GetComponentsInChildren<Button>(true);
+            return FindButtonIn(buttons, names);
+        }
+
+        private static Button FindButtonIn(Button[] buttons, params string[] names)
+        {
+            if (buttons == null)
+                return null;
 
             foreach (Button button in buttons)
             {
@@ -484,13 +537,14 @@ namespace UI.NyangQuarium
             BindButton(_collectionButton, OpenCollection);
             BindButton(_layoutButton, OpenLayout);
             BindButton(_waterGazeButton, OpenWaterGaze);
-            BindButton(_backButton, CloseHub);
+            BindButton(_backButton, CloseMain);
         }
 
         private void BindAquariumSelectButtons()
         {
             BindButton(_freshAquariumButton, OpenFreshAquarium);
             BindButton(_oceanAquariumButton, OpenOceanAquarium);
+            BindButton(_aquariumSelectBackButton, ReturnFromAquariumSelectToMain);
         }
 
         private void BindAddressableSprites()
@@ -498,25 +552,100 @@ namespace UI.NyangQuarium
             DisposeSpriteControllers();
 
             _backgroundSprite = BindSprite(_backgroundImage, _backgroundSpriteKey);
-            _titleLogoSprite = BindSprite(_titleLogoImage, _titleLogoSpriteKey);
+            _titleLogoSprite = BindSprite(_titleLogoImage, _titleLogoSpriteKey, true);
             _boardSprite = BindSprite(_boardButton, _boardSpriteKey);
             _collectionSprite = BindSprite(_collectionButton, _collectionSpriteKey);
             _layoutSprite = BindSprite(_layoutButton, _layoutSpriteKey);
             _waterGazeSprite = BindSprite(_waterGazeButton, _waterGazeSpriteKey);
             _backSprite = BindSprite(_backButton, _backSpriteKey);
+            _freshAquariumSprite = BindSprite(_freshAquariumButton, _freshAquariumSpriteKey);
+            _oceanAquariumSprite = BindSprite(_oceanAquariumButton, _oceanAquariumSpriteKey);
+            _aquariumSelectBackSprite = BindSprite(_aquariumSelectBackButton, _backSpriteKey);
         }
 
-        private static UISpriteController BindSprite(Button button, string key)
-            => BindSprite(button != null ? button.targetGraphic as Image : null, key);
+        private UISpriteController BindSprite(Button button, string key)
+        {
+            Image image = button != null ? button.targetGraphic as Image : null;
 
-        private static UISpriteController BindSprite(Image image, string key)
+            if (image == null || string.IsNullOrWhiteSpace(key))
+                return null;
+
+            RectTransform referenceRect = button.transform as RectTransform;
+            Vector2 referenceSize = GetReferenceSize(referenceRect);
+            StartCoroutine(MatchImageSizeToSpriteAspectWhenReady(image, referenceSize));
+
+            return BindSprite(image, key, true);
+        }
+
+        private static UISpriteController BindSprite(Image image, string key, bool preserveAspect = false)
         {
             if (image == null || string.IsNullOrWhiteSpace(key))
                 return null;
 
+            image.type = Image.Type.Simple;
+            image.preserveAspect = preserveAspect;
+
             UISpriteController controller = new(image);
             controller.ChangeSprite(key);
             return controller;
+        }
+
+        private IEnumerator MatchImageSizeToSpriteAspectWhenReady(Image image, Vector2 referenceSize)
+        {
+            Sprite lastSprite = null;
+
+            for (int i = 0; i < 120; i++)
+            {
+                if (image == null)
+                    yield break;
+
+                Sprite currentSprite = image.sprite;
+
+                if (currentSprite != null && !ReferenceEquals(currentSprite, lastSprite))
+                {
+                    MatchImageSizeToSpriteAspect(image.rectTransform, currentSprite, referenceSize);
+                    lastSprite = currentSprite;
+                }
+
+                yield return null;
+            }
+        }
+
+        private static Vector2 GetReferenceSize(RectTransform rectTransform)
+        {
+            if (rectTransform == null)
+                return Vector2.zero;
+
+            Vector2 referenceSize = rectTransform.sizeDelta;
+
+            if (referenceSize.x <= 0f || referenceSize.y <= 0f)
+                referenceSize = rectTransform.rect.size;
+
+            return referenceSize;
+        }
+
+        private static void MatchImageSizeToSpriteAspect(RectTransform rectTransform, Sprite sprite, Vector2 referenceSize)
+        {
+            if (rectTransform == null || sprite == null)
+                return;
+
+            if (referenceSize.x <= 0f || referenceSize.y <= 0f)
+                return;
+
+            float spriteWidth = sprite.rect.width;
+            float spriteHeight = sprite.rect.height;
+
+            if (spriteWidth <= 0f || spriteHeight <= 0f)
+                return;
+
+            float spriteAspect = spriteWidth / spriteHeight;
+            float referenceAspect = referenceSize.x / referenceSize.y;
+
+            Vector2 targetSize = referenceAspect > spriteAspect
+                ? new Vector2(referenceSize.x, referenceSize.x / spriteAspect)
+                : new Vector2(referenceSize.y * spriteAspect, referenceSize.y);
+
+            rectTransform.sizeDelta = targetSize;
         }
 
         private static void BindButton(Button button, UnityEngine.Events.UnityAction action)
@@ -536,6 +665,7 @@ namespace UI.NyangQuarium
             RefreshRouteButton(_waterGazeButton, _aquariumSelectRoot);
             RefreshRouteButton(_freshAquariumButton, _freshAquariumContent);
             RefreshRouteButton(_oceanAquariumButton, _oceanAquariumContent);
+            SetInteractable(_aquariumSelectBackButton, !_isTransitioning);
         }
 
         private void SetButtonsInteractable(bool interactable)
@@ -547,6 +677,7 @@ namespace UI.NyangQuarium
             SetInteractable(_backButton, interactable);
             SetInteractable(_freshAquariumButton, interactable);
             SetInteractable(_oceanAquariumButton, interactable);
+            SetInteractable(_aquariumSelectBackButton, interactable);
         }
 
         private void RefreshRouteButton(Button button, GameObject targetContent)
@@ -569,7 +700,7 @@ namespace UI.NyangQuarium
                 GameManager.Audio.PlaySfx(_clickSfxKey);
         }
 
-        private static void NotifyEntryMode(GameObject content, NyangquariumHubEntryMode entryMode)
+        private static void NotifyEntryMode(GameObject content, NyangquariumEntryMode entryMode)
         {
             if (content == null)
                 return;
@@ -578,7 +709,7 @@ namespace UI.NyangQuarium
 
             foreach (MonoBehaviour behaviour in behaviours)
             {
-                if (behaviour is INyangquariumHubEntryReceiver receiver)
+                if (behaviour is INyangquariumEntryReceiver receiver)
                     receiver.SetNyangquariumEntryMode(entryMode);
             }
         }
@@ -592,6 +723,9 @@ namespace UI.NyangQuarium
             _layoutSprite?.Dispose();
             _waterGazeSprite?.Dispose();
             _backSprite?.Dispose();
+            _freshAquariumSprite?.Dispose();
+            _oceanAquariumSprite?.Dispose();
+            _aquariumSelectBackSprite?.Dispose();
 
             _backgroundSprite = null;
             _titleLogoSprite = null;
@@ -600,6 +734,9 @@ namespace UI.NyangQuarium
             _layoutSprite = null;
             _waterGazeSprite = null;
             _backSprite = null;
+            _freshAquariumSprite = null;
+            _oceanAquariumSprite = null;
+            _aquariumSelectBackSprite = null;
         }
 
         private void OnDestroy()
