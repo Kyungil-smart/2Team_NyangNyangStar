@@ -11,7 +11,8 @@ namespace UI.NyangQuarium
 
         private void Awake()
         {
-            _button ??= GetComponent<Button>();
+            if (_button == null)
+                _button = GetComponent<Button>();
         }
 
         private void OnEnable()

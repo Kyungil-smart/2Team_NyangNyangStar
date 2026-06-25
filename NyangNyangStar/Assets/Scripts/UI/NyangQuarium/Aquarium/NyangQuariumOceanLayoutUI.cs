@@ -1,8 +1,8 @@
 using Core.Managers;
 using UI.Base;
+using UI.NyangQuarium;
 using UnityEngine;
 using UnityEngine.UI;
-using Util;
 
 public class NyangQuariumOceanLayoutUI : UIPopup
 {
@@ -30,7 +30,10 @@ public class NyangQuariumOceanLayoutUI : UIPopup
     [Tooltip("해수어 목록이 표시되는 패널")]
     [SerializeField] private GameObject _oceanwaterLayoutPanel;
 
-    private UIPopup _freshLayoutUI;
+    [Header("연결 레이아웃")]
+    [Tooltip("담수 수조 레이아웃 하위 오브젝트입니다. 담당자가 프리팹을 넣은 뒤 연결하면 됩니다.")]
+    [SerializeField] private UIPopup _freshLayoutUI;
+
     private bool _isFishPanelOpened;
 
     public override void Init()
@@ -40,7 +43,7 @@ public class NyangQuariumOceanLayoutUI : UIPopup
         BindButtons();
         AddButtonListeners();
         InitializeUI();
-        InitFreshLayoutUI();
+        ResolveFreshLayoutUI();
 
         DebugTool.Log("[NyangQuariumOceanLayoutUI] 초기화 완료", DebugType.UI, this);
     }
@@ -73,12 +76,25 @@ public class NyangQuariumOceanLayoutUI : UIPopup
         SetMainUIActive(true);
     }
 
-    private void InitFreshLayoutUI()
+    private void ResolveFreshLayoutUI()
     {
-        GameManager.UI.ShowPopupUI<UIPopup>(
-            KeyContainer.Prefabs.NyangQuariumFreshLayoutUI,
-            popup => _freshLayoutUI = popup,
-            false);
+        if (_freshLayoutUI == null)
+            _freshLayoutUI = NyangQuariumFreshLayoutUI.ActiveInstance;
+
+        if (_freshLayoutUI == null)
+            _freshLayoutUI = FindSiblingLayout<NyangQuariumFreshLayoutUI>();
+
+        if (_freshLayoutUI == null)
+            return;
+
+        NyangquariumHubUI.Active?.RegisterOwnedContent(_freshLayoutUI, false);
+    }
+
+    private T FindSiblingLayout<T>() where T : UIPopup
+    {
+        Transform searchRoot = transform.parent != null ? transform.parent : transform.root;
+
+        return searchRoot != null ? searchRoot.GetComponentInChildren<T>(true) : null;
     }
 
     private void AddBackButton()
@@ -99,7 +115,10 @@ public class NyangQuariumOceanLayoutUI : UIPopup
                 return;
             }
 
-            gameObject.SetActive(false);
+            if (NyangquariumHubUI.Active != null)
+                NyangquariumHubUI.Active.ReturnToHub();
+            else
+                gameObject.SetActive(false);
         });
     }
 
@@ -123,6 +142,7 @@ public class NyangQuariumOceanLayoutUI : UIPopup
 
             _freshLayoutUI.gameObject.SetActive(true);
             _freshLayoutUI.PlayOpenAnimation();
+            NyangquariumHubUI.Active?.RegisterOwnedContent(_freshLayoutUI);
 
             gameObject.SetActive(false);
 
