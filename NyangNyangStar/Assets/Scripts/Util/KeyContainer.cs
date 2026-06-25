@@ -11,7 +11,7 @@ namespace Util
     {
         public static Dictionary<string, List<GameObject>> PrefabKeyDict = new();
         private static Dictionary<string, KeyData> _keyDataDict  = new();
-        
+
         private static readonly Dictionary<AddressableGroupType, List<string>> _keysByGroup = new();
         private static readonly Dictionary<(AddressableGroupType group, LabelType label), List<string>> _keysByGroupAndLabel = new();
 
@@ -64,6 +64,9 @@ namespace Util
 
             // 스크래칭 타임 UI 프리팹
             public const string ScratchingTime = "ScratchingTimeScreen";
+
+            // 냥쿠아 리움 UI 프리팹
+            public const string Nyangquarium = "NyangquariumUI";
         }
 
         public static void Register(KeyData data)
@@ -158,6 +161,17 @@ namespace Util
                 DebugTool.Log($"{key} : 존재 하지 않는 Prefab Key 입니다.", DebugType.Addressable);
                 return false;
             }
+
+            return true;
+        }
+
+        public static bool EnsurePrefabKey(string key)
+        {
+            if (string.IsNullOrWhiteSpace(key))
+                return false;
+
+            if (!PrefabKeyDict.ContainsKey(key))
+                PrefabKeyDict.Add(key, new List<GameObject>());
 
             return true;
         }
@@ -287,6 +301,8 @@ namespace Util
             
             // 뭉치를 찾아라
             PrefabKeyDict.Add(Prefabs.FindMoongchiPopupUI, new List<GameObject>());
+
+            PrefabKeyDict.Add(Prefabs.Nyangquarium, new List<GameObject>());
         }
 
         public static void PrintKeys()
