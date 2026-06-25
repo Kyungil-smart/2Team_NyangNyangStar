@@ -167,6 +167,20 @@ namespace UI.NyangQuarium
         public void RegisterOwnedContent(UIPopup popup, bool setActiveContent = true)
             => RegisterOwnedContent(popup != null ? popup.gameObject : null, setActiveContent);
 
+        public void PrepareOwnedContent(UIPopup popup, NyangquariumEntryMode entryMode, bool setActiveContent = true)
+            => PrepareOwnedContent(popup != null ? popup.gameObject : null, entryMode, setActiveContent);
+
+        public void PrepareOwnedContent(GameObject content, NyangquariumEntryMode entryMode, bool setActiveContent = true)
+        {
+            if (content == null)
+                return;
+
+            NyangquariumEntryContext.Set(entryMode);
+            RegisterOwnedContent(content, setActiveContent);
+            InitializeChildContent(content);
+            NotifyEntryMode(content, entryMode);
+        }
+
         public void RegisterOwnedContent(GameObject content, bool setActiveContent = true)
         {
             if (content == null)
@@ -244,9 +258,7 @@ namespace UI.NyangQuarium
                 NyangquariumEntryContext.Set(entryMode);
                 HideChildContents();
                 SetMainMenuVisible(false);
-                RegisterOwnedContent(content);
-                InitializeChildContent(content);
-                NotifyEntryMode(content, entryMode);
+                PrepareOwnedContent(content, entryMode);
 
                 if (transition == null)
                     ShowChildContentWithOpenAnimation(content);
@@ -443,6 +455,20 @@ namespace UI.NyangQuarium
             if (_aquariumSelectRoot == null)
                 _aquariumSelectRoot = FindGameObject("SelectAquariumButton", "AquariumSelectPanel", "AquariumSelectionUI");
 
+            if (_freshAquariumContent == null)
+                _freshAquariumContent = FindContent<global::NyangQuariumFreshLayoutUI>(
+                    "NyangQuariumFreshCanvas",
+                    "NyangQuariumFreshLayoutCanvas",
+                    "FreshAquariumContent",
+                    "FreshLayoutContent");
+
+            if (_oceanAquariumContent == null)
+                _oceanAquariumContent = FindContent<global::NyangQuariumOceanLayoutUI>(
+                    "NyangQuariumOceanCanvas",
+                    "NyangQuariumOceanLayoutCanvas",
+                    "OceanAquariumContent",
+                    "OceanLayoutContent");
+
             if (_freshAquariumButton == null)
                 _freshAquariumButton = FindButtonIn(_aquariumSelectRoot, "FreshAquariumButton", "FreshWaterAquariumButton", "FreshButton")
                     ?? FindButton("FreshAquariumButton", "FreshWaterAquariumButton", "FreshButton");
@@ -497,6 +523,16 @@ namespace UI.NyangQuarium
             }
 
             return null;
+        }
+
+        private GameObject FindContent<T>(params string[] names) where T : Component
+        {
+            T component = GetComponentInChildren<T>(true);
+
+            if (component != null)
+                return component.gameObject;
+
+            return FindGameObject(names);
         }
 
         private Image FindImage(params string[] names)

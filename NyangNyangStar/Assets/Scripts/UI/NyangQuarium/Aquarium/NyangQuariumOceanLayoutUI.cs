@@ -4,7 +4,7 @@ using UI.NyangQuarium;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class NyangQuariumOceanLayoutUI : UIPopup
+public class NyangQuariumOceanLayoutUI : UIPopup, INyangquariumEntryReceiver
 {
     [Header("공통 버튼")]
     [Tooltip("뒤로가기 버튼")]
@@ -34,15 +34,26 @@ public class NyangQuariumOceanLayoutUI : UIPopup
     [Tooltip("담수 수조 레이아웃 하위 오브젝트입니다. 담당자가 프리팹을 넣은 뒤 연결하면 됩니다.")]
     [SerializeField] private UIPopup _freshLayoutUI;
 
+    [Header("Entry Mode")]
+    [SerializeField] private GameObject[] _layoutModeOnlyObjects;
+    [SerializeField] private GameObject[] _waterGazeModeOnlyObjects;
+
     private bool _isFishPanelOpened;
+    private NyangquariumEntryMode _entryMode = NyangquariumEntryMode.Layout;
+
+    public NyangquariumEntryMode EntryMode => _entryMode;
+    public bool IsLayoutMode => _entryMode == NyangquariumEntryMode.Layout;
+    public bool IsWaterGazeMode => _entryMode == NyangquariumEntryMode.WaterGaze;
 
     public override void Init()
     {
+        _entryMode = NyangquariumEntryContext.Current;
         Bind<Button>(typeof(NyangQuariumOceanLayoutUIButton));
 
         BindButtons();
         AddButtonListeners();
         InitializeUI();
+        ApplyEntryMode();
         ResolveFreshLayoutUI();
 
         DebugTool.Log("[NyangQuariumOceanLayoutUI] 초기화 완료", DebugType.UI, this);
@@ -74,6 +85,30 @@ public class NyangQuariumOceanLayoutUI : UIPopup
             _oceanwaterLayoutPanel.SetActive(false);
 
         SetMainUIActive(true);
+    }
+
+    public void SetNyangquariumEntryMode(NyangquariumEntryMode entryMode)
+    {
+        _entryMode = entryMode;
+        ApplyEntryMode();
+    }
+
+    private void ApplyEntryMode()
+    {
+        SetModeObjectsActive(_layoutModeOnlyObjects, IsLayoutMode);
+        SetModeObjectsActive(_waterGazeModeOnlyObjects, IsWaterGazeMode);
+    }
+
+    private static void SetModeObjectsActive(GameObject[] objects, bool isActive)
+    {
+        if (objects == null)
+            return;
+
+        foreach (GameObject target in objects)
+        {
+            if (target != null)
+                target.SetActive(isActive);
+        }
     }
 
     private void ResolveFreshLayoutUI()
@@ -140,14 +175,44 @@ public class NyangQuariumOceanLayoutUI : UIPopup
                 return;
             }
 
+            PrepareLinkedLayout(_freshLayoutUI);
             _freshLayoutUI.gameObject.SetActive(true);
             _freshLayoutUI.PlayOpenAnimation();
-            NyangquariumMainUIManager.Active?.RegisterOwnedContent(_freshLayoutUI);
 
             gameObject.SetActive(false);
 
             DebugTool.Log("[NyangQuariumOceanLayoutUI] 담수 레이아웃 UI로 변경", DebugType.UI, this);
         });
+    }
+
+    private void PrepareLinkedLayout(UIPopup popup)
+    {
+        if (popup == null)
+            return;
+
+        NyangquariumEntryContext.Set(_entryMode);
+
+        if (NyangquariumMainUIManager.Active != null)
+        {
+            NyangquariumMainUIManager.Active.PrepareOwnedContent(popup, _entryMode);
+            return;
+        }
+
+        NotifyEntryMode(popup.gameObject);
+    }
+
+    private void NotifyEntryMode(GameObject content)
+    {
+        if (content == null)
+            return;
+
+        MonoBehaviour[] behaviours = content.GetComponentsInChildren<MonoBehaviour>(true);
+
+        foreach (MonoBehaviour behaviour in behaviours)
+        {
+            if (behaviour is INyangquariumEntryReceiver receiver)
+                receiver.SetNyangquariumEntryMode(_entryMode);
+        }
     }
 
     private void AddOceanFishButton()
