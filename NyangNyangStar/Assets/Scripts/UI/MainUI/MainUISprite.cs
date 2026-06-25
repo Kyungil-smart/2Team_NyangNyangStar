@@ -55,6 +55,7 @@ public class MainUISprite : UIBase
         SetSprite(MainUIImages.ProfileFrame, "Main_Profile_Frame");
         SetSprite(MainUIImages.FindMoongchiButton, "Main_Btn_Event_FindMoongchi");
         SetSprite(MainUIImages.NotebookAlert, "Main_Alert");
+        SetSprite(MainUIImages.NyangquariumButton, "NQ_Object_Tank_01");
     }
 
     private void SetSprite(MainUIImages image, string key)
@@ -102,4 +103,5 @@ public enum MainUIImages
     ProfileFrame,              // 프로필 이미지 테두리
     FindMoongchiButton,        // 뭉치를 찾아라 이벤트
     NotebookAlert,             // 임시보호 수업 알림 
+    NyangquariumButton,        // 냥쿠아리움
 }
