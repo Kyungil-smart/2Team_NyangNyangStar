@@ -11,7 +11,8 @@ namespace UI.NyangQuarium
 
         private void Awake()
         {
-            _button ??= GetComponent<Button>();
+            if (_button == null)
+                _button = GetComponent<Button>();
         }
 
         private void OnEnable()
@@ -19,21 +20,21 @@ namespace UI.NyangQuarium
             if (_button == null)
                 return;
 
-            _button.onClick.RemoveListener(ReturnToHub);
-            _button.onClick.AddListener(ReturnToHub);
+            _button.onClick.RemoveListener(ReturnToMain);
+            _button.onClick.AddListener(ReturnToMain);
         }
 
         private void OnDisable()
         {
             if (_button != null)
-                _button.onClick.RemoveListener(ReturnToHub);
+                _button.onClick.RemoveListener(ReturnToMain);
         }
 
-        public void ReturnToHub()
+        public void ReturnToMain()
         {
-            if (NyangquariumHubUI.Active != null)
+            if (NyangquariumMainUIManager.Active != null)
             {
-                NyangquariumHubUI.Active.ReturnToHub();
+                NyangquariumMainUIManager.Active.ReturnToMain();
                 return;
             }
 

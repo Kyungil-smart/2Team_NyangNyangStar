@@ -1,0 +1,752 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using Core.Managers;
+using DG.Tweening;
+using UI.Base;
+using UI.Transition;
+using UnityEngine;
+using UnityEngine.Serialization;
+using UnityEngine.UI;
+using Util;
+
+namespace UI.NyangQuarium
+{
+    public sealed class NyangquariumMainUIManager : UIPopup
+    {
+        [Header("메인 버튼")]
+        [FormerlySerializedAs("_boardQuestButton")]
+        [SerializeField] private Button _boardButton;
+        [SerializeField] private Button _collectionButton;
+        [SerializeField] private Button _layoutButton;
+        [FormerlySerializedAs("_aquariumButton")]
+        [SerializeField] private Button _waterGazeButton;
+        [SerializeField] private Button _backButton;
+
+        [Header("하위 콘텐츠 오브젝트 연결")]
+        [Tooltip("기본 메인 버튼 묶음입니다. 비워두면 ContentButtons를 자동으로 찾습니다.")]
+        [FormerlySerializedAs("_hubMenuRoot")]
+        [SerializeField] private GameObject _mainMenuRoot;
+        [Tooltip("메인 버튼이 아니라 최초 진입 이벤트에서 OpenStory를 호출할 때 사용합니다.")]
+        [SerializeField] private GameObject _storyContent;
+        [FormerlySerializedAs("_boardQuestContent")]
+        [SerializeField] private GameObject _boardContent;
+        [SerializeField] private GameObject _collectionContent;
+        [Tooltip("수조 레이아웃/물멍 버튼을 눌렀을 때 먼저 여는 담수/해수 선택 UI입니다.")]
+        [SerializeField] private GameObject _aquariumSelectRoot;
+        [Tooltip("담수 선택 시 열 하위 오브젝트입니다. 담당자가 프리팹을 넣은 뒤 연결하면 됩니다.")]
+        [SerializeField] private GameObject _freshAquariumContent;
+        [Tooltip("해수 선택 시 열 하위 오브젝트입니다. 담당자가 프리팹을 넣은 뒤 연결하면 됩니다.")]
+        [SerializeField] private GameObject _oceanAquariumContent;
+
+        [Header("수조 선택 버튼")]
+        [SerializeField] private Button _freshAquariumButton;
+        [SerializeField] private Button _oceanAquariumButton;
+        [SerializeField] private Button _aquariumSelectBackButton;
+
+        [Header("기본 화면 Addressables 스프라이트")]
+        [FormerlySerializedAs("_tankImage")]
+        [SerializeField] private Image _backgroundImage;
+        [FormerlySerializedAs("_tankSpriteKey")]
+        [SerializeField] private string _backgroundSpriteKey = "NQ_BG_SaltWater";
+        [SerializeField] private Image _titleLogoImage;
+        [SerializeField] private string _titleLogoSpriteKey = "NQ_Img_Title";
+        [SerializeField] private string _boardSpriteKey = "NQ_Btn_Mergeboard";
+        [SerializeField] private string _collectionSpriteKey = "NQ_Btn_FishBook";
+        [SerializeField] private string _layoutSpriteKey = "NQ_Btn_Tank";
+        [SerializeField] private string _waterGazeSpriteKey = "NQ_Btn_AquaView";
+        [SerializeField] private string _backSpriteKey = "NQ_Btn_Back";
+        [SerializeField] private string _freshAquariumSpriteKey = "NQ_Btn_FishFresh";
+        [SerializeField] private string _oceanAquariumSpriteKey = "NQ_Btn_FishSalt";
+
+        [Header("연출")]
+        [SerializeField] private CanvasGroup _canvasGroup;
+        [SerializeField] private RectTransform _contentRoot;
+        [SerializeField] private float _openDuration = 0.2f;
+        [SerializeField] private float _openStartScale = 0.96f;
+        [SerializeField] private bool _useScreenTransition = true;
+        [SerializeField] private string _clickSfxKey = "Main_SFX_Touch";
+
+        private GameObject _activeContent;
+        private bool _isTransitioning;
+        private NyangquariumEntryMode _pendingAquariumEntryMode = NyangquariumEntryMode.Layout;
+        private UISpriteController _backgroundSprite;
+        private UISpriteController _titleLogoSprite;
+        private UISpriteController _boardSprite;
+        private UISpriteController _collectionSprite;
+        private UISpriteController _layoutSprite;
+        private UISpriteController _waterGazeSprite;
+        private UISpriteController _backSprite;
+        private UISpriteController _freshAquariumSprite;
+        private UISpriteController _oceanAquariumSprite;
+        private UISpriteController _aquariumSelectBackSprite;
+        private readonly List<GameObject> _ownedContents = new();
+        private readonly HashSet<UIPopup> _initializedChildPopups = new();
+
+        public static NyangquariumMainUIManager Active { get; private set; }
+
+        public override void Init()
+        {
+            Active = this;
+            ResolveReferences();
+            BindButtons();
+            BindAquariumSelectButtons();
+            BindAddressableSprites();
+            ShowMainViewImmediately();
+            RefreshButtonStates();
+        }
+
+        public override void PlayOpenAnimation()
+        {
+            Active = this;
+            ResolveAnimationReferences();
+            ShowMainViewImmediately();
+
+            if (_canvasGroup == null || _contentRoot == null)
+            {
+                DebugTool.Warning(
+                    "[NyangquariumMainUIManager] 오픈 연출에 필요한 CanvasGroup 또는 RectTransform을 찾지 못했습니다.",
+                    DebugType.UI,
+                    this);
+                return;
+            }
+
+            _canvasGroup.DOKill();
+            _contentRoot.DOKill();
+
+            _canvasGroup.alpha = 0f;
+            _contentRoot.localScale = Vector3.one * _openStartScale;
+
+            _canvasGroup
+                .DOFade(1f, _openDuration)
+                .SetUpdate(true);
+
+            _contentRoot
+                .DOScale(Vector3.one, _openDuration)
+                .SetEase(Ease.OutBack)
+                .SetUpdate(true);
+        }
+
+        public void ShowImmediately()
+        {
+            Active = this;
+            gameObject.SetActive(true);
+            ResolveAnimationReferences();
+
+            _canvasGroup?.DOKill();
+            _contentRoot?.DOKill();
+
+            if (_canvasGroup != null)
+                _canvasGroup.alpha = 1f;
+
+            if (_contentRoot != null)
+                _contentRoot.localScale = Vector3.one;
+
+            ShowMainViewImmediately();
+            RefreshButtonStates();
+        }
+
+        public void OpenStory() => OpenChildContent(_storyContent, NyangquariumEntryMode.Story);
+        public void OpenBoard() => OpenChildContent(_boardContent, NyangquariumEntryMode.Board);
+        public void OpenCollection() => OpenChildContent(_collectionContent, NyangquariumEntryMode.Collection);
+        public void OpenLayout() => OpenAquariumSelect(NyangquariumEntryMode.Layout);
+        public void OpenWaterGaze() => OpenAquariumSelect(NyangquariumEntryMode.WaterGaze);
+
+        public void ReturnToMain()
+        {
+            if (_isTransitioning)
+                return;
+
+            PlayClickSfx();
+            RunCoveredTransition(() =>
+            {
+                ShowMainViewImmediately();
+            });
+        }
+
+        public void RegisterOwnedContent(UIPopup popup, bool setActiveContent = true)
+            => RegisterOwnedContent(popup != null ? popup.gameObject : null, setActiveContent);
+
+        public void RegisterOwnedContent(GameObject content, bool setActiveContent = true)
+        {
+            if (content == null)
+                return;
+
+            _ownedContents.RemoveAll(item => item == null);
+
+            if (!_ownedContents.Contains(content))
+                _ownedContents.Add(content);
+
+            if (setActiveContent)
+                _activeContent = content;
+        }
+
+        public void CloseMain()
+        {
+            if (_isTransitioning)
+                return;
+
+            PlayClickSfx();
+            RunCoveredTransition(() =>
+            {
+                HideChildContents();
+                SetMainMenuVisible(true);
+                gameObject.SetActive(false);
+            });
+        }
+
+        private void OpenAquariumSelect(NyangquariumEntryMode entryMode)
+        {
+            if (_isTransitioning || _aquariumSelectRoot == null)
+                return;
+
+            PlayClickSfx();
+            _pendingAquariumEntryMode = entryMode;
+            NyangquariumEntryContext.Set(entryMode);
+
+            HideChildContents();
+            SetMainMenuVisible(false);
+            RegisterOwnedContent(_aquariumSelectRoot);
+            InitializeChildContent(_aquariumSelectRoot);
+            NotifyEntryMode(_aquariumSelectRoot, entryMode);
+            ShowChildContentImmediately(_aquariumSelectRoot);
+            RefreshButtonStates();
+        }
+
+        private void ReturnFromAquariumSelectToMain()
+        {
+            if (_isTransitioning)
+                return;
+
+            PlayClickSfx();
+            ShowMainViewImmediately();
+            RefreshButtonStates();
+        }
+
+        public void OpenFreshAquarium()
+            => OpenChildContent(_freshAquariumContent, _pendingAquariumEntryMode);
+
+        public void OpenOceanAquarium()
+            => OpenChildContent(_oceanAquariumContent, _pendingAquariumEntryMode);
+
+        private void OpenChildContent(GameObject content, NyangquariumEntryMode entryMode)
+        {
+            if (_isTransitioning || content == null)
+                return;
+
+            PlayClickSfx();
+            SetButtonsInteractable(false);
+            _isTransitioning = true;
+            ScreenTransitionManager transition = GetTransition();
+
+            void ShowContent()
+            {
+                NyangquariumEntryContext.Set(entryMode);
+                HideChildContents();
+                SetMainMenuVisible(false);
+                RegisterOwnedContent(content);
+                InitializeChildContent(content);
+                NotifyEntryMode(content, entryMode);
+
+                if (transition == null)
+                    ShowChildContentWithOpenAnimation(content);
+                else
+                    ShowChildContentImmediately(content);
+            }
+
+            if (transition == null)
+            {
+                ShowContent();
+                Unlock();
+                return;
+            }
+
+            transition.Cover(() =>
+            {
+                ShowContent();
+                transition.Reveal(Unlock);
+            });
+        }
+
+        private void RunCoveredTransition(Action coveredAction)
+        {
+            SetButtonsInteractable(false);
+            _isTransitioning = true;
+
+            ScreenTransitionManager transition = GetTransition();
+
+            if (transition == null)
+            {
+                coveredAction?.Invoke();
+                Unlock();
+                return;
+            }
+
+            transition.Cover(() =>
+            {
+                coveredAction?.Invoke();
+                transition.Reveal(Unlock);
+            });
+        }
+
+        private void RevealAndUnlock()
+        {
+            ScreenTransitionManager transition = GetTransition();
+
+            if (transition == null)
+            {
+                Unlock();
+                return;
+            }
+
+            transition.Reveal(Unlock);
+        }
+
+        private void Unlock()
+        {
+            _isTransitioning = false;
+            SetButtonsInteractable(true);
+            RefreshButtonStates();
+        }
+
+        private ScreenTransitionManager GetTransition()
+            => _useScreenTransition ? ScreenTransitionManager.Instance : null;
+
+        private void ShowMainViewImmediately()
+        {
+            gameObject.SetActive(true);
+            HideChildContents();
+            SetMainMenuVisible(true);
+        }
+
+        private void HideChildContents()
+        {
+            SetContentActive(_storyContent, false);
+            SetContentActive(_boardContent, false);
+            SetContentActive(_collectionContent, false);
+            SetContentActive(_aquariumSelectRoot, false);
+            SetContentActive(_freshAquariumContent, false);
+            SetContentActive(_oceanAquariumContent, false);
+
+            for (int i = _ownedContents.Count - 1; i >= 0; i--)
+            {
+                GameObject content = _ownedContents[i];
+
+                if (content != null)
+                    content.SetActive(false);
+            }
+
+            _activeContent = null;
+        }
+
+        private void SetMainMenuVisible(bool isVisible)
+        {
+            if (_mainMenuRoot != null)
+                _mainMenuRoot.SetActive(isVisible);
+        }
+
+        private static void SetContentActive(GameObject content, bool isActive)
+        {
+            if (content != null)
+                content.SetActive(isActive);
+        }
+
+        private void InitializeChildContent(GameObject content)
+        {
+            if (content == null)
+                return;
+
+            UIPopup[] popups = content.GetComponentsInChildren<UIPopup>(true);
+
+            foreach (UIPopup popup in popups)
+            {
+                if (popup == null || ReferenceEquals(popup, this))
+                    continue;
+
+                if (!_initializedChildPopups.Add(popup))
+                    continue;
+
+                popup.Init();
+                popup.SetAddressableKey(string.Empty);
+            }
+        }
+
+        private static void ShowChildContentImmediately(GameObject content)
+        {
+            if (content == null)
+                return;
+
+            content.SetActive(true);
+
+            CanvasGroup canvasGroup = content.GetComponent<CanvasGroup>();
+
+            if (canvasGroup != null)
+            {
+                canvasGroup.DOKill();
+                canvasGroup.alpha = 1f;
+            }
+
+            if (content.transform is RectTransform rectTransform)
+            {
+                rectTransform.DOKill();
+                rectTransform.localScale = Vector3.one;
+            }
+        }
+
+        private static void ShowChildContentWithOpenAnimation(GameObject content)
+        {
+            if (content == null)
+                return;
+
+            content.SetActive(true);
+
+            UIPopup popup = content.GetComponent<UIPopup>();
+
+            if (popup != null)
+                popup.PlayOpenAnimation();
+        }
+
+        private void ResolveReferences()
+        {
+            if (_boardButton == null)
+                _boardButton = FindButton("BoardButton", "MergeGameButton", "BoardQuestButton");
+
+            if (_collectionButton == null)
+                _collectionButton = FindButton("CollectionButton", "FishCollectionButton");
+
+            if (_layoutButton == null)
+                _layoutButton = FindButton("LayoutButton", "AquariumLayoutButton");
+
+            if (_waterGazeButton == null)
+                _waterGazeButton = FindButton("WaterGazeButton", "AquariumButton");
+
+            if (_backgroundImage == null)
+                _backgroundImage = FindImage("Background", "BackgroundImage");
+
+            if (_titleLogoImage == null)
+                _titleLogoImage = FindImage("LogoImage", "TitleLogoImage", "TitleImage", "NyangquariumTitle");
+
+            ResolveChildContentReferences();
+
+            if (_backButton == null)
+                _backButton = FindButtonIn(_mainMenuRoot, "BackButton", "CloseButton", "ExitButton")
+                    ?? FindButton("BackButton", "CloseButton", "ExitButton");
+
+            ResolveAnimationReferences();
+        }
+
+        private void ResolveChildContentReferences()
+        {
+            if (_mainMenuRoot == null)
+                _mainMenuRoot = FindGameObject("ContentButtons", "ControlPanel");
+
+            if (_aquariumSelectRoot == null)
+                _aquariumSelectRoot = FindGameObject("SelectAquariumButton", "AquariumSelectPanel", "AquariumSelectionUI");
+
+            if (_freshAquariumButton == null)
+                _freshAquariumButton = FindButtonIn(_aquariumSelectRoot, "FreshAquariumButton", "FreshWaterAquariumButton", "FreshButton")
+                    ?? FindButton("FreshAquariumButton", "FreshWaterAquariumButton", "FreshButton");
+
+            if (_oceanAquariumButton == null)
+                _oceanAquariumButton = FindButtonIn(_aquariumSelectRoot, "OceanAquariumButton", "SaltAquariumButton", "OceanButton")
+                    ?? FindButton("OceanAquariumButton", "SaltAquariumButton", "OceanButton");
+
+            if (_aquariumSelectBackButton == null)
+                _aquariumSelectBackButton = FindButtonIn(_aquariumSelectRoot, "BackButton", "AquariumSelectBackButton", "SelectBackButton");
+        }
+
+        private void ResolveAnimationReferences()
+        {
+            if (_canvasGroup == null)
+                _canvasGroup = GetComponent<CanvasGroup>();
+
+            if (_canvasGroup == null)
+                _canvasGroup = gameObject.AddComponent<CanvasGroup>();
+
+            if (_contentRoot == null)
+                _contentRoot = transform as RectTransform;
+        }
+
+        private Button FindButton(params string[] names)
+        {
+            Button[] buttons = GetComponentsInChildren<Button>(true);
+            return FindButtonIn(buttons, names);
+        }
+
+        private static Button FindButtonIn(GameObject root, params string[] names)
+        {
+            if (root == null)
+                return null;
+
+            Button[] buttons = root.GetComponentsInChildren<Button>(true);
+            return FindButtonIn(buttons, names);
+        }
+
+        private static Button FindButtonIn(Button[] buttons, params string[] names)
+        {
+            if (buttons == null)
+                return null;
+
+            foreach (Button button in buttons)
+            {
+                foreach (string targetName in names)
+                {
+                    if (string.Equals(button.name, targetName, StringComparison.OrdinalIgnoreCase))
+                        return button;
+                }
+            }
+
+            return null;
+        }
+
+        private Image FindImage(params string[] names)
+        {
+            Image[] images = GetComponentsInChildren<Image>(true);
+
+            foreach (Image image in images)
+            {
+                foreach (string targetName in names)
+                {
+                    if (string.Equals(image.name, targetName, StringComparison.OrdinalIgnoreCase))
+                        return image;
+                }
+            }
+
+            return null;
+        }
+
+        private GameObject FindGameObject(params string[] names)
+        {
+            Transform[] transforms = GetComponentsInChildren<Transform>(true);
+
+            foreach (Transform child in transforms)
+            {
+                foreach (string targetName in names)
+                {
+                    if (string.Equals(child.name, targetName, StringComparison.OrdinalIgnoreCase))
+                        return child.gameObject;
+                }
+            }
+
+            return null;
+        }
+
+        private void BindButtons()
+        {
+            BindButton(_boardButton, OpenBoard);
+            BindButton(_collectionButton, OpenCollection);
+            BindButton(_layoutButton, OpenLayout);
+            BindButton(_waterGazeButton, OpenWaterGaze);
+            BindButton(_backButton, CloseMain);
+        }
+
+        private void BindAquariumSelectButtons()
+        {
+            BindButton(_freshAquariumButton, OpenFreshAquarium);
+            BindButton(_oceanAquariumButton, OpenOceanAquarium);
+            BindButton(_aquariumSelectBackButton, ReturnFromAquariumSelectToMain);
+        }
+
+        private void BindAddressableSprites()
+        {
+            DisposeSpriteControllers();
+
+            _backgroundSprite = BindSprite(_backgroundImage, _backgroundSpriteKey);
+            _titleLogoSprite = BindSprite(_titleLogoImage, _titleLogoSpriteKey, true);
+            _boardSprite = BindSprite(_boardButton, _boardSpriteKey);
+            _collectionSprite = BindSprite(_collectionButton, _collectionSpriteKey);
+            _layoutSprite = BindSprite(_layoutButton, _layoutSpriteKey);
+            _waterGazeSprite = BindSprite(_waterGazeButton, _waterGazeSpriteKey);
+            _backSprite = BindSprite(_backButton, _backSpriteKey);
+            _freshAquariumSprite = BindSprite(_freshAquariumButton, _freshAquariumSpriteKey);
+            _oceanAquariumSprite = BindSprite(_oceanAquariumButton, _oceanAquariumSpriteKey);
+            _aquariumSelectBackSprite = BindSprite(_aquariumSelectBackButton, _backSpriteKey);
+        }
+
+        private UISpriteController BindSprite(Button button, string key)
+        {
+            Image image = button != null ? button.targetGraphic as Image : null;
+
+            if (image == null || string.IsNullOrWhiteSpace(key))
+                return null;
+
+            RectTransform referenceRect = button.transform as RectTransform;
+            Vector2 referenceSize = GetReferenceSize(referenceRect);
+            StartCoroutine(MatchImageSizeToSpriteAspectWhenReady(image, referenceSize));
+
+            return BindSprite(image, key, true);
+        }
+
+        private static UISpriteController BindSprite(Image image, string key, bool preserveAspect = false)
+        {
+            if (image == null || string.IsNullOrWhiteSpace(key))
+                return null;
+
+            image.type = Image.Type.Simple;
+            image.preserveAspect = preserveAspect;
+
+            UISpriteController controller = new(image);
+            controller.ChangeSprite(key);
+            return controller;
+        }
+
+        private IEnumerator MatchImageSizeToSpriteAspectWhenReady(Image image, Vector2 referenceSize)
+        {
+            Sprite lastSprite = null;
+
+            for (int i = 0; i < 120; i++)
+            {
+                if (image == null)
+                    yield break;
+
+                Sprite currentSprite = image.sprite;
+
+                if (currentSprite != null && !ReferenceEquals(currentSprite, lastSprite))
+                {
+                    MatchImageSizeToSpriteAspect(image.rectTransform, currentSprite, referenceSize);
+                    lastSprite = currentSprite;
+                }
+
+                yield return null;
+            }
+        }
+
+        private static Vector2 GetReferenceSize(RectTransform rectTransform)
+        {
+            if (rectTransform == null)
+                return Vector2.zero;
+
+            Vector2 referenceSize = rectTransform.sizeDelta;
+
+            if (referenceSize.x <= 0f || referenceSize.y <= 0f)
+                referenceSize = rectTransform.rect.size;
+
+            return referenceSize;
+        }
+
+        private static void MatchImageSizeToSpriteAspect(RectTransform rectTransform, Sprite sprite, Vector2 referenceSize)
+        {
+            if (rectTransform == null || sprite == null)
+                return;
+
+            if (referenceSize.x <= 0f || referenceSize.y <= 0f)
+                return;
+
+            float spriteWidth = sprite.rect.width;
+            float spriteHeight = sprite.rect.height;
+
+            if (spriteWidth <= 0f || spriteHeight <= 0f)
+                return;
+
+            float spriteAspect = spriteWidth / spriteHeight;
+            float referenceAspect = referenceSize.x / referenceSize.y;
+
+            Vector2 targetSize = referenceAspect > spriteAspect
+                ? new Vector2(referenceSize.x, referenceSize.x / spriteAspect)
+                : new Vector2(referenceSize.y * spriteAspect, referenceSize.y);
+
+            rectTransform.sizeDelta = targetSize;
+        }
+
+        private static void BindButton(Button button, UnityEngine.Events.UnityAction action)
+        {
+            if (button == null)
+                return;
+
+            button.onClick.RemoveListener(action);
+            button.onClick.AddListener(action);
+        }
+
+        private void RefreshButtonStates()
+        {
+            RefreshRouteButton(_boardButton, _boardContent);
+            RefreshRouteButton(_collectionButton, _collectionContent);
+            RefreshRouteButton(_layoutButton, _aquariumSelectRoot);
+            RefreshRouteButton(_waterGazeButton, _aquariumSelectRoot);
+            RefreshRouteButton(_freshAquariumButton, _freshAquariumContent);
+            RefreshRouteButton(_oceanAquariumButton, _oceanAquariumContent);
+            SetInteractable(_aquariumSelectBackButton, !_isTransitioning);
+        }
+
+        private void SetButtonsInteractable(bool interactable)
+        {
+            SetInteractable(_boardButton, interactable);
+            SetInteractable(_collectionButton, interactable);
+            SetInteractable(_layoutButton, interactable);
+            SetInteractable(_waterGazeButton, interactable);
+            SetInteractable(_backButton, interactable);
+            SetInteractable(_freshAquariumButton, interactable);
+            SetInteractable(_oceanAquariumButton, interactable);
+            SetInteractable(_aquariumSelectBackButton, interactable);
+        }
+
+        private void RefreshRouteButton(Button button, GameObject targetContent)
+        {
+            if (button == null)
+                return;
+
+            button.interactable = !_isTransitioning && targetContent != null;
+        }
+
+        private static void SetInteractable(Button button, bool interactable)
+        {
+            if (button != null)
+                button.interactable = interactable;
+        }
+
+        private void PlayClickSfx()
+        {
+            if (!string.IsNullOrWhiteSpace(_clickSfxKey))
+                GameManager.Audio.PlaySfx(_clickSfxKey);
+        }
+
+        private static void NotifyEntryMode(GameObject content, NyangquariumEntryMode entryMode)
+        {
+            if (content == null)
+                return;
+
+            MonoBehaviour[] behaviours = content.GetComponentsInChildren<MonoBehaviour>(true);
+
+            foreach (MonoBehaviour behaviour in behaviours)
+            {
+                if (behaviour is INyangquariumEntryReceiver receiver)
+                    receiver.SetNyangquariumEntryMode(entryMode);
+            }
+        }
+
+        private void DisposeSpriteControllers()
+        {
+            _backgroundSprite?.Dispose();
+            _titleLogoSprite?.Dispose();
+            _boardSprite?.Dispose();
+            _collectionSprite?.Dispose();
+            _layoutSprite?.Dispose();
+            _waterGazeSprite?.Dispose();
+            _backSprite?.Dispose();
+            _freshAquariumSprite?.Dispose();
+            _oceanAquariumSprite?.Dispose();
+            _aquariumSelectBackSprite?.Dispose();
+
+            _backgroundSprite = null;
+            _titleLogoSprite = null;
+            _boardSprite = null;
+            _collectionSprite = null;
+            _layoutSprite = null;
+            _waterGazeSprite = null;
+            _backSprite = null;
+            _freshAquariumSprite = null;
+            _oceanAquariumSprite = null;
+            _aquariumSelectBackSprite = null;
+        }
+
+        private void OnDestroy()
+        {
+            if (ReferenceEquals(Active, this))
+                Active = null;
+
+            DisposeSpriteControllers();
+            _canvasGroup?.DOKill();
+            _contentRoot?.DOKill();
+        }
+    }
+}
