@@ -742,6 +742,7 @@ RectTransform:
   m_Children:
   - {fileID: 8101387181880525009}
   - {fileID: 1197681883198897989}
+  - {fileID: 3984176874536833237}
   - {fileID: 1136310711188192482}
   - {fileID: 7618407969744243138}
   - {fileID: 1244644319279007325}
@@ -850,8 +851,8 @@ MonoBehaviour:
   _boardContent: {fileID: 0}
   _collectionContent: {fileID: 7010140895242844630}
   _aquariumSelectRoot: {fileID: 991239996561264205}
-  _freshAquariumContent: {fileID: 0}
-  _oceanAquariumContent: {fileID: 0}
+  _freshAquariumContent: {fileID: 1667259236429226636}
+  _oceanAquariumContent: {fileID: 3635743820930315980}
   _freshAquariumButton: {fileID: 8690517038997037526}
   _oceanAquariumButton: {fileID: 7887225278345477766}
   _aquariumSelectBackButton: {fileID: 8649289661056596847}
@@ -947,6 +948,87 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!1 &4868851442085704297
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3984176874536833237}
+  - component: {fileID: 7312762389650527211}
+  m_Layer: 5
+  m_Name: Fishes
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &3984176874536833237
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4868851442085704297}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 6627190258747934343}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &7312762389650527211
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4868851442085704297}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a7c95e5e8c1d4f349a9fbcb44ce6f311, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _root: {fileID: 3984176874536833237}
+  _fishPrefab: {fileID: 2865107759746690171, guid: c2d05a3bde78a3240af5b810ca9e8b54, type: 3}
+  _spawnCountPerType: 2
+  _padding: 80
+  _speedRange: {x: 35, y: 90}
+  _scaleRange: {x: 1.5, y: 2}
+  _targetReachDistance: 10
+  _maxTiltAngle: 30
+  _rotationLerpSpeed: 5
+  _freshFishKeys:
+  - Fish_Fresh_Guppy
+  - Fish_Fresh_Angelfish
+  - Fish_Fresh_NeonTetra
+  - Fish_Fresh_ZebraDanio
+  - Fish_Fresh_Corydoras
+  - Fish_Fresh_Discus
+  - Fish_Fresh_Betta
+  _saltFishKeys:
+  - Fish_Salt_YellowTang
+  - Fish_Salt_GreenChromis
+  - Fish_Salt_FireGoby
+  - Fish_Salt_PerculaClownfish
+  - Fish_Salt_BanggaiCardinalfish
+  - Fish_Salt_RockBlenny
+  - Fish_Salt_BlueTang
+  _brackishFishKeys:
+  - Fish_Brackish_FigurePuffer
+  - Fish_Brackish_ArcherFish
+  - Fish_Brackish_Scat
+  - Fish_Brackish_Monodactylus
+  - Fish_Brackish_SpottedGreenPuffer
+  - Fish_Brackish_BumblebeeGoby
+  - Fish_Brackish_IndianGlassFish
 --- !u!1 &5244268749032204110
 GameObject:
   m_ObjectHideFlags: 0
@@ -2022,7 +2104,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5068424835779841990, guid: 1112680ec737cc340ab5bbda4ef2a63f, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -155024.17
+      value: -647840.44
       objectReference: {fileID: 0}
     - target: {fileID: 5205680253079148815, guid: 1112680ec737cc340ab5bbda4ef2a63f, type: 3}
       propertyPath: m_Value
@@ -2084,6 +2166,11 @@ PrefabInstance:
 --- !u!224 &1136310711188192482 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 2722391419948345071, guid: 1112680ec737cc340ab5bbda4ef2a63f, type: 3}
+  m_PrefabInstance: {fileID: 3027294164392892941}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &3635743820930315980 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1763121583756356801, guid: 1112680ec737cc340ab5bbda4ef2a63f, type: 3}
   m_PrefabInstance: {fileID: 3027294164392892941}
   m_PrefabAsset: {fileID: 0}
 --- !u!1001 &5605358549452684521
@@ -2351,7 +2438,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4271582099244861343, guid: e5b1c5f1b117d1544949c2d755127a9f, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -150579.44
+      value: -643849
       objectReference: {fileID: 0}
     - target: {fileID: 6091781468883956208, guid: e5b1c5f1b117d1544949c2d755127a9f, type: 3}
       propertyPath: m_AnchorMax.y
@@ -2462,6 +2549,11 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: e5b1c5f1b117d1544949c2d755127a9f, type: 3}
+--- !u!1 &1667259236429226636 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 6928494549463557804, guid: e5b1c5f1b117d1544949c2d755127a9f, type: 3}
+  m_PrefabInstance: {fileID: 8576470404902356000}
+  m_PrefabAsset: {fileID: 0}
 --- !u!224 &7618407969744243138 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 2215696024662920674, guid: e5b1c5f1b117d1544949c2d755127a9f, type: 3}
