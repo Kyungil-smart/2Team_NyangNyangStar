@@ -14,6 +14,26 @@ namespace UI.NyangQuarium
 {
     public sealed class NyangquariumMainUIManager : UIPopup
     {
+        private static readonly string[] CollectionContentNames =
+        {
+            "NyangQuariumCollectionPopup",
+            "NyangquariumCollectionPopup",
+            "NyangQuariumCollectionCanvas",
+            "NyangquariumCollectionCanvas",
+            "CollectionContent",
+            "CollectionPopup",
+            "FishCollectionContent",
+            "FishCollectionPopup"
+        };
+
+        private static readonly string[] CollectionDetailOnlyContentNames =
+        {
+            "NyangQuariumFishInfoPopup",
+            "NyangquariumFishInfoPopup",
+            "FishInfoPopup",
+            "CollectionFishInfoPopup"
+        };
+
         [Header("메인 버튼")]
         [FormerlySerializedAs("_boardQuestButton")]
         [SerializeField] private Button _boardButton;
@@ -82,6 +102,7 @@ namespace UI.NyangQuarium
         private UISpriteController _aquariumSelectBackSprite;
         private readonly List<GameObject> _ownedContents = new();
         private readonly HashSet<UIPopup> _initializedChildPopups = new();
+        private bool _warnedCollectionDetailOnlyContent;
 
         public static NyangquariumMainUIManager Active { get; private set; }
 
@@ -455,6 +476,9 @@ namespace UI.NyangQuarium
             if (_aquariumSelectRoot == null)
                 _aquariumSelectRoot = FindGameObject("SelectAquariumButton", "AquariumSelectPanel", "AquariumSelectionUI");
 
+            if (_collectionContent == null || IsNamed(_collectionContent, CollectionDetailOnlyContentNames))
+                _collectionContent = ResolveCollectionContent(_collectionContent);
+
             if (_freshAquariumContent == null)
                 _freshAquariumContent = FindContent<global::NyangQuariumFreshLayoutUI>(
                     "NyangQuariumFreshCanvas",
@@ -479,6 +503,39 @@ namespace UI.NyangQuarium
 
             if (_aquariumSelectBackButton == null)
                 _aquariumSelectBackButton = FindButtonIn(_aquariumSelectRoot, "BackButton", "AquariumSelectBackButton", "SelectBackButton");
+        }
+
+        private GameObject ResolveCollectionContent(GameObject currentContent)
+        {
+            if (IsNamed(currentContent, CollectionContentNames))
+                return currentContent;
+
+            if (IsNamed(currentContent, CollectionDetailOnlyContentNames))
+                WarnCollectionDetailOnlyContent(currentContent);
+
+            GameObject collectionContent = FindGameObject(CollectionContentNames);
+
+            if (collectionContent != null)
+                return collectionContent;
+
+            GameObject detailOnlyContent = FindGameObject(CollectionDetailOnlyContentNames);
+
+            if (detailOnlyContent != null)
+                WarnCollectionDetailOnlyContent(detailOnlyContent);
+
+            return IsNamed(currentContent, CollectionDetailOnlyContentNames) ? null : currentContent;
+        }
+
+        private void WarnCollectionDetailOnlyContent(GameObject content)
+        {
+            if (_warnedCollectionDetailOnlyContent || content == null)
+                return;
+
+            _warnedCollectionDetailOnlyContent = true;
+            DebugTool.Warning(
+                $"[NyangquariumMainUIManager] {content.name} is a fish detail popup. Add NyangQuariumCollectionPopup under NyanquariumUI for CollectionButton.",
+                DebugType.UI,
+                this);
         }
 
         private void ResolveAnimationReferences()
@@ -565,6 +622,20 @@ namespace UI.NyangQuarium
             }
 
             return null;
+        }
+
+        private static bool IsNamed(GameObject gameObject, string[] names)
+        {
+            if (gameObject == null || names == null)
+                return false;
+
+            foreach (string targetName in names)
+            {
+                if (string.Equals(gameObject.name, targetName, StringComparison.OrdinalIgnoreCase))
+                    return true;
+            }
+
+            return false;
         }
 
         private void BindButtons()
