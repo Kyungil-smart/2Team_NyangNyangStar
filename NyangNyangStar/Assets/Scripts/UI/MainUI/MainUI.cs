@@ -6,6 +6,7 @@ using UI.Common;
 using UI;
 using UI.Base;
 using UI.MergeBoard;
+using UI.NyangQuarium;
 using UI.Transition;
 using UnityEngine;
 using UnityEngine.UI;
@@ -43,6 +44,7 @@ public class MainUI : UIScene
     private NotebookPopupUI _notebookPopup;
     private bool _isMergeBoardTransitioning;
     private bool _isMergeBoardVisible;
+    private bool _isNyangquariumTransitioning;
 
     [SerializeField] private UsersSO _usersSO;
     [SerializeField] private TMP_Text _uidText;
@@ -114,7 +116,7 @@ public class MainUI : UIScene
         InitPopup(KeyContainer.Prefabs.NyangNyangSnapStagePopUpUI, _nyangNyangSnapButton);
         InitNyangStargramPopup();
         InitPopup(KeyContainer.Prefabs.FindMoongchiPopupUI, _findMoongchiButton);
-        InitPopup(KeyContainer.Prefabs.Nyangquarium, _nyangquariumButton);
+        InitNyangquariumPopup();
 
         if (_logOutButton != null)
             _logOutButton.onClick.AddListener(LogOutButton);
@@ -152,6 +154,8 @@ public class MainUI : UIScene
 
         if (_logOutButton != null)
             _logOutButton.onClick.RemoveAllListeners();
+
+        _isNyangquariumTransitioning = false;
     }
 
     private void OnDestroy()
@@ -409,6 +413,14 @@ public class MainUI : UIScene
             false);
     }
 
+    private void InitNyangquariumPopup()
+    {
+        GameManager.UI.ShowPopupUI<UIPopup>(
+            KeyContainer.Prefabs.Nyangquarium,
+            onLoaded => AddNyangquariumButton(_nyangquariumButton, onLoaded),
+            false);
+    }
+
     private void AddPopupButton(Button button, UIPopup popup)
     {
         if (button == null)
@@ -420,6 +432,69 @@ public class MainUI : UIScene
             PlayPopupOpenAnimation(popup);
             GameManager.Audio.PlaySfx("Main_SFX_Touch");
         });
+    }
+
+    private void AddNyangquariumButton(Button button, UIPopup popup)
+    {
+        if (button == null)
+            return;
+
+        button.onClick.AddListener(() => OpenNyangquariumPopup(popup));
+    }
+
+    private void OpenNyangquariumPopup(UIPopup popup)
+    {
+        if (popup == null || _isNyangquariumTransitioning)
+            return;
+
+        ScreenTransitionManager transition = ScreenTransitionManager.Instance;
+
+        if (transition == null)
+        {
+            popup.gameObject.SetActive(true);
+            PlayPopupOpenAnimation(popup);
+            GameManager.Audio.PlaySfx("Main_SFX_Touch");
+            return;
+        }
+
+        if (transition.IsTransitioning)
+            return;
+
+        BeginNyangquariumTransition();
+        GameManager.Audio.PlaySfx("Main_SFX_Touch");
+
+        transition.Cover(() =>
+        {
+            ShowNyangquariumPopupImmediately(popup);
+            transition.Reveal(EndNyangquariumTransition);
+        });
+    }
+
+    private void ShowNyangquariumPopupImmediately(UIPopup popup)
+    {
+        if (popup is NyangquariumMainUIManager mainManager)
+        {
+            mainManager.ShowImmediately();
+            return;
+        }
+
+        popup.gameObject.SetActive(true);
+    }
+
+    private void BeginNyangquariumTransition()
+    {
+        _isNyangquariumTransitioning = true;
+
+        if (_nyangquariumButton != null)
+            _nyangquariumButton.interactable = false;
+    }
+
+    private void EndNyangquariumTransition()
+    {
+        _isNyangquariumTransitioning = false;
+
+        if (_nyangquariumButton != null)
+            _nyangquariumButton.interactable = true;
     }
 
     private void RemovePopupButton(Button button)
