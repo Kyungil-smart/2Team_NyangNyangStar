@@ -1,5 +1,7 @@
+using System;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using UnityEngine.EventSystems;
 using UnityEngine.ResourceManagement.AsyncOperations;
 using UnityEngine.UI;
 using Util;
@@ -11,11 +13,13 @@ namespace UI.NyangQuarium
     /// Main background fish and placed aquarium fish can share this component,
     /// while each owner decides which fish key to pass and where the fish can swim.
     /// </summary>
-    public sealed class NyangquariumFishController : MonoBehaviour
+    public sealed class NyangquariumFishController : MonoBehaviour, IPointerClickHandler
     {
         [SerializeField] private Image _image;
         [SerializeField] private RectTransform _rectTransform;
         [SerializeField] private RectTransform _swimArea;
+        [SerializeField] private Color _normalColor = Color.white;
+        [SerializeField] private Color _selectedColor = new(1f, 0.92f, 0.35f, 1f);
 
         [Header("Movement")]
         [SerializeField] private bool _spriteFacesRight;
@@ -25,16 +29,20 @@ namespace UI.NyangQuarium
         [SerializeField] private float _maxTiltAngle = 30f;
         [SerializeField] private float _rotationLerpSpeed = 5f;
         [SerializeField] private bool _isMovementEnabled;
+        [SerializeField] private bool _isSelectable;
 
         private AsyncOperationHandle<Sprite> _spriteHandle;
         private Vector2 _target;
         private float _baseScale = 1f;
         private int _spriteLoadVersion;
         private bool _hasTarget;
+        private bool _isSelected;
 
-        public string PlacedId { get; private set; }
         public string SpriteKey { get; private set; }
         public float VisualScale => _baseScale;
+        public bool IsSelectable => _isSelectable;
+        public bool IsSelected => _isSelected;
+        public event Action<NyangquariumFishController> Clicked;
         public RectTransform RectTransform
         {
             get
@@ -61,8 +69,7 @@ namespace UI.NyangQuarium
             float padding = 80f,
             float maxTiltAngle = 30f,
             float rotationLerpSpeed = 5f,
-            float targetReachDistance = 10f,
-            string placedId = null)
+            float targetReachDistance = 10f)
         {
             if (swimArea == null)
             {
@@ -98,7 +105,6 @@ namespace UI.NyangQuarium
             if (fishController == null)
                 fishController = fishObject.AddComponent<NyangquariumFishController>();
 
-            fishController.SetPlacedId(placedId);
             fishController.Initialize(
                 spriteKey,
                 swimArea,
@@ -113,9 +119,12 @@ namespace UI.NyangQuarium
             return fishController;
         }
 
-        public void SetPlacedId(string placedId)
+        public void OnPointerClick(PointerEventData eventData)
         {
-            PlacedId = placedId;
+            if (!_isSelectable)
+                return;
+
+            Clicked?.Invoke(this);
         }
 
         private void Awake()
@@ -239,6 +248,18 @@ namespace UI.NyangQuarium
 
             if (_isMovementEnabled && !_hasTarget)
                 PickNewTarget();
+        }
+
+        public void SetSelectable(bool isSelectable)
+        {
+            _isSelectable = isSelectable;
+            UpdateImageState();
+        }
+
+        public void SetSelected(bool isSelected)
+        {
+            _isSelected = isSelected;
+            UpdateImageState();
         }
 
         public void SetMovementOptions(
@@ -419,8 +440,7 @@ namespace UI.NyangQuarium
             if (_image == null)
                 return;
 
-            _image.raycastTarget = false;
-            _image.preserveAspect = true;
+            UpdateImageState();
         }
 
         private void CacheBaseScale()
@@ -438,6 +458,16 @@ namespace UI.NyangQuarium
 
             Addressables.Release(_spriteHandle);
             _spriteHandle = default;
+        }
+
+        private void UpdateImageState()
+        {
+            if (_image == null)
+                return;
+
+            _image.raycastTarget = _isSelectable;
+            _image.preserveAspect = true;
+            _image.color = _isSelected ? _selectedColor : _normalColor;
         }
 
         private static GameObject CreateRuntimeFishObject(RectTransform swimArea)
