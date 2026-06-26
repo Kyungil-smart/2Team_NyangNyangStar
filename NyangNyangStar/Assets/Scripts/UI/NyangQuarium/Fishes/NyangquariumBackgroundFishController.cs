@@ -7,7 +7,6 @@ namespace UI.NyangQuarium
     public sealed class NyangquariumBackgroundFishController : MonoBehaviour
     {
         [SerializeField] private RectTransform _root;
-        [SerializeField] private GameObject _fishPrefab;
         [SerializeField, Min(0)] private int _spawnCountPerType = 2;
         [SerializeField] private float _padding = 80f;
         [SerializeField] private Vector2 _speedRange = new(35f, 90f);
@@ -127,7 +126,6 @@ namespace UI.NyangQuarium
             float scale = Random.Range(_scaleRange.x, _scaleRange.y);
 
             NyangquariumFishController fish = NyangquariumFishController.SpawnMovingFish(
-                _fishPrefab,
                 _root,
                 spriteKey,
                 scale: scale,

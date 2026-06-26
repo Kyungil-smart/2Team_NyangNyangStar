@@ -32,8 +32,27 @@ namespace UI.NyangQuarium
         private int _spriteLoadVersion;
         private bool _hasTarget;
 
+        public string PlacedId { get; private set; }
+        public string SpriteKey { get; private set; }
+        public float VisualScale => _baseScale;
+        public RectTransform RectTransform
+        {
+            get
+            {
+                ResolveComponents();
+                return _rectTransform;
+            }
+        }
+        public Vector2 AnchoredPosition
+        {
+            get
+            {
+                ResolveComponents();
+                return _rectTransform != null ? _rectTransform.anchoredPosition : Vector2.zero;
+            }
+        }
+
         public static NyangquariumFishController SpawnMovingFish(
-            GameObject fishPrefab,
             RectTransform swimArea,
             string spriteKey,
             Vector2? anchoredPosition = null,
@@ -42,17 +61,16 @@ namespace UI.NyangQuarium
             float padding = 80f,
             float maxTiltAngle = 30f,
             float rotationLerpSpeed = 5f,
-            float targetReachDistance = 10f)
+            float targetReachDistance = 10f,
+            string placedId = null)
         {
             if (swimArea == null)
             {
-                DebugTool.Warning("[NyangquariumFishController] 물고기를 생성할 SwimArea가 없습니다.", DebugType.UI);
+                DebugTool.Warning("[냥쿠아리움 물고기 컨트롤러] 물고기를 생성할 유영 영역이 없습니다.", DebugType.UI);
                 return null;
             }
 
-            GameObject fishObject = fishPrefab != null
-                ? Instantiate(fishPrefab, swimArea)
-                : CreateRuntimeFishObject(swimArea);
+            GameObject fishObject = CreateRuntimeFishObject(swimArea);
 
             if (fishObject == null)
                 return null;
@@ -80,6 +98,7 @@ namespace UI.NyangQuarium
             if (fishController == null)
                 fishController = fishObject.AddComponent<NyangquariumFishController>();
 
+            fishController.SetPlacedId(placedId);
             fishController.Initialize(
                 spriteKey,
                 swimArea,
@@ -92,6 +111,11 @@ namespace UI.NyangQuarium
                 !anchoredPosition.HasValue);
 
             return fishController;
+        }
+
+        public void SetPlacedId(string placedId)
+        {
+            PlacedId = placedId;
         }
 
         private void Awake()
@@ -171,6 +195,7 @@ namespace UI.NyangQuarium
             ResolveComponents();
             PrepareImage();
 
+            SpriteKey = spriteKey;
             _spriteLoadVersion++;
             int loadVersion = _spriteLoadVersion;
 
@@ -196,7 +221,7 @@ namespace UI.NyangQuarium
                     return;
                 }
 
-                DebugTool.Warning($"{spriteKey} : 냥쿠아리움 물고기 Sprite 로드 실패", DebugType.Addressable, this);
+                DebugTool.Warning($"{spriteKey} : 냥쿠아리움 물고기 스프라이트 로드 실패", DebugType.Addressable, this);
             };
         }
 
@@ -250,6 +275,11 @@ namespace UI.NyangQuarium
 
             if (pickNewTarget)
                 PickNewTarget();
+        }
+
+        public NyangquariumPlacedFishData ToPlacedFishData(bool includeCurrentPosition = false)
+        {
+            return NyangquariumPlacedFishData.FromController(this, includeCurrentPosition);
         }
 
         public void PickNewTarget()
