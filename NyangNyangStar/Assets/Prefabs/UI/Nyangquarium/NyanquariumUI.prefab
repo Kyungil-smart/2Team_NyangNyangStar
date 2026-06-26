@@ -997,7 +997,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _root: {fileID: 3984176874536833237}
-  _fishPrefab: {fileID: 2865107759746690171, guid: c2d05a3bde78a3240af5b810ca9e8b54, type: 3}
   _spawnCountPerType: 2
   _padding: 80
   _speedRange: {x: 35, y: 90}
@@ -2104,7 +2103,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5068424835779841990, guid: 1112680ec737cc340ab5bbda4ef2a63f, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -647840.44
+      value: -649175.3
       objectReference: {fileID: 0}
     - target: {fileID: 5205680253079148815, guid: 1112680ec737cc340ab5bbda4ef2a63f, type: 3}
       propertyPath: m_Value
@@ -2438,7 +2437,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4271582099244861343, guid: e5b1c5f1b117d1544949c2d755127a9f, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -643849
+      value: -645185.1
       objectReference: {fileID: 0}
     - target: {fileID: 6091781468883956208, guid: e5b1c5f1b117d1544949c2d755127a9f, type: 3}
       propertyPath: m_AnchorMax.y
