@@ -850,8 +850,8 @@ MonoBehaviour:
   _boardContent: {fileID: 0}
   _collectionContent: {fileID: 7010140895242844630}
   _aquariumSelectRoot: {fileID: 991239996561264205}
-  _freshAquariumContent: {fileID: 0}
-  _oceanAquariumContent: {fileID: 0}
+  _freshAquariumContent: {fileID: 1667259236429226636}
+  _oceanAquariumContent: {fileID: 3635743820930315980}
   _freshAquariumButton: {fileID: 8690517038997037526}
   _oceanAquariumButton: {fileID: 7887225278345477766}
   _aquariumSelectBackButton: {fileID: 8649289661056596847}
@@ -2022,7 +2022,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5068424835779841990, guid: 1112680ec737cc340ab5bbda4ef2a63f, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -155024.17
+      value: -171265.52
       objectReference: {fileID: 0}
     - target: {fileID: 5205680253079148815, guid: 1112680ec737cc340ab5bbda4ef2a63f, type: 3}
       propertyPath: m_Value
@@ -2084,6 +2084,11 @@ PrefabInstance:
 --- !u!224 &1136310711188192482 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 2722391419948345071, guid: 1112680ec737cc340ab5bbda4ef2a63f, type: 3}
+  m_PrefabInstance: {fileID: 3027294164392892941}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &3635743820930315980 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1763121583756356801, guid: 1112680ec737cc340ab5bbda4ef2a63f, type: 3}
   m_PrefabInstance: {fileID: 3027294164392892941}
   m_PrefabAsset: {fileID: 0}
 --- !u!1001 &5605358549452684521
@@ -2351,7 +2356,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4271582099244861343, guid: e5b1c5f1b117d1544949c2d755127a9f, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -150579.44
+      value: -166835.53
       objectReference: {fileID: 0}
     - target: {fileID: 6091781468883956208, guid: e5b1c5f1b117d1544949c2d755127a9f, type: 3}
       propertyPath: m_AnchorMax.y
@@ -2462,6 +2467,11 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: e5b1c5f1b117d1544949c2d755127a9f, type: 3}
+--- !u!1 &1667259236429226636 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 6928494549463557804, guid: e5b1c5f1b117d1544949c2d755127a9f, type: 3}
+  m_PrefabInstance: {fileID: 8576470404902356000}
+  m_PrefabAsset: {fileID: 0}
 --- !u!224 &7618407969744243138 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 2215696024662920674, guid: e5b1c5f1b117d1544949c2d755127a9f, type: 3}
