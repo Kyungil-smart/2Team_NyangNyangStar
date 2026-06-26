@@ -55,6 +55,10 @@ namespace Data.Loader
         [SerializeField] private SheetData findMoongchiProfileURL;
         [SerializeField] private MoongchiProfileSO findMoongchiProfileSo;
 
+        [Space(8)] [Header("냥쿠아리움 물고기")]
+        [SerializeField] private SheetData nyangQuariumFishURL;
+        [SerializeField] private NyangQuariumFishSO nyangQuariumFishSo;
+
         [Space(8)] [SerializeField] private int _pendingSheetCount;
         public int PendingSheetCount => _pendingSheetCount;
 
@@ -186,6 +190,13 @@ namespace Data.Loader
             {
                 OnSheetCompleted("뭉치를 찾아라 프로필 시트 로드 완료");
                 findMoongchiProfileSo?.PrintData();
+            });
+
+            LoadSheetData(nyangQuariumFishURL, nyangQuariumFishSo, 1, () =>
+            {
+                OnSheetCompleted("냥쿠아리움 물고기 시트 로드 완료");
+                nyangQuariumFishSo.SortData();
+                nyangQuariumFishSo?.PrintData();
             });
         }
 
