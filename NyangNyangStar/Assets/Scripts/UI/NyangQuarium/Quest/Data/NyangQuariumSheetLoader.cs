@@ -6,8 +6,7 @@ using UnityEngine;
 
 namespace UI.NyangQuarium.Quest
 {
-    // 냥쿠아리움 퀘스트 전용 시트 로더
-    // 나중에 시트로더에 수정 할 것
+    // 냥쿠아리움 전용 시트 로더 (퀘스트, 생성기, 물고기)
     public class NyangQuariumSheetLoader : MonoBehaviour
     {
         public static NyangQuariumSheetLoader Instance { get; private set; }
@@ -27,6 +26,16 @@ namespace UI.NyangQuarium.Quest
         [SerializeField] private NyangQuariumQuestStringSO _questStringSO;
         [SerializeField] private int _questStringHeaderRowCount = 2;
 
+        [Header("냥쿠_생성기 테이블")]
+        [SerializeField] private SheetData _generatorURL;
+        [SerializeField] private NyangQuariumGeneratorSO _generatorSO;
+        [SerializeField] private int _generatorHeaderRowCount = 1;
+
+        [Header("냥쿠_물고기 테이블")]
+        [SerializeField] private SheetData _fishURL;
+        [SerializeField] private NyangQuariumFishSO _fishSO;
+        [SerializeField] private int _fishHeaderRowCount = 1;
+
         [Header("옵션")]
         [SerializeField] private bool _loadOnStart = true;
 
@@ -37,6 +46,8 @@ namespace UI.NyangQuarium.Quest
         public NyangQuariumQuestSO QuestSO => _questSO;
         public NyangQuariumQuestRewardSO QuestRewardSO => _questRewardSO;
         public NyangQuariumQuestStringSO QuestStringSO => _questStringSO;
+        public NyangQuariumGeneratorSO GeneratorSO => _generatorSO;
+        public NyangQuariumFishSO FishSO => _fishSO;
 
         // 시트 로드 완료 시 QuestManager 등에서 구독
         public event Action OnLoadCompleted;
@@ -69,7 +80,7 @@ namespace UI.NyangQuarium.Quest
         {
             IsReady = false;
             StopAllCoroutines();
-            _pendingSheetCount = 3;
+            _pendingSheetCount = 5;
 
             DebugTool.Log("[NyangQuariumSheetLoader] 시트 로드 시작", DebugType.Data, this);
 
@@ -90,6 +101,20 @@ namespace UI.NyangQuarium.Quest
                 _questStringSO?.PrintData();
                 OnSheetCompleted("냥쿠_퀘스트 스트링 테이블 로드 완료");
             });
+
+            LoadSheetData(_generatorURL, _generatorSO, _generatorHeaderRowCount, "생성기", () =>
+            {
+                _generatorSO?.SortData();
+                _generatorSO?.PrintData();
+                OnSheetCompleted("냥쿠_생성기 테이블 로드 완료");
+            });
+
+            LoadSheetData(_fishURL, _fishSO, _fishHeaderRowCount, "물고기", () =>
+            {
+                _fishSO?.SortData();
+                _fishSO?.PrintData();
+                OnSheetCompleted("냥쿠_물고기 테이블 로드 완료");
+            });
         }
 
         public void ClearData()
@@ -101,6 +126,8 @@ namespace UI.NyangQuarium.Quest
             _questSO?.ClearData();
             _questRewardSO?.ClearData();
             _questStringSO?.ClearData();
+            _generatorSO?.ClearData();
+            _fishSO?.ClearData();
 
             DebugTool.Log("[NyangQuariumSheetLoader] 캐싱된 시트 데이터 제거 완료", DebugType.Data, this);
         }
