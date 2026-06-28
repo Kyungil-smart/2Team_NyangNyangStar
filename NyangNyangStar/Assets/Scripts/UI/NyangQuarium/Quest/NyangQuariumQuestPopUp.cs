@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Core.Managers;
+using Data.Loader;
 using Data.LibrarySystem;
 using Data.ScriptableObjects.KeyContainerSO;
 using Data.ScriptableObjects.MergeBoard;
@@ -728,14 +729,18 @@ namespace UI.NyangQuarium.Quest
 
         private NyangQuariumQuestStringSO ResolveStringSO()
         {
-            NyangQuariumSheetLoader loader = NyangQuariumSheetLoader.Instance;
-            return loader != null ? loader.QuestStringSO : null;
+            SheetLoader sheetLoader = FindFirstObjectByType<SheetLoader>();
+            return sheetLoader != null && sheetLoader.TryGetNyangQuariumQuestStringSO(out NyangQuariumQuestStringSO stringSO)
+                ? stringSO
+                : null;
         }
 
         private NyangQuariumQuestRewardSO ResolveRewardSO()
         {
-            NyangQuariumSheetLoader loader = NyangQuariumSheetLoader.Instance;
-            return loader != null ? loader.QuestRewardSO : null;
+            SheetLoader sheetLoader = FindFirstObjectByType<SheetLoader>();
+            return sheetLoader != null && sheetLoader.TryGetNyangQuariumQuestRewardSO(out NyangQuariumQuestRewardSO rewardSO)
+                ? rewardSO
+                : null;
         }
 
         private void OnCloseClicked()

@@ -1,9 +1,10 @@
+using Data.Loader;
 using Data.ScriptableObjects.MergeBoard;
 using Services.Enums;
+using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UI.MergeBoard;
-using UI.NyangQuarium.Quest;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
@@ -29,28 +30,58 @@ namespace UI.NyangQuarium.MergeBoard
 
     public sealed class NyangQuariumMergeBoardBootstrap : MonoBehaviour
     {
+        private const string RootName = "NyangQuariumMergeBoard";
         private const string GeneratorName = "Item Generator";
         private const string BoardName = "Item Board";
         private const string InfoName = "ItemInfo";
+        private static NyangQuariumMergeBoardBootstrap _instance;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Register()
         {
             SceneManager.sceneLoaded -= OnSceneLoaded;
             SceneManager.sceneLoaded += OnSceneLoaded;
-            BootstrapCurrentScene();
+            EnsureRunner();
         }
 
         private static void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         {
-            BootstrapCurrentScene();
+            EnsureRunner();
+        }
+
+        private static void EnsureRunner()
+        {
+            if (_instance != null)
+                return;
+
+            GameObject runner = new("@NyangQuariumMergeBoardBootstrap");
+            DontDestroyOnLoad(runner);
+            _instance = runner.AddComponent<NyangQuariumMergeBoardBootstrap>();
+        }
+
+        private void OnEnable()
+        {
+            StartCoroutine(WatchMergeBoard());
+        }
+
+        private IEnumerator WatchMergeBoard()
+        {
+            while (true)
+            {
+                BootstrapCurrentScene();
+                yield return null;
+            }
         }
 
         private static void BootstrapCurrentScene()
         {
-            GameObject generatorObject = FindActiveGameObject(GeneratorName);
-            GameObject boardObject = FindActiveGameObject(BoardName);
-            GameObject infoObject = FindActiveGameObject(InfoName);
+            GameObject rootObject = FindActiveGameObject(RootName);
+            if (rootObject == null)
+                return;
+
+            GameObject generatorObject = FindChildGameObject(rootObject.transform, GeneratorName);
+            GameObject boardObject = FindChildGameObject(rootObject.transform, BoardName);
+            GameObject infoObject = FindChildGameObject(rootObject.transform, InfoName);
 
             if (generatorObject == null || boardObject == null || infoObject == null)
                 return;
@@ -70,6 +101,22 @@ namespace UI.NyangQuarium.MergeBoard
                 generator = generatorObject.AddComponent<NyangQuariumItemGenerator>();
 
             generator.Init(board);
+        }
+
+        private static GameObject FindChildGameObject(Transform root, string objectName)
+        {
+            if (root == null)
+                return null;
+
+            Transform[] children = root.GetComponentsInChildren<Transform>(true);
+            for (int i = 0; i < children.Length; i++)
+            {
+                Transform child = children[i];
+                if (child != null && child.gameObject.activeInHierarchy && child.name == objectName)
+                    return child.gameObject;
+            }
+
+            return null;
         }
 
         private static GameObject FindActiveGameObject(string objectName)
@@ -144,9 +191,11 @@ namespace UI.NyangQuarium.MergeBoard
 
         private NyangQuariumBoardItem CreateRandomItem()
         {
-            NyangQuariumFishSO fishSO = NyangQuariumSheetLoader.Instance != null
-                ? NyangQuariumSheetLoader.Instance.FishSO
-                : null;
+            NyangQuariumFishSO fishSO = null;
+            SheetLoader sheetLoader = FindFirstObjectByType<SheetLoader>();
+
+            if (sheetLoader != null && sheetLoader.TryGetNyangQuariumFishSO(out NyangQuariumFishSO loadedFishSO))
+                fishSO = loadedFishSO;
 
             if (fishSO != null && fishSO.FishData != null && fishSO.FishData.Count > 0)
             {
@@ -300,7 +349,11 @@ namespace UI.NyangQuarium.MergeBoard
         private void GenerateSlots()
         {
             for (int i = _slotRoot.childCount - 1; i >= 0; i--)
-                Destroy(_slotRoot.GetChild(i).gameObject);
+            {
+                GameObject child = _slotRoot.GetChild(i).gameObject;
+                child.SetActive(false);
+                Destroy(child);
+            }
 
             _slots.Clear();
 

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Core.Managers;
+using Data.Loader;
 using Data.ScriptableObjects.NyangQuariumSO;
 using UI.MergeBoard;
 using UnityEngine;
@@ -15,7 +16,6 @@ namespace UI.NyangQuarium.Quest
         public static NyangQuariumQuestManager Instance { get; private set; }
 
         [Header("Quest Data")]
-        [SerializeField] private NyangQuariumSheetLoader _sheetLoader;
         [SerializeField] private NyangQuariumQuestSO _questSO;
 
         [Header("Intro Quest")]
@@ -297,11 +297,10 @@ namespace UI.NyangQuarium.Quest
             if (_questSO != null)
                 return;
 
-            if (_sheetLoader == null)
-                _sheetLoader = NyangQuariumSheetLoader.Instance;
+            SheetLoader sheetLoader = FindFirstObjectByType<SheetLoader>();
 
-            if (_sheetLoader != null)
-                _questSO = _sheetLoader.QuestSO;
+            if (sheetLoader != null && sheetLoader.TryGetNyangQuariumQuestSO(out NyangQuariumQuestSO questSO))
+                _questSO = questSO;
         }
     }
 }
