@@ -413,7 +413,7 @@ namespace UI.NyangQuarium
                 maxY = rect.yMax;
             }
 
-            return new Vector2(Random.Range(minX, maxX), Random.Range(minY, maxY));
+            return new Vector2(UnityEngine.Random.Range(minX, maxX), UnityEngine.Random.Range(minY, maxY));
         }
 
         private Rect GetMovementRect()

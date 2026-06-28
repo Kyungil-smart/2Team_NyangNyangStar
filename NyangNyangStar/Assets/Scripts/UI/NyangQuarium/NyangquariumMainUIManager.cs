@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using Core.Managers;
 using DG.Tweening;
@@ -39,8 +38,6 @@ namespace UI.NyangQuarium
         [SerializeField] private Button _boardButton;
         [SerializeField] private Button _collectionButton;
         [SerializeField] private Button _layoutButton;
-        [FormerlySerializedAs("_aquariumButton")]
-        [SerializeField] private Button _waterGazeButton;
         [SerializeField] private Button _backButton;
 
         [Header("하위 콘텐츠 오브젝트 연결")]
@@ -52,7 +49,7 @@ namespace UI.NyangQuarium
         [FormerlySerializedAs("_boardQuestContent")]
         [SerializeField] private GameObject _boardContent;
         [SerializeField] private GameObject _collectionContent;
-        [Tooltip("수조 레이아웃/물멍 버튼을 눌렀을 때 먼저 여는 담수/해수 선택 UI입니다.")]
+        [Tooltip("수조 레이아웃 버튼을 눌렀을 때 먼저 여는 담수/해수 선택 UI입니다.")]
         [SerializeField] private GameObject _aquariumSelectRoot;
         [Tooltip("담수 선택 시 열 하위 오브젝트입니다. 담당자가 프리팹을 넣은 뒤 연결하면 됩니다.")]
         [SerializeField] private GameObject _freshAquariumContent;
@@ -74,7 +71,6 @@ namespace UI.NyangQuarium
         [SerializeField] private string _boardSpriteKey = "NQ_Btn_Mergeboard";
         [SerializeField] private string _collectionSpriteKey = "NQ_Btn_FishBook";
         [SerializeField] private string _layoutSpriteKey = "NQ_Btn_Tank";
-        [SerializeField] private string _waterGazeSpriteKey = "NQ_Btn_AquaView";
         [SerializeField] private string _backSpriteKey = "NQ_Btn_Back";
         [SerializeField] private string _freshAquariumSpriteKey = "NQ_Btn_FishFresh";
         [SerializeField] private string _oceanAquariumSpriteKey = "NQ_Btn_FishSalt";
@@ -95,7 +91,6 @@ namespace UI.NyangQuarium
         private UISpriteController _boardSprite;
         private UISpriteController _collectionSprite;
         private UISpriteController _layoutSprite;
-        private UISpriteController _waterGazeSprite;
         private UISpriteController _backSprite;
         private UISpriteController _freshAquariumSprite;
         private UISpriteController _oceanAquariumSprite;
@@ -171,7 +166,6 @@ namespace UI.NyangQuarium
         public void OpenBoard() => OpenChildContent(_boardContent, NyangquariumEntryMode.Board);
         public void OpenCollection() => OpenChildContent(_collectionContent, NyangquariumEntryMode.Collection);
         public void OpenLayout() => OpenAquariumSelect(NyangquariumEntryMode.Layout);
-        public void OpenWaterGaze() => OpenAquariumSelect(NyangquariumEntryMode.WaterGaze);
 
         public void ReturnToMain()
         {
@@ -450,9 +444,6 @@ namespace UI.NyangQuarium
             if (_layoutButton == null)
                 _layoutButton = FindButton("LayoutButton", "AquariumLayoutButton");
 
-            if (_waterGazeButton == null)
-                _waterGazeButton = FindButton("WaterGazeButton", "AquariumButton");
-
             if (_backgroundImage == null)
                 _backgroundImage = FindImage("Background", "BackgroundImage");
 
@@ -643,7 +634,6 @@ namespace UI.NyangQuarium
             BindButton(_boardButton, OpenBoard);
             BindButton(_collectionButton, OpenCollection);
             BindButton(_layoutButton, OpenLayout);
-            BindButton(_waterGazeButton, OpenWaterGaze);
             BindButton(_backButton, CloseMain);
         }
 
@@ -663,7 +653,6 @@ namespace UI.NyangQuarium
             _boardSprite = BindSprite(_boardButton, _boardSpriteKey);
             _collectionSprite = BindSprite(_collectionButton, _collectionSpriteKey);
             _layoutSprite = BindSprite(_layoutButton, _layoutSpriteKey);
-            _waterGazeSprite = BindSprite(_waterGazeButton, _waterGazeSpriteKey);
             _backSprite = BindSprite(_backButton, _backSpriteKey);
             _freshAquariumSprite = BindSprite(_freshAquariumButton, _freshAquariumSpriteKey);
             _oceanAquariumSprite = BindSprite(_oceanAquariumButton, _oceanAquariumSpriteKey);
@@ -676,10 +665,6 @@ namespace UI.NyangQuarium
 
             if (image == null || string.IsNullOrWhiteSpace(key))
                 return null;
-
-            RectTransform referenceRect = button.transform as RectTransform;
-            Vector2 referenceSize = GetReferenceSize(referenceRect);
-            StartCoroutine(MatchImageSizeToSpriteAspectWhenReady(image, referenceSize));
 
             return BindSprite(image, key, true);
         }
@@ -697,64 +682,6 @@ namespace UI.NyangQuarium
             return controller;
         }
 
-        private IEnumerator MatchImageSizeToSpriteAspectWhenReady(Image image, Vector2 referenceSize)
-        {
-            Sprite lastSprite = null;
-
-            for (int i = 0; i < 120; i++)
-            {
-                if (image == null)
-                    yield break;
-
-                Sprite currentSprite = image.sprite;
-
-                if (currentSprite != null && !ReferenceEquals(currentSprite, lastSprite))
-                {
-                    MatchImageSizeToSpriteAspect(image.rectTransform, currentSprite, referenceSize);
-                    lastSprite = currentSprite;
-                }
-
-                yield return null;
-            }
-        }
-
-        private static Vector2 GetReferenceSize(RectTransform rectTransform)
-        {
-            if (rectTransform == null)
-                return Vector2.zero;
-
-            Vector2 referenceSize = rectTransform.sizeDelta;
-
-            if (referenceSize.x <= 0f || referenceSize.y <= 0f)
-                referenceSize = rectTransform.rect.size;
-
-            return referenceSize;
-        }
-
-        private static void MatchImageSizeToSpriteAspect(RectTransform rectTransform, Sprite sprite, Vector2 referenceSize)
-        {
-            if (rectTransform == null || sprite == null)
-                return;
-
-            if (referenceSize.x <= 0f || referenceSize.y <= 0f)
-                return;
-
-            float spriteWidth = sprite.rect.width;
-            float spriteHeight = sprite.rect.height;
-
-            if (spriteWidth <= 0f || spriteHeight <= 0f)
-                return;
-
-            float spriteAspect = spriteWidth / spriteHeight;
-            float referenceAspect = referenceSize.x / referenceSize.y;
-
-            Vector2 targetSize = referenceAspect > spriteAspect
-                ? new Vector2(referenceSize.x, referenceSize.x / spriteAspect)
-                : new Vector2(referenceSize.y * spriteAspect, referenceSize.y);
-
-            rectTransform.sizeDelta = targetSize;
-        }
-
         private static void BindButton(Button button, UnityEngine.Events.UnityAction action)
         {
             if (button == null)
@@ -769,7 +696,6 @@ namespace UI.NyangQuarium
             RefreshRouteButton(_boardButton, _boardContent);
             RefreshRouteButton(_collectionButton, _collectionContent);
             RefreshRouteButton(_layoutButton, _aquariumSelectRoot);
-            RefreshRouteButton(_waterGazeButton, _aquariumSelectRoot);
             RefreshRouteButton(_freshAquariumButton, _freshAquariumContent);
             RefreshRouteButton(_oceanAquariumButton, _oceanAquariumContent);
             SetInteractable(_aquariumSelectBackButton, !_isTransitioning);
@@ -780,7 +706,6 @@ namespace UI.NyangQuarium
             SetInteractable(_boardButton, interactable);
             SetInteractable(_collectionButton, interactable);
             SetInteractable(_layoutButton, interactable);
-            SetInteractable(_waterGazeButton, interactable);
             SetInteractable(_backButton, interactable);
             SetInteractable(_freshAquariumButton, interactable);
             SetInteractable(_oceanAquariumButton, interactable);
@@ -828,7 +753,6 @@ namespace UI.NyangQuarium
             _boardSprite?.Dispose();
             _collectionSprite?.Dispose();
             _layoutSprite?.Dispose();
-            _waterGazeSprite?.Dispose();
             _backSprite?.Dispose();
             _freshAquariumSprite?.Dispose();
             _oceanAquariumSprite?.Dispose();
@@ -839,7 +763,6 @@ namespace UI.NyangQuarium
             _boardSprite = null;
             _collectionSprite = null;
             _layoutSprite = null;
-            _waterGazeSprite = null;
             _backSprite = null;
             _freshAquariumSprite = null;
             _oceanAquariumSprite = null;
