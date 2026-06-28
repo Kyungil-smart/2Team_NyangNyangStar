@@ -286,10 +286,8 @@ namespace Data.Loader
 
                 nyangQuariumFishSo.SortData();
                 nyangQuariumFishSo.PrintData();
-
-                StartCoroutine(NyangQuariumFishSpriteCache.LoadSpritesCoroutine(
-                    nyangQuariumFishSo,
-                    () => OnSheetCompleted("냥쿠아리움 물고기 스프라이트 로드 완료")));
+                NyangQuariumFishSpriteCache.BeginPreload(this, nyangQuariumFishSo);
+                OnSheetCompleted("냥쿠아리움 물고기 시트 로드 완료");
             });
         }
 

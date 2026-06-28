@@ -7,26 +7,27 @@ using UnityEngine.ResourceManagement.AsyncOperations;
 
 namespace Data.Loader
 {
-    
+    // 냥쿠아리움 물고기 스프라이트 전용 캐시.
+    //
     // NyangQuariumFishSO는 시트에서 FishKey까지만 받아오고, Sprite는 안 들고 있음.
     // 그 상태로 머지보드에서 아이템 생성하면 UISpriteController가 그때 Addressable 로드함
-    // -> Image는 먼저 켜지고 sprite는 null ->
-    // 흰색 네모 잠깐 보였다가 이미지 나오는 그 딜레이.
-    
+    // -> Image는 먼저 켜지고 sprite는 null -> 흰색 네모 잠깐 보였다가 이미지 나오는 그거
+    //
+    // SheetLoader가 시트 파싱 끝난 뒤 백그라운드로 미리 받아두고,
+    // 머지보드 생성 시 TryGetSprite로 바로 꺼내 씀 (로그인은 막지 않음)
     public static class NyangQuariumFishSpriteCache
     {
         // FishKey(Addressable 키) -> 로드된 Sprite
         private static readonly Dictionary<string, Sprite> SpritesByKey = new();
 
-        // Release할 때 쓰는 핸들
-        // Sprite만 들고 있으면 Addressable 메모리 안 풀림
         private static readonly Dictionary<string, AsyncOperationHandle<Sprite>> HandlesByKey = new();
 
-        // 프리로드 끝났는지
-        // SheetLoader OnSheetCompleted 전에 true가 되어야 함
+        // 프리로드 완료 여부. 로그인(MarkReady)과는 분리 — 백그라운드로 미리 받아둠
         public static bool IsLoaded { get; private set; }
 
-        // SheetLoader.ClearDatas() 할 때 같이 비워줌
+        public static bool IsLoading { get; private set; }
+
+        // SheetLoader.ClearDatas() 할 때 같이 비워줌.
         // 핸들 Release 안 하면 스프라이트가 메모리에 계속 남음
         public static void Clear()
         {
@@ -41,18 +42,39 @@ namespace Data.Loader
             SpritesByKey.Clear();
             HandlesByKey.Clear();
             IsLoaded = false;
+            IsLoading = false;
+        }
+
+        // SheetLoader / 냥쿠 진입 시 백그라운드 프리로드 시작. 이미 로드 중이거나 완료됐으면 스킵
+        public static void BeginPreload(MonoBehaviour runner, NyangQuariumFishSO fishSO)
+        {
+            if (runner == null || fishSO == null || IsLoaded || IsLoading)
+                return;
+
+            runner.StartCoroutine(LoadSpritesCoroutine(fishSO));
         }
 
         // SheetLoader에서 물고기 시트 로드 직후 StartCoroutine으로 호출
+        // fishSO.FishData 돌면서 FishKey마다 스프라이트 한 번씩만 요청함
         public static IEnumerator LoadSpritesCoroutine(NyangQuariumFishSO fishSO, Action onComplete = null)
         {
-            
+            if (IsLoading)
+            {
+                while (IsLoading)
+                    yield return null;
+
+                onComplete?.Invoke();
+                yield break;
+            }
+
+            // 재로드할 때 이전 캐시/핸들부터 정리
             Clear();
-            IsLoaded = false;
+            IsLoading = true;
 
             if (fishSO == null || fishSO.FishData == null || fishSO.FishData.Count == 0)
             {
                 IsLoaded = true;
+                IsLoading = false;
                 onComplete?.Invoke();
                 yield break;
             }
@@ -102,6 +124,7 @@ namespace Data.Loader
                 yield return null;
 
             IsLoaded = true;
+            IsLoading = false;
             DebugTool.Log(
                 $"[NyangQuariumFishSpriteCache] 물고기 Sprite 로드 완료 ({SpritesByKey.Count}개)",
                 DebugType.Addressable);

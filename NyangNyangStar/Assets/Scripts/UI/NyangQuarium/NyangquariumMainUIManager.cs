@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using Core.Managers;
+using Data.Loader;
 using DG.Tweening;
 using UI.Base;
 using UI.Transition;
@@ -161,10 +162,16 @@ namespace UI.NyangQuarium
 
             ShowMainViewImmediately();
             RefreshButtonStates();
+            EnsureFishSpritePreload();
         }
 
         public void OpenStory() => OpenChildContent(_storyContent, NyangquariumEntryMode.Story);
-        public void OpenBoard() => OpenChildContent(_boardContent, NyangquariumEntryMode.Board);
+
+        public void OpenBoard()
+        {
+            EnsureFishSpritePreload();
+            OpenChildContent(_boardContent, NyangquariumEntryMode.Board);
+        }
         public void OpenCollection() => OpenChildContent(_collectionContent, NyangquariumEntryMode.Collection);
         public void OpenLayout() => OpenAquariumSelect(NyangquariumEntryMode.Layout);
 
@@ -841,6 +848,23 @@ namespace UI.NyangQuarium
             DisposeSpriteControllers();
             _canvasGroup?.DOKill();
             _contentRoot?.DOKill();
+        }
+
+        // NyangQuariumFishSpriteCache 클래스에서 물고기 스프라이트 백그라운드 로드 시작
+        // 냥쿠 열 때 / 머지보드 들어갈 때 물고기 스프라이트 백그라운드 확인 용
+        // 이미 로드 중이거나 완료됐으면 그냥 return (중복 요청 방지)
+        private void EnsureFishSpritePreload()
+        {
+            if (NyangQuariumFishSpriteCache.IsLoaded || NyangQuariumFishSpriteCache.IsLoading)
+                return;
+
+            SheetLoader sheetLoader = FindFirstObjectByType<SheetLoader>();
+
+            if (sheetLoader != null &&
+                sheetLoader.TryGetNyangQuariumFishSO(out NyangQuariumFishSO fishSO))
+            {
+                NyangQuariumFishSpriteCache.BeginPreload(this, fishSO);
+            }
         }
     }
 }
