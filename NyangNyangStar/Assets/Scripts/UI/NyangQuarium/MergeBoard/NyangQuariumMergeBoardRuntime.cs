@@ -101,6 +101,12 @@ namespace UI.NyangQuarium.MergeBoard
                 generator = generatorObject.AddComponent<NyangQuariumItemGenerator>();
 
             generator.Init(board);
+
+            NyangQuariumMergeBoardNavigation navigation = rootObject.GetComponent<NyangQuariumMergeBoardNavigation>();
+            if (navigation == null)
+                navigation = rootObject.AddComponent<NyangQuariumMergeBoardNavigation>();
+
+            navigation.Init();
         }
 
         private static GameObject FindChildGameObject(Transform root, string objectName)
@@ -208,6 +214,9 @@ namespace UI.NyangQuarium.MergeBoard
                         Mathf.Max(1, fishData.Level),
                         ItemType.Common,
                         fishData.FishKey);
+
+                    if (NyangQuariumFishSpriteCache.TryGetSprite(fishData.FishKey, out Sprite sprite))
+                        itemData.SetSprite(sprite);
 
                     return new NyangQuariumBoardItem(itemData);
                 }
