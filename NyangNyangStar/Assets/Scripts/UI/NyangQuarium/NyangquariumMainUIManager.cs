@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using Core.Managers;
 using DG.Tweening;
@@ -470,6 +471,9 @@ namespace UI.NyangQuarium
             if (_collectionContent == null || IsNamed(_collectionContent, CollectionDetailOnlyContentNames))
                 _collectionContent = ResolveCollectionContent(_collectionContent);
 
+            if (_boardContent == null || !IsChildContent(_boardContent))
+                _boardContent = FindGameObject("NyangQuariumMergeBoard", "Merge Board", "MergeBoard", "BoardContent");
+
             if (_freshAquariumContent == null)
                 _freshAquariumContent = FindContent<global::NyangQuariumFreshLayoutUI>(
                     "NyangQuariumFreshCanvas",
@@ -615,6 +619,9 @@ namespace UI.NyangQuarium
             return null;
         }
 
+        private bool IsChildContent(GameObject content)
+            => content != null && content.transform.IsChildOf(transform);
+
         private static bool IsNamed(GameObject gameObject, string[] names)
         {
             if (gameObject == null || names == null)
@@ -650,7 +657,7 @@ namespace UI.NyangQuarium
 
             _backgroundSprite = BindSprite(_backgroundImage, _backgroundSpriteKey);
             _titleLogoSprite = BindSprite(_titleLogoImage, _titleLogoSpriteKey, true);
-            _boardSprite = BindSprite(_boardButton, _boardSpriteKey);
+            _boardSprite = BindSprite(_boardButton, _boardSpriteKey, true);
             _collectionSprite = BindSprite(_collectionButton, _collectionSpriteKey);
             _layoutSprite = BindSprite(_layoutButton, _layoutSpriteKey);
             _backSprite = BindSprite(_backButton, _backSpriteKey);
@@ -659,12 +666,20 @@ namespace UI.NyangQuarium
             _aquariumSelectBackSprite = BindSprite(_aquariumSelectBackButton, _backSpriteKey);
         }
 
-        private UISpriteController BindSprite(Button button, string key)
+        private UISpriteController BindSprite(Button button, string key, bool fitHeightToSpriteAspect = false)
         {
             Image image = button != null ? button.targetGraphic as Image : null;
 
             if (image == null || string.IsNullOrWhiteSpace(key))
                 return null;
+
+            if (fitHeightToSpriteAspect && image.rectTransform != null)
+            {
+                float referenceHeight = GetReferenceHeight(image.rectTransform);
+
+                if (referenceHeight > 0f)
+                    StartCoroutine(FitRectWidthToSpriteAspectWhenReady(image, referenceHeight));
+            }
 
             return BindSprite(image, key, true);
         }
@@ -680,6 +695,55 @@ namespace UI.NyangQuarium
             UISpriteController controller = new(image);
             controller.ChangeSprite(key);
             return controller;
+        }
+
+        private IEnumerator FitRectWidthToSpriteAspectWhenReady(Image image, float referenceHeight)
+        {
+            Sprite lastSprite = null;
+
+            for (int i = 0; i < 120; i++)
+            {
+                if (image == null)
+                    yield break;
+
+                Sprite currentSprite = image.sprite;
+
+                if (currentSprite != null && !ReferenceEquals(currentSprite, lastSprite))
+                {
+                    FitRectWidthToSpriteAspect(image.rectTransform, currentSprite, referenceHeight);
+                    lastSprite = currentSprite;
+                }
+
+                yield return null;
+            }
+        }
+
+        private static float GetReferenceHeight(RectTransform rectTransform)
+        {
+            if (rectTransform == null)
+                return 0f;
+
+            float referenceHeight = rectTransform.sizeDelta.y;
+
+            if (referenceHeight <= 0f)
+                referenceHeight = rectTransform.rect.height;
+
+            return referenceHeight;
+        }
+
+        private static void FitRectWidthToSpriteAspect(RectTransform rectTransform, Sprite sprite, float referenceHeight)
+        {
+            if (rectTransform == null || sprite == null || referenceHeight <= 0f)
+                return;
+
+            float spriteWidth = sprite.rect.width;
+            float spriteHeight = sprite.rect.height;
+
+            if (spriteWidth <= 0f || spriteHeight <= 0f)
+                return;
+
+            float spriteAspect = spriteWidth / spriteHeight;
+            rectTransform.sizeDelta = new Vector2(referenceHeight * spriteAspect, referenceHeight);
         }
 
         private static void BindButton(Button button, UnityEngine.Events.UnityAction action)
