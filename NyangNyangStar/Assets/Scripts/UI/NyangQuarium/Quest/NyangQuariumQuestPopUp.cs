@@ -1,11 +1,17 @@
 using System;
+using System.Collections.Generic;
 using Core.Managers;
 using Data.LibrarySystem;
+using Data.ScriptableObjects.KeyContainerSO;
 using Data.ScriptableObjects.MergeBoard;
 using Data.ScriptableObjects.NyangQuariumSO;
+using Services.Enums;
+using UI;
 using TMPro;
 using UI.Base;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
+using UnityEngine.ResourceManagement.AsyncOperations;
 using UnityEngine.UI;
 using Util;
 
@@ -17,6 +23,19 @@ namespace UI.NyangQuarium.Quest
     {
         private const string CompleteLabel = "완료";
         private const string FindLabel = "찾기";
+
+        private const string PanelQuestKey = "NQ_Panel_Quest";
+        private const string PanelQuestInfoKey = "NQ_Panel_QuestInfo";
+        private const string PanelQuestRewardKey = "NQ_Panel_QuestReward";
+        private const string BarProgressKey = "NQ_Bar_Progress";
+        private const string ProgressFillKey = "Shape_Rectangle";
+        private const string MarkerNormalKey = "NQ_Marker_normal";
+        private const string MarkerClearKey = "NQ_Marker_clear";
+        private const string BtnCloseKey = "Btn_Close";
+        private const string CheckIconKey = "FM_Icon_Check";
+        private const string AlertBadgeKey = "Shape_Circle";
+        private const string ExpRewardIconKey = "NQ_Icon_ExpLarge";
+        private const string CoinIconKey = "Main_Icon_Coin";
 
         [Header("Root")]
         [SerializeField] private GameObject _questPanelFrame;
@@ -58,11 +77,29 @@ namespace UI.NyangQuarium.Quest
         // PopupOpener가 Instantiate한 경우 닫을 때 Destroy (Addressable 팝업은 false)
         private bool _closeDestroysInstance;
         private bool _referencesResolved;
+        private bool _staticSpritesBound;
+        private bool _openRequested;
+        private int _staticSpriteRequestCount;
+        private int _staticSpriteResolvedCount;
         private int _conditionIconBindId;
+
+        private Image _questPanelFrameImage;
+        private Image _questInfoPanelImage;
+        private Image _rewardSlotPanelImage;
+        private Image _chapterProgressBackgroundImage;
+        private Image _chapterProgressFillImage;
+        private Image _conditionCompleteMarkImage;
+        private Image _alertBadgeImage;
+        private readonly List<QuestPopUpSpriteController> _spriteControllers = new();
+        private readonly List<AsyncOperationHandle<Sprite>> _loadedIconHandles = new();
+        private Canvas _canvas;
+        private RectTransform _rectTransform;
 
         public override void Init()
         {
             ResolveReferences();
+            EnsureRequiredSpriteKeys();
+            BindAddressableSprites();
             BindButtons();
         }
 
@@ -72,13 +109,44 @@ namespace UI.NyangQuarium.Quest
             _closeDestroysInstance = destroyOnClose;
         }
 
+        public void OpenWhenReady()
+        {
+            ResolveReferences();
+            BindAddressableSprites();
+
+            if (StaticSpritesReady)
+            {
+                ShowPreparedPopup();
+                return;
+            }
+
+            _openRequested = true;
+        }
+
         // 프리팹 루트 scale이 0으로 저장되어 있어 열 때 1로 복원
         public override void PlayOpenAnimation()
         {
+            ResolveReferences();
+            BindAddressableSprites();
+            BringToFront();
+
             transform.localScale = Vector3.one;
 
             if (_questPanelFrame != null)
                 _questPanelFrame.transform.localScale = Vector3.one;
+        }
+
+        public void HideImmediately()
+        {
+            ResolveReferences();
+
+            transform.localScale = Vector3.zero;
+
+            if (_questPanelFrame != null)
+                _questPanelFrame.transform.localScale = Vector3.zero;
+
+            SendBehindMainUI();
+            gameObject.SetActive(false);
         }
 
         // 표시할 퀘스트 지정 후 전체 UI 갱신
@@ -103,42 +171,200 @@ namespace UI.NyangQuarium.Quest
             if (_referencesResolved)
                 return;
 
-            _questPanelFrame ??= transform.Find("Quest_Panel_Frame")?.gameObject;
+            _canvas = GetComponent<Canvas>();
+            _rectTransform = GetComponent<RectTransform>();
 
-            Transform panel = _questPanelFrame != null ? _questPanelFrame.transform : transform;
+            Transform questPanelFrame = transform.Find("Quest_Panel_Frame");
+            _questPanelFrame = questPanelFrame != null ? questPanelFrame.gameObject : null;
+            _questPanelFrameImage = questPanelFrame != null ? questPanelFrame.GetComponent<Image>() : null;
 
-            _closeButton ??= panel.Find("CloseButton")?.GetComponent<Button>();
+            Transform panel = questPanelFrame != null ? questPanelFrame : transform;
+
+            _closeButton = panel.Find("CloseButton")?.GetComponent<Button>();
 
             Transform storyThemeRoot = panel.Find("StoryThemeRoot");
-            _storyThemeRoot ??= storyThemeRoot?.gameObject;
-            _storyThemeText ??= storyThemeRoot?.GetComponentInChildren<TMP_Text>(true);
+            _storyThemeRoot = storyThemeRoot != null ? storyThemeRoot.gameObject : null;
+            _storyThemeText = storyThemeRoot?.GetComponentInChildren<TMP_Text>(true);
 
             Transform chapterProgressRoot = panel.Find("Quest_ContentArea/ChapterProgressRoot");
-            _chapterProgressRoot ??= chapterProgressRoot?.gameObject;
-            _chapterTitleText ??= chapterProgressRoot?.Find("ChapterTitleText")?.GetComponent<TMP_Text>();
-            _chapterProgressSlider ??= chapterProgressRoot?.Find("Slider")?.GetComponent<Slider>();
+            _chapterProgressRoot = chapterProgressRoot != null ? chapterProgressRoot.gameObject : null;
+            _chapterTitleText = chapterProgressRoot?.Find("ChapterTitleText")?.GetComponent<TMP_Text>();
+            _chapterProgressSlider = chapterProgressRoot?.Find("Slider")?.GetComponent<Slider>();
 
             if (_chapterProgressText == null && _chapterProgressSlider != null)
                 _chapterProgressText = _chapterProgressSlider.GetComponentInChildren<TMP_Text>(true);
 
             Transform questInfoRoot = panel.Find("Quest_ContentArea/QuestInfoRoot");
-            _questNameText ??= questInfoRoot?.Find("Header/QuestNameText")?.GetComponent<TMP_Text>();
-            _conditionIcon ??= questInfoRoot?.Find("Body/ConditionIcon")?.GetComponent<Image>();
-            _conditionCompleteMark ??= questInfoRoot?.Find("Body/ConditionCompleteMark")?.gameObject;
+            _questInfoPanelImage = questInfoRoot?.GetComponent<Image>();
+            _questNameText = questInfoRoot?.Find("Header/QuestNameText")?.GetComponent<TMP_Text>();
+            _conditionIcon = questInfoRoot?.Find("Body/ConditionIcon")?.GetComponent<Image>();
+            Transform conditionCompleteMark = questInfoRoot?.Find("Body/ConditionCompleteMark");
+            _conditionCompleteMark = conditionCompleteMark != null ? conditionCompleteMark.gameObject : null;
+            _conditionCompleteMarkImage = conditionCompleteMark != null ? conditionCompleteMark.GetComponent<Image>() : null;
 
             Transform rewardRoot = panel.Find("Quest_ContentArea/RewardRoot");
-            _rewardRoot ??= rewardRoot?.gameObject;
-            _rewardIconPrimary ??= rewardRoot?.Find("RewardSlotPrimary/RewardIconPrimary")?.GetComponent<Image>();
-            _rewardPrimaryText ??= rewardRoot?.Find("RewardSlotPrimary/RewardPrimaryText")?.GetComponent<TMP_Text>();
+            _rewardRoot = rewardRoot != null ? rewardRoot.gameObject : null;
+            Transform rewardSlotPrimary = rewardRoot?.Find("RewardSlotPrimary");
+            _rewardSlotPanelImage = rewardSlotPrimary?.GetComponent<Image>();
+            _rewardIconPrimary = rewardSlotPrimary?.Find("RewardIconPrimary")?.GetComponent<Image>();
+            _rewardPrimaryText = rewardRoot?.Find("RewardSlotPrimary/RewardPrimaryText")?.GetComponent<TMP_Text>();
 
-            _completeButton ??= panel.Find("CompleteButton")?.GetComponent<Button>();
-            _findButton ??= panel.Find("FindButton")?.GetComponent<Button>();
-            _alertBadge ??= panel.Find("CompleteButton/AlertBadge")?.gameObject;
+            _completeButton = panel.Find("CompleteButton")?.GetComponent<Button>();
+            _findButton = panel.Find("FindButton")?.GetComponent<Button>();
+            Transform alertBadge = panel.Find("CompleteButton/AlertBadge");
+            _alertBadge = alertBadge != null ? alertBadge.gameObject : null;
+            _alertBadgeImage = alertBadge != null ? alertBadge.GetComponent<Image>() : null;
+
+            if (_chapterProgressSlider != null)
+            {
+                Transform sliderRoot = _chapterProgressSlider.transform;
+                _chapterProgressBackgroundImage = sliderRoot.Find("Background")?.GetComponent<Image>();
+                _chapterProgressFillImage = sliderRoot.Find("Fill Area/Fill")?.GetComponent<Image>();
+            }
 
             _referencesResolved = true;
         }
 
+        private void BringToFront()
+        {
+            if (_canvas == null)
+                _canvas = GetComponent<Canvas>();
+
+            if (_canvas != null)
+            {
+                _canvas.overrideSorting = true;
+                _canvas.sortingOrder = 5;
+            }
+
+            if (_rectTransform == null)
+                _rectTransform = GetComponent<RectTransform>();
+
+            if (_rectTransform != null)
+                _rectTransform.SetAsLastSibling();
+        }
+
+        private void SendBehindMainUI()
+        {
+            if (_canvas == null)
+                _canvas = GetComponent<Canvas>();
+
+            if (_canvas != null)
+            {
+                _canvas.overrideSorting = true;
+                _canvas.sortingOrder = 1;
+            }
+        }
+
         // 중복 등록 방지를 위해 Remove 후 Add
+        private void BindAddressableSprites(bool force = false)
+        {
+            EnsureRequiredSpriteKeys();
+
+            if (_staticSpritesBound && !force)
+                return;
+
+            if (force)
+            {
+                DisposeSpriteControllers();
+                _staticSpritesBound = false;
+                _staticSpriteRequestCount = 0;
+                _staticSpriteResolvedCount = 0;
+            }
+
+            BindSprite(_questPanelFrameImage, PanelQuestKey);
+            BindSprite(_questInfoPanelImage, PanelQuestInfoKey);
+            BindSprite(_rewardSlotPanelImage, PanelQuestRewardKey);
+            BindSprite(_chapterProgressBackgroundImage, BarProgressKey);
+            BindSprite(_chapterProgressFillImage, ProgressFillKey);
+            BindSprite(_conditionCompleteMarkImage, CheckIconKey, true);
+            BindSprite(_alertBadgeImage, AlertBadgeKey);
+            BindButtonSprite(_closeButton, BtnCloseKey);
+            BindButtonSprite(_completeButton, MarkerClearKey);
+            BindButtonSprite(_findButton, MarkerNormalKey);
+
+            _staticSpritesBound = true;
+            TryShowPendingPopup();
+        }
+
+        private bool StaticSpritesReady =>
+            _staticSpritesBound &&
+            _staticSpriteRequestCount > 0 &&
+            _staticSpriteResolvedCount >= _staticSpriteRequestCount;
+
+        private void ShowPreparedPopup()
+        {
+            _openRequested = false;
+            gameObject.SetActive(true);
+            PlayOpenAnimation();
+        }
+
+        private void TryShowPendingPopup()
+        {
+            if (_openRequested && StaticSpritesReady)
+                ShowPreparedPopup();
+        }
+
+        private static void EnsureRequiredSpriteKeys()
+        {
+            RegisterSpriteKeyIfMissing(PanelQuestKey, AddressableGroupType.Nyangquarium);
+            RegisterSpriteKeyIfMissing(PanelQuestInfoKey, AddressableGroupType.Nyangquarium);
+            RegisterSpriteKeyIfMissing(PanelQuestRewardKey, AddressableGroupType.Nyangquarium);
+            RegisterSpriteKeyIfMissing(BarProgressKey, AddressableGroupType.Nyangquarium);
+            RegisterSpriteKeyIfMissing(ProgressFillKey, AddressableGroupType.Common);
+            RegisterSpriteKeyIfMissing(MarkerNormalKey, AddressableGroupType.Nyangquarium);
+            RegisterSpriteKeyIfMissing(MarkerClearKey, AddressableGroupType.Nyangquarium);
+            RegisterSpriteKeyIfMissing(BtnCloseKey, AddressableGroupType.Common);
+            RegisterSpriteKeyIfMissing(CheckIconKey, AddressableGroupType.Finding);
+            RegisterSpriteKeyIfMissing(AlertBadgeKey, AddressableGroupType.Common);
+            RegisterSpriteKeyIfMissing(ExpRewardIconKey, AddressableGroupType.Nyangquarium);
+            RegisterSpriteKeyIfMissing(CoinIconKey, AddressableGroupType.Main);
+        }
+
+        private static void RegisterSpriteKeyIfMissing(string key, AddressableGroupType groupType)
+        {
+            if (KeyContainer.Sprites.Contains(key))
+                return;
+
+            KeyContainer.Register(new KeyData
+            {
+                Key = key,
+                FileName = key,
+                Usage = "NyangQuariumQuestPopUp",
+                GroupType = groupType,
+                LabelType = LabelType.Sprite,
+                BuildType = BuildType.Local
+            });
+        }
+
+        private void BindButtonSprite(Button button, string key)
+        {
+            if (button == null || string.IsNullOrWhiteSpace(key))
+                return;
+
+            BindSprite(button.targetGraphic as Image, key, true);
+        }
+
+        private void BindSprite(Image image, string key, bool preserveAspect = false)
+        {
+            if (image == null || string.IsNullOrWhiteSpace(key))
+                return;
+
+            _staticSpriteRequestCount++;
+            image.sprite = null;
+            image.type = Image.Type.Simple;
+            image.preserveAspect = preserveAspect;
+
+            QuestPopUpSpriteController controller = new(image);
+            controller.ChangeSprite(key, OnStaticSpriteResolved);
+            _spriteControllers.Add(controller);
+        }
+
+        private void OnStaticSpriteResolved()
+        {
+            _staticSpriteResolvedCount++;
+            TryShowPendingPopup();
+        }
+
         private void BindButtons()
         {
             if (_closeButton != null)
@@ -287,7 +513,7 @@ namespace UI.NyangQuarium.Quest
                 }
                 else if (rewardData.HasExpReward)
                 {
-                    ClearIcon(_rewardIconPrimary);
+                    ApplyExpRewardIcon();
                     primaryAmount = rewardData.ExpAmount;
                 }
             }
@@ -336,8 +562,8 @@ namespace UI.NyangQuarium.Quest
             {
                 _conditionIconBindId = -1;
 
-                GameManager.Addressable.LoadSprite(
-                    "Main_Icon_Coin",
+                LoadQuestSprite(
+                    CoinIconKey,
                     (sprite, _) =>
                     {
                         if (_conditionIcon != null)
@@ -383,15 +609,15 @@ namespace UI.NyangQuarium.Quest
                 return;
             }
 
-            if (itemData.ItemSprite != null)
-            {
-                target.enabled = true;
-                target.sprite = itemData.ItemSprite;
-                return;
-            }
-
             if (string.IsNullOrEmpty(itemData.AddressableKey))
             {
+                if (itemData.ItemSprite != null)
+                {
+                    target.enabled = true;
+                    target.sprite = itemData.ItemSprite;
+                    return;
+                }
+
                 if (conditionBindId >= 0 && conditionBindId == _conditionIconBindId)
                     ClearIcon(target);
                 return;
@@ -399,7 +625,7 @@ namespace UI.NyangQuarium.Quest
 
             string addressableKey = itemData.AddressableKey;
 
-            GameManager.Addressable.LoadSprite(
+            LoadQuestSprite(
                 addressableKey,
                 (sprite, _) =>
                 {
@@ -421,6 +647,49 @@ namespace UI.NyangQuarium.Quest
                         return;
 
                     ClearIcon(target);
+                });
+        }
+
+        private void ApplyExpRewardIcon()
+        {
+            if (_rewardIconPrimary == null)
+                return;
+
+            LoadQuestSprite(
+                ExpRewardIconKey,
+                (sprite, _) =>
+                {
+                    if (_rewardIconPrimary == null)
+                        return;
+
+                    _rewardIconPrimary.enabled = true;
+                    _rewardIconPrimary.sprite = sprite;
+                },
+                _ => ClearIcon(_rewardIconPrimary));
+        }
+
+        private void LoadQuestSprite(
+            string key,
+            Action<Sprite, AsyncOperationHandle<Sprite>> onLoaded,
+            Action<string> onFailed = null)
+        {
+            if (string.IsNullOrWhiteSpace(key))
+            {
+                onFailed?.Invoke(key);
+                return;
+            }
+
+            GameManager.Addressable.LoadSprite(
+                key,
+                (sprite, handle) =>
+                {
+                    _loadedIconHandles.Add(handle);
+                    onLoaded?.Invoke(sprite, handle);
+                },
+                failedKey =>
+                {
+                    DebugTool.Warning($"{failedKey} : QuestPopUp Sprite load failed", DebugType.UI);
+                    onFailed?.Invoke(failedKey);
                 });
         }
 
@@ -511,11 +780,14 @@ namespace UI.NyangQuarium.Quest
                 return;
             }
 
-            base.ClosePopup();
+            HideImmediately();
         }
 
         private void OnDestroy()
         {
+            DisposeSpriteControllers();
+            ReleaseLoadedIconHandles();
+
             if (_closeButton != null)
                 _closeButton.onClick.RemoveListener(OnCloseClicked);
 
@@ -524,6 +796,89 @@ namespace UI.NyangQuarium.Quest
 
             if (_findButton != null)
                 _findButton.onClick.RemoveListener(OnFindClicked);
+        }
+
+        private void DisposeSpriteControllers()
+        {
+            for (int i = 0; i < _spriteControllers.Count; i++)
+                _spriteControllers[i]?.Dispose();
+
+            _spriteControllers.Clear();
+        }
+
+        private void ReleaseLoadedIconHandles()
+        {
+            for (int i = 0; i < _loadedIconHandles.Count; i++)
+            {
+                AsyncOperationHandle<Sprite> handle = _loadedIconHandles[i];
+
+                if (handle.IsValid())
+                    Addressables.Release(handle);
+            }
+
+            _loadedIconHandles.Clear();
+        }
+
+        private sealed class QuestPopUpSpriteController
+        {
+            private readonly Image _image;
+            private AsyncOperationHandle<Sprite> _handle;
+            private int _requestId;
+            private bool _disposed;
+
+            public QuestPopUpSpriteController(Image image)
+                => _image = image;
+
+            public void ChangeSprite(string key, Action onResolved = null)
+            {
+                if (_disposed || _image == null || string.IsNullOrWhiteSpace(key))
+                    return;
+
+                int currentRequestId = ++_requestId;
+
+                GameManager.Addressable.LoadSprite(
+                    key,
+                    (sprite, handle) =>
+                    {
+                        if (_disposed || currentRequestId != _requestId)
+                        {
+                            if (handle.IsValid())
+                                Addressables.Release(handle);
+
+                            return;
+                        }
+
+                        Release();
+
+                        _handle = handle;
+                        _image.sprite = sprite;
+                        onResolved?.Invoke();
+                    },
+                    failedKey =>
+                    {
+                        if (_disposed || currentRequestId != _requestId)
+                            return;
+
+                        DebugTool.Warning($"{failedKey} : QuestPopUp Sprite load failed", DebugType.UI);
+                        onResolved?.Invoke();
+                    });
+            }
+
+            public void Dispose()
+            {
+                _disposed = true;
+                ++_requestId;
+                Release();
+            }
+
+            private void Release()
+            {
+                if (!_handle.IsValid())
+                    return;
+
+                Addressables.Release(_handle);
+                _handle = default;
+            }
         }
     }
 }
