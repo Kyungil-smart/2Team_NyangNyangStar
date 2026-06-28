@@ -15,19 +15,16 @@ public class NyangQuariumFreshLayoutUISprite : UIBase
         _spriteController = new UISpriteController[Enum.GetValues(typeof(NyangQuariumFreshLayoutUIImage)).Length];
 
         for (int i = 0; i < Enum.GetValues(typeof(NyangQuariumFreshLayoutUIImage)).Length; i++)
-        {
             _spriteController[i] = new UISpriteController(GetImage(i));
-        }
 
         SetSprites();
     }
 
     private void SetSprites()
     {
-        //바다 냥쿠아리움 배경
+        // 담수 냥쿠아리움 배경
         SetSprite(NyangQuariumFreshLayoutUIImage.NyangQuariumLayoutPanel, "NQ_BQ_FreshWater");
 
-        //냥쿠아리움 버튼들과 이미지
         SetSprite(NyangQuariumFreshLayoutUIImage.WindowButton, "NQ_Img_AquaTunnel");
         SetSprite(NyangQuariumFreshLayoutUIImage.CatImage, "NQ_Char_Moongchi");
         SetSprite(NyangQuariumFreshLayoutUIImage.LevelImage, "NQ_Icon_TankLevel");
@@ -35,11 +32,6 @@ public class NyangQuariumFreshLayoutUISprite : UIBase
         SetSprite(NyangQuariumFreshLayoutUIImage.FreshWaterWeedButton, "NQ_Btn_CreatureFresh");
         SetSprite(NyangQuariumFreshLayoutUIImage.FreshWaterFishButton, "NQ_Btn_FishFresh");
         SetSprite(NyangQuariumFreshLayoutUIImage.ChangeButton, "NQ_Btn_FishSalt");
-
-        //아직 어드레서블 없음
-        //SetSprite(NyangQuariumOceanLayoutUIImage.OceanwaterLayoutCloseButton, "NYS_Btn_Exit");
-        //SetSprite(NyangQuariumOceanLayoutUIImage.OceanwaterLayoutPanel, "NYS_Btn_Exit");
-
     }
 
     private void SetSprite(NyangQuariumFreshLayoutUIImage image, string key)
@@ -63,8 +55,5 @@ public enum NyangQuariumFreshLayoutUIImage
     BackButton,
     FreshWaterWeedButton,
     FreshWaterFishButton,
-    ChangeButton,
-    FreshwaterLayoutCloseButton,
-    FreshwaterLayoutPanel,
-
+    ChangeButton
 }

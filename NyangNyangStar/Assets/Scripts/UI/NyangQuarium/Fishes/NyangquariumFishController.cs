@@ -5,6 +5,8 @@ using UnityEngine.EventSystems;
 using UnityEngine.ResourceManagement.AsyncOperations;
 using UnityEngine.UI;
 using Util;
+using Random = UnityEngine.Random;
+
 
 namespace UI.NyangQuarium
 {
