@@ -74,6 +74,7 @@ namespace Util
             public const string NyangQuariumFishInfoPopupUI = "NyangQuariumFishInfoPopupUI";
 
             // 냥쿠아 리움 UI 프리팹
+            public const string NyangQuariumQuestPopUp = "NyangQuariumQuestPopUp";
             public const string Nyangquarium = "NyangquariumUI";
         }
 
@@ -315,6 +316,7 @@ namespace Util
             PrefabKeyDict.Add(Prefabs.NyangQuariumMulMeongUI, new List<GameObject>());
             PrefabKeyDict.Add(Prefabs.NyangQuariumFreshLayoutUI, new List<GameObject>());
             PrefabKeyDict.Add(Prefabs.NyangQuariumOceanLayoutUI, new List<GameObject>());
+            PrefabKeyDict.Add(Prefabs.NyangQuariumQuestPopUp, new List<GameObject>());
             PrefabKeyDict.Add(Prefabs.Nyangquarium, new List<GameObject>());
             PrefabKeyDict.Add(Prefabs.NyangQuariumCollectionPopupUI, new List<GameObject>());
             PrefabKeyDict.Add(Prefabs.NyangQuariumFishInfoPopupUI, new List<GameObject>());
