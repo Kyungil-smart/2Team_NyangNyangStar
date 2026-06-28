@@ -23,19 +23,23 @@ namespace Data.Loader
         [SerializeField] private List<KeyContainerSo> keySo = new();
         private readonly Dictionary<int, KeyContainerSo> _keyContainerDict = new();
 
-        [Space(8)] [Header("스크래칭 타임")]
+        [Space(8)]
+        [Header("스크래칭 타임")]
         [SerializeField] private SheetData scratchingURL;
         [SerializeField] private ScratchingSo scratchingSo;
 
-        [Space(8)] [Header("냥냥스냅 배경")]
+        [Space(8)]
+        [Header("냥냥스냅 배경")]
         [SerializeField] private SheetData nyangNyangSnapBackgroundURL;
         [SerializeField] private NyangNyangSnapBackgroundSO nyangNyangSnapBackgroundSo;
 
-        [Space(8)] [Header("머지 보드 아이템")]
+        [Space(8)]
+        [Header("머지 보드 아이템")]
         [SerializeField] private SheetData mergeBoardItemURL;
         [SerializeField] private ItemDatabaseSo itemDatabaseSo;
 
-        [Space(8)] [Header("냥냥스냅 포즈")]
+        [Space(8)]
+        [Header("냥냥스냅 포즈")]
         [SerializeField] private SheetData nyangNyangSnapPoseURL;
         [SerializeField] private NyangNyangSnapPoseSO nyangNyangSnapPoseSo;
 
@@ -44,39 +48,47 @@ namespace Data.Loader
         [SerializeField] private SheetData nyangNyangSnapToolURL;
         [SerializeField] private NyangNyangSnapToolSO nyangNyangSnapToolSo;
 
-        [Space(8)] [Header("뭉치를 찾아라 상점/보상")]
+        [Space(8)]
+        [Header("뭉치를 찾아라 상점/보상")]
         [SerializeField] private SheetData findMoongchiShopURL;
         [SerializeField] private MoongchiShopSO findMoongchiShopSo;
 
-        [Space(8)] [Header("뭉치를 찾아라 미션")]
+        [Space(8)]
+        [Header("뭉치를 찾아라 미션")]
         [SerializeField] private SheetData findMoongchiMissionURL;
         [SerializeField] private MoongchiMissionSO findMoongchiMissionSo;
 
-        [Space(8)] [Header("뭉치를 찾아라 프로필")]
+        [Space(8)]
+        [Header("뭉치를 찾아라 프로필")]
         [SerializeField] private SheetData findMoongchiProfileURL;
         [SerializeField] private MoongchiProfileSO findMoongchiProfileSo;
 
-        [Space(8)] [Header("냥쿠아리움 퀘스트")]
+        [Space(8)]
+        [Header("냥쿠아리움 퀘스트")]
         [SerializeField] private SheetData nyangQuariumQuestURL;
         [SerializeField] private NyangQuariumQuestSO nyangQuariumQuestSo;
 
-        [Space(8)] [Header("냥쿠아리움 퀘스트 보상")]
+        [Space(8)]
+        [Header("냥쿠아리움 퀘스트 보상")]
         [SerializeField] private SheetData nyangQuariumQuestRewardURL;
         [SerializeField] private NyangQuariumQuestRewardSO nyangQuariumQuestRewardSo;
 
-        [Space(8)] [Header("냥쿠아리움 퀘스트 스트링")]
+        [Space(8)]
+        [Header("냥쿠아리움 퀘스트 스트링")]
         [SerializeField] private SheetData nyangQuariumQuestStringURL;
         [SerializeField] private NyangQuariumQuestStringSO nyangQuariumQuestStringSo;
 
-        [Space(8)] [Header("냥쿠아리움 생성기")]
+        [Space(8)]
+        [Header("냥쿠아리움 생성기")]
         [SerializeField] private SheetData nyangQuariumGeneratorURL;
         [SerializeField] private NyangQuariumGeneratorSO nyangQuariumGeneratorSo;
 
-        [Space(8)] [Header("냥쿠아리움 물고기")]
+        [Space(8)]
+        [Header("냥쿠아리움 물고기")]
         [SerializeField] private SheetData nyangQuariumFishURL;
         [SerializeField] private NyangQuariumFishSO nyangQuariumFishSo;
 
-        [Space(8)] [SerializeField] private int _pendingSheetCount;
+        [Space(8)][SerializeField] private int _pendingSheetCount;
         public int PendingSheetCount => _pendingSheetCount;
 
         public bool TryGetFindMoongchiShopSO(out MoongchiShopSO shopSO)
@@ -266,9 +278,18 @@ namespace Data.Loader
 
             LoadSheetData(nyangQuariumFishURL, nyangQuariumFishSo, 1, () =>
             {
-                OnSheetCompleted("냥쿠아리움 물고기 시트 로드 완료");
+                if (nyangQuariumFishSo == null)
+                {
+                    OnSheetCompleted("냥쿠아리움 물고기 시트 로드 완료");
+                    return;
+                }
+
                 nyangQuariumFishSo.SortData();
-                nyangQuariumFishSo?.PrintData();
+                nyangQuariumFishSo.PrintData();
+
+                StartCoroutine(NyangQuariumFishSpriteCache.LoadSpritesCoroutine(
+                    nyangQuariumFishSo,
+                    () => OnSheetCompleted("냥쿠아리움 물고기 스프라이트 로드 완료")));
             });
         }
 
@@ -617,6 +638,7 @@ namespace Data.Loader
             nyangQuariumQuestStringSo?.ClearData();
             nyangQuariumGeneratorSo?.ClearData();
             nyangQuariumFishSo?.ClearData();
+            NyangQuariumFishSpriteCache.Clear();
 
             _keyContainerDict.Clear();
 
