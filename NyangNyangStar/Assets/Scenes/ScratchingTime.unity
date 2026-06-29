@@ -547,58 +547,6 @@ PrefabInstance:
       propertyPath: m_Name
       value: NyangQuariumMergeBoard
       objectReference: {fileID: 0}
-    - target: {fileID: 506438048927786420, guid: 024c5a092cbb54c49950614adba04bef, type: 3}
-      propertyPath: m_AnchorMax.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 506438048927786420, guid: 024c5a092cbb54c49950614adba04bef, type: 3}
-      propertyPath: m_AnchorMin.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 506438048927786420, guid: 024c5a092cbb54c49950614adba04bef, type: 3}
-      propertyPath: m_AnchoredPosition.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 506438048927786420, guid: 024c5a092cbb54c49950614adba04bef, type: 3}
-      propertyPath: m_AnchoredPosition.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1225997652909332603, guid: 024c5a092cbb54c49950614adba04bef, type: 3}
-      propertyPath: m_Sprite
-      value: 
-      objectReference: {fileID: 0}
-    - target: {fileID: 2729238412144556132, guid: 024c5a092cbb54c49950614adba04bef, type: 3}
-      propertyPath: m_AnchorMax.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2729238412144556132, guid: 024c5a092cbb54c49950614adba04bef, type: 3}
-      propertyPath: m_AnchorMin.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2729238412144556132, guid: 024c5a092cbb54c49950614adba04bef, type: 3}
-      propertyPath: m_AnchoredPosition.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2729238412144556132, guid: 024c5a092cbb54c49950614adba04bef, type: 3}
-      propertyPath: m_AnchoredPosition.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5114350153148002559, guid: 024c5a092cbb54c49950614adba04bef, type: 3}
-      propertyPath: m_AnchorMax.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5114350153148002559, guid: 024c5a092cbb54c49950614adba04bef, type: 3}
-      propertyPath: m_AnchorMin.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5114350153148002559, guid: 024c5a092cbb54c49950614adba04bef, type: 3}
-      propertyPath: m_AnchoredPosition.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5114350153148002559, guid: 024c5a092cbb54c49950614adba04bef, type: 3}
-      propertyPath: m_AnchoredPosition.y
-      value: 0
-      objectReference: {fileID: 0}
     - target: {fileID: 6775779284003590004, guid: 024c5a092cbb54c49950614adba04bef, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
