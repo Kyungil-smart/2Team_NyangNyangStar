@@ -11,8 +11,6 @@ public class NyangQuariumFishSO : SoBase, ISheetParsable
     [Tooltip("물고기ID, 타입, 레벨, 종류, 이름, 설명, 물고기 Key")]
     [SerializeField] private List<NyangQuariumFishData> _fishData = new();
 
-    private readonly Dictionary<FishType, int> _fishCountByType = new(); // 타입별 물고기 수
-
     public IReadOnlyList<NyangQuariumFishData> FishData => _fishData;
 
     public override void Init() => ClearData();
@@ -20,7 +18,6 @@ public class NyangQuariumFishSO : SoBase, ISheetParsable
     public void ClearData()
     {
         _fishData.Clear();
-        _fishCountByType.Clear();
     }
 
     public void SetData(string[] cols)
@@ -35,11 +32,6 @@ public class NyangQuariumFishSO : SoBase, ISheetParsable
             cols[6].Trim());
 
         _fishData.Add(data);
-
-        if (!_fishCountByType.ContainsKey(data.FishType))
-            _fishCountByType[data.FishType] = 0;
-
-        _fishCountByType[data.FishType]++;
     }
 
     private FishType ParseFishType(string type)
@@ -63,8 +55,6 @@ public class NyangQuariumFishSO : SoBase, ISheetParsable
     {
         _fishData.Sort((a, b) => a.Level.CompareTo(b.Level));
     }
-
-    public int GetFishCount(FishType fishType) => _fishCountByType.TryGetValue(fishType, out int count) ? count : 0;
 
     public void PrintData()
     {
