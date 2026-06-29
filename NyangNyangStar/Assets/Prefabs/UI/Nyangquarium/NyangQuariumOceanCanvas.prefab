@@ -1128,6 +1128,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _aquariumType: 2
+  _fishTabButton: {fileID: 6644249192987410499}
+  _natureTabButton: {fileID: 1089702655732377778}
+  _fishFilterObjects:
+  - {fileID: 1080160777227172477}
+  - {fileID: 4840309796602467361}
   _content: {fileID: 5068424835779841990}
   _itemTemplate: {fileID: 4528002650524190541}
   _placementController: {fileID: 6312291345538352752}

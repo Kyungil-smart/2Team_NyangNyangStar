@@ -226,12 +226,17 @@ public sealed class NyangQuariumFishPlacementController : MonoBehaviour
     /// <summary>
     /// 현재 선택된 물고기 또는 자연 요소의 배치를 확정합니다.
     /// </summary>
+    /// <summary>
+    /// 현재 선택된 자연 요소의 배치를 확정합니다.
+    /// 배치 확정 전에 머지보드 보유 수량을 검사하고 1개 차감합니다.
+    /// </summary>
     public void ConfirmPlacement()
     {
         if (!_isPlacementMode ||
             _selectedCategory !=
             NyangQuariumPlacementCategory.Nature ||
-            string.IsNullOrWhiteSpace(_selectedSpriteKey))
+            string.IsNullOrWhiteSpace(_selectedSpriteKey) ||
+            _naturePreview == null)
         {
             return;
         }
@@ -239,11 +244,34 @@ public sealed class NyangQuariumFishPlacementController : MonoBehaviour
         GameManager.Audio.PlaySfx(
             "Main_SFX_Touch");
 
+        if (!NyangQuariumMergeBoardInventoryService
+                .TryConsumeNature(
+                    _selectedItemId,
+                    1))
+        {
+            Debug.LogWarning(
+                $"[NyangQuariumFishPlacementController] " +
+                $"머지보드 자연 요소 차감에 실패했습니다. " +
+                $"배치 미리보기는 유지됩니다. " +
+                $"ItemId:{_selectedItemId}",
+                this);
+
+            return;
+        }
+
         RectTransform confirmedObject =
             ConfirmNaturePlacement();
 
         if (confirmedObject == null)
+        {
+            Debug.LogError(
+                $"[NyangQuariumFishPlacementController] " +
+                $"자연 요소 차감 후 배치 확정에 실패했습니다. " +
+                $"ItemId:{_selectedItemId}",
+                this);
+
             return;
+        }
 
         int confirmedItemId =
             _selectedItemId;
@@ -258,7 +286,9 @@ public sealed class NyangQuariumFishPlacementController : MonoBehaviour
 
         Debug.Log(
             $"[NyangQuariumFishPlacementController] " +
-            $"자연 요소 배치 확정 - {confirmedObject.name}",
+            $"자연 요소 배치 및 머지보드 차감 완료 - " +
+            $"ItemId:{confirmedItemId}, " +
+            $"Object:{confirmedObject.name}",
             this);
     }
 
