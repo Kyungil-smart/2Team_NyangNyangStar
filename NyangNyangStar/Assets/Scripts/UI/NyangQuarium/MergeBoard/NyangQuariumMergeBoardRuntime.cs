@@ -224,8 +224,8 @@ namespace UI.NyangQuarium.MergeBoard
 
             if (fireStoreManager == null ||
                 !fireStoreManager.IsInitialized ||
-                !fireStoreManager.TryGetStore(out NyangQuariumCollectionSO collectionSO) ||
-                collectionSO == null)
+                !fireStoreManager.TryGetStore(out NyangQuariumFirestoreSO nyangQuariumSO) ||
+                nyangQuariumSO == null)
             {
                 DebugTool.Warning("[NyangQuariumItemGenerator] Firestore가 준비되지 않아 도감 해금 저장을 생략합니다.", DebugType.Data, this);
                 return;
@@ -233,7 +233,7 @@ namespace UI.NyangQuarium.MergeBoard
 
             try
             {
-                await collectionSO.UnlockFishAsync(item.Id);
+                await nyangQuariumSO.UnlockFishAsync(item.Id);
             }
             catch (System.Exception e)
             {
