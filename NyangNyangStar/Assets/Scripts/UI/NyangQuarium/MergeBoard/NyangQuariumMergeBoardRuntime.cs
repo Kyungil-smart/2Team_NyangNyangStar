@@ -37,6 +37,7 @@ namespace UI.NyangQuarium.MergeBoard
         private const string BoardName = "Item Board";
         private const string InfoName = "ItemInfo";
         private const string RewardRootName = "Reward Root";
+        private const string QuestBoardPanelName = "QuestBoardPanel";
         private static NyangQuariumMergeBoardBootstrap _instance;
 
         // 게임 시작, 씬 로드 시 부트스트랩 러너 등록
@@ -125,6 +126,18 @@ namespace UI.NyangQuarium.MergeBoard
                 navigation = rootObject.AddComponent<NyangQuariumMergeBoardNavigation>();
 
             navigation.Init();
+
+            GameObject questBoardPanelObject = FindChildGameObject(rootObject.transform, QuestBoardPanelName);
+            if (questBoardPanelObject != null)
+            {
+                NyangQuariumMergeQuestBoardUI questBoardUI =
+                    questBoardPanelObject.GetComponent<NyangQuariumMergeQuestBoardUI>();
+
+                if (questBoardUI == null)
+                    questBoardUI = questBoardPanelObject.AddComponent<NyangQuariumMergeQuestBoardUI>();
+
+                questBoardUI.Init();
+            }
         }
 
         // 활성화된 자식 오브젝트만 이름으로 찾음
@@ -602,6 +615,7 @@ namespace UI.NyangQuarium.MergeBoard
         }
     }
 
+    [DefaultExecutionOrder(-50)]
     public sealed class NyangQuariumItemBoard : MonoBehaviour
     {
         private const int Width = 7;
@@ -609,12 +623,19 @@ namespace UI.NyangQuarium.MergeBoard
         private const int SlotSize = 135;
         private const int SlotSpacing = 9;
         private const int ItemSize = 85;
+        private const string SlotRootObjectName = "@Slot Root";
 
         private readonly List<NyangQuariumItemSlot> _slots = new();
         private NyangQuariumItemInfoPanel _infoPanel;
         private NyangQuariumItemSlot _selectedSlot;
         private Transform _slotRoot;
         private bool _initialized;
+
+        private void Awake()
+        {
+            // BoardSystem.Start()보다 먼저 비활성화해서 메인 보드 @Slot Root 오염을 방지합니다.
+            DisableMergeBoardSystem();
+        }
 
         public void Init(NyangQuariumItemInfoPanel infoPanel)
         {
@@ -947,15 +968,23 @@ namespace UI.NyangQuarium.MergeBoard
         // 같은 오브젝트에 붙은 메인 BoardSystem 비활성화
         private void DisableMergeBoardSystem()
         {
-            BoardSystem mergeBoardSystem = GetComponent<BoardSystem>();
-            if (mergeBoardSystem != null)
-                mergeBoardSystem.enabled = false;
+            BoardSystem[] boardSystems = GetComponents<BoardSystem>();
+
+            for (int i = 0; i < boardSystems.Length; i++)
+            {
+                BoardSystem boardSystem = boardSystems[i];
+
+                if (boardSystem == null)
+                    continue;
+
+                boardSystem.enabled = false;
+            }
         }
 
         // @Slot Root 없으면 만들고 GridLayoutGroup 7열로 맞춤
         private void SetupSlotRoot()
         {
-            Transform existingRoot = transform.Find("@Slot Root");
+            Transform existingRoot = transform.Find(SlotRootObjectName);
             if (existingRoot != null)
             {
                 _slotRoot = existingRoot;

@@ -14,17 +14,17 @@ namespace UI.NyangQuarium.Quest
         [Header("냥쿠_퀘스트 테이블")]
         [SerializeField] private SheetData _questURL;
         [SerializeField] private NyangQuariumQuestSO _questSO;
-        [SerializeField] private int _questHeaderRowCount = 2;
+        [SerializeField] private int _questHeaderRowCount = 3;
 
         [Header("냥쿠_퀘스트 보상 테이블")]
         [SerializeField] private SheetData _questRewardURL;
         [SerializeField] private NyangQuariumQuestRewardSO _questRewardSO;
-        [SerializeField] private int _questRewardHeaderRowCount = 2;
+        [SerializeField] private int _questRewardHeaderRowCount = 3;
 
         [Header("냥쿠_퀘스트 스트링 테이블")]
         [SerializeField] private SheetData _questStringURL;
         [SerializeField] private NyangQuariumQuestStringSO _questStringSO;
-        [SerializeField] private int _questStringHeaderRowCount = 2;
+        [SerializeField] private int _questStringHeaderRowCount = 1;
 
         [Header("냥쿠_생성기 테이블")]
         [SerializeField] private SheetData _generatorURL;

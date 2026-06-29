@@ -251,19 +251,19 @@ namespace Data.Loader
                 findMoongchiProfileSo?.PrintData();
             });
 
-            LoadSheetData(nyangQuariumQuestURL, nyangQuariumQuestSo, 2, () =>
+            LoadSheetData(nyangQuariumQuestURL, nyangQuariumQuestSo, 3, () =>
             {
                 OnSheetCompleted("냥쿠아리움 퀘스트 시트 로드 완료");
                 nyangQuariumQuestSo?.PrintData();
             });
 
-            LoadSheetData(nyangQuariumQuestRewardURL, nyangQuariumQuestRewardSo, 2, () =>
+            LoadSheetData(nyangQuariumQuestRewardURL, nyangQuariumQuestRewardSo, 3, () =>
             {
                 OnSheetCompleted("냥쿠아리움 퀘스트 보상 시트 로드 완료");
                 nyangQuariumQuestRewardSo?.PrintData();
             });
 
-            LoadSheetData(nyangQuariumQuestStringURL, nyangQuariumQuestStringSo, 2, () =>
+            LoadSheetData(nyangQuariumQuestStringURL, nyangQuariumQuestStringSo, 1, () =>
             {
                 OnSheetCompleted("냥쿠아리움 퀘스트 스트링 시트 로드 완료");
                 nyangQuariumQuestStringSo?.PrintData();

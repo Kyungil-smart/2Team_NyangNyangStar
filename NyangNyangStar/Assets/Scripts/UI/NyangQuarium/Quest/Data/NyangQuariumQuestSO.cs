@@ -49,8 +49,7 @@ namespace Data.ScriptableObjects.NyangQuariumSO
         // 시트 한 줄을 받아서 NyangQuariumQuestData로 변환
         public void SetData(string[] cols)
         {
-            // 퀘스트 테이블은 최소 12개 컬럼이 필요
-            if (cols == null || cols.Length < 12)
+            if (cols == null || cols.Length < 7)
                 return;
 
             // 0번 컬럼: id
@@ -71,38 +70,48 @@ namespace Data.ScriptableObjects.NyangQuariumSO
             // 실제 문구가 아니라 Q_DESC5 같은 스트링 키
             string questDescKey = GetColumn(cols, 3);
 
-            // 4번 컬럼: preQuest
-            // "-"이면 선행 퀘스트 없음으로 보고 0 처리하기
-            int preQuestId = ParseQuestId(GetColumn(cols, 4));
+            string column4 = GetColumn(cols, 4);
+            string column5 = GetColumn(cols, 5);
 
-            // 5번 컬럼: questType
-            // story / merge / housing 값을 enum으로 변환하기
-            NyangQuariumQuestType questType =
-                ParseEnum(GetColumn(cols, 5), NyangQuariumQuestType.None);
+            int preQuestId;
+            NyangQuariumQuestType questType;
+            int condition1Index;
+            int amount1Index;
+            int condition2Index;
+            int amount2Index;
+            int rewardIdIndex;
+            int rewardAmountIndex;
 
-            // 6번 컬럼: questCondition1
-            // "코인" 또는 아이템 ID 같은 값이 들어오기
-            string questCondition1 = NormalizeEmptyValue(GetColumn(cols, 6));
+            // sub merge 행은 선행 퀘스트 없이 questType이 4번 컬럼에 올 수 있습니다.
+            // 예: 43004 | sub | Q_NAME4 | Q_DESC4 | merge | 42001 | 2
+            if (TryParseQuestType(column4, out questType))
+            {
+                preQuestId = 0;
+                condition1Index = 5;
+                amount1Index = 6;
+                condition2Index = 7;
+                amount2Index = 8;
+                rewardIdIndex = 9;
+                rewardAmountIndex = 10;
+            }
+            else
+            {
+                preQuestId = ParseQuestId(column4);
+                questType = ParseEnum(column5, NyangQuariumQuestType.None);
+                condition1Index = 6;
+                amount1Index = 7;
+                condition2Index = 8;
+                amount2Index = 9;
+                rewardIdIndex = 10;
+                rewardAmountIndex = 11;
+            }
 
-            // 7번 컬럼: amount
-            // 첫 번째 조건 요구 수량
-            int conditionAmount1 = ParseIntOrDefault(GetColumn(cols, 7));
-
-            // 8번 컬럼: questCondition2
-            // 없으면 빈 문자열로 처리하기
-            string questCondition2 = NormalizeEmptyValue(GetColumn(cols, 8));
-
-            // 9번 컬럼: amount
-            // 두 번째 조건 요구 수량
-            int conditionAmount2 = ParseIntOrDefault(GetColumn(cols, 9));
-
-            // 10번 컬럼: questReward
-            // 보상 테이블 ID
-            int questRewardId = ParseIntOrDefault(GetColumn(cols, 10));
-
-            // 11번 컬럼: rewardAmount
-            // 퀘스트 테이블 자체의 보상량
-            int rewardAmount = ParseIntOrDefault(GetColumn(cols, 11));
+            string questCondition1 = NormalizeEmptyValue(GetColumn(cols, condition1Index));
+            int conditionAmount1 = ParseIntOrDefault(GetColumn(cols, amount1Index));
+            string questCondition2 = NormalizeEmptyValue(GetColumn(cols, condition2Index));
+            int conditionAmount2 = ParseIntOrDefault(GetColumn(cols, amount2Index));
+            int questRewardId = ParseIntOrDefault(GetColumn(cols, rewardIdIndex));
+            int rewardAmount = ParseIntOrDefault(GetColumn(cols, rewardAmountIndex));
 
             // enum 값이 잘못되면 None으로 들어오므로 해당 행은 무시하기
             if (questSection == NyangQuariumQuestSection.None || questType == NyangQuariumQuestType.None)
@@ -295,6 +304,25 @@ namespace Data.ScriptableObjects.NyangQuariumSO
                 return defaultValue;
 
             return Enum.TryParse(value, true, out T result) ? result : defaultValue;
+        }
+
+        private static bool TryParseQuestType(string value, out NyangQuariumQuestType questType)
+        {
+            value = NormalizeEmptyValue(value);
+
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                questType = NyangQuariumQuestType.None;
+                return false;
+            }
+
+            if (!Enum.TryParse(value, true, out questType) || questType == NyangQuariumQuestType.None)
+            {
+                questType = NyangQuariumQuestType.None;
+                return false;
+            }
+
+            return true;
         }
     }
 }
