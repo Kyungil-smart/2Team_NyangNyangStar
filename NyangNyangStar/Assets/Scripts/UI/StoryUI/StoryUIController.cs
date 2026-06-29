@@ -1,9 +1,11 @@
+using Core.Managers;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
+using UI.Base;
 using UnityEngine;
 using UnityEngine.UI;
-using UI.Base;
+using Util;
 
 
 public class StoryUIController : UIPopup
@@ -18,6 +20,8 @@ public class StoryUIController : UIPopup
 
     [SerializeField] private GameObject _cardPrefab;
 
+    [SerializeField] private bool cleared;
+
 
     [SerializeField] private Button _nextButton;
 
@@ -31,14 +35,14 @@ public class StoryUIController : UIPopup
     private StoryDataSO _currentStory;
     private int _currentStoryIndex = -1;
     private int _currentIndex = 0;
-    private bool _reachedEnd = false; 
+    private bool _reachedEnd = false;
 
 
     public override void Init()
     {
         if (_nextButton != null)
         {
-            _nextButton.onClick.RemoveListener(ShowNextCard); 
+            _nextButton.onClick.RemoveListener(ShowNextCard);
             _nextButton.onClick.AddListener(ShowNextCard);
         }
     }
@@ -109,7 +113,7 @@ public class StoryUIController : UIPopup
             return;
         }
 
-  
+
 
         if (_currentStory == null)
             return;
@@ -153,11 +157,28 @@ public class StoryUIController : UIPopup
 
     private IEnumerator ScrollToBottomNextFrame()
     {
-        yield return null; 
+        yield return null;
         Canvas.ForceUpdateCanvases();
         if (_scrollRect != null)
-            _scrollRect.verticalNormalizedPosition = 0f; 
+            _scrollRect.verticalNormalizedPosition = 0f;
         Canvas.ForceUpdateCanvases();
     }
+
+    public void PopupStory()
+    {
+        if(cleared == false)
+        {
+            GameManager.UI.ShowPopupUI<StoryUIController>(
+            KeyContainer.Prefabs.StoryUI,
+            popup => popup.PlayStory(_stories[0]));   // targetStorySO = 재생할 StoryDataSO
+        }
+        else
+        {
+            GameManager.UI.ShowPopupUI<StoryUIController>(
+            KeyContainer.Prefabs.StoryUI,
+            popup => popup.PlayStory(_stories[1]));
+        }
+    }
+
 
 }
