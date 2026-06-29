@@ -27,19 +27,9 @@ public class NyangQuariumFreshLayoutUI : UIPopup, INyangquariumEntryReceiver
     [Tooltip("현재 미사용 버튼")]
     [SerializeField] private Button _freshWaterWeedButton;
 
-    [Tooltip("담수 통합 인벤토리 닫기 버튼")]
-    [SerializeField] private Button _closeButton;
-
     [Header("담수 통합 인벤토리")]
     [Tooltip("담수 통합 인벤토리 패널")]
     [SerializeField] private GameObject _freshwaterLayoutPanel;
-
-    [Header("담수 필터 패널")]
-    [Tooltip("필터 패널을 열고 닫는 버튼")]
-    [SerializeField] private Button _filterButton;
-
-    [Tooltip("필터 목록이 들어 있는 패널")]
-    [SerializeField] private GameObject _filterTab;
 
     [Tooltip("비워두면 패널의 RectTransform을 자동으로 사용합니다.")]
     [SerializeField] private RectTransform _inventoryRect;
@@ -105,7 +95,6 @@ public class NyangQuariumFreshLayoutUI : UIPopup, INyangquariumEntryReceiver
         _changeButton = Get<Button>((int)NyangQuariumFreshLayoutUIButton.ChangeButton);
         _freshWaterFishButton = Get<Button>((int)NyangQuariumFreshLayoutUIButton.FreshWaterFishButton);
         _freshWaterWeedButton = Get<Button>((int)NyangQuariumFreshLayoutUIButton.FreshWaterWeedButton);
-        _closeButton = Get<Button>((int)NyangQuariumFreshLayoutUIButton.CloseButton);
     }
 
     private void ResolveInventoryRect()
@@ -122,8 +111,6 @@ public class NyangQuariumFreshLayoutUI : UIPopup, INyangquariumEntryReceiver
         AddBackButton();
         AddChangeButton();
         AddFreshWaterFishButton();
-        AddCloseButton();
-        AddFilterButton();
     }
 
     private void InitializeUI()
@@ -136,9 +123,6 @@ public class NyangQuariumFreshLayoutUI : UIPopup, INyangquariumEntryReceiver
             _inventoryRect.DOKill();
             _inventoryRect.anchoredPosition = GetInventoryClosedPosition();
         }
-
-        if (_filterTab != null)
-            _filterTab.SetActive(false);
 
         if (_freshwaterLayoutPanel != null)
             _freshwaterLayoutPanel.SetActive(false);
@@ -200,14 +184,9 @@ public class NyangQuariumFreshLayoutUI : UIPopup, INyangquariumEntryReceiver
         {
             GameManager.Audio.PlaySfx("Main_SFX_Touch");
 
-            // 배치 패널이 열려 있거나 애니메이션 중이면 BackButton은 동작하지 않습니다.
-            // 배치 패널은 FreshwaterLayoutPanel 내부 CloseButton으로만 닫습니다.
             if (_isInventoryOpened || _isInventoryAnimating)
             {
-                DebugTool.Log(
-                    "[NyangQuariumFreshLayoutUI] 배치 패널이 열려 있어 BackButton 입력을 무시합니다.",
-                    DebugType.UI,
-                    this);
+                CloseInventory();
                 return;
             }
 
@@ -337,69 +316,6 @@ public class NyangQuariumFreshLayoutUI : UIPopup, INyangquariumEntryReceiver
         });
     }
 
-    private void AddCloseButton()
-    {
-        if (_closeButton == null)
-        {
-            DebugTool.Warning(
-                "[NyangQuariumFreshLayoutUI] CloseButton을 찾을 수 없습니다.",
-                DebugType.UI,
-                this);
-            return;
-        }
-
-        _closeButton.onClick.RemoveListener(OnClickCloseButton);
-        _closeButton.onClick.AddListener(OnClickCloseButton);
-    }
-    private void AddFilterButton()
-    {
-        if (_filterButton == null)
-        {
-            DebugTool.Warning(
-                "[NyangQuariumFreshLayoutUI] FilterButton이 연결되지 않았습니다.",
-                DebugType.UI,
-                this);
-            return;
-        }
-
-        if (_filterTab == null)
-        {
-            DebugTool.Warning(
-                "[NyangQuariumFreshLayoutUI] FilterTab이 연결되지 않았습니다.",
-                DebugType.UI,
-                this);
-            return;
-        }
-
-        _filterButton.onClick.RemoveListener(OnClickFilterButton);
-        _filterButton.onClick.AddListener(OnClickFilterButton);
-    }
-
-    private void OnClickFilterButton()
-    {
-        if (_filterButton == null)
-            return;
-
-        GameManager.Audio.PlaySfx("Main_SFX_Touch");
-
-        bool isOpen = !_filterTab.activeSelf;
-        _filterTab.SetActive(isOpen);
-
-        DebugTool.Log(
-            $"[NyangQuariumFreshLayoutUI] 필터 탭 {(isOpen ? "열기" : "닫기")}",
-            DebugType.UI,
-            this);
-    }
-
-    private void OnClickCloseButton()
-    {
-        if (!_isInventoryOpened && !_isInventoryAnimating)
-            return;
-
-        GameManager.Audio.PlaySfx("Main_SFX_Touch");
-        CloseInventory();
-    }
-
     private void OpenInventory()
     {
         if (_isInventoryOpened || _isInventoryAnimating)
@@ -429,9 +345,6 @@ public class NyangQuariumFreshLayoutUI : UIPopup, INyangquariumEntryReceiver
 
         _isInventoryOpened = false;
         _isInventoryAnimating = true;
-
-        if (_filterTab != null)
-            _filterTab.SetActive(false);
 
         _inventoryRect.DOKill();
         _inventoryRect
@@ -481,9 +394,6 @@ public class NyangQuariumFreshLayoutUI : UIPopup, INyangquariumEntryReceiver
             _inventoryRect.anchoredPosition = GetInventoryClosedPosition();
         }
 
-        if (_filterTab != null)
-            _filterTab.SetActive(false);
-
         if (_freshwaterLayoutPanel != null)
             _freshwaterLayoutPanel.SetActive(false);
 
@@ -503,6 +413,5 @@ public enum NyangQuariumFreshLayoutUIButton
     WindowButton,
     ChangeButton,
     FreshWaterFishButton,
-    FreshWaterWeedButton,
-    CloseButton
+    FreshWaterWeedButton
 }

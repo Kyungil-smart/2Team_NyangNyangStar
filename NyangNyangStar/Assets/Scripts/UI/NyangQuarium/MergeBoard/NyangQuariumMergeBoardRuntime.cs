@@ -3,9 +3,9 @@ using Data.ScriptableObjects.MergeBoard;
 using Services.Enums;
 using System.Collections;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using TMPro;
 using UI.MergeBoard;
+using UI.NyangQuarium.Quest;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
@@ -174,13 +174,16 @@ namespace UI.NyangQuarium.MergeBoard
         }
     }
 
-    // NyangQuariumItemGenerator -> 보드 밖 Item Generator 버튼, 클릭 시 랜덤 아이템 생성
-    // TODO : 생성기 테이블(NyangQuariumGeneratorSO) 연동 전 임시 구현
+    // NyangQuariumItemGenerator -> Item Generator 버튼, 클릭 시 랜덤 또는 InputItemID 지정 아이템 생성
     public sealed class NyangQuariumItemGenerator : MonoBehaviour
     {
+        private const string InputItemIdFieldName = "InputItemID";
+        private const int GeneratorItemIdOffset = 200000;
+
         private NyangQuariumItemBoard _board;
         private NyangQuariumRewardQueue _rewardQueue;
         private Button _button;
+        private TMP_InputField _itemIdInputField;
         private int _fallbackItemId = 1;
         private readonly string[] _fallbackItemNames =
         {
@@ -196,6 +199,7 @@ namespace UI.NyangQuarium.MergeBoard
             _board = board;
             _rewardQueue = rewardQueue;
             BindButton();
+            BindInputField();
         }
 
         private void OnDestroy()
@@ -225,151 +229,179 @@ namespace UI.NyangQuarium.MergeBoard
                 DebugTool.Warning("[NyangQuariumItemGenerator] Button 컴포넌트를 찾지 못했습니다.", DebugType.UI, this);
         }
 
-        // 빈 슬롯에 랜덤 아이템 1개 추가
+        private void BindInputField()
+        {
+            if (_itemIdInputField != null)
+                return;
+
+            Transform root = transform;
+            while (root.parent != null)
+                root = root.parent;
+
+            Transform inputTransform = FindChildTransform(root, InputItemIdFieldName);
+            if (inputTransform == null)
+            {
+                DebugTool.Warning(
+                    "[NyangQuariumItemGenerator] InputItemID를 찾지 못했습니다.",
+                    DebugType.UI,
+                    this);
+                return;
+            }
+
+            _itemIdInputField = inputTransform.GetComponent<TMP_InputField>();
+            if (_itemIdInputField == null)
+                DebugTool.Warning(
+                    "[NyangQuariumItemGenerator] InputItemID에 TMP_InputField가 없습니다.",
+                    DebugType.UI,
+                    this);
+        }
+
         public void GenerateItem()
         {
             if (_board == null)
                 return;
 
-            NyangQuariumBoardItem item = CreateRandomItem();
+            BindInputField();
+
+            NyangQuariumBoardItem item = null;
+            bool usedInputItemId = false;
+
+            if (TryReadInputItemId(out int itemId, out bool hasInput))
+            {
+                if (!TryCreateItemById(itemId, out item))
+                {
+                    DebugTool.Warning(
+                        $"[NyangQuariumItemGenerator] {itemId} ID에 해당하는 아이템 데이터를 찾지 못했습니다.",
+                        DebugType.UI,
+                        this);
+                    return;
+                }
+
+                usedInputItemId = true;
+            }
+            else if (hasInput)
+                return;
+            else
+                item = CreateRandomItem();
+
+            if (item == null || !item.HasItem)
+                return;
+
+            bool added = false;
+
             if (_rewardQueue != null)
             {
                 _rewardQueue.EnqueueItem(item);
-                return;
+                added = true;
             }
-            
-            if (_board.TryAddItem(item))
-                UnlockCollectionItem(item);
+            else
+                added = _board.TryAddItem(item);
+
+            if (usedInputItemId && added)
+                ClearInputItemIdField();
         }
 
-        private async void UnlockCollectionItem(NyangQuariumBoardItem item)
+        private void ClearInputItemIdField()
         {
-            if (!IsKnownFishItem(item))
+            if (_itemIdInputField == null)
                 return;
 
-            if (!await WaitForFirestoreReadyAsync())
-            {
-                DebugTool.Warning("[NyangQuariumItemGenerator] Firestore가 준비되지 않아 도감 해금 저장을 생략합니다.", DebugType.Data, this);
-                return;
-            }
-
-            FireStoreManager fireStoreManager = FireStoreManager.Instance;
-
-            if (fireStoreManager == null ||
-                !fireStoreManager.IsInitialized ||
-                !fireStoreManager.TryGetStore(out NyangQuariumFirestoreSO nyangQuariumSO) ||
-                nyangQuariumSO == null)
-            {
-                DebugTool.Warning("[NyangQuariumItemGenerator] Firestore가 준비되지 않아 도감 해금 저장을 생략합니다.", DebugType.Data, this);
-                return;
-            }
-
-            try
-            {
-                await nyangQuariumSO.UnlockFishAsync(item.Id);
-            }
-            catch (System.Exception e)
-            {
-                DebugTool.Warning($"[NyangQuariumItemGenerator] 도감 해금 저장 실패: {e.Message}", DebugType.Data, this);
-            }
+            _itemIdInputField.text = string.Empty;
+            _itemIdInputField.ReleaseSelection();
         }
 
-        private static async Task<bool> WaitForFirestoreReadyAsync(int timeoutMs = 5000)
+        private bool TryReadInputItemId(out int itemId, out bool hasInput)
         {
-            int elapsedMs = 0;
-            const int intervalMs = 100;
+            itemId = 0;
+            hasInput = false;
 
-            while (elapsedMs < timeoutMs)
-            {
-                if (FireStoreManager.Instance != null && FireStoreManager.Instance.IsInitialized)
-                    return true;
-
-                await Task.Delay(intervalMs);
-                elapsedMs += intervalMs;
-            }
-
-            return FireStoreManager.Instance != null && FireStoreManager.Instance.IsInitialized;
-        }
-
-        private bool IsKnownFishItem(NyangQuariumBoardItem item)
-        {
-            if (item == null || !item.HasItem || item.Id <= 0)
+            if (_itemIdInputField == null)
                 return false;
 
-            SheetLoader sheetLoader = FindFirstObjectByType<SheetLoader>();
+            string input = _itemIdInputField.text?.Trim();
+            if (string.IsNullOrEmpty(input))
+                return false;
 
-            if (sheetLoader == null ||
-                !sheetLoader.TryGetNyangQuariumFishSO(out NyangQuariumFishSO fishSO) ||
-                fishSO == null ||
-                fishSO.FishData == null)
+            hasInput = true;
+
+            if (!int.TryParse(input, out itemId) || itemId <= 0)
             {
+                DebugTool.Warning(
+                    $"[NyangQuariumItemGenerator] 아이템 ID 입력값이 올바르지 않습니다. 입력값: {input}",
+                    DebugType.UI,
+                    this);
                 return false;
             }
 
-            for (int i = 0; i < fishSO.FishData.Count; i++)
-            {
-                NyangQuariumFishData fishData = fishSO.FishData[i];
+            return true;
+        }
 
-                if (fishData != null && fishData.FishId == item.Id)
-                    return true;
+        private bool TryCreateItemById(int itemId, out NyangQuariumBoardItem item)
+        {
+            item = null;
+
+            if (itemId <= 0)
+                return false;
+
+            TryResolveFishSO(out NyangQuariumFishSO fishSO);
+            TryResolveGeneratorSO(out NyangQuariumGeneratorSO generatorSO);
+
+            if (fishSO?.FishData != null)
+            {
+                for (int i = 0; i < fishSO.FishData.Count; i++)
+                {
+                    NyangQuariumFishData fishData = fishSO.FishData[i];
+                    if (fishData == null || fishData.FishId != itemId)
+                        continue;
+
+                    item = CreateFishItem(fishData);
+                    return item != null && item.HasItem;
+                }
+            }
+
+            if (generatorSO != null)
+            {
+                if (itemId >= GeneratorItemIdOffset &&
+                    generatorSO.TryGetById(itemId - GeneratorItemIdOffset, out NyangQuariumGeneratorData offsetGeneratorData))
+                {
+                    item = CreateGeneratorItem(offsetGeneratorData);
+                    return item != null && item.HasItem;
+                }
+
+                if (generatorSO.TryGetById(itemId, out NyangQuariumGeneratorData generatorData))
+                {
+                    item = CreateGeneratorItem(generatorData);
+                    return item != null && item.HasItem;
+                }
             }
 
             return false;
         }
 
-        // 물고기 시트에서 랜덤 뽑기, 없으면 fallback 이름으로 임시 아이템
         private NyangQuariumBoardItem CreateRandomItem()
         {
-            const int generatorItemIdOffset = 200000;
+            TryResolveFishSO(out NyangQuariumFishSO fishSO);
+            TryResolveGeneratorSO(out NyangQuariumGeneratorSO generatorSO);
 
-            NyangQuariumFishSO fishSO = null;
-            NyangQuariumGeneratorSO generatorSO = null;
-            SheetLoader sheetLoader = FindFirstObjectByType<SheetLoader>();
             List<NyangQuariumBoardItem> candidates = new();
 
-            if (sheetLoader != null && sheetLoader.TryGetNyangQuariumFishSO(out NyangQuariumFishSO loadedFishSO))
-                fishSO = loadedFishSO;
-
-            if (sheetLoader != null && sheetLoader.TryGetNyangQuariumGeneratorSO(out NyangQuariumGeneratorSO loadedGeneratorSO))
-                generatorSO = loadedGeneratorSO;
-
-            if (fishSO != null && fishSO.FishData != null && fishSO.FishData.Count > 0)
+            if (fishSO?.FishData != null && fishSO.FishData.Count > 0)
             {
                 for (int i = 0; i < fishSO.FishData.Count; i++)
                 {
-                    NyangQuariumFishData fishData = fishSO.FishData[i];
-                    if (fishData == null || fishData.FishId <= 0)
-                        continue;
-
-                    ItemData itemData = new(
-                        fishData.FishId,
-                        fishData.FishName,
-                        Mathf.Max(1, fishData.Level),
-                        ItemType.Common,
-                        fishData.FishKey);
-
-                    if (NyangQuariumFishSpriteCache.TryGetSprite(fishData.FishKey, out Sprite sprite))
-                        itemData.SetSprite(sprite);
-
-                    candidates.Add(new NyangQuariumBoardItem(itemData));
+                    NyangQuariumBoardItem candidate = CreateFishItem(fishSO.FishData[i]);
+                    if (candidate != null && candidate.HasItem)
+                        candidates.Add(candidate);
                 }
             }
 
-            if (generatorSO != null && generatorSO.Generators != null && generatorSO.Generators.Count > 0)
+            if (generatorSO?.Generators != null && generatorSO.Generators.Count > 0)
             {
                 for (int i = 0; i < generatorSO.Generators.Count; i++)
                 {
-                    NyangQuariumGeneratorData generatorData = generatorSO.Generators[i];
-                    if (generatorData == null || generatorData.GeneratorId <= 0)
-                        continue;
-
-                    ItemData itemData = new(
-                        generatorItemIdOffset + generatorData.GeneratorId,
-                        generatorData.GeneratorName,
-                        Mathf.Max(1, generatorData.Level),
-                        ItemType.Common);
-
-                    candidates.Add(new NyangQuariumBoardItem(itemData));
+                    NyangQuariumBoardItem candidate = CreateGeneratorItem(generatorSO.Generators[i]);
+                    if (candidate != null && candidate.HasItem)
+                        candidates.Add(candidate);
                 }
             }
 
@@ -377,15 +409,90 @@ namespace UI.NyangQuarium.MergeBoard
                 return candidates[Random.Range(0, candidates.Count)];
 
             int fallbackIndex = Random.Range(0, _fallbackItemNames.Length);
-            int itemId = _fallbackItemId++;
+            int fallbackId = _fallbackItemId++;
             ItemData fallbackItem = new(
-                itemId,
+                fallbackId,
                 _fallbackItemNames[fallbackIndex],
                 fallbackIndex + 1,
                 ItemType.Common);
 
-            DebugTool.Warning("[NyangQuariumItemGenerator] NyangQuariumFishSO가 준비되지 않아 임시 랜덤 아이템을 생성했습니다.", DebugType.UI, this);
+            DebugTool.Warning(
+                "[NyangQuariumItemGenerator] NyangQuariumFishSO가 준비되지 않아 임시 랜덤 아이템을 생성했습니다.",
+                DebugType.UI,
+                this);
             return new NyangQuariumBoardItem(fallbackItem);
+        }
+
+        private static NyangQuariumBoardItem CreateFishItem(NyangQuariumFishData fishData)
+        {
+            if (fishData == null || fishData.FishId <= 0)
+                return null;
+
+            ItemData itemData = new(
+                fishData.FishId,
+                fishData.FishName,
+                Mathf.Max(1, fishData.Level),
+                ItemType.Common,
+                fishData.FishKey);
+
+            if (NyangQuariumFishSpriteCache.TryGetSprite(fishData.FishKey, out Sprite sprite))
+                itemData.SetSprite(sprite);
+
+            return new NyangQuariumBoardItem(itemData);
+        }
+
+        private static NyangQuariumBoardItem CreateGeneratorItem(NyangQuariumGeneratorData generatorData)
+        {
+            if (generatorData == null || generatorData.GeneratorId <= 0)
+                return null;
+
+            ItemData itemData = new(
+                GeneratorItemIdOffset + generatorData.GeneratorId,
+                generatorData.GeneratorName,
+                Mathf.Max(1, generatorData.Level),
+                ItemType.Common);
+
+            return new NyangQuariumBoardItem(itemData);
+        }
+
+        private static bool TryResolveFishSO(out NyangQuariumFishSO fishSO)
+        {
+            SheetLoader sheetLoader = FindFirstObjectByType<SheetLoader>();
+
+            if (sheetLoader != null && sheetLoader.TryGetNyangQuariumFishSO(out fishSO))
+                return fishSO != null;
+
+            NyangQuariumSheetLoader quariumLoader = NyangQuariumSheetLoader.Instance;
+            fishSO = quariumLoader != null ? quariumLoader.FishSO : null;
+            return fishSO != null;
+        }
+
+        private static bool TryResolveGeneratorSO(out NyangQuariumGeneratorSO generatorSO)
+        {
+            SheetLoader sheetLoader = FindFirstObjectByType<SheetLoader>();
+
+            if (sheetLoader != null && sheetLoader.TryGetNyangQuariumGeneratorSO(out generatorSO))
+                return generatorSO != null;
+
+            NyangQuariumSheetLoader quariumLoader = NyangQuariumSheetLoader.Instance;
+            generatorSO = quariumLoader != null ? quariumLoader.GeneratorSO : null;
+            return generatorSO != null;
+        }
+
+        private static Transform FindChildTransform(Transform root, string objectName)
+        {
+            if (root == null)
+                return null;
+
+            Transform[] children = root.GetComponentsInChildren<Transform>(true);
+            for (int i = 0; i < children.Length; i++)
+            {
+                Transform child = children[i];
+                if (child != null && child.name == objectName)
+                    return child;
+            }
+
+            return null;
         }
     }
 

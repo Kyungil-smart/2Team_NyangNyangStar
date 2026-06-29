@@ -8,12 +8,11 @@ public class FishSlotSprite : UIBase
 {
     private const string RectangleKey = "Shape_Rectangle";
 
+    private UISpriteController[] _spriteController;
+
     [Tooltip("텍스트 배경")][SerializeField] private Color _fishSlotColor;
     [Tooltip("이미지 배경")][SerializeField] private Color _fishBackgroundColor;
     [Tooltip("미해금 배경")][SerializeField] private Color _lockedOverlayColor;
-
-    private UISpriteController[] _spriteController;
-    private Image _fishImage;
 
     public override void Init()
     {
@@ -25,8 +24,6 @@ public class FishSlotSprite : UIBase
         {
             _spriteController[i] = new UISpriteController(GetImage(i));
         }
-
-        _fishImage = GetImage((int)FishSlotImages.FishImage);
 
         SetSprites();
     }
@@ -52,11 +49,6 @@ public class FishSlotSprite : UIBase
     public void SetFishImage(string key)
     {
         SetSprite(FishSlotImages.FishImage, key);
-    }
-
-    public void SetFishImageColor(Color color)
-    {
-        _fishImage.color = color;
     }
 
     private void OnDestroy()
