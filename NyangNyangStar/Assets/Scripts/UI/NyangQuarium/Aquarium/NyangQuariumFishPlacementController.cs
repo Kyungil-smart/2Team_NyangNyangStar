@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using UI.NyangQuarium;
 using UnityEngine;
 using UnityEngine.UI;
+using UI.NyangQuarium.MergeBoard;
 
 /// <summary>
 /// 물고기와 자연 요소의 배치 흐름을 관리합니다.
@@ -263,11 +264,27 @@ public sealed class NyangQuariumFishPlacementController : MonoBehaviour
 
     private void ConfirmSelectedFish()
     {
-        RectTransform confirmedObject =
-            ConfirmFishPlacement();
+        NyangquariumFishController spawnedFish = ConfirmFishPlacement();
 
-        if (confirmedObject == null)
+        if (spawnedFish == null)
             return;
+
+        if (!NyangQuariumMergeBoardInventoryService
+                .TryConsumeFish(_selectedItemId, 1))
+        {
+            _placedFishRenderer.DeleteFish(spawnedFish);
+
+            Debug.LogWarning(
+                $"[NyangQuariumFishPlacementController] " +
+                $"머지보드 물고기 차감에 실패하여 배치를 취소했습니다. " +
+                $"ItemId:{_selectedItemId}",
+                this);
+
+            return;
+        }
+
+        RectTransform confirmedObject =
+            spawnedFish.RectTransform;
 
         int confirmedItemId =
             _selectedItemId;
@@ -282,7 +299,9 @@ public sealed class NyangQuariumFishPlacementController : MonoBehaviour
 
         Debug.Log(
             $"[NyangQuariumFishPlacementController] " +
-            $"물고기 배치 확정 - {confirmedObject.name}",
+            $"물고기 배치 및 머지보드 차감 완료 - " +
+            $"ItemId:{confirmedItemId}, " +
+            $"Object:{confirmedObject.name}",
             this);
     }
 
@@ -311,7 +330,10 @@ public sealed class NyangQuariumFishPlacementController : MonoBehaviour
     /// <summary>
     /// NyangquariumPlacedFishRenderer를 통해 움직이는 물고기를 생성합니다.
     /// </summary>
-    private RectTransform ConfirmFishPlacement()
+    /// <summary>
+    /// NyangquariumPlacedFishRenderer를 통해 움직이는 물고기를 생성합니다.
+    /// </summary>
+    private NyangquariumFishController ConfirmFishPlacement()
     {
         if (_placedFishRenderer == null)
         {
@@ -351,11 +373,10 @@ public sealed class NyangQuariumFishPlacementController : MonoBehaviour
             return null;
         }
 
-        RectTransform fishRect =
-            spawnedFish.RectTransform;
-
-        if (fishRect == null)
+        if (spawnedFish.RectTransform == null)
         {
+            _placedFishRenderer.DeleteFish(spawnedFish);
+
             Debug.LogError(
                 $"[NyangQuariumFishPlacementController] " +
                 $"생성된 물고기의 RectTransform을 가져오지 못했습니다. " +
@@ -368,10 +389,11 @@ public sealed class NyangQuariumFishPlacementController : MonoBehaviour
         Debug.Log(
             $"[NyangQuariumFishPlacementController] " +
             $"물고기 생성 완료 - " +
+            $"ItemId:{_selectedItemId}, " +
             $"SpriteKey:{_selectedSpriteKey}",
             this);
 
-        return fishRect;
+        return spawnedFish;
     }
 
     public void SavePlacedFishSnapshot()
