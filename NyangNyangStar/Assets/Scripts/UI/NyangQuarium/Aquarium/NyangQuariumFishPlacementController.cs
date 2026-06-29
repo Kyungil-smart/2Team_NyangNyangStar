@@ -345,12 +345,11 @@ public sealed class NyangQuariumFishPlacementController : MonoBehaviour
             return null;
         }
 
-        if (string.IsNullOrWhiteSpace(
-                _selectedSpriteKey))
+        if (_selectedItemId <= 0)
         {
             Debug.LogError(
                 "[NyangQuariumFishPlacementController] " +
-                "선택된 물고기의 SpriteKey가 비어 있습니다.",
+                "선택된 물고기 ID가 올바르지 않습니다.",
                 this);
 
             return null;
@@ -359,7 +358,7 @@ public sealed class NyangQuariumFishPlacementController : MonoBehaviour
         NyangquariumFishController spawnedFish =
             _placedFishRenderer.ConfirmPlacedFish(
                 _selectedItemId,
-                _selectedSpriteKey,
+                _fishSO,
                 1f);
 
         if (spawnedFish == null)
@@ -367,7 +366,7 @@ public sealed class NyangQuariumFishPlacementController : MonoBehaviour
             Debug.LogError(
                 $"[NyangQuariumFishPlacementController] " +
                 $"물고기 생성에 실패했습니다. " +
-                $"SpriteKey:{_selectedSpriteKey}",
+                $"ItemId:{_selectedItemId}",
                 this);
 
             return null;
