@@ -3,6 +3,7 @@ using Data.ScriptableObjects.MergeBoard;
 using Services.Enums;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using TMPro;
 using UI.MergeBoard;
 using UnityEngine;
@@ -223,8 +224,84 @@ namespace UI.NyangQuarium.MergeBoard
                 _rewardQueue.EnqueueItem(item);
                 return;
             }
+            
+            if (_board.TryAddItem(item))
+                UnlockCollectionItem(item);
+        }
 
-            _board.TryAddItem(item);
+        private async void UnlockCollectionItem(NyangQuariumBoardItem item)
+        {
+            if (!IsKnownFishItem(item))
+                return;
+
+            if (!await WaitForFirestoreReadyAsync())
+            {
+                DebugTool.Warning("[NyangQuariumItemGenerator] Firestore가 준비되지 않아 도감 해금 저장을 생략합니다.", DebugType.Data, this);
+                return;
+            }
+
+            FireStoreManager fireStoreManager = FireStoreManager.Instance;
+
+            if (fireStoreManager == null ||
+                !fireStoreManager.IsInitialized ||
+                !fireStoreManager.TryGetStore(out NyangQuariumFirestoreSO nyangQuariumSO) ||
+                nyangQuariumSO == null)
+            {
+                DebugTool.Warning("[NyangQuariumItemGenerator] Firestore가 준비되지 않아 도감 해금 저장을 생략합니다.", DebugType.Data, this);
+                return;
+            }
+
+            try
+            {
+                await nyangQuariumSO.UnlockFishAsync(item.Id);
+            }
+            catch (System.Exception e)
+            {
+                DebugTool.Warning($"[NyangQuariumItemGenerator] 도감 해금 저장 실패: {e.Message}", DebugType.Data, this);
+            }
+        }
+
+        private static async Task<bool> WaitForFirestoreReadyAsync(int timeoutMs = 5000)
+        {
+            int elapsedMs = 0;
+            const int intervalMs = 100;
+
+            while (elapsedMs < timeoutMs)
+            {
+                if (FireStoreManager.Instance != null && FireStoreManager.Instance.IsInitialized)
+                    return true;
+
+                await Task.Delay(intervalMs);
+                elapsedMs += intervalMs;
+            }
+
+            return FireStoreManager.Instance != null && FireStoreManager.Instance.IsInitialized;
+        }
+
+        private bool IsKnownFishItem(NyangQuariumBoardItem item)
+        {
+            if (item == null || !item.HasItem || item.Id <= 0)
+                return false;
+
+            SheetLoader sheetLoader = FindFirstObjectByType<SheetLoader>();
+
+            if (sheetLoader == null ||
+                !sheetLoader.TryGetNyangQuariumFishSO(out NyangQuariumFishSO fishSO) ||
+                fishSO == null ||
+                fishSO.FishData == null)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < fishSO.FishData.Count; i++)
+            {
+                NyangQuariumFishData fishData = fishSO.FishData[i];
+
+                if (fishData != null && fishData.FishId == item.Id)
+                    return true;
+            }
+
+            return false;
         }
 
         // 물고기 시트에서 랜덤 뽑기, 없으면 fallback 이름으로 임시 아이템
