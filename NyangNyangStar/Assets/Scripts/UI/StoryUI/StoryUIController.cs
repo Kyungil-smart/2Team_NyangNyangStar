@@ -3,15 +3,16 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using UI.Base;
 
 
-public class StoryUIController : MonoBehaviour
+public class StoryUIController : UIPopup
 {
     [Header("연결")]
-    [Tooltip("Scroll View 오브젝트의 ScrollRect")]
+
     [SerializeField] private ScrollRect _scrollRect;
 
-    [Tooltip("Scroll View > Viewport > Content (카드가 쌓이는 곳)")]
+
     [SerializeField] private RectTransform _content;
 
 
@@ -20,18 +21,83 @@ public class StoryUIController : MonoBehaviour
 
     [SerializeField] private Button _nextButton;
 
-    [Header("스토리 대사")]
-    [SerializeField]
-    private List<DialogueCard> dialogueCards = new List<DialogueCard>();
+    [Header("스토리 데이터")]
 
+    [SerializeField] private List<StoryDataSO> _stories = new List<StoryDataSO>();
+
+
+    [SerializeField] private TMP_Text _titleText;
+
+    private StoryDataSO _currentStory;
+    private int _currentStoryIndex = -1;
     private int _currentIndex = 0;
     private bool _reachedEnd = false; 
 
-    private void Awake()
-    {
 
+    public override void Init()
+    {
         if (_nextButton != null)
+        {
+            _nextButton.onClick.RemoveListener(ShowNextCard); 
             _nextButton.onClick.AddListener(ShowNextCard);
+        }
+    }
+
+
+    [ContextMenu("테스트: 첫 스토리 재생")]
+    private void TestPlayFirstStory()
+    {
+        Init();
+        PlayStory(0);
+    }
+
+
+
+    public void PlayStory(StoryDataSO story)
+    {
+        if (story == null)
+        {
+            Debug.LogWarning("[StoryUI] PlayStory: story가 null 입니다.");
+            return;
+        }
+
+        _currentStory = story;
+        _currentIndex = 0;
+        _reachedEnd = false;
+
+        ClearCards();
+
+        if (_titleText != null)
+            _titleText.text = story.title;
+
+        ShowNextCard(); // 첫 대사 출력
+    }
+
+
+    public void PlayStory(int index)
+    {
+        if (index < 0 || index >= _stories.Count)
+        {
+            Debug.LogWarning($"[StoryUI] 재생할 스토리가 없습니다. index={index}");
+            return;
+        }
+
+        _currentStoryIndex = index;
+        PlayStory(_stories[index]);
+    }
+
+
+    public void PlayNextStory()
+    {
+        PlayStory(_currentStoryIndex + 1);
+    }
+
+
+    private void ClearCards()
+    {
+        if (_content == null) return;
+        for (int i = _content.childCount - 1; i >= 0; i--)
+            Destroy(_content.GetChild(i).gameObject);
     }
 
 
@@ -45,13 +111,23 @@ public class StoryUIController : MonoBehaviour
 
   
 
-        if (_reachedEnd || _currentIndex >= dialogueCards.Count)
+        if (_currentStory == null)
+            return;
+
+
+        if (_reachedEnd)
+        {
+            ClosePopup();
+            return;
+        }
+
+        if (_currentIndex >= _currentStory.cards.Count)
         {
             Debug.Log("[StoryUI] 더 출력할 대사가 없습니다.");
             return;
         }
 
-        DialogueCard data = dialogueCards[_currentIndex];
+        DialogueCard data = _currentStory.cards[_currentIndex];
 
 
         GameObject card = Instantiate(_cardPrefab, _content);
@@ -84,15 +160,4 @@ public class StoryUIController : MonoBehaviour
         Canvas.ForceUpdateCanvases();
     }
 
-    [System.Serializable]
-    struct DialogueCard
-    {
-        public string ID;            // 예: S2_001 (문자열이라 string)
-        public string char_name;     // 표시 이름
-        public string frame;         // 포트레잇 프레임 키
-        public string char_portrait; // 초상화 키
-        [TextArea] public string dialogue; // 대사 (여러 줄 입력 가능)
-        public string card_bg;       // 카드 배경 키
-        public bool end;             // 중단점 (TRUE면 출력 중단)
-    }
 }

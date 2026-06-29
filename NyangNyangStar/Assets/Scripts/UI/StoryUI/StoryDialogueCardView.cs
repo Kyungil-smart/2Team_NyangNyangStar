@@ -8,14 +8,13 @@ using UnityEngine;
 /// </summary>
 public class StoryDialogueCardView : MonoBehaviour
 {
-    [Header("텍스트 (인스펙터에서 연결)")]
-    [Tooltip("캐릭터 이름 TMP")]
+
     [SerializeField] private TMP_Text _nameText;
 
-    [Tooltip("대사 TMP")]
+
     [SerializeField] private TMP_Text _dialogueText;
 
-    /// <summary>이 카드에 이름과 대사를 채운다.</summary>
+
     public void Setup(string charName, string dialogue)
     {
         if (_nameText != null)
