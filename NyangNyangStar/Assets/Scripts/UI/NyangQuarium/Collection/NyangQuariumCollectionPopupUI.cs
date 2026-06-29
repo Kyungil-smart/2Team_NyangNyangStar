@@ -23,7 +23,7 @@ public class NyangQuariumCollectionPopupUI : UIPopup
     [SerializeField] private NyangQuariumFishSO _fishSO;
 
     [Header("도감 해금 데이터")]
-    [SerializeField] private NyangQuariumCollectionSO _collectionSO;
+    [SerializeField] private NyangQuariumFirestoreSO _nyangquariumSo;
 
     [Header("수집 진척도")]
     [SerializeField] private TMP_Text _progressText;
@@ -183,7 +183,7 @@ public class NyangQuariumCollectionPopupUI : UIPopup
             FishSlotUI slot = Instantiate(_fishSlotPrefab, _content);
             slot.Init();
             slot.SetCollectionPopup(this);
-            slot.SetData(fishData, _collectionSO.IsUnlocked(fishData.FishId));
+            slot.SetData(fishData, _nyangquariumSo.IsUnlocked(fishData.FishId));
 
             _fishSlots.Add(slot);
         }
@@ -204,7 +204,7 @@ public class NyangQuariumCollectionPopupUI : UIPopup
 
     private void UpdateProgress(FishType fishType)
     {
-        NyangQuariumCollectionProgress progress = _collectionSO.GetProgress(_fishSO, fishType);
+        NyangQuariumCollectionProgress progress = _nyangquariumSo.GetProgress(_fishSO, fishType);
 
         _sprite.SetProgress(progress.Ratio);
         _progressText.text = $"({progress.UnlockedCount}/{progress.TotalCount})";
@@ -214,7 +214,7 @@ public class NyangQuariumCollectionPopupUI : UIPopup
     {
         foreach (FishSlotUI slot in _fishSlots)
         {
-            slot.RefreshUnlockState(_collectionSO.IsUnlocked(slot.FishId));
+            slot.RefreshUnlockState(_nyangquariumSo.IsUnlocked(slot.FishId));
         }
     }
 
