@@ -12,6 +12,7 @@ using UnityEngine.UI;
 
 namespace UI.NyangQuarium.MergeBoard
 {
+    // NyangQuariumBoardItem -> 보드 슬롯에 올라가는 아이템 래퍼
     public sealed class NyangQuariumBoardItem
     {
         public static readonly NyangQuariumBoardItem Empty = new(ItemData.Empty);
@@ -28,6 +29,7 @@ namespace UI.NyangQuarium.MergeBoard
         }
     }
 
+    // NyangQuariumMergeBoardBootstrap -> 씬에 NyangQuariumMergeBoard 프리팹이 뜨면 런타임 컴포넌트 자동 부착
     public sealed class NyangQuariumMergeBoardBootstrap : MonoBehaviour
     {
         private const string RootName = "NyangQuariumMergeBoard";
@@ -36,6 +38,7 @@ namespace UI.NyangQuarium.MergeBoard
         private const string InfoName = "ItemInfo";
         private static NyangQuariumMergeBoardBootstrap _instance;
 
+        // 게임 시작, 씬 로드 시 부트스트랩 러너 등록
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Register()
         {
@@ -49,6 +52,7 @@ namespace UI.NyangQuarium.MergeBoard
             EnsureRunner();
         }
 
+        // DontDestroyOnLoad 러너가 없으면 하나 만들어 둠
         private static void EnsureRunner()
         {
             if (_instance != null)
@@ -64,6 +68,7 @@ namespace UI.NyangQuarium.MergeBoard
             StartCoroutine(WatchMergeBoard());
         }
 
+        // 매 프레임 씬에 머지보드가 있는지 감시해서 Init 해줌
         private IEnumerator WatchMergeBoard()
         {
             while (true)
@@ -73,6 +78,7 @@ namespace UI.NyangQuarium.MergeBoard
             }
         }
 
+        // 프리팹 자식 이름 기준으로 Board / Generator / Info / Navigation 연결
         private static void BootstrapCurrentScene()
         {
             GameObject rootObject = FindActiveGameObject(RootName);
@@ -109,6 +115,7 @@ namespace UI.NyangQuarium.MergeBoard
             navigation.Init();
         }
 
+        // 활성화된 자식 오브젝트만 이름으로 찾음
         private static GameObject FindChildGameObject(Transform root, string objectName)
         {
             if (root == null)
@@ -125,6 +132,7 @@ namespace UI.NyangQuarium.MergeBoard
             return null;
         }
 
+        // 씬 전체에서 이름으로 루트 오브젝트 검색
         private static GameObject FindActiveGameObject(string objectName)
         {
             GameObject[] objects = FindObjectsOfType<GameObject>();
@@ -140,6 +148,8 @@ namespace UI.NyangQuarium.MergeBoard
         }
     }
 
+    // NyangQuariumItemGenerator -> 보드 밖 Item Generator 버튼, 클릭 시 랜덤 아이템 생성
+    // TODO : 생성기 테이블(NyangQuariumGeneratorSO) 연동 전 임시 구현
     public sealed class NyangQuariumItemGenerator : MonoBehaviour
     {
         private NyangQuariumItemBoard _board;
@@ -166,6 +176,7 @@ namespace UI.NyangQuarium.MergeBoard
                 _button.onClick.RemoveListener(GenerateItem);
         }
 
+        // 자기 자신 또는 자식에서 Button 찾아서 GenerateItem 연결
         private void BindButton()
         {
             Button button = GetComponent<Button>();
@@ -186,6 +197,7 @@ namespace UI.NyangQuarium.MergeBoard
                 DebugTool.Warning("[NyangQuariumItemGenerator] Button 컴포넌트를 찾지 못했습니다.", DebugType.UI, this);
         }
 
+        // 빈 슬롯에 랜덤 아이템 1개 추가
         public void GenerateItem()
         {
             if (_board == null)
@@ -195,6 +207,7 @@ namespace UI.NyangQuarium.MergeBoard
             _board.TryAddItem(item);
         }
 
+        // 물고기 시트에서 랜덤 뽑기, 없으면 fallback 이름으로 임시 아이템
         private NyangQuariumBoardItem CreateRandomItem()
         {
             NyangQuariumFishSO fishSO = null;
@@ -235,6 +248,7 @@ namespace UI.NyangQuarium.MergeBoard
         }
     }
 
+    // NyangQuariumItemBoard -> 7x9 슬롯 그리드, 아이템 배치·선택 처리
     public sealed class NyangQuariumItemBoard : MonoBehaviour
     {
         private const int Width = 7;
@@ -256,13 +270,156 @@ namespace UI.NyangQuarium.MergeBoard
             if (_initialized)
                 return;
 
+            // 메인 머지보드 BoardSystem 끄고 냥쿠 전용 슬롯으로 대체
             DisableMergeBoardSystem();
             SetupSlotRoot();
             GenerateSlots();
             ClearSelection();
+            NyangQuariumMergeBoardInventoryService.RegisterBoard(this);
             _initialized = true;
         }
 
+        private void OnDestroy()
+        {
+            NyangQuariumMergeBoardInventoryService.UnregisterBoard(this);
+        }
+
+        // InventoryService.GetOwnedFishCount — 슬롯 전체에서 fishId 개수 세기
+        public int GetOwnedFishCount(int fishId)
+        {
+            if (fishId <= 0)
+                return 0;
+
+            int count = 0;
+
+            for (int i = 0; i < _slots.Count; i++)
+            {
+                NyangQuariumItemSlot slot = _slots[i];
+
+                if (slot != null && slot.HasItem && slot.Item.Id == fishId)
+                    count++;
+            }
+
+            return count;
+        }
+
+        // InventoryService.CopyOwnedFishEntries — 왼쪽 슬롯부터 maxCount개, FishSO에 없는 아이템은 스킵
+        public void CopyOwnedFishEntries(
+            List<NyangQuariumMergeBoardFishEntry> results,
+            FishType aquariumType,
+            int maxCount)
+        {
+            if (results == null)
+                return;
+
+            results.Clear();
+
+            if (maxCount <= 0)
+                return;
+
+            for (int i = 0; i < _slots.Count && results.Count < maxCount; i++)
+            {
+                NyangQuariumItemSlot slot = _slots[i];
+
+                if (slot == null || !slot.HasItem)
+                    continue;
+
+                NyangQuariumBoardItem item = slot.Item;
+
+                if (!TryResolveFishData(item.Id, out NyangQuariumFishData fishData))
+                    continue;
+
+                if (!NyangQuariumMergeBoardInventoryService.CanPlaceFish(
+                        fishData.FishType,
+                        aquariumType))
+                {
+                    continue;
+                }
+
+                results.Add(new NyangQuariumMergeBoardFishEntry(
+                    i,
+                    item.Id,
+                    item.Level,
+                    fishData.FishKey,
+                    item.Name,
+                    fishData.FishType,
+                    item.ItemData?.ItemSprite));
+            }
+        }
+
+        // InventoryService.TryConsumeFish — fishId 같은 슬롯을 왼쪽부터 count만큼 비움
+        public bool TryConsumeFish(int fishId, int count)
+        {
+            if (fishId <= 0 || count <= 0)
+                return false;
+
+            int remaining = count;
+
+            for (int i = 0; i < _slots.Count && remaining > 0; i++)
+            {
+                NyangQuariumItemSlot slot = _slots[i];
+
+                if (slot == null || !slot.HasItem || slot.Item.Id != fishId)
+                    continue;
+
+                if (!TryClearSlot(i))
+                    continue;
+
+                remaining--;
+            }
+
+            if (remaining > 0)
+                return false;
+
+            return true;
+        }
+
+        // 슬롯 1칸 비우기 — 수조 배치 후 머지보드에서 사라지는 처리
+        public bool TryClearSlot(int slotIndex)
+        {
+            if (slotIndex < 0 || slotIndex >= _slots.Count)
+                return false;
+
+            NyangQuariumItemSlot slot = _slots[slotIndex];
+
+            if (slot == null || !slot.HasItem)
+                return false;
+
+            if (_selectedSlot == slot)
+                ClearSelection();
+
+            slot.SetItem(NyangQuariumBoardItem.Empty);
+            return true;
+        }
+
+        private static bool TryResolveFishData(int fishId, out NyangQuariumFishData fishData)
+        {
+            fishData = null;
+
+            SheetLoader sheetLoader = UnityEngine.Object.FindFirstObjectByType<SheetLoader>();
+
+            if (sheetLoader == null ||
+                !sheetLoader.TryGetNyangQuariumFishSO(out NyangQuariumFishSO fishSO) ||
+                fishSO.FishData == null)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < fishSO.FishData.Count; i++)
+            {
+                NyangQuariumFishData data = fishSO.FishData[i];
+
+                if (data == null || data.FishId != fishId)
+                    continue;
+
+                fishData = data;
+                return true;
+            }
+
+            return false;
+        }
+
+        // 왼쪽부터 빈 슬롯 찾아서 아이템 넣기
         public bool TryAddItem(NyangQuariumBoardItem item)
         {
             if (item == null || !item.HasItem)
@@ -275,6 +432,7 @@ namespace UI.NyangQuarium.MergeBoard
                     continue;
 
                 slot.SetItem(item);
+                NyangQuariumMergeBoardInventoryService.NotifyInventoryChanged();
                 return true;
             }
 
@@ -282,6 +440,7 @@ namespace UI.NyangQuarium.MergeBoard
             return false;
         }
 
+        // 슬롯 클릭 시 선택 표시 + 하단 Info 패널 갱신
         public void SelectSlot(NyangQuariumItemSlot slot)
         {
             if (slot == null || !slot.HasItem)
@@ -311,6 +470,7 @@ namespace UI.NyangQuarium.MergeBoard
                 _infoPanel.Hide();
         }
 
+        // 같은 오브젝트에 붙은 메인 BoardSystem 비활성화
         private void DisableMergeBoardSystem()
         {
             BoardSystem mergeBoardSystem = GetComponent<BoardSystem>();
@@ -318,6 +478,7 @@ namespace UI.NyangQuarium.MergeBoard
                 mergeBoardSystem.enabled = false;
         }
 
+        // @Slot Root 없으면 만들고 GridLayoutGroup 7열로 맞춤
         private void SetupSlotRoot()
         {
             Transform existingRoot = transform.Find("@Slot Root");
@@ -355,6 +516,7 @@ namespace UI.NyangQuarium.MergeBoard
             grid.spacing = new Vector2(SlotSpacing, SlotSpacing);
         }
 
+        // 63칸 슬롯 런타임 생성 (배경 Image + 아이템 Image)
         private void GenerateSlots()
         {
             for (int i = _slotRoot.childCount - 1; i >= 0; i--)
@@ -399,6 +561,7 @@ namespace UI.NyangQuarium.MergeBoard
         }
     }
 
+    // NyangQuariumItemSlot -> 슬롯 1칸, 클릭하면 보드에 선택 전달
     public sealed class NyangQuariumItemSlot : MonoBehaviour, IPointerClickHandler
     {
         private static readonly Color BaseColor = new(1f, 1f, 1f, 0.25f);
@@ -425,6 +588,7 @@ namespace UI.NyangQuarium.MergeBoard
             SetSelected(false);
         }
 
+        // AddressableKey로 로드
         public void SetItem(NyangQuariumBoardItem item)
         {
             Item = item ?? NyangQuariumBoardItem.Empty;
@@ -478,6 +642,7 @@ namespace UI.NyangQuarium.MergeBoard
         }
     }
 
+    // NyangQuariumItemInfoPanel -> 선택한 아이템 Lv / 이름 표시
     public sealed class NyangQuariumItemInfoPanel : MonoBehaviour
     {
         private TMP_Text _levelText;
@@ -517,6 +682,7 @@ namespace UI.NyangQuarium.MergeBoard
                 _itemText.text = string.Empty;
         }
 
+        // LevelText, ItemText 자식 TMP 찾기
         private void BindTexts()
         {
             if (_levelText == null)
