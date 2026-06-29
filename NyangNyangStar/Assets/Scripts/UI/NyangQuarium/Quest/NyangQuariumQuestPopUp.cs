@@ -730,17 +730,25 @@ namespace UI.NyangQuarium.Quest
         private NyangQuariumQuestStringSO ResolveStringSO()
         {
             SheetLoader sheetLoader = FindFirstObjectByType<SheetLoader>();
-            return sheetLoader != null && sheetLoader.TryGetNyangQuariumQuestStringSO(out NyangQuariumQuestStringSO stringSO)
-                ? stringSO
-                : null;
+
+            if (sheetLoader != null &&
+                sheetLoader.TryGetNyangQuariumQuestStringSO(out NyangQuariumQuestStringSO stringSO))
+                return stringSO;
+
+            NyangQuariumSheetLoader quariumLoader = NyangQuariumSheetLoader.Instance;
+            return quariumLoader != null ? quariumLoader.QuestStringSO : null;
         }
 
         private NyangQuariumQuestRewardSO ResolveRewardSO()
         {
             SheetLoader sheetLoader = FindFirstObjectByType<SheetLoader>();
-            return sheetLoader != null && sheetLoader.TryGetNyangQuariumQuestRewardSO(out NyangQuariumQuestRewardSO rewardSO)
-                ? rewardSO
-                : null;
+
+            if (sheetLoader != null &&
+                sheetLoader.TryGetNyangQuariumQuestRewardSO(out NyangQuariumQuestRewardSO rewardSO))
+                return rewardSO;
+
+            NyangQuariumSheetLoader quariumLoader = NyangQuariumSheetLoader.Instance;
+            return quariumLoader != null ? quariumLoader.QuestRewardSO : null;
         }
 
         private void OnCloseClicked()
