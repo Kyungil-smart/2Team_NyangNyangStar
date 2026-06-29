@@ -104,8 +104,7 @@ public class NyangQuariumFishInfoPopupUI : UIPopup
     {
         gameObject.SetActive(false);
 
-        if (_collectionPopup != null)
-            _collectionPopup.gameObject.SetActive(false);
+        _collectionPopup.gameObject.SetActive(false);
 
         GameManager.Audio.PlaySfx("Main_SFX_Touch");
     }

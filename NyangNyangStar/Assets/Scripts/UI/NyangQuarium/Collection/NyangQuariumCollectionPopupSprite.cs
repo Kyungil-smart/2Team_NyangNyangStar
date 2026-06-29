@@ -84,17 +84,12 @@ public class NyangQuariumCollectionPopupSprite : UIBase
     private void SetTab(NyangQuariumCollectionPopupImages image, bool selected)
     {
         _spriteController[(int)image].ChangeColor(selected ? _tabPanelColor : _tabButtonColor);
-        _spriteController[(int)image].ChangeSprite(selected ? RectangleKey : DefaultTabButtonKey);
+        _spriteController[(int)image].ChangeSprite(selected ? SquareKey : DefaultTabButtonKey);
     }
 
     public void SetProgress(float progress)
     {
         _progressFill.fillAmount = Mathf.Clamp01(progress);
-    }
-
-    public void SetLockedFishImage(string key)
-    {
-        SetSprite(NyangQuariumCollectionPopupImages.LockedFishImage, key, Color.black);
     }
 
     private void OnDestroy()

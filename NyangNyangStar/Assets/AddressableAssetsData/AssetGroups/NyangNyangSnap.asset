@@ -57,6 +57,12 @@ MonoBehaviour:
     m_SerializedLabels:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 314b94708f45d384dae0221bc3324aa3
+    m_Address: Snap_Btn_Filter
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 5bc47388ba43c4f448a39529228b8a81
     m_Address: NyangNyangSnapResultCanvas
     m_ReadOnly: 0

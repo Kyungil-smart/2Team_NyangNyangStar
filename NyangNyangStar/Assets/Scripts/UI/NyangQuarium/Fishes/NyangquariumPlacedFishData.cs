@@ -6,7 +6,6 @@ namespace UI.NyangQuarium
     [Serializable]
     public sealed class NyangquariumPlacedFishData
     {
-        [SerializeField] private int _fishId;
         [SerializeField] private string _spriteKey;
         [SerializeField] private float _anchoredPositionX;
         [SerializeField] private float _anchoredPositionY;
@@ -22,32 +21,11 @@ namespace UI.NyangQuarium
             Scale = scale;
         }
 
-        public NyangquariumPlacedFishData(int fishId, string spriteKey, float scale = 1f)
-        {
-            FishId = fishId;
-            SpriteKey = spriteKey;
-            Scale = scale;
-        }
-
         public NyangquariumPlacedFishData(string spriteKey, Vector2 anchoredPosition, float scale = 1f)
         {
             SpriteKey = spriteKey;
             AnchoredPosition = anchoredPosition;
             Scale = scale;
-        }
-
-        public NyangquariumPlacedFishData(int fishId, string spriteKey, Vector2 anchoredPosition, float scale = 1f)
-        {
-            FishId = fishId;
-            SpriteKey = spriteKey;
-            AnchoredPosition = anchoredPosition;
-            Scale = scale;
-        }
-
-        public int FishId
-        {
-            get => _fishId;
-            set => _fishId = Mathf.Max(0, value);
         }
 
         public string SpriteKey
@@ -91,12 +69,10 @@ namespace UI.NyangQuarium
 
             return includeCurrentPosition
                 ? new NyangquariumPlacedFishData(
-                    fish.FishId,
                     fish.SpriteKey,
                     fish.AnchoredPosition,
                     fish.VisualScale)
                 : new NyangquariumPlacedFishData(
-                    fish.FishId,
                     fish.SpriteKey,
                     fish.VisualScale);
         }

@@ -172,7 +172,7 @@ namespace UI.NyangQuarium
             EnsureFishSpritePreload();
             OpenChildContent(_boardContent, NyangquariumEntryMode.Board);
         }
-        public void OpenCollection() => OpenPopupContent(_collectionContent, NyangquariumEntryMode.Collection);
+        public void OpenCollection() => OpenChildContent(_collectionContent, NyangquariumEntryMode.Collection);
         public void OpenLayout() => OpenAquariumSelect(NyangquariumEntryMode.Layout);
 
         public void ReturnToMain()
@@ -301,21 +301,6 @@ namespace UI.NyangQuarium
                 ShowContent();
                 transition.Reveal(Unlock);
             });
-        }
-
-        private void OpenPopupContent(GameObject content, NyangquariumEntryMode entryMode)
-        {
-            if (_isTransitioning || content == null)
-                return;
-
-            PlayClickSfx();
-            NyangquariumEntryContext.Set(entryMode);
-            RegisterOwnedContent(content);
-            InitializeChildContent(content);
-            NotifyEntryMode(content, entryMode);
-            content.transform.SetAsLastSibling();
-            ShowChildContentImmediately(content);
-            RefreshButtonStates();
         }
 
         private void RunCoveredTransition(Action coveredAction)

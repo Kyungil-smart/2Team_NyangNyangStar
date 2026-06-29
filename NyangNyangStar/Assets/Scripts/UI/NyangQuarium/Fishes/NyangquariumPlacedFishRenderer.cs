@@ -52,12 +52,7 @@ namespace UI.NyangQuarium
 
         public NyangquariumFishController ConfirmPlacedFish(string spriteKey, float scale = 1f)
         {
-            return ConfirmPlacedFish(0, spriteKey, scale);
-        }
-
-        public NyangquariumFishController ConfirmPlacedFish(int fishId, string spriteKey, float scale = 1f)
-        {
-            NyangquariumPlacedFishData placedFish = new(fishId, spriteKey, scale);
+            NyangquariumPlacedFishData placedFish = new(spriteKey, scale);
             return AddPlacedFish(placedFish);
         }
 
@@ -115,8 +110,7 @@ namespace UI.NyangQuarium
                 _padding,
                 _maxTiltAngle,
                 _rotationLerpSpeed,
-                _targetReachDistance,
-                placedFish.FishId);
+                _targetReachDistance);
 
             return fish;
         }
@@ -343,7 +337,6 @@ namespace UI.NyangQuarium
                 return null;
 
             return new NyangquariumPlacedFishData(
-                source.FishId,
                 source.SpriteKey,
                 source.Scale);
         }
