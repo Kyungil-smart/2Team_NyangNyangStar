@@ -79,6 +79,7 @@ namespace Util
 
             // 스토리 출력 UI
             public const string StoryUI = "StoryUI";
+
         }
 
         public static void Register(KeyData data)
@@ -323,6 +324,8 @@ namespace Util
             PrefabKeyDict.Add(Prefabs.Nyangquarium, new List<GameObject>());
             PrefabKeyDict.Add(Prefabs.NyangQuariumCollectionPopupUI, new List<GameObject>());
             PrefabKeyDict.Add(Prefabs.NyangQuariumFishInfoPopupUI, new List<GameObject>());
+            
+            PrefabKeyDict.Add(Prefabs.StoryUI, new List<GameObject>());
         }
 
         public static void PrintKeys()

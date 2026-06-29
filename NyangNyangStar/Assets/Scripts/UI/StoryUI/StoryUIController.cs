@@ -20,7 +20,7 @@ public class StoryUIController : UIPopup
 
     [SerializeField] private GameObject _cardPrefab;
 
-    [SerializeField] private bool cleared;
+
 
 
     [SerializeField] private Button _nextButton;
@@ -36,6 +36,7 @@ public class StoryUIController : UIPopup
     private int _currentStoryIndex = -1;
     private int _currentIndex = 0;
     private bool _reachedEnd = false;
+    private System.Action _onFinished; 
 
 
     public override void Init()
@@ -57,7 +58,10 @@ public class StoryUIController : UIPopup
 
 
 
-    public void PlayStory(StoryDataSO story)
+    public void PlayStory(StoryDataSO story) => PlayStory(story, null);
+
+
+    public void PlayStory(StoryDataSO story, System.Action onFinished)
     {
         if (story == null)
         {
@@ -65,6 +69,7 @@ public class StoryUIController : UIPopup
             return;
         }
 
+        _onFinished = onFinished;
         _currentStory = story;
         _currentIndex = 0;
         _reachedEnd = false;
@@ -74,7 +79,7 @@ public class StoryUIController : UIPopup
         if (_titleText != null)
             _titleText.text = story.title;
 
-        ShowNextCard(); // 첫 대사 출력
+        ShowNextCard(); 
     }
 
 
@@ -122,6 +127,7 @@ public class StoryUIController : UIPopup
         if (_reachedEnd)
         {
             ClosePopup();
+            _onFinished?.Invoke();
             return;
         }
 
@@ -164,21 +170,7 @@ public class StoryUIController : UIPopup
         Canvas.ForceUpdateCanvases();
     }
 
-    public void PopupStory()
-    {
-        if(cleared == false)
-        {
-            GameManager.UI.ShowPopupUI<StoryUIController>(
-            KeyContainer.Prefabs.StoryUI,
-            popup => popup.PlayStory(_stories[0]));   // targetStorySO = 재생할 StoryDataSO
-        }
-        else
-        {
-            GameManager.UI.ShowPopupUI<StoryUIController>(
-            KeyContainer.Prefabs.StoryUI,
-            popup => popup.PlayStory(_stories[1]));
-        }
-    }
+
 
 
 }

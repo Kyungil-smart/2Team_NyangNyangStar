@@ -6,7 +6,7 @@ using UnityEngine;
 public class StoryDataSO : ScriptableObject
 {
 
-    public string storyId;
+    public int storyId;
 
 
     public string title;

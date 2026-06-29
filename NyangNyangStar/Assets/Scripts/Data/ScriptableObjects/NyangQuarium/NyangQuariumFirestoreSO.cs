@@ -15,6 +15,9 @@ public class NyangQuariumFirestoreSO : BaseFireStore
     [SerializeField] private List<int> _freshwaterPlacedFishIds = new();
     [SerializeField] private List<int> _saltwaterPlacedFishIds = new();
 
+    [Header("스토리")]
+    [SerializeField] private List<int> _readStoryIds = new();
+
     private readonly HashSet<int> _unlockedFishIdSet = new();
 
     public IReadOnlyList<int> UnlockedFishIds => _unlockedFishIds;
@@ -355,6 +358,29 @@ public class NyangQuariumFirestoreSO : BaseFireStore
         return fishType == FishType.None || fishData.FishType == fishType;
     }
 
+  
+    public bool HasReadStory(int storyId)
+    {
+        return _readStoryIds != null && _readStoryIds.Contains(storyId);
+    }
+
+    public async Task MarkStoryReadAsync(int storyId)
+    {
+        _readStoryIds ??= new List<int>();
+
+        if (_readStoryIds.Contains(storyId))
+            return;
+
+        if (!TryEnsureDatabaseReady())
+        {
+            DebugTool.Warning("[NyangQuariumFirestoreSO] Firestore가 준비되지 않아 스토리 읽음 저장을 생략합니다.", DebugType.Data, this);
+            return;
+        }
+
+        _readStoryIds.Add(storyId);
+        await SetDataAsync(ToFirestoreDictionary());
+    }
+
     private void ResetToDefault()
     {
         _unlockedFishIds ??= new List<int>();
@@ -366,6 +392,9 @@ public class NyangQuariumFirestoreSO : BaseFireStore
 
         _saltwaterPlacedFishIds ??= new List<int>();
         _saltwaterPlacedFishIds.Clear();
+
+        _readStoryIds ??= new List<int>();
+        _readStoryIds.Clear();
     }
 
     private void RebuildCacheIfNeeded()
