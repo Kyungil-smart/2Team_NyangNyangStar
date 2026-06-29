@@ -89,12 +89,6 @@ MonoBehaviour:
     m_SerializedLabels:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: e2f86a449aeb1fd4aa4f9610122a2c73
-    m_Address: Env_Stone_Stone
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - Sprite
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: e3569358be6b79a4e8cecd0de11c40ca
     m_Address: Env_Marine_Rock
     m_ReadOnly: 0
