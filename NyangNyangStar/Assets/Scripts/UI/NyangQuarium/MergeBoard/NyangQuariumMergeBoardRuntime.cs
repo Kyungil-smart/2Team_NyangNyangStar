@@ -34,9 +34,10 @@ namespace UI.NyangQuarium.MergeBoard
     public sealed class NyangQuariumMergeBoardBootstrap : MonoBehaviour
     {
         private const string RootName = "NyangQuariumMergeBoard";
-        private const string GeneratorName = "Item Generator";
+        private const string GeneratorName = "Item Generator Button";
         private const string BoardName = "Item Board";
         private const string InfoName = "ItemInfo";
+        private const string RewardRootName = "Reward Root";
         private static NyangQuariumMergeBoardBootstrap _instance;
 
         // 게임 시작, 씬 로드 시 부트스트랩 러너 등록
@@ -89,6 +90,7 @@ namespace UI.NyangQuarium.MergeBoard
             GameObject generatorObject = FindChildGameObject(rootObject.transform, GeneratorName);
             GameObject boardObject = FindChildGameObject(rootObject.transform, BoardName);
             GameObject infoObject = FindChildGameObject(rootObject.transform, InfoName);
+            GameObject rewardRootObject = FindChildGameObject(rootObject.transform, RewardRootName);
 
             if (generatorObject == null || boardObject == null || infoObject == null)
                 return;
@@ -103,11 +105,21 @@ namespace UI.NyangQuarium.MergeBoard
 
             board.Init(infoPanel);
 
+            NyangQuariumRewardQueue rewardQueue = null;
+            if (rewardRootObject != null)
+            {
+                rewardQueue = rewardRootObject.GetComponent<NyangQuariumRewardQueue>();
+                if (rewardQueue == null)
+                    rewardQueue = rewardRootObject.AddComponent<NyangQuariumRewardQueue>();
+
+                rewardQueue.Init(board);
+            }
+
             NyangQuariumItemGenerator generator = generatorObject.GetComponent<NyangQuariumItemGenerator>();
             if (generator == null)
                 generator = generatorObject.AddComponent<NyangQuariumItemGenerator>();
 
-            generator.Init(board);
+            generator.Init(board, rewardQueue);
 
             NyangQuariumMergeBoardNavigation navigation = rootObject.GetComponent<NyangQuariumMergeBoardNavigation>();
             if (navigation == null)
@@ -126,7 +138,7 @@ namespace UI.NyangQuarium.MergeBoard
             for (int i = 0; i < children.Length; i++)
             {
                 Transform child = children[i];
-                if (child != null && child.gameObject.activeInHierarchy && child.name == objectName)
+                if (child != null && child.name == objectName)
                     return child.gameObject;
             }
 
@@ -154,6 +166,7 @@ namespace UI.NyangQuarium.MergeBoard
     public sealed class NyangQuariumItemGenerator : MonoBehaviour
     {
         private NyangQuariumItemBoard _board;
+        private NyangQuariumRewardQueue _rewardQueue;
         private Button _button;
         private int _fallbackItemId = 1;
         private readonly string[] _fallbackItemNames =
@@ -165,9 +178,10 @@ namespace UI.NyangQuarium.MergeBoard
             "Random Item E"
         };
 
-        public void Init(NyangQuariumItemBoard board)
+        public void Init(NyangQuariumItemBoard board, NyangQuariumRewardQueue rewardQueue)
         {
             _board = board;
+            _rewardQueue = rewardQueue;
             BindButton();
         }
 
@@ -205,6 +219,12 @@ namespace UI.NyangQuarium.MergeBoard
                 return;
 
             NyangQuariumBoardItem item = CreateRandomItem();
+            if (_rewardQueue != null)
+            {
+                _rewardQueue.EnqueueItem(item);
+                return;
+            }
+            
             if (_board.TryAddItem(item))
                 UnlockCollectionItem(item);
         }
@@ -287,17 +307,27 @@ namespace UI.NyangQuarium.MergeBoard
         // 물고기 시트에서 랜덤 뽑기, 없으면 fallback 이름으로 임시 아이템
         private NyangQuariumBoardItem CreateRandomItem()
         {
+            const int generatorItemIdOffset = 200000;
+
             NyangQuariumFishSO fishSO = null;
+            NyangQuariumGeneratorSO generatorSO = null;
             SheetLoader sheetLoader = FindFirstObjectByType<SheetLoader>();
+            List<NyangQuariumBoardItem> candidates = new();
 
             if (sheetLoader != null && sheetLoader.TryGetNyangQuariumFishSO(out NyangQuariumFishSO loadedFishSO))
                 fishSO = loadedFishSO;
 
+            if (sheetLoader != null && sheetLoader.TryGetNyangQuariumGeneratorSO(out NyangQuariumGeneratorSO loadedGeneratorSO))
+                generatorSO = loadedGeneratorSO;
+
             if (fishSO != null && fishSO.FishData != null && fishSO.FishData.Count > 0)
             {
-                NyangQuariumFishData fishData = fishSO.FishData[Random.Range(0, fishSO.FishData.Count)];
-                if (fishData != null)
+                for (int i = 0; i < fishSO.FishData.Count; i++)
                 {
+                    NyangQuariumFishData fishData = fishSO.FishData[i];
+                    if (fishData == null || fishData.FishId <= 0)
+                        continue;
+
                     ItemData itemData = new(
                         fishData.FishId,
                         fishData.FishName,
@@ -308,9 +338,30 @@ namespace UI.NyangQuarium.MergeBoard
                     if (NyangQuariumFishSpriteCache.TryGetSprite(fishData.FishKey, out Sprite sprite))
                         itemData.SetSprite(sprite);
 
-                    return new NyangQuariumBoardItem(itemData);
+                    candidates.Add(new NyangQuariumBoardItem(itemData));
                 }
             }
+
+            if (generatorSO != null && generatorSO.Generators != null && generatorSO.Generators.Count > 0)
+            {
+                for (int i = 0; i < generatorSO.Generators.Count; i++)
+                {
+                    NyangQuariumGeneratorData generatorData = generatorSO.Generators[i];
+                    if (generatorData == null || generatorData.GeneratorId <= 0)
+                        continue;
+
+                    ItemData itemData = new(
+                        generatorItemIdOffset + generatorData.GeneratorId,
+                        generatorData.GeneratorName,
+                        Mathf.Max(1, generatorData.Level),
+                        ItemType.Common);
+
+                    candidates.Add(new NyangQuariumBoardItem(itemData));
+                }
+            }
+
+            if (candidates.Count > 0)
+                return candidates[Random.Range(0, candidates.Count)];
 
             int fallbackIndex = Random.Range(0, _fallbackItemNames.Length);
             int itemId = _fallbackItemId++;
@@ -326,6 +377,308 @@ namespace UI.NyangQuarium.MergeBoard
     }
 
     // NyangQuariumItemBoard -> 7x9 슬롯 그리드, 아이템 배치·선택 처리
+    public sealed class NyangQuariumRewardQueue : MonoBehaviour
+    {
+        private const int PreviewCount = 3;
+
+        private readonly Queue<NyangQuariumBoardItem> _rewardQueue = new();
+        private readonly List<NyangQuariumRewardQueueSlot> _slotViews = new();
+
+        private NyangQuariumItemBoard _board;
+        private TMP_Text _countText;
+        private bool _initialized;
+        private bool _isMoving;
+
+        public void Init(NyangQuariumItemBoard board)
+        {
+            _board = board;
+
+            if (!_initialized)
+            {
+                BindViews();
+                _initialized = true;
+            }
+
+            RefreshView();
+        }
+
+        public void EnqueueItem(NyangQuariumBoardItem item)
+        {
+            if (item == null || !item.HasItem)
+                return;
+
+            _rewardQueue.Enqueue(new NyangQuariumBoardItem(item.ItemData));
+            RefreshView();
+        }
+
+        public void TryMoveTopItemToBoard()
+        {
+            if (_isMoving || _rewardQueue.Count <= 0)
+                return;
+
+            if (_board == null)
+            {
+                DebugTool.Warning("[NyangQuariumRewardQueue] Board is not ready.", DebugType.UI, this);
+                return;
+            }
+
+            _isMoving = true;
+
+            try
+            {
+                NyangQuariumBoardItem item = _rewardQueue.Peek();
+                if (!_board.TryAddItem(item))
+                    return;
+
+                _rewardQueue.Dequeue();
+                RefreshView();
+            }
+            finally
+            {
+                _isMoving = false;
+            }
+        }
+
+        private void BindViews()
+        {
+            _slotViews.Clear();
+
+            AddSlotView("ItemSlot3");
+            AddSlotView("ItemSlot2");
+            AddSlotView("ItemSlot1");
+
+            if (_countText == null)
+                _countText = FindCountText();
+        }
+
+        private void AddSlotView(string slotName)
+        {
+            Transform slotTransform = FindChild(slotName);
+            if (slotTransform == null)
+                return;
+
+            NyangQuariumRewardQueueSlot slotView = slotTransform.GetComponent<NyangQuariumRewardQueueSlot>();
+            if (slotView == null)
+                slotView = slotTransform.gameObject.AddComponent<NyangQuariumRewardQueueSlot>();
+
+            slotView.Init(this, _slotViews.Count == 0);
+            _slotViews.Add(slotView);
+        }
+
+        private Transform FindChild(string childName)
+        {
+            Transform[] children = GetComponentsInChildren<Transform>(true);
+            for (int i = 0; i < children.Length; i++)
+            {
+                Transform child = children[i];
+                if (child != null && child.name == childName)
+                    return child;
+            }
+
+            return null;
+        }
+
+        private TMP_Text FindCountText()
+        {
+            Transform countRoot = FindChild("ItemCount");
+            if (countRoot != null)
+                return countRoot.GetComponentInChildren<TMP_Text>(true);
+
+            TMP_Text directText = GetComponentInChildren<TMP_Text>(true);
+            if (directText != null)
+                return directText;
+
+            return null;
+        }
+
+        private void RefreshView()
+        {
+            List<NyangQuariumBoardItem> previewItems = new(_rewardQueue);
+
+            for (int i = 0; i < _slotViews.Count; i++)
+            {
+                if (_slotViews[i] == null)
+                    continue;
+
+                if (i < previewItems.Count && i < PreviewCount)
+                    _slotViews[i].SetItem(previewItems[i]);
+                else
+                    _slotViews[i].SetItem(NyangQuariumBoardItem.Empty);
+            }
+
+            if (_countText == null)
+                return;
+
+            int count = _rewardQueue.Count;
+            _countText.text = count.ToString();
+            _countText.transform.parent?.gameObject.SetActive(count > 0);
+            _countText.gameObject.SetActive(count > 0);
+        }
+    }
+
+    public sealed class NyangQuariumRewardQueueSlot : MonoBehaviour, IPointerClickHandler
+    {
+        private NyangQuariumRewardQueue _rewardQueue;
+        private Image _itemImage;
+        private Button _button;
+        private UI.UISpriteController _spriteController;
+        private Sprite _emptySprite;
+        private Color _emptyColor;
+        private bool _isTopSlot;
+        private bool _hasItem;
+
+        public void Init(NyangQuariumRewardQueue rewardQueue, bool isTopSlot)
+        {
+            _rewardQueue = rewardQueue;
+            _isTopSlot = isTopSlot;
+            BindImage();
+            BindButton();
+            SetItem(NyangQuariumBoardItem.Empty);
+        }
+
+        public void SetItem(NyangQuariumBoardItem item)
+        {
+            BindImage();
+
+            _hasItem = item != null && item.HasItem;
+
+            if (_itemImage == null)
+                return;
+
+            _spriteController?.ClearSprite();
+
+            if (!_hasItem)
+            {
+                _itemImage.sprite = null;
+                _itemImage.color = _emptyColor;
+                _itemImage.enabled = false;
+                _itemImage.gameObject.SetActive(false);
+                _itemImage.raycastTarget = _button != null;
+                return;
+            }
+
+            ItemData itemData = item.ItemData;
+            _itemImage.gameObject.SetActive(true);
+            _itemImage.color = Color.white;
+            _itemImage.enabled = true;
+            _itemImage.raycastTarget = _button != null;
+
+            if (itemData.ItemSprite != null)
+            {
+                _itemImage.sprite = itemData.ItemSprite;
+                return;
+            }
+
+            _itemImage.sprite = null;
+
+            if (!string.IsNullOrWhiteSpace(itemData.AddressableKey))
+            {
+                _spriteController ??= new UI.UISpriteController(_itemImage);
+                _spriteController.ChangeSprite(itemData.AddressableKey);
+            }
+        }
+
+        public void OnPointerClick(PointerEventData eventData)
+        {
+            if (_button != null)
+                return;
+
+            HandleClick();
+        }
+
+        private void HandleClick()
+        {
+            if (!_isTopSlot || !_hasItem || _rewardQueue == null)
+                return;
+
+            _rewardQueue.TryMoveTopItemToBoard();
+        }
+
+        private void BindImage()
+        {
+            if (_itemImage != null)
+                return;
+
+            _itemImage = FindButtonImage();
+
+            if (_itemImage == null)
+                _itemImage = FindChildImage();
+
+            if (_itemImage == null)
+                return;
+
+            _emptySprite = _itemImage.sprite;
+            _emptyColor = _itemImage.color;
+        }
+
+        private Image FindButtonImage()
+        {
+            Button[] buttons = GetComponentsInChildren<Button>(true);
+            for (int i = 0; i < buttons.Length; i++)
+            {
+                Button button = buttons[i];
+                if (button == null)
+                    continue;
+
+                Image image = button.GetComponent<Image>();
+                if (image != null)
+                    return image;
+            }
+
+            return null;
+        }
+
+        private Image FindChildImage()
+        {
+            Image[] images = GetComponentsInChildren<Image>(true);
+            for (int i = 0; i < images.Length; i++)
+            {
+                Image image = images[i];
+                if (image == null || image.gameObject == gameObject)
+                    continue;
+
+                return image;
+            }
+
+            return null;
+        }
+
+        private void BindButton()
+        {
+            Button button = null;
+
+            if (_itemImage != null)
+                button = _itemImage.GetComponent<Button>();
+
+            if (button == null)
+            {
+                Button[] buttons = GetComponentsInChildren<Button>(true);
+                if (buttons.Length > 0)
+                    button = buttons[0];
+            }
+
+            if (_button == button)
+                return;
+
+            if (_button != null)
+                _button.onClick.RemoveListener(HandleClick);
+
+            _button = button;
+
+            if (_button != null)
+                _button.onClick.AddListener(HandleClick);
+        }
+
+        private void OnDestroy()
+        {
+            if (_button != null)
+                _button.onClick.RemoveListener(HandleClick);
+
+            _spriteController?.Dispose();
+            _spriteController = null;
+        }
+    }
+
     public sealed class NyangQuariumItemBoard : MonoBehaviour
     {
         private const int Width = 7;
@@ -422,6 +775,127 @@ namespace UI.NyangQuarium.MergeBoard
                     fishData.FishType,
                     item.ItemData?.ItemSprite));
             }
+        }
+
+        public int GetOwnedNatureCount(int itemId)
+        {
+            if (itemId <= 0)
+                return 0;
+
+            int count = 0;
+
+            for (int i = 0; i < _slots.Count; i++)
+            {
+                NyangQuariumItemSlot slot = _slots[i];
+
+                if (slot == null || !slot.HasItem || slot.Item.Id != itemId)
+                    continue;
+
+                if (!TryResolveFishData(slot.Item.Id, out NyangQuariumFishData fishData))
+                    continue;
+
+                if (fishData.FishType != FishType.Environments)
+                    continue;
+
+                count++;
+            }
+
+            return count;
+        }
+
+        public void CopyOwnedNatureEntries(
+            List<NyangQuariumMergeBoardNatureEntry> results,
+            int maxCount)
+        {
+            if (results == null)
+                return;
+
+            results.Clear();
+
+            if (maxCount <= 0)
+                return;
+
+            for (int i = 0; i < _slots.Count && results.Count < maxCount; i++)
+            {
+                NyangQuariumItemSlot slot = _slots[i];
+
+                if (slot == null || !slot.HasItem)
+                    continue;
+
+                NyangQuariumBoardItem item = slot.Item;
+
+                if (!TryResolveFishData(item.Id, out NyangQuariumFishData fishData))
+                    continue;
+
+                if (fishData.FishType != FishType.Environments)
+                    continue;
+
+                results.Add(new NyangQuariumMergeBoardNatureEntry(
+                    i,
+                    item.Id,
+                    item.Level,
+                    fishData.FishKey,
+                    item.Name,
+                    item.ItemData?.ItemSprite));
+            }
+        }
+
+        public bool TryConsumeNature(int itemId, int count)
+        {
+            if (itemId <= 0 || count <= 0)
+                return false;
+
+            int remaining = count;
+
+            for (int i = 0; i < _slots.Count && remaining > 0; i++)
+            {
+                NyangQuariumItemSlot slot = _slots[i];
+
+                if (slot == null || !slot.HasItem || slot.Item.Id != itemId)
+                    continue;
+
+                if (!TryResolveFishData(slot.Item.Id, out NyangQuariumFishData fishData))
+                    continue;
+
+                if (fishData.FishType != FishType.Environments)
+                    continue;
+
+                if (!TryClearSlot(i))
+                    continue;
+
+                remaining--;
+            }
+
+            if (remaining > 0)
+                return false;
+
+            return true;
+        }
+
+        public bool TryConsumeNatureAtSlot(int slotIndex)
+        {
+            if (!TryGetNatureSlotData(slotIndex, out _))
+                return false;
+
+            return TryClearSlot(slotIndex);
+        }
+
+        private bool TryGetNatureSlotData(int slotIndex, out NyangQuariumFishData fishData)
+        {
+            fishData = null;
+
+            if (slotIndex < 0 || slotIndex >= _slots.Count)
+                return false;
+
+            NyangQuariumItemSlot slot = _slots[slotIndex];
+
+            if (slot == null || !slot.HasItem)
+                return false;
+
+            if (!TryResolveFishData(slot.Item.Id, out fishData))
+                return false;
+
+            return fishData.FishType == FishType.Environments;
         }
 
         // InventoryService.TryConsumeFish — fishId 같은 슬롯을 왼쪽부터 count만큼 비움
