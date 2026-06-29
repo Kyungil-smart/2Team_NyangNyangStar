@@ -35,6 +35,12 @@ MonoBehaviour:
     m_SerializedLabels:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 314b94708f45d384dae0221bc3324aa3
+    m_Address: Btn_Filter
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 65eeedcdb40d2a34db66a9e0dcbfd1d0
     m_Address: Profile_ProfileImages_1
     m_ReadOnly: 0

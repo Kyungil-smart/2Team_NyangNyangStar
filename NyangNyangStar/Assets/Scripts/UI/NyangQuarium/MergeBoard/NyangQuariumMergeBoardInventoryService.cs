@@ -4,11 +4,9 @@ using UnityEngine;
 
 namespace UI.NyangQuarium.MergeBoard
 {
-    // 수조 API — 머지보드 보유 관상어 조회/제거
-    
+    // 수조 API — 머지보드 보유 관상어 / 자연요소 조회 제거
     public static class NyangQuariumMergeBoardInventoryService
     {
-        // 수조 인벤토리에 한 번에 최대 6마리까지 호출
         public const int AquariumInventoryMaxDisplayCount = 6;
 
         private static NyangQuariumItemBoard _board;
@@ -48,7 +46,6 @@ namespace UI.NyangQuarium.MergeBoard
         // 수조 인벤토리 채울 때 호출
         // results는 호출 전 비워지고, 왼쪽 슬롯부터 maxCount개까지 복사됨
         // aquariumType : FishType.Freshwater(담수) / FishType.Saltwater(해수)
-        // None이면 관상어만 전부 (자연요소 Environments 제외)
         public static void CopyOwnedFishEntries(
             List<NyangQuariumMergeBoardFishEntry> results,
             FishType aquariumType = FishType.None,
@@ -94,8 +91,61 @@ namespace UI.NyangQuarium.MergeBoard
             return TryConsumeFishAtSlot(entry.SlotIndex);
         }
 
-        // 담수 수조: Freshwater + BrackishWater
-        // 해수 수조: Saltwater + BrackishWater
+        // ItemId 기준 자연요소 보유 개수
+        public static int GetOwnedNatureCount(int itemId)
+        {
+            if (_board == null || itemId <= 0)
+                return 0;
+
+            return _board.GetOwnedNatureCount(itemId);
+        }
+
+        // 좌측 자연요소 인벤 채울 때 — FishType.Environments만, 담수 / 해수 구분 없음
+        public static void CopyOwnedNatureEntries(
+            List<NyangQuariumMergeBoardNatureEntry> results,
+            int maxCount = AquariumInventoryMaxDisplayCount)
+        {
+            results?.Clear();
+
+            if (_board == null || results == null)
+                return;
+
+            _board.CopyOwnedNatureEntries(results, maxCount);
+        }
+
+        // 자연요소 배치 확정 — itemId 같은 슬롯을 왼쪽부터 count만큼 제거
+        public static bool TryConsumeNature(int itemId, int count = 1)
+        {
+            if (_board == null || itemId <= 0 || count <= 0)
+                return false;
+
+            if (!_board.TryConsumeNature(itemId, count))
+                return false;
+
+            NotifyInventoryChanged();
+            return true;
+        }
+
+        public static bool TryConsumeNatureAtSlot(int slotIndex)
+        {
+            if (_board == null)
+                return false;
+
+            if (!_board.TryConsumeNatureAtSlot(slotIndex))
+                return false;
+
+            NotifyInventoryChanged();
+            return true;
+        }
+
+        public static bool TryConsumeNatureEntry(NyangQuariumMergeBoardNatureEntry entry)
+        {
+            return TryConsumeNatureAtSlot(entry.SlotIndex);
+        }
+
+        // 담수 수조:  Freshwater + BrackishWater
+        // 해수 수조 : Saltwater + BrackishWater
+        // 물고기를 해당 수조에 배치할 수 있는지 확인
         public static bool CanPlaceFish(FishType fishType, FishType aquariumType)
         {
             if (fishType == FishType.None || fishType == FishType.Environments)
@@ -139,6 +189,33 @@ namespace UI.NyangQuarium.MergeBoard
             FishKey = fishKey ?? string.Empty;
             FishName = fishName ?? string.Empty;
             FishType = fishType;
+            Sprite = sprite;
+        }
+    }
+
+    // CopyOwnedNatureEntries 결과 1칸 — 좌측 자연요소 인벤 슬롯 1개
+    public readonly struct NyangQuariumMergeBoardNatureEntry
+    {
+        public int SlotIndex { get; }
+        public int ItemId { get; }
+        public int Level { get; }
+        public string ItemKey { get; }
+        public string ItemName { get; }
+        public Sprite Sprite { get; }
+
+        public NyangQuariumMergeBoardNatureEntry(
+            int slotIndex,
+            int itemId,
+            int level,
+            string itemKey,
+            string itemName,
+            Sprite sprite)
+        {
+            SlotIndex = slotIndex;
+            ItemId = itemId;
+            Level = level;
+            ItemKey = itemKey ?? string.Empty;
+            ItemName = itemName ?? string.Empty;
             Sprite = sprite;
         }
     }
