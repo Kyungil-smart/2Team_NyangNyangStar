@@ -61,6 +61,20 @@ namespace UI.NyangQuarium
             return AddPlacedFish(placedFish);
         }
 
+        public NyangquariumFishController ConfirmPlacedFish(int fishId, NyangQuariumFishSO fishSO, float scale = 1f)
+        {
+            if (!TryGetSpriteKey(fishId, fishSO, out string spriteKey))
+            {
+                DebugTool.Warning(
+                    $"[냥쿠아리움 배치 물고기 표시] FishId로 SpriteKey를 찾지 못했습니다. FishId:{fishId}",
+                    DebugType.UI,
+                    this);
+                return null;
+            }
+
+            return ConfirmPlacedFish(fishId, spriteKey, scale);
+        }
+
         public NyangquariumFishController AddPlacedFish(NyangquariumPlacedFishData placedFish)
         {
             NyangquariumFishController fish = CreatePlacedFishObject(placedFish);
@@ -110,6 +124,25 @@ namespace UI.NyangQuarium
         public NyangquariumPlacedFishData CreateDataFromFish(NyangquariumFishController fish)
         {
             return NyangquariumPlacedFishData.FromController(fish);
+        }
+
+        private static bool TryGetSpriteKey(int fishId, NyangQuariumFishSO fishSO, out string spriteKey)
+        {
+            spriteKey = string.Empty;
+
+            if (fishId <= 0 || fishSO == null || fishSO.FishData == null)
+                return false;
+
+            foreach (NyangQuariumFishData fishData in fishSO.FishData)
+            {
+                if (fishData == null || fishData.FishId != fishId)
+                    continue;
+
+                spriteKey = fishData.FishKey;
+                return !string.IsNullOrWhiteSpace(spriteKey);
+            }
+
+            return false;
         }
 
         public List<NyangquariumPlacedFishData> GetCurrentPlacedFishData(bool includeCurrentPosition = false)
