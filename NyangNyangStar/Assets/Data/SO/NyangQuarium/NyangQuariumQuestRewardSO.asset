@@ -12,10 +12,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: aaf868e7a7d24db1b6d48fec18eac69e, type: 3}
   m_Name: NyangQuariumQuestRewardSO
   m_EditorClassIdentifier: 
-  _rewards:
-  - _id: 0
-    _rewardItem1: 0
-    _rewardAmount1: 0
-    _rewardItem2: 0
-    _rewardAmount2: 0
-    _expAmount: 0
+  _rewards: []

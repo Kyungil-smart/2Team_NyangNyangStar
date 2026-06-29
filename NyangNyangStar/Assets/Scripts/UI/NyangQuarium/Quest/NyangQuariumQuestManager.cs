@@ -291,7 +291,7 @@ namespace UI.NyangQuarium.Quest
                     condition.Equals("코인", StringComparison.OrdinalIgnoreCase));
         }
 
-        // SheetLoader에서 같은 SO를 채우므로, 비어 있으면 로더에서 가져옴
+        // SheetLoader / NyangQuariumSheetLoader(TestLoader)에서 같은 SO를 채우므로, 비어 있으면 로더에서 가져옴
         private void ResolveQuestSO()
         {
             if (_questSO != null)
@@ -300,7 +300,15 @@ namespace UI.NyangQuarium.Quest
             SheetLoader sheetLoader = FindFirstObjectByType<SheetLoader>();
 
             if (sheetLoader != null && sheetLoader.TryGetNyangQuariumQuestSO(out NyangQuariumQuestSO questSO))
+            {
                 _questSO = questSO;
+                return;
+            }
+
+            NyangQuariumSheetLoader quariumLoader = NyangQuariumSheetLoader.Instance;
+
+            if (quariumLoader != null)
+                _questSO = quariumLoader.QuestSO;
         }
     }
 }
