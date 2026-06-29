@@ -21,6 +21,10 @@ public sealed class NyangQuariumFishDeleteUI : MonoBehaviour
     [SerializeField]
     private NyangQuariumFishSO _fishSO;
 
+    [Tooltip("이 삭제 UI가 저장할 수조 타입입니다. 배치 컨트롤러가 있으면 해당 값을 자동으로 따릅니다.")]
+    [SerializeField]
+    private FishType _aquariumType = FishType.Freshwater;
+
     [Header("선택 오브젝트 UI")]
     [Tooltip("제거 버튼과 이름 텍스트를 포함하는 UI 루트")]
     [SerializeField]
@@ -90,6 +94,7 @@ public sealed class NyangQuariumFishDeleteUI : MonoBehaviour
 
     private void Awake()
     {
+        ResolveAquariumType();
         BindButtons();
         HideDeleteUI();
     }
@@ -371,6 +376,7 @@ public sealed class NyangQuariumFishDeleteUI : MonoBehaviour
             _placedFishRenderer.GetCurrentPlacedFishData();
 
         PlacedFishDataChanged?.Invoke(currentData);
+        SavePlacedFishData(currentData);
 
         CloseDeleteConfirmPopup();
         ExitDeleteMode(false);
@@ -379,6 +385,36 @@ public sealed class NyangQuariumFishDeleteUI : MonoBehaviour
             $"[NyangQuariumFishDeleteUI] 물고기 삭제 완료 - " +
             $"남은 수:{currentData.Count}",
             this);
+    }
+
+    private void ResolveAquariumType()
+    {
+        NyangQuariumFishPlacementController placementController =
+            GetComponent<NyangQuariumFishPlacementController>();
+
+        if (placementController != null)
+            _aquariumType = placementController.AquariumType;
+    }
+
+    private async void SavePlacedFishData(
+        IReadOnlyList<NyangquariumPlacedFishData> currentData)
+    {
+        NyangQuariumFirestoreSO firestoreSO =
+            await NyangQuariumFirestoreSO.WaitForReadyAsync();
+
+        if (firestoreSO == null)
+        {
+            Debug.LogWarning(
+                "[NyangQuariumFishDeleteUI] " +
+                "Firestore가 준비되지 않아 수조 배치 저장을 생략합니다.",
+                this);
+            return;
+        }
+
+        await firestoreSO.SavePlacedFishAsync(
+            _aquariumType,
+            currentData,
+            _fishSO);
     }
 
     private void DeleteSelectedNature()

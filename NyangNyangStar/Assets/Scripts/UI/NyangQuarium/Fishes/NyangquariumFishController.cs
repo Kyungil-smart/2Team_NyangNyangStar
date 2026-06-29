@@ -40,6 +40,7 @@ namespace UI.NyangQuarium
         private bool _hasTarget;
         private bool _isSelected;
 
+        public int FishId { get; private set; }
         public string SpriteKey { get; private set; }
         public float VisualScale => _baseScale;
         public bool IsSelectable => _isSelectable;
@@ -71,7 +72,8 @@ namespace UI.NyangQuarium
             float padding = 80f,
             float maxTiltAngle = 30f,
             float rotationLerpSpeed = 5f,
-            float targetReachDistance = 10f)
+            float targetReachDistance = 10f,
+            int fishId = 0)
         {
             if (swimArea == null)
             {
@@ -116,7 +118,8 @@ namespace UI.NyangQuarium
                 rotationLerpSpeed,
                 targetReachDistance,
                 scale,
-                !anchoredPosition.HasValue);
+                !anchoredPosition.HasValue,
+                fishId);
 
             return fishController;
         }
@@ -184,11 +187,13 @@ namespace UI.NyangQuarium
             float rotationLerpSpeed,
             float targetReachDistance,
             float scale,
-            bool randomizePosition)
+            bool randomizePosition,
+            int fishId = 0)
         {
             ResolveComponents();
             PrepareImage();
 
+            FishId = Mathf.Max(0, fishId);
             SetMovementOptions(speed, padding, maxTiltAngle, rotationLerpSpeed, targetReachDistance);
             SetSwimArea(swimArea);
             SetVisualScale(scale);

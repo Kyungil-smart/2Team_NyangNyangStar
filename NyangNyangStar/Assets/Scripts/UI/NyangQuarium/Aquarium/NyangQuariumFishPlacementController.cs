@@ -43,6 +43,10 @@ public sealed class NyangQuariumFishPlacementController : MonoBehaviour
     [SerializeField]
     private NyangQuariumFishSO _fishSO;
 
+    [Tooltip("이 배치 UI가 저장할 수조 타입입니다. 담수 수조는 Freshwater, 해수 수조는 Saltwater로 둡니다.")]
+    [SerializeField]
+    private FishType _aquariumType = FishType.Freshwater;
+
     [Header("물고기 배치")]
     [Tooltip("물고기 생성, 이동, 선택, 삭제를 담당하는 Renderer")]
     [SerializeField]
@@ -85,8 +89,11 @@ public sealed class NyangQuariumFishPlacementController : MonoBehaviour
         _natureDragHandler;
 
     private bool _isPlacementMode;
+    private bool _hasLoadedPlacedFish;
+    private int _placedFishMutationVersion;
 
     public bool IsPlacementMode => _isPlacementMode;
+    public FishType AquariumType => _aquariumType;
 
     public event Action<
         int,
@@ -106,6 +113,11 @@ public sealed class NyangQuariumFishPlacementController : MonoBehaviour
         BindButtons();
         SetDecisionButtonsActive(false);
         SetInventoryConfirmInteractable(false);
+    }
+
+    private void OnEnable()
+    {
+        LoadPlacedFishFromFirestore();
     }
 
     private void OnDestroy()
@@ -265,6 +277,7 @@ public sealed class NyangQuariumFishPlacementController : MonoBehaviour
             confirmedItemId,
             NyangQuariumPlacementCategory.Fish);
 
+        SavePlacedFishSnapshot();
         ClearSelection();
 
         Debug.Log(
@@ -323,6 +336,7 @@ public sealed class NyangQuariumFishPlacementController : MonoBehaviour
 
         NyangquariumFishController spawnedFish =
             _placedFishRenderer.ConfirmPlacedFish(
+                _selectedItemId,
                 _selectedSpriteKey,
                 1f);
 
@@ -358,6 +372,76 @@ public sealed class NyangQuariumFishPlacementController : MonoBehaviour
             this);
 
         return fishRect;
+    }
+
+    public void SavePlacedFishSnapshot()
+    {
+        if (_placedFishRenderer == null)
+            return;
+
+        SavePlacedFishSnapshotAsync(
+            _placedFishRenderer.GetCurrentPlacedFishData());
+    }
+
+    public void SavePlacedFishSnapshot(
+        IReadOnlyList<NyangquariumPlacedFishData> placedFishData)
+    {
+        SavePlacedFishSnapshotAsync(placedFishData);
+    }
+
+    private async void SavePlacedFishSnapshotAsync(
+        IEnumerable<NyangquariumPlacedFishData> placedFishData)
+    {
+        _placedFishMutationVersion++;
+
+        NyangQuariumFirestoreSO firestoreSO =
+            await NyangQuariumFirestoreSO.WaitForReadyAsync();
+
+        if (firestoreSO == null)
+        {
+            Debug.LogWarning(
+                "[NyangQuariumFishPlacementController] " +
+                "Firestore가 준비되지 않아 수조 배치 저장을 생략합니다.",
+                this);
+            return;
+        }
+
+        await firestoreSO.SavePlacedFishAsync(
+            _aquariumType,
+            placedFishData,
+            _fishSO);
+    }
+
+    private async void LoadPlacedFishFromFirestore()
+    {
+        if (_hasLoadedPlacedFish || _placedFishRenderer == null)
+            return;
+
+        int loadVersion = _placedFishMutationVersion;
+
+        NyangQuariumFirestoreSO firestoreSO =
+            await NyangQuariumFirestoreSO.WaitForReadyAsync();
+
+        if (firestoreSO == null)
+            return;
+
+        bool loadedOrCreated =
+            await firestoreSO.LoadOrCreateFromServerAsync();
+
+        if (!loadedOrCreated ||
+            _placedFishRenderer == null ||
+            loadVersion != _placedFishMutationVersion)
+        {
+            return;
+        }
+
+        IReadOnlyList<NyangquariumPlacedFishData> placedFishData =
+            firestoreSO.GetPlacedFishData(
+                _aquariumType,
+                _fishSO);
+
+        _placedFishRenderer.ShowPlacedFishes(placedFishData);
+        _hasLoadedPlacedFish = true;
     }
 
     /// <summary>

@@ -2987,6 +2987,7 @@ MonoBehaviour:
   _nyangQuariumLayoutPanel: {fileID: 4153253175044498790}
   _placementArea: {fileID: 7001582317935200639}
   _fishSO: {fileID: 11400000, guid: 83d3494b1e111e44c91f704a62b69410, type: 2}
+  _aquariumType: 1
   _placedFishRenderer: {fileID: 6132697727580011391}
   _confirmButton: {fileID: 6917443624507821057}
   _cancelButton: {fileID: 2463684832122401307}
@@ -3012,6 +3013,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _placedFishRenderer: {fileID: 6132697727580011391}
   _fishSO: {fileID: 11400000, guid: 83d3494b1e111e44c91f704a62b69410, type: 2}
+  _aquariumType: 1
   _selectionUIRoot: {fileID: 8659039630428294433}
   _deleteButton: {fileID: 2264374674901140980}
   _fishNameText: {fileID: 645131220130112192}
