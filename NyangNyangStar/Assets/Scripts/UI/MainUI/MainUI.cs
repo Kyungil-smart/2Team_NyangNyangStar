@@ -1,3 +1,4 @@
+using System;
 using Core.Managers;
 using System.Collections;
 using System.Collections.Generic;
@@ -208,6 +209,13 @@ public class MainUI : UIScene
         _ = PlayerResourceManager.Instance.RefreshAsync();
     }
 
+    public event Action MergeBoardVisibilityChanged;
+
+    public void OpenMergeBoardFromQuest()
+    {
+        OpenMergeBoard();
+    }
+
     private void OpenMergeBoard()
     {
         if (_mergeBoardController == null)
@@ -284,11 +292,15 @@ public class MainUI : UIScene
 
     private void SetMergeBoardVisible(bool isOpen)
     {
+        bool wasVisible = _isMergeBoardVisible;
         _isMergeBoardVisible = isOpen;
         _mergeBoardController.SetVisible(isOpen);
 
         if (_mainUICanvas != null)
             _mainUICanvas.sortingOrder = isOpen ? 0 : 2;
+
+        if (wasVisible && !isOpen)
+            MergeBoardVisibilityChanged?.Invoke();
     }
 
     private void LoadScratchingTime()

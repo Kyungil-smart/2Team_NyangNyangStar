@@ -1,3 +1,4 @@
+using System;
 using Core.Managers;
 using Data.ScriptableObjects.NyangQuariumSO;
 using UnityEngine;
@@ -5,16 +6,14 @@ using Util;
 
 namespace UI.NyangQuarium.Quest
 {
-    // Addressable 등록 전: Inspector에 NyangQuariumQuestPopUp 프리팹을 연결해 테스트
-    // 퀘스트 클릭 -> 알람 뷰 -> 여기서 팝업을 열게 됨
+    // Addressable로 NyangQuariumQuestPopUp을 미리 올려 두고, 열 때 활성화합니다.
     public sealed class NyangQuariumQuestPopupOpener : MonoBehaviour
     {
         public static NyangQuariumQuestPopupOpener Instance { get; private set; }
 
-        [Header("Popup Prefab (Addressable 전 테스트용)")]
-        [SerializeField] private NyangQuariumQuestPopUp _popupPrefab;
-
-        private NyangQuariumQuestPopUp _activePopup;
+        private NyangQuariumQuestPopUp _cachedPopup;
+        private bool _isLoading;
+        private Action _pendingOpenAction;
 
         private void Awake()
         {
@@ -25,6 +24,11 @@ namespace UI.NyangQuarium.Quest
             }
 
             Instance = this;
+        }
+
+        private void Start()
+        {
+            EnsurePreloaded();
         }
 
         private void OnDestroy()
@@ -48,9 +52,51 @@ namespace UI.NyangQuarium.Quest
             }
 
             DebugTool.Warning(
-                "[NyangQuariumQuestPopupOpener] 씬에 NyangQuariumQuestPopupOpener가 없습니다. " +
-                "@NyangQuariumData 등에 컴포넌트를 추가하고 NyangQuariumQuestPopUp 프리팹을 연결",
+                "[NyangQuariumQuestPopupOpener] 씬에 NyangQuariumQuestPopupOpener가 없습니다.",
                 DebugType.UI);
+        }
+
+        public void EnsurePreloaded(Action onReady = null)
+        {
+            if (_cachedPopup != null)
+            {
+                onReady?.Invoke();
+                return;
+            }
+
+            if (onReady != null)
+                _pendingOpenAction += onReady;
+
+            if (_isLoading)
+                return;
+
+            _isLoading = true;
+
+            GameManager.UI.ShowPopupUI<NyangQuariumQuestPopUp>(
+                KeyContainer.Prefabs.NyangQuariumQuestPopUp,
+                popup =>
+                {
+                    _isLoading = false;
+                    _cachedPopup = popup;
+                    _cachedPopup.ConfigureDirectLifecycle(false);
+                    _cachedPopup.HideImmediately();
+
+                    Action readyAction = _pendingOpenAction;
+                    _pendingOpenAction = null;
+                    readyAction?.Invoke();
+                },
+                setActive: false,
+                addCanvas: true,
+                onFailed: failedKey =>
+                {
+                    _isLoading = false;
+                    _pendingOpenAction = null;
+
+                    DebugTool.Warning(
+                        $"[NyangQuariumQuestPopupOpener] 팝업 로드 실패. Key:{failedKey}",
+                        DebugType.UI,
+                        this);
+                });
         }
 
         public void OpenPopup(NyangQuariumQuestData quest)
@@ -58,39 +104,24 @@ namespace UI.NyangQuarium.Quest
             if (quest == null)
                 return;
 
-            if (_popupPrefab == null)
-            {
-                DebugTool.Warning(
-                    "[NyangQuariumQuestPopupOpener] Popup Prefab이 연결되지 않았습니다. " +
-                    "NyangQuariumQuestPopUp 프리팹 을 Inspector에 연결하세요.",
-                    DebugType.UI,
-                    this);
-                return;
-            }
-
-            if (_activePopup != null)
-            {
-                _activePopup.BindQuest(quest);
-                _activePopup.gameObject.SetActive(true);
-                _activePopup.PlayOpenAnimation();
-                return;
-            }
-
-            Transform parent = FindUiRoot();
-            NyangQuariumQuestPopUp popup = Instantiate(_popupPrefab, parent);
-            popup.ConfigureDirectLifecycle(true);
-            popup.gameObject.SetActive(true);
-            popup.Init();
-            popup.BindQuest(quest);
-            popup.PlayOpenAnimation();
-
-            _activePopup = popup;
+            EnsurePreloaded(() => ShowPopup(quest));
         }
 
-        private static Transform FindUiRoot()
+        private void ShowPopup(NyangQuariumQuestData quest)
         {
-            GameObject root = GameObject.Find("@UI_Root");
-            return root != null ? root.transform : null;
+            if (_cachedPopup == null)
+                return;
+
+            _cachedPopup.BindQuest(quest);
+            _cachedPopup.OpenWhenReady();
+        }
+
+        public static void RefreshOpenPopup()
+        {
+            if (Instance?._cachedPopup == null || !Instance._cachedPopup.gameObject.activeInHierarchy)
+                return;
+
+            Instance._cachedPopup.RefreshBoundQuestView();
         }
     }
 }

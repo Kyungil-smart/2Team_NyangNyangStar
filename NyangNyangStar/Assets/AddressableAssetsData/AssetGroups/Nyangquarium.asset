@@ -89,6 +89,11 @@ MonoBehaviour:
     m_SerializedLabels:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2f5ed6f2a62d48044921e5b9d2a58071
+    m_Address: NyangQuariumQuestPopUp
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 396681227a450b4498fb5469e6f6cfd6
     m_Address: NQ_Btn_Complete
     m_ReadOnly: 0
