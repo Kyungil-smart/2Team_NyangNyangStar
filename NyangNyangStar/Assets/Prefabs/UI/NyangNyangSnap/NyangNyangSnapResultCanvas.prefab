@@ -4568,7 +4568,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b6f988986d552cc42ac0abef42e2134c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _androidAdUnitId: Rewarded_Android
+  _androidAdUnitId: NNSnapRewarded_Android
   _iOSAdUnitId: Rewarded_iOS
   _showAdButton: {fileID: 0}
 --- !u!1 &5905555581559353347
