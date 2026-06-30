@@ -28,7 +28,7 @@ RectTransform:
   m_GameObject: {fileID: 86119103092294942}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 1, y: 0.925, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 7022728568534508893}
@@ -36,7 +36,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.1, y: 0}
   m_AnchorMax: {x: 0.9, y: 0.8}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 20}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &9055909581595143830
@@ -1401,7 +1401,7 @@ MonoBehaviour:
   - {fileID: 4837094989988135879}
   _content: {fileID: 5928702403332428047}
   _itemTemplate: {fileID: 5967278365901847108}
-  _placementController: {fileID: 0}
+  _placementController: {fileID: 2520541861548970491}
   _minimumSlotCount: 8
   _filterToggles:
   - {fileID: 1805758192450637941}
@@ -2180,7 +2180,7 @@ MonoBehaviour:
   _category: 0
   _itemImage: {fileID: 70081421690852430}
   _countText: {fileID: 4041524779878488118}
-  _placementController: {fileID: 0}
+  _placementController: {fileID: 2520541861548970491}
 --- !u!1 &2479214159063264186
 GameObject:
   m_ObjectHideFlags: 0
@@ -2615,7 +2615,7 @@ RectTransform:
   m_GameObject: {fileID: 2988050780435846680}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 1, y: 0.8625, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 544940669662461321}
@@ -6161,6 +6161,9 @@ MonoBehaviour:
   _inventoryRect: {fileID: 4520033290254702506}
   _inventoryClosedOffsetY: 610
   _inventoryMoveDuration: 0.3
+  _fishLayoutGroup: {fileID: 5928702403332428047}
+  _fishColumnCount: 4
+  _fishCellHeightRatio: 1
   _oceanLayoutUI: {fileID: 0}
   _layoutModeOnlyObjects: []
   _waterGazeModeOnlyObjects: []

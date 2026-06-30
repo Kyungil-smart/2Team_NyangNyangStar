@@ -119,8 +119,8 @@ public sealed class NyangQuariumFishInventoryListUI : MonoBehaviour
         ApplyCategoryUI();
         Refresh();
 
-        Debug.Log(
-            "[NyangQuariumFishInventoryListUI] 관상어 탭 활성화",
+        DebugTool.Log("[NyangQuariumFishInventoryListUI] 관상어 탭 활성화",
+            DebugType.UI,
             this);
     }
 
@@ -141,8 +141,8 @@ public sealed class NyangQuariumFishInventoryListUI : MonoBehaviour
         ApplyCategoryUI();
         Refresh();
 
-        Debug.Log(
-            "[NyangQuariumFishInventoryListUI] 자연 요소 탭 활성화",
+        DebugTool.Log("[NyangQuariumFishInventoryListUI] 자연 요소 탭 활성화",
+            DebugType.UI,
             this);
     }
 
@@ -157,9 +157,9 @@ public sealed class NyangQuariumFishInventoryListUI : MonoBehaviour
         {
             FillEmptySlots();
 
-            Debug.LogWarning(
-                "[NyangQuariumFishInventoryListUI] " +
+            DebugTool.Warning("[NyangQuariumFishInventoryListUI] " +
                 "머지보드가 등록되지 않아 빈 슬롯만 표시합니다.",
+                DebugType.UI,
                 this);
 
             return;
@@ -191,11 +191,11 @@ public sealed class NyangQuariumFishInventoryListUI : MonoBehaviour
         GroupOwnedFishEntries();
         CreateFishItems();
 
-        Debug.Log(
-            $"[NyangQuariumFishInventoryListUI] " +
+        DebugTool.Log($"[NyangQuariumFishInventoryListUI] " +
             $"관상어 목록 갱신 완료 - " +
             $"Raw:{_ownedFishEntries.Count}, " +
             $"Grouped:{_groupedFishEntries.Count}",
+            DebugType.UI,
             this);
     }
 
@@ -208,12 +208,12 @@ public sealed class NyangQuariumFishInventoryListUI : MonoBehaviour
         GroupOwnedNatureEntries();
         CreateNatureItems();
 
-        Debug.Log(
-            $"[NyangQuariumFishInventoryListUI] " +
+        DebugTool.Log($"[NyangQuariumFishInventoryListUI] " +
             $"자연 요소 목록 갱신 완료 - " +
             $"Raw:{_ownedNatureEntries.Count}, " +
             $"Grouped:{_groupedNatureEntries.Count}, " +
             $"Aquarium:{_aquariumType}",
+            DebugType.UI,
             this);
     }
 
@@ -415,9 +415,9 @@ public sealed class NyangQuariumFishInventoryListUI : MonoBehaviour
             return true;
         }
 
-        Debug.LogWarning(
-            "[NyangQuariumFishInventoryListUI] " +
+        DebugTool.Warning("[NyangQuariumFishInventoryListUI] " +
             "Content 또는 ItemTemplate이 연결되지 않았습니다.",
+            DebugType.UI,
             this);
 
         return false;

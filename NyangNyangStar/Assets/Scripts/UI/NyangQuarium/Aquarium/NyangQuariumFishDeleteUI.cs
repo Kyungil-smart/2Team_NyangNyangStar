@@ -6,6 +6,7 @@ using UI.NyangQuarium;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using System.Collections;
 
 /// <summary>
 /// 배치 완료된 물고기와 자연 요소의 삭제 UI를 담당합니다.
@@ -15,6 +16,7 @@ public sealed class NyangQuariumFishDeleteUI : MonoBehaviour
     [Header("배치 물고기 시스템")]
     [SerializeField]
     private NyangquariumPlacedFishRenderer _placedFishRenderer;
+
 
     [Header("오브젝트 데이터")]
     [Tooltip("SpriteKey로 물고기와 자연 요소 이름을 조회할 SO")]
@@ -188,8 +190,8 @@ public sealed class NyangQuariumFishDeleteUI : MonoBehaviour
     {
         if (_placedFishRenderer == null)
         {
-            Debug.LogWarning(
-                "[NyangQuariumFishDeleteUI] PlacedFishRenderer가 연결되지 않았습니다.",
+            DebugTool.Warning("[NyangQuariumFishDeleteUI] PlacedFishRenderer가 연결되지 않았습니다.",
+                DebugType.UI,
                 this);
 
             return;
@@ -254,9 +256,9 @@ public sealed class NyangQuariumFishDeleteUI : MonoBehaviour
         RefreshSelectedObjectName();
         UpdateSelectionUIPosition();
 
-        Debug.Log(
-            $"[NyangQuariumFishDeleteUI] 물고기 삭제 모드 진입 - " +
+        DebugTool.Log($"[NyangQuariumFishDeleteUI] 물고기 삭제 모드 진입 - " +
             $"Key:{_selectedFish.SpriteKey}",
+            DebugType.UI,
             this);
     }
 
@@ -297,10 +299,10 @@ public sealed class NyangQuariumFishDeleteUI : MonoBehaviour
         RefreshSelectedObjectName();
         UpdateSelectionUIPosition();
 
-        Debug.Log(
-            $"[NyangQuariumFishDeleteUI] 자연 요소 삭제 모드 진입 - " +
+        DebugTool.Log($"[NyangQuariumFishDeleteUI] 자연 요소 삭제 모드 진입 - " +
             $"ItemId:{_selectedNature.ItemId}, " +
             $"SpriteKey:{_selectedNature.SpriteKey}",
+            DebugType.UI,
             this);
     }
 
@@ -313,8 +315,8 @@ public sealed class NyangQuariumFishDeleteUI : MonoBehaviour
 
         if (_deleteConfirmPopup == null)
         {
-            Debug.LogWarning(
-                "[NyangQuariumFishDeleteUI] 삭제 확인 팝업이 연결되지 않았습니다.",
+            DebugTool.Warning("[NyangQuariumFishDeleteUI] 삭제 확인 팝업이 연결되지 않았습니다.",
+                DebugType.UI,
                 this);
 
             return;
@@ -326,8 +328,8 @@ public sealed class NyangQuariumFishDeleteUI : MonoBehaviour
         _deleteConfirmPopup.SetActive(true);
         _deleteConfirmPopup.transform.SetAsLastSibling();
 
-        Debug.Log(
-            "[NyangQuariumFishDeleteUI] 삭제 확인 팝업 열기",
+        DebugTool.Log("[NyangQuariumFishDeleteUI] 삭제 확인 팝업 열기",
+            DebugType.UI,
             this);
     }
 
@@ -351,8 +353,8 @@ public sealed class NyangQuariumFishDeleteUI : MonoBehaviour
     {
         if (_placedFishRenderer == null)
         {
-            Debug.LogWarning(
-                "[NyangQuariumFishDeleteUI] PlacedFishRenderer가 연결되지 않았습니다.",
+            DebugTool.Warning("[NyangQuariumFishDeleteUI] PlacedFishRenderer가 연결되지 않았습니다.",
+                DebugType.UI,
                 this);
 
             ExitDeleteMode(true);
@@ -363,8 +365,8 @@ public sealed class NyangQuariumFishDeleteUI : MonoBehaviour
 
         if (!deleted)
         {
-            Debug.LogWarning(
-                "[NyangQuariumFishDeleteUI] 선택된 물고기를 삭제하지 못했습니다.",
+            DebugTool.Warning("[NyangQuariumFishDeleteUI] 선택된 물고기를 삭제하지 못했습니다.",
+                DebugType.UI,
                 this);
 
             CloseDeleteConfirmPopup();
@@ -381,9 +383,9 @@ public sealed class NyangQuariumFishDeleteUI : MonoBehaviour
         CloseDeleteConfirmPopup();
         ExitDeleteMode(false);
 
-        Debug.Log(
-            $"[NyangQuariumFishDeleteUI] 물고기 삭제 완료 - " +
+        DebugTool.Log($"[NyangQuariumFishDeleteUI] 물고기 삭제 완료 - " +
             $"남은 수:{currentData.Count}",
+            DebugType.UI,
             this);
     }
 
@@ -391,6 +393,12 @@ public sealed class NyangQuariumFishDeleteUI : MonoBehaviour
     {
         NyangQuariumFishPlacementController placementController =
             GetComponent<NyangQuariumFishPlacementController>();
+
+        if (placementController == null)
+        {
+            placementController =
+                GetComponentInParent<NyangQuariumFishPlacementController>();
+        }
 
         if (placementController != null)
             _aquariumType = placementController.AquariumType;
@@ -404,9 +412,9 @@ public sealed class NyangQuariumFishDeleteUI : MonoBehaviour
 
         if (firestoreSO == null)
         {
-            Debug.LogWarning(
-                "[NyangQuariumFishDeleteUI] " +
+            DebugTool.Warning("[NyangQuariumFishDeleteUI] " +
                 "Firestore가 준비되지 않아 수조 배치 저장을 생략합니다.",
+                DebugType.UI,
                 this);
             return;
         }
@@ -422,9 +430,32 @@ public sealed class NyangQuariumFishDeleteUI : MonoBehaviour
         if (_selectedNature == null)
             return;
 
-        GameObject deleteTarget = _selectedNature.gameObject;
-        int deletedItemId = _selectedNature.ItemId;
-        string deletedSpriteKey = _selectedNature.SpriteKey;
+        NyangQuariumPlacedNature deletedNature = _selectedNature;
+        GameObject deleteTarget = deletedNature.gameObject;
+        int deletedItemId = deletedNature.ItemId;
+        string deletedSpriteKey = deletedNature.SpriteKey;
+
+        // Destroy는 프레임 종료에 처리되므로 삭제 대상을 제외한 목록을 먼저 저장합니다.
+        NyangQuariumFishPlacementController placementController =
+            GetComponent<NyangQuariumFishPlacementController>();
+
+        if (placementController == null)
+        {
+            placementController =
+                GetComponentInParent<NyangQuariumFishPlacementController>();
+        }
+
+        if (placementController != null)
+        {
+            placementController.SavePlacedNatureSnapshot(deletedNature);
+        }
+        else
+        {
+            DebugTool.Warning("[NyangQuariumFishDeleteUI] " +
+                "FishPlacementController를 찾지 못해 자연 요소 Firestore 저장을 수행하지 못했습니다.",
+                DebugType.UI,
+                this);
+        }
 
         _selectedNature = null;
         _selectedNatureSiblingIndex = -1;
@@ -435,14 +466,11 @@ public sealed class NyangQuariumFishDeleteUI : MonoBehaviour
         if (deleteTarget != null)
             Destroy(deleteTarget);
 
-        PlacedNatureDeleted?.Invoke(
-            deletedItemId,
-            deletedSpriteKey);
+        PlacedNatureDeleted?.Invoke(deletedItemId, deletedSpriteKey);
 
-        Debug.Log(
-            $"[NyangQuariumFishDeleteUI] 자연 요소 삭제 완료 - " +
-            $"ItemId:{deletedItemId}, " +
-            $"SpriteKey:{deletedSpriteKey}",
+        DebugTool.Log($"[NyangQuariumFishDeleteUI] 자연 요소 삭제 완료 - " +
+            $"ItemId:{deletedItemId}, SpriteKey:{deletedSpriteKey}",
+            DebugType.UI,
             this);
     }
 
@@ -458,8 +486,8 @@ public sealed class NyangQuariumFishDeleteUI : MonoBehaviour
         RefreshSelectedObjectName();
         UpdateSelectionUIPosition();
 
-        Debug.Log(
-            "[NyangQuariumFishDeleteUI] 삭제 확인 취소 - 삭제 모드 복귀",
+        DebugTool.Log("[NyangQuariumFishDeleteUI] 삭제 확인 취소 - 삭제 모드 복귀",
+            DebugType.UI,
             this);
     }
 
@@ -567,8 +595,8 @@ public sealed class NyangQuariumFishDeleteUI : MonoBehaviour
             _placedFishRenderer.ClearSelection();
         }
 
-        Debug.Log(
-            "[NyangQuariumFishDeleteUI] 삭제 모드 종료",
+        DebugTool.Log("[NyangQuariumFishDeleteUI] 삭제 모드 종료",
+            DebugType.UI,
             this);
     }
 
@@ -642,10 +670,10 @@ public sealed class NyangQuariumFishDeleteUI : MonoBehaviour
 
         _fishNameText.text = spriteKey;
 
-        Debug.LogWarning(
-            $"[NyangQuariumFishDeleteUI] " +
+        DebugTool.Warning($"[NyangQuariumFishDeleteUI] " +
             $"SpriteKey와 일치하는 데이터를 찾지 못했습니다. " +
             $"Key:{spriteKey}",
+            DebugType.UI,
             this);
     }
 

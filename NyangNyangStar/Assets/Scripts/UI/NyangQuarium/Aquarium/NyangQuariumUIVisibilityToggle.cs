@@ -62,8 +62,8 @@ public sealed class NyangQuariumUIVisibilityToggle : MonoBehaviour
     {
         if (_toggleButton == null)
         {
-            Debug.LogWarning(
-                "[NyangQuariumUIVisibilityToggle] UI 토글 버튼이 연결되지 않았습니다.",
+            DebugTool.Warning("[NyangQuariumUIVisibilityToggle] UI 토글 버튼이 연결되지 않았습니다.",
+                DebugType.UI,
                 this);
 
             return;
@@ -88,8 +88,8 @@ public sealed class NyangQuariumUIVisibilityToggle : MonoBehaviour
 
         SetUIVisible(!_isUIVisible);
 
-        Debug.Log(
-            $"[NyangQuariumUIVisibilityToggle] 기본 UI 표시 상태: {_isUIVisible}",
+        DebugTool.Log($"[NyangQuariumUIVisibilityToggle] 기본 UI 표시 상태: {_isUIVisible}",
+            DebugType.UI,
             this);
     }
 
