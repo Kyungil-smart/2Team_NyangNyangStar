@@ -183,23 +183,28 @@ namespace UI.MergeBoard
             return addedSlot != null;
         }
 
-        public Task<ItemSlot> TryAddItemFromQueueAndSelectAsync(ItemData itemData)
+        public async Task<ItemSlot> TryAddItemFromQueueAndSelectAsync(ItemData itemData)
         {
             bool result = TryAddItemInternal(itemData, out int changedSlotNumber);
 
             if (!result)
-                return Task.FromResult<ItemSlot>(null);
+                return null;
 
             ItemSlot addedSlot = GetSlot(changedSlotNumber);
             if (addedSlot != null)
                 SelectSlot(addedSlot);
 
-            // 큐 아이템을 보드에 넣는 순간 로컬 보드 상태는 이미 변경되었다.
-            // Firestore 저장을 기다리면 모바일에서 SaveSlotAsync가 지연될 때
-            // BoardRewardQueue의 Dequeue까지 도달하지 못해 큐가 Pop되지 않는 문제가 발생한다.
-            SaveSlotFireAndForget(changedSlotNumber);
+            if (!await SaveSlotSafeAsync(changedSlotNumber))
+            {
+                SetSlotData(changedSlotNumber, ItemData.Empty);
 
-            return Task.FromResult(addedSlot);
+                if (_selectedSlot != null && _selectedSlot.SlotNumber == changedSlotNumber)
+                    ClearSelectedSlot();
+
+                return null;
+            }
+
+            return addedSlot;
         }
 
         public Task<bool> TryAddItemAsync(ItemData itemData)
@@ -296,17 +301,24 @@ namespace UI.MergeBoard
                 ItemData fromData = fromSlot.ItemData.Clone();
                 ItemData toData = toSlot.HasItem ? toSlot.ItemData.Clone() : ItemData.Empty;
 
+                Dictionary<int, ItemData> changedSlots = new Dictionary<int, ItemData>
+                {
+                    { fromSlotNumber, toData.Clone() },
+                    { toSlotNumber, fromData.Clone() }
+                };
+
                 SetSlotData(toSlotNumber, fromData);
                 SetSlotData(fromSlotNumber, toData);
 
-                Dictionary<int, ItemData> changedSlots = new Dictionary<int, ItemData>
+                if (!await SaveSlotsSafeAsync(changedSlots))
                 {
-                    { fromSlotNumber, _slotItemDict[fromSlotNumber].Clone() },
-                    { toSlotNumber, _slotItemDict[toSlotNumber].Clone() }
-                };
+                    SetSlotData(fromSlotNumber, fromData);
+                    SetSlotData(toSlotNumber, toData);
+                    SelectSlot(fromSlot);
+                    return false;
+                }
 
                 UpdateSelectionAfterMove(toSlot);
-                await SaveSlotsSafeAsync(changedSlots);
                 return true;
             }
             finally
@@ -368,13 +380,33 @@ namespace UI.MergeBoard
             if (!IsValidSlotNumber(slotNumber))
                 return false;
 
+            ItemData previousData = GetItemData(slotNumber);
             SetSlotData(slotNumber, ItemData.Empty);
-            await SaveSlotSafeAsync(slotNumber);
+
+            if (!await SaveSlotSafeAsync(slotNumber))
+            {
+                SetSlotData(slotNumber, previousData);
+                return false;
+            }
 
             if (_selectedSlot != null && _selectedSlot.SlotNumber == slotNumber)
                 ClearSelectedSlot();
 
             return true;
+        }
+
+        public async Task<bool> ClearSlotIfContainsAsync(int slotNumber, int expectedItemID)
+        {
+            if (!IsValidSlotNumber(slotNumber) || expectedItemID <= 0)
+                return false;
+
+            if (!_slotItemDict.TryGetValue(slotNumber, out ItemData itemData))
+                return false;
+
+            if (itemData == null || !itemData.HasItem || itemData.ItemID != expectedItemID)
+                return false;
+
+            return await ClearSlotAsync(slotNumber);
         }
 
         public ItemData GetItemData(int slotNumber)
@@ -427,6 +459,7 @@ namespace UI.MergeBoard
             }
 
             Dictionary<int, ItemData> changedSlots = new Dictionary<int, ItemData>();
+            Dictionary<int, ItemData> backupData = new Dictionary<int, ItemData>();
             int consumedCount = 0;
             bool selectedSlotConsumed = false;
 
@@ -441,13 +474,25 @@ namespace UI.MergeBoard
                 if (_selectedSlot != null && _selectedSlot.SlotNumber == slotNumber)
                     selectedSlotConsumed = true;
 
+                backupData[slotNumber] = itemData.Clone();
                 SetSlotData(slotNumber, ItemData.Empty);
                 changedSlots[slotNumber] = ItemData.Empty;
                 consumedCount++;
             }
 
-            if (changedSlots.Count > 0)
-                await SaveSlotsSafeAsync(changedSlots);
+            if (changedSlots.Count > 0 && !await SaveSlotsSafeAsync(changedSlots))
+            {
+                for (int slotNumber = 1; slotNumber <= SlotCount; slotNumber++)
+                {
+                    if (changedSlots.ContainsKey(slotNumber) && backupData.TryGetValue(slotNumber, out ItemData backupItem))
+                        SetSlotData(slotNumber, backupItem);
+                }
+
+                if (selectedSlotConsumed && _selectedSlot != null)
+                    SelectSlot(_selectedSlot);
+
+                return 0;
+            }
 
             if (selectedSlotConsumed)
                 ClearSelectedSlot();
@@ -502,8 +547,16 @@ namespace UI.MergeBoard
             if (!IsValidSlotNumber(slotNumber))
                 return false;
 
+            ItemData previousData = GetItemData(slotNumber);
             SetSlotData(slotNumber, ItemData.Empty);
-            await SaveSlotSafeAsync(slotNumber);
+
+            if (!await SaveSlotSafeAsync(slotNumber))
+            {
+                SetSlotData(slotNumber, previousData);
+                SelectSlot(_selectedSlot);
+                return false;
+            }
+
             ClearSelectedSlot();
 
             return true;
@@ -706,43 +759,42 @@ namespace UI.MergeBoard
             return slotNumber >= 1 && slotNumber <= SlotCount;
         }
 
-        private void SaveSlotFireAndForget(int slotNumber)
-        {
-            _ = SaveSlotSafeAsync(slotNumber);
-        }
-
-        private async Task SaveSlotSafeAsync(int slotNumber)
+        private async Task<bool> SaveSlotSafeAsync(int slotNumber)
         {
             if (!ResolveMergeBoardFirestore())
-                return;
+                return false;
 
             if (!_slotItemDict.TryGetValue(slotNumber, out ItemData itemData))
-                return;
+                return false;
 
             ItemData saveData = itemData?.Clone() ?? ItemData.Empty;
 
             try
             {
                 await _mergeBoardFirestore.SaveSlotAsync(slotNumber, saveData);
+                return true;
             }
             catch (Exception exception)
             {
                 Debug.LogError($"{slotNumber}번 슬롯 저장 실패 : {exception.Message}", this);
+                return false;
             }
         }
 
-        private async Task SaveSlotsSafeAsync(Dictionary<int, ItemData> changedSlots)
+        private async Task<bool> SaveSlotsSafeAsync(Dictionary<int, ItemData> changedSlots)
         {
             if (!ResolveMergeBoardFirestore())
-                return;
+                return false;
 
             try
             {
                 await _mergeBoardFirestore.SaveSlotsAsync(changedSlots);
+                return true;
             }
             catch (Exception exception)
             {
                 Debug.LogError($"보드 슬롯 저장 실패 : {exception.Message}", this);
+                return false;
             }
         }
         

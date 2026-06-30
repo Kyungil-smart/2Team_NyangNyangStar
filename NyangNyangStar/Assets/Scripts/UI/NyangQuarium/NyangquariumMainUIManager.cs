@@ -39,6 +39,7 @@ namespace UI.NyangQuarium
         private const string CollectionButtonSpriteKey = "NQ_Btn_Collection";
         private const string FreshAquariumButtonSpriteKey = "NQ_Btn_FreshWater";
         private const string OceanAquariumButtonSpriteKey = "NQ_Btn_SaltWater";
+        private const string TransitionSpriteKey = "NQ_BG_Transition";
 
         [Header("메인 버튼")]
         [FormerlySerializedAs("_boardQuestButton")]
@@ -303,10 +304,14 @@ namespace UI.NyangQuarium
                 return;
             }
 
-            transition.Cover(() =>
+            transition.Cover(TransitionSpriteKey, () =>
             {
                 ShowContent();
-                transition.Reveal(Unlock);
+                transition.Reveal(() =>
+                {
+                    transition.RestoreDefaultCoverSprite();
+                    Unlock();
+                });
             });
         }
 
@@ -339,10 +344,14 @@ namespace UI.NyangQuarium
                 return;
             }
 
-            transition.Cover(() =>
+            transition.Cover(TransitionSpriteKey, () =>
             {
                 coveredAction?.Invoke();
-                transition.Reveal(Unlock);
+                transition.Reveal(() =>
+                {
+                    transition.RestoreDefaultCoverSprite();
+                    Unlock();
+                });
             });
         }
 
