@@ -67,6 +67,7 @@ public class NyangQuariumOceanLayoutUI : UIPopup, INyangquariumEntryReceiver
     public bool IsWaterGazeMode => _entryMode == NyangquariumEntryMode.WaterGaze;
 
     private NyangQuariumOceanLayoutUISprite _nyangQuariumOceanLayoutUISprite;
+    private NyangQuariumUIVisibilityToggle _uiVisibilityToggle;
 
     public override void Init()
     {
@@ -78,10 +79,13 @@ public class NyangQuariumOceanLayoutUI : UIPopup, INyangquariumEntryReceiver
         _entryMode = NyangquariumEntryContext.Current;
         Bind<Button>(typeof(NyangQuariumOceanLayoutUIButton));
 
-        _nyangQuariumOceanLayoutUISprite =
-            GetComponent<NyangQuariumOceanLayoutUISprite>();
+        _nyangQuariumOceanLayoutUISprite =GetComponent<NyangQuariumOceanLayoutUISprite>();
 
         _nyangQuariumOceanLayoutUISprite?.Init();
+
+        _uiVisibilityToggle =GetComponent<NyangQuariumUIVisibilityToggle>();
+
+        BindUIVisibilityToggle();
 
         BindButtons();
         ResolveInventoryRect();
@@ -95,7 +99,32 @@ public class NyangQuariumOceanLayoutUI : UIPopup, INyangquariumEntryReceiver
             DebugType.UI,
             this);
     }
+    private void BindUIVisibilityToggle()
+    {
+        if (_uiVisibilityToggle == null)
+        {
+            DebugTool.Warning(
+                "[NyangQuariumOceanLayoutUI] " +
+                "NyangQuariumUIVisibilityToggle을 찾을 수 없습니다.",
+                DebugType.UI,
+                this);
 
+            return;
+        }
+
+        _uiVisibilityToggle.VisibilityChanged -= OnUIVisibilityChanged;
+        _uiVisibilityToggle.VisibilityChanged += OnUIVisibilityChanged;
+
+        OnUIVisibilityChanged(_uiVisibilityToggle.IsUIVisible);
+    }
+
+    private void OnUIVisibilityChanged(bool isUIVisible)
+    {
+        if (_nyangQuariumOceanLayoutUISprite == null)
+            return;
+
+        _nyangQuariumOceanLayoutUISprite.SetUIToggleSprite(isUIVisible);
+    }
     private void BindButtons()
     {
         _backButton = Get<Button>((int)NyangQuariumOceanLayoutUIButton.BackButton);
@@ -463,14 +492,21 @@ public class NyangQuariumOceanLayoutUI : UIPopup, INyangquariumEntryReceiver
         }
 
         if (_filterTab != null)
-        { 
             _filterTab.SetActive(false);
-        }
 
         if (_oceanwaterLayoutPanel != null)
             _oceanwaterLayoutPanel.SetActive(false);
 
         SetMainUIActive(true);
+    }
+
+    private void OnDestroy()
+    {
+        if (_uiVisibilityToggle != null)
+        {
+            _uiVisibilityToggle.VisibilityChanged -=
+                OnUIVisibilityChanged;
+        }
     }
 }
 
