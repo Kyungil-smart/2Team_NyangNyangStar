@@ -1,6 +1,11 @@
 using System;
+using Core.Managers;
 using DG.Tweening;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
+using UnityEngine.ResourceManagement.AsyncOperations;
+using UnityEngine.UI;
+using Util;
 
 namespace UI.Transition
 {
@@ -12,6 +17,7 @@ namespace UI.Transition
         [SerializeField] private Canvas _canvas;
         [SerializeField] private CanvasGroup _canvasGroup;
         [SerializeField] private RectTransform _coverRect;
+        [SerializeField] private Image _coverImage;
 
         [Header("Option")]
         [SerializeField] private float _screenHeight = 1920f;
@@ -23,6 +29,10 @@ namespace UI.Transition
         private Tween _tween;
         private bool _isCovered;
         private bool _isTransitioning;
+        private Sprite _defaultCoverSprite;
+        private AsyncOperationHandle<Sprite> _coverSpriteHandle;
+        private int _coverSpriteRequestId;
+        private bool _hasDefaultCoverSprite;
 
         public bool IsTransitioning => _isTransitioning;
 
@@ -46,6 +56,21 @@ namespace UI.Transition
             if (_coverRect == null)
                 _coverRect = GetComponentInChildren<RectTransform>(true);
 
+            if (_coverImage == null && _coverRect != null)
+                _coverImage = _coverRect.GetComponent<Image>();
+
+            if (_coverImage == null)
+                _coverImage = GetComponentInChildren<Image>(true);
+
+            if (_coverRect == null && _coverImage != null)
+                _coverRect = _coverImage.rectTransform;
+
+            if (_coverImage != null)
+            {
+                _defaultCoverSprite = _coverImage.sprite;
+                _hasDefaultCoverSprite = true;
+            }
+
             if (_canvas != null)
             {
                 _canvas.overrideSorting = true;
@@ -53,6 +78,11 @@ namespace UI.Transition
             }
 
             HideImmediately();
+        }
+
+        public void Cover(string coverSpriteKey, Action onComplete = null)
+        {
+            ChangeCoverSprite(coverSpriteKey, () => Cover(onComplete));
         }
 
         public void Cover(Action onComplete = null)
@@ -82,6 +112,15 @@ namespace UI.Transition
                     _isTransitioning = false;
                     onComplete?.Invoke();
                 });
+        }
+
+        public void RestoreDefaultCoverSprite()
+        {
+            _coverSpriteRequestId++;
+            ReleaseCoverSprite();
+
+            if (_coverImage != null && _hasDefaultCoverSprite)
+                _coverImage.sprite = _defaultCoverSprite;
         }
 
         public void Reveal(Action onComplete = null)
@@ -150,6 +189,64 @@ namespace UI.Transition
             _canvasGroup.alpha = isActive ? 1f : 0f;
             _canvasGroup.blocksRaycasts = isActive;
             _canvasGroup.interactable = isActive;
+        }
+
+        private void ChangeCoverSprite(string coverSpriteKey, Action onResolved = null)
+        {
+            if (_coverImage == null || string.IsNullOrWhiteSpace(coverSpriteKey))
+            {
+                onResolved?.Invoke();
+                return;
+            }
+
+            KeyContainer.Sprites.Add(coverSpriteKey);
+
+            int requestId = ++_coverSpriteRequestId;
+
+            GameManager.Addressable.LoadSprite(
+                coverSpriteKey,
+                (sprite, handle) =>
+                {
+                    if (requestId != _coverSpriteRequestId || _coverImage == null)
+                    {
+                        if (handle.IsValid())
+                            Addressables.Release(handle);
+
+                        return;
+                    }
+
+                    ReleaseCoverSprite();
+                    _coverSpriteHandle = handle;
+                    _coverImage.type = Image.Type.Simple;
+                    _coverImage.preserveAspect = false;
+                    _coverImage.sprite = sprite;
+                    onResolved?.Invoke();
+                },
+                failedKey =>
+                {
+                    if (requestId != _coverSpriteRequestId)
+                        return;
+
+                    onResolved?.Invoke();
+                });
+        }
+
+        private void ReleaseCoverSprite()
+        {
+            if (!_coverSpriteHandle.IsValid())
+                return;
+
+            Addressables.Release(_coverSpriteHandle);
+            _coverSpriteHandle = default;
+        }
+
+        private void OnDestroy()
+        {
+            _coverSpriteRequestId++;
+            ReleaseCoverSprite();
+
+            if (Instance == this)
+                Instance = null;
         }
     }
 }
