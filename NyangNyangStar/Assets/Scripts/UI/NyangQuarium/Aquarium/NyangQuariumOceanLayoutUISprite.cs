@@ -9,6 +9,7 @@ public class NyangQuariumOceanLayoutUISprite : UIBase
 
     private const string UIToggleOnSpriteKey = "NQ_Btn_On";
     private const string UIToggleOffSpriteKey = "NQ_Btn_Off";
+    [SerializeField] private Color _freshwaterLayoutPanel;
 
     private UISpriteController[] _spriteController;
 
@@ -44,8 +45,10 @@ public class NyangQuariumOceanLayoutUISprite : UIBase
         SetSprite(NyangQuariumOceanLayoutUIImage.FreshFishCountIcon, "NQ_Icon_Fish");
         SetSprite(NyangQuariumOceanLayoutUIImage.FreshNatureCountIcon, "NQ_Icon_Environment");
 
-        //SetSprite(NyangQuariumFreshLayoutUIImage.FreshwaterLayoutPanel, "NQ_Char_Moongchi");
-        //SetSprite(NyangQuariumFreshLayoutUIImage.FishItemTemplate, "NQ_Char_Moongchi");
+        SetSprite(NyangQuariumOceanLayoutUIImage.OceanwaterLayoutPanel, "Shape_Rectangle", _freshwaterLayoutPanel);
+        SetSprite(NyangQuariumOceanLayoutUIImage.OceanWaterFishView, "Shape_Rectangle");
+
+        SetSprite(NyangQuariumOceanLayoutUIImage.FishItemTemplate, "Shape_Rectangle");
         SetSprite(NyangQuariumOceanLayoutUIImage.CloseButton, "Btn_Close");
         SetSprite(NyangQuariumOceanLayoutUIImage.confirmButton, "Snap_Btn_White");
         SetSprite(NyangQuariumOceanLayoutUIImage.FishTabButton, "Snap_Btn_White");
@@ -97,11 +100,12 @@ public enum NyangQuariumOceanLayoutUIImage
     UIToggleButton,
     FreshFishCountIcon,
     FreshNatureCountIcon,
-    FreshwaterLayoutPanel,
+    OceanwaterLayoutPanel,
     FishItemTemplate,
     CloseButton,
     confirmButton,
     FishTabButton,
     NatureTextButton,
-    FilterButton
+    FilterButton,
+    OceanWaterFishView
 }
