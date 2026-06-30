@@ -26,14 +26,11 @@ public class NyangQuariumOceanLayoutUISprite : UIBase
         SetSprite(NyangQuariumOceanLayoutUIImage.NyangQuariumLayoutPanel, "NQ_BG_SaltWater");
 
         SetSprite(NyangQuariumOceanLayoutUIImage.WindowButton, "NQ_Img_AquaTunnel");
-        SetSprite(NyangQuariumOceanLayoutUIImage.LevelImage, "NQ_Icon_TankLevel");
         SetSprite(NyangQuariumOceanLayoutUIImage.BackButton, "NQ_Btn_Back");
-        SetSprite(NyangQuariumOceanLayoutUIImage.OceanWaterWeedButton, "NQ_Btn_CreatureSalt");
-        SetSprite(NyangQuariumOceanLayoutUIImage.OceanFishButton, "NQ_Btn_FishSalt");
-        SetSprite(NyangQuariumOceanLayoutUIImage.ChangeButton, "NQ_Btn_FishFresh");
-        //SetSprite(NyangQuariumOceanLayoutUIImage.Confirm, "NQ_Btn_FishFresh");
+        SetSprite(NyangQuariumOceanLayoutUIImage.OceanFishButton, "NQ_Btn_Inventory");
+        SetSprite(NyangQuariumOceanLayoutUIImage.ChangeButton, "NQ_Btn_FreshWater");
+        SetSprite(NyangQuariumOceanLayoutUIImage.Confirm, "NQ_Btn_Confirm");
         SetSprite(NyangQuariumOceanLayoutUIImage.Cancle, "Btn_Close");
-
     }
 
     private void SetSprite(NyangQuariumOceanLayoutUIImage image, string key)
@@ -53,9 +50,7 @@ public enum NyangQuariumOceanLayoutUIImage
     NyangQuariumLayoutPanel,
     WindowButton,
     CatImage,
-    LevelImage,
     BackButton,
-    OceanWaterWeedButton,
     OceanFishButton,
     ChangeButton,
     Confirm,
