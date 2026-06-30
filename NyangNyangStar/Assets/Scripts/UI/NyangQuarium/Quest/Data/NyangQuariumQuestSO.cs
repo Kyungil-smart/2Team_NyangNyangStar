@@ -316,16 +316,7 @@ namespace Data.ScriptableObjects.NyangQuariumSO
                 return false;
             }
 
-            // E열 선행 퀘스트 ID(43001 등)는 Enum.TryParse가 통과할 수 있어 questType으로 오인됨
-            if (int.TryParse(value, out _))
-            {
-                questType = NyangQuariumQuestType.None;
-                return false;
-            }
-
-            if (!Enum.TryParse(value, true, out questType) ||
-                questType == NyangQuariumQuestType.None ||
-                !Enum.IsDefined(typeof(NyangQuariumQuestType), questType))
+            if (!Enum.TryParse(value, true, out questType) || questType == NyangQuariumQuestType.None)
             {
                 questType = NyangQuariumQuestType.None;
                 return false;
