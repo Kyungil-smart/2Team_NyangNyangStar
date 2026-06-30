@@ -1,3 +1,4 @@
+using System;
 using Core.Managers;
 using System.Collections;
 using System.Collections.Generic;
@@ -15,6 +16,8 @@ using Util;
 
 public class MainUI : UIScene
 {
+    private const string NyangquariumTransitionSpriteKey = "NQ_BG_Transition";
+
     [SerializeField] private Canvas _mainUICanvas;
 
     [Header("버튼")]
@@ -206,6 +209,13 @@ public class MainUI : UIScene
         _ = PlayerResourceManager.Instance.RefreshAsync();
     }
 
+    public event Action MergeBoardVisibilityChanged;
+
+    public void OpenMergeBoardFromQuest()
+    {
+        OpenMergeBoard();
+    }
+
     private void OpenMergeBoard()
     {
         if (_mergeBoardController == null)
@@ -282,11 +292,15 @@ public class MainUI : UIScene
 
     private void SetMergeBoardVisible(bool isOpen)
     {
+        bool wasVisible = _isMergeBoardVisible;
         _isMergeBoardVisible = isOpen;
         _mergeBoardController.SetVisible(isOpen);
 
         if (_mainUICanvas != null)
             _mainUICanvas.sortingOrder = isOpen ? 0 : 2;
+
+        if (wasVisible && !isOpen)
+            MergeBoardVisibilityChanged?.Invoke();
     }
 
     private void LoadScratchingTime()
@@ -467,11 +481,16 @@ public class MainUI : UIScene
 
         BeginNyangquariumTransition();
         GameManager.Audio.PlaySfx("Main_SFX_Touch");
+        RegisterSpriteKeyIfMissing(NyangquariumTransitionSpriteKey);
 
-        transition.Cover(() =>
+        transition.Cover(NyangquariumTransitionSpriteKey, () =>
         {
             ShowNyangquariumPopupImmediately(popup);
-            transition.Reveal(EndNyangquariumTransition);
+            transition.Reveal(() =>
+            {
+                transition.RestoreDefaultCoverSprite();
+                EndNyangquariumTransition();
+            });
         });
     }
 
@@ -500,6 +519,12 @@ public class MainUI : UIScene
 
         if (_nyangquariumButton != null)
             _nyangquariumButton.interactable = true;
+    }
+
+    private static void RegisterSpriteKeyIfMissing(string spriteKey)
+    {
+        if (!string.IsNullOrWhiteSpace(spriteKey))
+            KeyContainer.Sprites.Add(spriteKey);
     }
 
     private void RemovePopupButton(Button button)
