@@ -59,10 +59,10 @@ public sealed class NyangQuariumPlacedNature :
         if (_image != null)
             _image.raycastTarget = true;
 
-        Debug.Log(
-            $"[NyangQuariumPlacedNature] 자연 요소 등록 - " +
+        DebugTool.Log($"[NyangQuariumPlacedNature] 자연 요소 등록 - " +
             $"ItemId:{ItemId}, SpriteKey:{SpriteKey}, " +
             $"Raycast:{_image != null && _image.raycastTarget}",
+            DebugType.UI,
             this);
     }
 
@@ -86,9 +86,9 @@ public sealed class NyangQuariumPlacedNature :
         if (eventData == null)
             return;
 
-        Debug.Log(
-            $"[NyangQuariumPlacedNature] 자연 요소 클릭 - " +
+        DebugTool.Log($"[NyangQuariumPlacedNature] 자연 요소 클릭 - " +
             $"ItemId:{ItemId}, SpriteKey:{SpriteKey}",
+            DebugType.UI,
             this);
 
         Clicked?.Invoke(this);

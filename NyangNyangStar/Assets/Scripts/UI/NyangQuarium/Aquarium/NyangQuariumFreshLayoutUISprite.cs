@@ -61,8 +61,8 @@ public class NyangQuariumFreshLayoutUISprite : UIBase
             NyangQuariumFreshLayoutUIImage.UIToggleButton,
             spriteKey);
 
-        Debug.Log(
-            $"[NyangQuariumFreshLayoutUISprite] UI 토글 이미지 변경: {spriteKey}",
+        DebugTool.Log($"[NyangQuariumFreshLayoutUISprite] UI 토글 이미지 변경: {spriteKey}",
+            DebugType.UI,
             this);
     }
 
