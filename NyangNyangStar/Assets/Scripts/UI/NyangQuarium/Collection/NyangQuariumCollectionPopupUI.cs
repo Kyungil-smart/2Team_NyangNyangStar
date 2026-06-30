@@ -4,7 +4,6 @@ using TMPro;
 using UI.Base;
 using UnityEngine;
 using UnityEngine.UI;
-using Util;
 
 public class NyangQuariumCollectionPopupUI : UIPopup
 {
@@ -23,6 +22,9 @@ public class NyangQuariumCollectionPopupUI : UIPopup
     [Header("물고기 데이터")]
     [SerializeField] private NyangQuariumFishSO _fishSO;
 
+    [Header("도감 해금 데이터")]
+    [SerializeField] private NyangQuariumFirestoreSO _nyangquariumSo;
+
     [Header("수집 진척도")]
     [SerializeField] private TMP_Text _progressText;
 
@@ -30,14 +32,17 @@ public class NyangQuariumCollectionPopupUI : UIPopup
     [SerializeField] private Transform _content;
     [SerializeField] private FishSlotUI _fishSlotPrefab;
 
+    [Header("물고기 정보 팝업")]
+    [SerializeField] private NyangQuariumFishInfoPopupUI _infoPopup;
+
     [Header("미해금 안내창")]
     [SerializeField] private GameObject _lockedPopup;
+    [SerializeField] private Button _lockedPopupCloseButton;
 
     private NyangQuariumCollectionPopupSprite _sprite;
     private readonly List<FishSlotUI> _fishSlots = new();
     private FishType _currentFishType = FishType.Freshwater;
     private bool _isInitialized;
-    private NyangQuariumFishInfoPopupUI _infoPopup;
 
     public override void Init()
     {
@@ -51,9 +56,12 @@ public class NyangQuariumCollectionPopupUI : UIPopup
         _saltwaterFishButton = GetButton((int)NyangQuariumCollectionPopupButtons.SaltwaterFishButton);
         _brackishWaterFishButton = GetButton((int)NyangQuariumCollectionPopupButtons.BrackishWaterFishButton);
         _environmentsButton = GetButton((int)NyangQuariumCollectionPopupButtons.EnvironmentsButton);
+        _lockedPopupCloseButton = GetButton((int)NyangQuariumCollectionPopupButtons.LockedPopupCloseButton);
 
         _progressText = GetText((int)NyangQuariumCollectionPopupTexts.ProgressText);
 
+        _infoPopup = GetObject((int)NyangQuariumCollectionPopupObjects.NyangQuariumFishInfoPopup)
+            .GetComponent<NyangQuariumFishInfoPopupUI>();
         _lockedPopup = GetObject((int)NyangQuariumCollectionPopupObjects.LockedPopup);
 
         RefreshPhotoGridCellSize();
@@ -65,29 +73,25 @@ public class NyangQuariumCollectionPopupUI : UIPopup
 
         InitInfoPopup();
 
+        CreateFishSlots();
+        _isInitialized = true;
+        ShowFishType(_currentFishType);
+
         _lockedPopup.SetActive(false);
     }
 
     private void InitInfoPopup()
     {
-        GameManager.UI.ShowPopupUI<NyangQuariumFishInfoPopupUI>(KeyContainer.Prefabs.NyangQuariumFishInfoPopupUI,
-            onLoaded =>
-            {
-                _infoPopup = onLoaded;
-                _infoPopup.SetCollectionPopup(this);
-
-                CreateFishSlots();
-
-                _isInitialized = true;
-                ShowFishType(_currentFishType);
-            },
-            false);
+        _infoPopup.Init();
+        _infoPopup.SetCollectionPopup(this);
+        _infoPopup.gameObject.SetActive(false);
     }
 
     private void OnEnable()
     {
         if (!_isInitialized) return;
 
+        RefreshFishSlots();
         ShowFishType(_currentFishType);
     }
 
@@ -119,10 +123,31 @@ public class NyangQuariumCollectionPopupUI : UIPopup
     {
         if (_background != null) _background.onClick.AddListener(CloseNyangQuariumCollectionPopup);
         if (_closeButton != null) _closeButton.onClick.AddListener(CloseNyangQuariumCollectionPopup);
-        if (_freshwaterFishButton != null) _freshwaterFishButton.onClick.AddListener(() => ShowFishType(FishType.Freshwater));
-        if (_saltwaterFishButton != null) _saltwaterFishButton.onClick.AddListener(() => ShowFishType(FishType.Saltwater));
-        if (_brackishWaterFishButton != null) _brackishWaterFishButton.onClick.AddListener(() => ShowFishType(FishType.BrackishWater));
-        if (_environmentsButton != null) _environmentsButton.onClick.AddListener(() => ShowFishType(FishType.Environments));
+        if (_freshwaterFishButton != null) _freshwaterFishButton.onClick.AddListener(() => 
+        {
+            GameManager.Audio.PlaySfx("Main_SFX_Touch");
+            ShowFishType(FishType.Freshwater);
+        });
+        if (_saltwaterFishButton != null) _saltwaterFishButton.onClick.AddListener(() => 
+        {
+            GameManager.Audio.PlaySfx("Main_SFX_Touch");
+            ShowFishType(FishType.Saltwater); 
+        });
+        if (_brackishWaterFishButton != null) _brackishWaterFishButton.onClick.AddListener(() => 
+        {
+            GameManager.Audio.PlaySfx("Main_SFX_Touch");
+            ShowFishType(FishType.BrackishWater);
+        });
+        if (_environmentsButton != null) _environmentsButton.onClick.AddListener(() => 
+        {
+            GameManager.Audio.PlaySfx("Main_SFX_Touch");
+            ShowFishType(FishType.Environments);
+        });
+        if (_lockedPopupCloseButton != null) _lockedPopupCloseButton.onClick.AddListener(() => 
+        {
+            GameManager.Audio.PlaySfx("Main_SFX_Touch");
+            _lockedPopup.SetActive(false); 
+        });
     }
 
     private void OnDestroy()
@@ -133,6 +158,7 @@ public class NyangQuariumCollectionPopupUI : UIPopup
         RemovePopupButton(_saltwaterFishButton);
         RemovePopupButton(_brackishWaterFishButton);
         RemovePopupButton(_environmentsButton);
+        RemovePopupButton(_lockedPopupCloseButton);
     }
 
     private void RemovePopupButton(Button button)
@@ -145,9 +171,9 @@ public class NyangQuariumCollectionPopupUI : UIPopup
 
     private void CloseNyangQuariumCollectionPopup()
     {
-        gameObject.SetActive(false);
-
         GameManager.Audio.PlaySfx("Main_SFX_Touch");
+
+        gameObject.SetActive(false);
     }
 
     private void CreateFishSlots()
@@ -156,8 +182,8 @@ public class NyangQuariumCollectionPopupUI : UIPopup
         {
             FishSlotUI slot = Instantiate(_fishSlotPrefab, _content);
             slot.Init();
-            slot.SetInfoPopup(_infoPopup);
-            slot.SetData(fishData);
+            slot.SetCollectionPopup(this);
+            slot.SetData(fishData, _nyangquariumSo.IsUnlocked(fishData.FishId));
 
             _fishSlots.Add(slot);
         }
@@ -174,28 +200,40 @@ public class NyangQuariumCollectionPopupUI : UIPopup
 
         _sprite.SetSelectedTab(fishType);
         UpdateProgress(fishType);
-
-        GameManager.Audio.PlaySfx("Main_SFX_Touch");
     }
 
     private void UpdateProgress(FishType fishType)
     {
-        int totalCount = _fishSO.GetFishCount(fishType);
-        int unlockedCount = 0;
+        NyangQuariumCollectionProgress progress = _nyangquariumSo.GetProgress(_fishSO, fishType);
 
-        foreach (NyangQuariumFishData fishData in _fishSO.FishData)
+        _sprite.SetProgress(progress.Ratio);
+        _progressText.text = $"({progress.UnlockedCount}/{progress.TotalCount})";
+    }
+
+    private void RefreshFishSlots()
+    {
+        foreach (FishSlotUI slot in _fishSlots)
         {
-            if (fishData.FishType != fishType) continue;
+            slot.RefreshUnlockState(_nyangquariumSo.IsUnlocked(slot.FishId));
+        }
+    }
 
-            // TODO : 유저 물고기 해금 데이터에서 체크
-            //if()
-            unlockedCount++;
+    public void OnClickFishSlot(NyangQuariumFishData fishData, bool isUnlocked)
+    {
+        if (!isUnlocked)
+        {
+            ShowLockedPopup(fishData);
+            return;
         }
 
-        float progress = totalCount == 0 ? 0f : (float)unlockedCount / totalCount;
+        _infoPopup.SetData(fishData);
+        _infoPopup.gameObject.SetActive(true);
+    }
 
-        _sprite.SetProgress(progress);
-        _progressText.text = $"({unlockedCount}/{totalCount})";
+    public void ShowLockedPopup(NyangQuariumFishData fishData)
+    {
+        _sprite.SetLockedFishImage(fishData.FishKey);
+        _lockedPopup.SetActive(true);
     }
 }
 
@@ -206,11 +244,13 @@ public enum NyangQuariumCollectionPopupButtons
     FreshwaterFishButton,
     SaltwaterFishButton,
     BrackishWaterFishButton,
-    EnvironmentsButton
+    EnvironmentsButton,
+    LockedPopupCloseButton
 }
 
 public enum NyangQuariumCollectionPopupObjects
 {
+    NyangQuariumFishInfoPopup,
     LockedPopup
 }
 

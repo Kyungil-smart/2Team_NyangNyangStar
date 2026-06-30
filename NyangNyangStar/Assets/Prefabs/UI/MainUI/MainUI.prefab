@@ -1973,8 +1973,12 @@ MonoBehaviour:
   _logOutButton: {fileID: 0}
   _findMoongchiButton: {fileID: 0}
   _nyangquariumButton: {fileID: 0}
+  _nyangquariumStory: {fileID: 11400000, guid: a805b387d53f7304fac1a6708ca01a54, type: 2}
   _usersSO: {fileID: 11400000, guid: 4ec0c66ac4dba954b95bd94dcae6ccb2, type: 2}
   _uidText: {fileID: 6273888709693873444}
+  _stories:
+  - {fileID: 11400000, guid: a805b387d53f7304fac1a6708ca01a54, type: 2}
+  - {fileID: 11400000, guid: fe20ea439e7368e4abfad14c08126b76, type: 2}
 --- !u!1 &2546719769241725343
 GameObject:
   m_ObjectHideFlags: 0

@@ -22,11 +22,6 @@ namespace UI.NyangQuarium.MergeBoard
         public static IReadOnlyList<int> ActiveQuestIds => _activeQuestIds;
         public static bool IsRegistered => _isRegistered;
 
-        public static bool RemoveQuest(int questId)
-        {
-            return questId > 0 && _activeQuestIds.Remove(questId);
-        }
-
         public static void EnsureRegistered(NyangQuariumQuestSO questSO)
         {
             if (_isRegistered)
@@ -71,48 +66,10 @@ namespace UI.NyangQuarium.MergeBoard
     {
         private const string QuestBoardNamePrefix = "QuestBoard";
         private const string MergeTargetItemName = "MergeTargetItem";
-        private const string MergeTargetAmountTextName = "Text (TMP)";
-        private const string CompleteButtonName = "Button";
         private const float SpriteWaitTimeoutSeconds = 12f;
-
-        private readonly List<MergeQuestSlotBinding> _slotBindings = new();
 
         private bool _initialized;
         private bool _initStarted;
-
-        private sealed class MergeQuestSlotBinding
-        {
-            public int QuestId;
-            public int FishId;
-            public int RequiredAmount;
-            public Transform SlotTransform;
-            public Button CompleteButton;
-            public bool IsCompleted;
-        }
-
-        private void OnEnable()
-        {
-            NyangQuariumMergeBoardInventoryService.InventoryChanged += RefreshCompleteButtons;
-        }
-
-        private void OnDisable()
-        {
-            NyangQuariumMergeBoardInventoryService.InventoryChanged -= RefreshCompleteButtons;
-        }
-
-        private void OnDestroy()
-        {
-            for (int i = 0; i < _slotBindings.Count; i++)
-            {
-                MergeQuestSlotBinding binding = _slotBindings[i];
-                if (binding?.CompleteButton == null)
-                    continue;
-
-                binding.CompleteButton.onClick.RemoveAllListeners();
-            }
-
-            _slotBindings.Clear();
-        }
 
         public void Init()
         {
@@ -162,7 +119,6 @@ namespace UI.NyangQuarium.MergeBoard
                 yield return BindQuestSlotCoroutine(questBoardSlots[i], quest, fishSO);
             }
 
-            RefreshCompleteButtons();
             _initialized = true;
 
             DebugTool.Log(
@@ -212,7 +168,10 @@ namespace UI.NyangQuarium.MergeBoard
             }
 
             Image targetImage = mergeTargetTransform.GetComponent<Image>();
-            TMP_Text amountText = ResolveMergeTargetAmountText(mergeTargetTransform);
+            TMP_Text amountText = mergeTargetTransform.GetComponentInChildren<TMP_Text>(true);
+
+            if (amountText != null && quest.ConditionAmount1 > 0)
+                amountText.text = $"x{quest.ConditionAmount1}";
 
             if (!int.TryParse(quest.QuestCondition1, out int fishId) || fishId <= 0)
             {
@@ -241,147 +200,7 @@ namespace UI.NyangQuarium.MergeBoard
                 yield break;
             }
 
-            ApplyMergeTargetAmountText(amountText, quest);
-
             yield return ApplyFishSpriteCoroutine(fishData.FishKey, targetImage);
-
-            SetupCompleteButton(slotTransform, quest, fishId);
-        }
-
-        private void SetupCompleteButton(
-            Transform slotTransform,
-            NyangQuariumQuestData quest,
-            int fishId)
-        {
-            if (slotTransform == null || quest == null)
-                return;
-
-            Transform buttonTransform = FindDirectChildByName(slotTransform, CompleteButtonName);
-            if (buttonTransform == null)
-            {
-                DebugTool.Warning(
-                    $"[NyangQuariumMergeQuestBoardUI] 완료 Button을 찾지 못했습니다. Slot:{slotTransform.name}",
-                    DebugType.UI,
-                    this);
-                return;
-            }
-
-            Button completeButton = buttonTransform.GetComponent<Button>();
-            if (completeButton == null)
-            {
-                DebugTool.Warning(
-                    $"[NyangQuariumMergeQuestBoardUI] 완료 Button 컴포넌트 없음. Slot:{slotTransform.name}",
-                    DebugType.UI,
-                    this);
-                return;
-            }
-
-            MergeQuestSlotBinding binding = new()
-            {
-                QuestId = quest.ID,
-                FishId = fishId,
-                RequiredAmount = quest.ConditionAmount1 > 0 ? quest.ConditionAmount1 : 1,
-                SlotTransform = slotTransform,
-                CompleteButton = completeButton
-            };
-
-            completeButton.onClick.RemoveAllListeners();
-            completeButton.onClick.AddListener(() => OnCompleteButtonClicked(binding));
-            completeButton.interactable = false;
-
-            _slotBindings.Add(binding);
-            RefreshCompleteButton(binding);
-        }
-
-        private void OnCompleteButtonClicked(MergeQuestSlotBinding binding)
-        {
-            if (binding == null || binding.IsCompleted)
-                return;
-
-            if (!CanCompleteQuest(binding))
-            {
-                RefreshCompleteButton(binding);
-                return;
-            }
-
-            if (!NyangQuariumMergeBoardInventoryService.TryConsumeFish(binding.FishId, binding.RequiredAmount))
-            {
-                DebugTool.Warning(
-                    $"[NyangQuariumMergeQuestBoardUI] 퀘스트 조건 아이템 소비 실패. QuestId:{binding.QuestId}, FishId:{binding.FishId}, Amount:{binding.RequiredAmount}",
-                    DebugType.UI,
-                    this);
-                RefreshCompleteButton(binding);
-                return;
-            }
-
-            binding.IsCompleted = true;
-            NyangQuariumMergeQuestSession.RemoveQuest(binding.QuestId);
-
-            if (binding.CompleteButton != null)
-                binding.CompleteButton.onClick.RemoveAllListeners();
-
-            if (binding.SlotTransform != null)
-                binding.SlotTransform.gameObject.SetActive(false);
-
-            _slotBindings.Remove(binding);
-
-            DebugTool.Log(
-                $"[NyangQuariumMergeQuestBoardUI] merge 퀘스트 완료. QuestId:{binding.QuestId}, FishId:{binding.FishId}, Amount:{binding.RequiredAmount}",
-                DebugType.UI,
-                this);
-        }
-
-        private void RefreshCompleteButtons()
-        {
-            for (int i = 0; i < _slotBindings.Count; i++)
-            {
-                MergeQuestSlotBinding binding = _slotBindings[i];
-
-                if (binding == null || binding.IsCompleted)
-                    continue;
-
-                RefreshCompleteButton(binding);
-            }
-        }
-
-        private static bool CanCompleteQuest(MergeQuestSlotBinding binding)
-        {
-            if (binding == null || !NyangQuariumMergeBoardInventoryService.IsReady)
-                return false;
-
-            int ownedCount = NyangQuariumMergeBoardInventoryService.GetOwnedFishCount(binding.FishId);
-            return ownedCount >= binding.RequiredAmount;
-        }
-
-        private static void RefreshCompleteButton(MergeQuestSlotBinding binding)
-        {
-            if (binding?.CompleteButton == null)
-                return;
-
-            binding.CompleteButton.interactable = CanCompleteQuest(binding);
-        }
-
-        private static TMP_Text ResolveMergeTargetAmountText(Transform mergeTargetTransform)
-        {
-            if (mergeTargetTransform == null)
-                return null;
-
-            Transform amountTextTransform =
-                FindDirectChildByName(mergeTargetTransform, MergeTargetAmountTextName);
-
-            if (amountTextTransform != null)
-                return amountTextTransform.GetComponent<TMP_Text>();
-
-            return mergeTargetTransform.GetComponentInChildren<TMP_Text>(true);
-        }
-
-        private static void ApplyMergeTargetAmountText(TMP_Text amountText, NyangQuariumQuestData quest)
-        {
-            if (amountText == null || quest == null)
-                return;
-
-            int amount = quest.ConditionAmount1 > 0 ? quest.ConditionAmount1 : 1;
-            amountText.text = $"x{amount}";
         }
 
         private IEnumerator ApplyFishSpriteCoroutine(string fishKey, Image targetImage)
