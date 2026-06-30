@@ -37,8 +37,6 @@ public class MainUI : UIScene
     [Tooltip("뭉치를 찾아라")] [SerializeField] private Button _findMoongchiButton;
     [Tooltip("냥쿠아 리움")] [SerializeField] private Button _nyangquariumButton;
 
-    [Tooltip("냥쿠아리움 진입 시 보여줄 스토리")][SerializeField] private StoryDataSO _nyangquariumStory;
-
     private MainUISprite _mainUISprite;
     private MergeBoardController _mergeBoardController;
     private ScratchingTimeManager _scratchingTimeManager;
@@ -446,33 +444,7 @@ public class MainUI : UIScene
         if (button == null)
             return;
 
-        button.onClick.AddListener(() => _ = OnNyangquariumButtonAsync(popup));
-    }
-
-    // 냥쿠아리움 진입: 스토리를 안 봤으면 먼저 보여주고, 다 읽으면 컨텐츠를 연다.
-    private async Task OnNyangquariumButtonAsync(UIPopup content)
-    {
-        NyangQuariumFirestoreSO fso = await NyangQuariumFirestoreSO.WaitForReadyAsync();
-
-        int storyKey = _nyangquariumStory != null ? _nyangquariumStory.storyId : -1;
-        bool alreadyRead = fso != null && fso.HasReadStory(storyKey);
-
-        // 스토리가 없거나 이미 읽었으면 바로 컨텐츠
-        if (_nyangquariumStory == null || alreadyRead)
-        {
-            OpenNyangquariumPopup(content);
-            return;
-        }
-
-        // 스토리 먼저 → 다 읽으면 컨텐츠 열고 읽음 기록 저장
-        GameManager.UI.ShowPopupUI<StoryUIController>(
-            KeyContainer.Prefabs.StoryUI,
-            story => story.PlayStory(_nyangquariumStory, () =>
-            {
-                OpenNyangquariumPopup(content);
-                if (fso != null)
-                    _ = fso.MarkStoryReadAsync(storyKey);
-            }));
+        button.onClick.AddListener(() => OpenNyangquariumPopup(popup));
     }
 
     private void OpenNyangquariumPopup(UIPopup popup)

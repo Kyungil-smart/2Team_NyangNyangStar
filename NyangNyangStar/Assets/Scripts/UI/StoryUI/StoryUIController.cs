@@ -11,25 +11,13 @@ using Util;
 public class StoryUIController : UIPopup
 {
     [Header("연결")]
-
     [SerializeField] private ScrollRect _scrollRect;
-
-
     [SerializeField] private RectTransform _content;
-
-
     [SerializeField] private GameObject _cardPrefab;
-
-
-
-
     [SerializeField] private Button _nextButton;
 
     [Header("스토리 데이터")]
-
     [SerializeField] private List<StoryDataSO> _stories = new List<StoryDataSO>();
-
-
     [SerializeField] private TMP_Text _titleText;
 
     private StoryDataSO _currentStory;
@@ -39,6 +27,7 @@ public class StoryUIController : UIPopup
     private System.Action _onFinished; 
 
 
+  
     public override void Init()
     {
         if (_nextButton != null)
@@ -57,6 +46,27 @@ public class StoryUIController : UIPopup
     }
 
 
+    public static async void ShowOnce(StoryDataSO story)
+    {
+        if (story == null)
+        {
+            Debug.LogWarning("[StoryUI] ShowOnce: story가 null 입니다.");
+            return;
+        }
+
+        NyangQuariumFirestoreSO fso = await NyangQuariumFirestoreSO.WaitForReadyAsync();
+
+        if (fso != null && fso.HasReadStory(story.storyId))
+            return; 
+
+        GameManager.UI.ShowPopupUI<StoryUIController>(
+            KeyContainer.Prefabs.StoryUI,
+            popup => popup.PlayStory(story, () =>
+            {
+                if (fso != null)
+                    _ = fso.MarkStoryReadAsync(story.storyId);
+            }));
+    }
 
     public void PlayStory(StoryDataSO story) => PlayStory(story, null);
 
@@ -79,7 +89,7 @@ public class StoryUIController : UIPopup
         if (_titleText != null)
             _titleText.text = story.title;
 
-        ShowNextCard(); 
+        ShowNextCard();
     }
 
 
@@ -95,12 +105,10 @@ public class StoryUIController : UIPopup
         PlayStory(_stories[index]);
     }
 
-
     public void PlayNextStory()
     {
         PlayStory(_currentStoryIndex + 1);
     }
-
 
     private void ClearCards()
     {
@@ -108,7 +116,6 @@ public class StoryUIController : UIPopup
         for (int i = _content.childCount - 1; i >= 0; i--)
             Destroy(_content.GetChild(i).gameObject);
     }
-
 
     public void ShowNextCard()
     {
@@ -118,8 +125,6 @@ public class StoryUIController : UIPopup
             return;
         }
 
-
-
         if (_currentStory == null)
             return;
 
@@ -127,7 +132,7 @@ public class StoryUIController : UIPopup
         if (_reachedEnd)
         {
             ClosePopup();
-            _onFinished?.Invoke();
+            _onFinished?.Invoke(); 
             return;
         }
 
@@ -139,7 +144,6 @@ public class StoryUIController : UIPopup
 
         DialogueCard data = _currentStory.cards[_currentIndex];
 
-
         GameObject card = Instantiate(_cardPrefab, _content);
 
         StoryDialogueCardView view = card.GetComponent<StoryDialogueCardView>();
@@ -150,7 +154,6 @@ public class StoryUIController : UIPopup
 
         _currentIndex++;
 
-
         if (data.end)
         {
             _reachedEnd = true;
@@ -160,7 +163,6 @@ public class StoryUIController : UIPopup
         StartCoroutine(ScrollToBottomNextFrame());
     }
 
-
     private IEnumerator ScrollToBottomNextFrame()
     {
         yield return null;
@@ -169,8 +171,4 @@ public class StoryUIController : UIPopup
             _scrollRect.verticalNormalizedPosition = 0f;
         Canvas.ForceUpdateCanvases();
     }
-
-
-
-
 }
