@@ -37,6 +37,19 @@ public class StoryUIController : UIPopup
         }
     }
 
+    // 다른 토글형 팝업처럼: 닫을 때 파괴(Release)하지 않고 비활성화만 한다.
+    // (기본 ClosePopup은 ClosePopupUI→TryReleasePrefab로 파괴되어 다른 팝업에 영향)
+    public override void ClosePopup()
+    {
+        gameObject.SetActive(false);
+    }
+
+    private void OnDestroy()
+    {
+        if (_instance == this)
+            _instance = null;
+    }
+
 
     [ContextMenu("테스트: 첫 스토리 재생")]
     private void TestPlayFirstStory()
@@ -45,6 +58,8 @@ public class StoryUIController : UIPopup
         PlayStory(0);
     }
 
+
+    private static StoryUIController _instance; // 한 번 생성 후 재사용 (닫을 때 비활성화만 하므로 살아있음)
 
     public static async void ShowOnce(StoryDataSO story)
     {
@@ -59,13 +74,29 @@ public class StoryUIController : UIPopup
         if (fso != null && fso.HasReadStory(story.storyId))
             return; 
 
+        System.Action onFinished = () =>
+        {
+            if (fso != null)
+                _ = fso.MarkStoryReadAsync(story.storyId);
+        };
+
+        // 이미 만들어둔 인스턴스가 있으면 재사용 (닫을 때 비활성화만 하므로 살아있음)
+        if (_instance != null)
+        {
+            _instance.gameObject.SetActive(true);
+            _instance.transform.SetAsLastSibling();
+            _instance.PlayStory(story, onFinished);
+            return;
+        }
+
+        // 처음 한 번만 생성
         GameManager.UI.ShowPopupUI<StoryUIController>(
             KeyContainer.Prefabs.StoryUI,
-            popup => popup.PlayStory(story, () =>
+            popup =>
             {
-                if (fso != null)
-                    _ = fso.MarkStoryReadAsync(story.storyId);
-            }));
+                _instance = popup;
+                popup.PlayStory(story, onFinished);
+            });
     }
 
     public void PlayStory(StoryDataSO story) => PlayStory(story, null);
