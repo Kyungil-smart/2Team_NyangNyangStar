@@ -71,7 +71,8 @@ public class NyangQuariumFreshLayoutUI : UIPopup, INyangquariumEntryReceiver
     private bool _isChangingLayout;
 
     private NyangQuariumFreshLayoutUISprite _nyangQuariumFreshLayoutUISprite;
-
+    
+    private NyangQuariumUIVisibilityToggle _uiVisibilityToggle;
     public override void Init()
     {
         if (_isInitialized)
@@ -85,7 +86,12 @@ public class NyangQuariumFreshLayoutUI : UIPopup, INyangquariumEntryReceiver
 
 
         _nyangQuariumFreshLayoutUISprite = GetComponent<NyangQuariumFreshLayoutUISprite>();
+
         _nyangQuariumFreshLayoutUISprite?.Init();
+
+        _uiVisibilityToggle = GetComponent<NyangQuariumUIVisibilityToggle>();
+
+        BindUIVisibilityToggle();
 
 
         BindButtons();
@@ -115,6 +121,34 @@ public class NyangQuariumFreshLayoutUI : UIPopup, INyangquariumEntryReceiver
 
         if (_inventoryRect != null)
             _inventoryOpenedPosition = _inventoryRect.anchoredPosition;
+    }
+    private void BindUIVisibilityToggle()
+    {
+        if (_uiVisibilityToggle == null)
+        {
+            DebugTool.Warning(
+                "[NyangQuariumFreshLayoutUI] " +
+                "NyangQuariumUIVisibilityToggle을 찾을 수 없습니다.",
+                DebugType.UI,
+                this);
+
+            return;
+        }
+
+        _uiVisibilityToggle.VisibilityChanged -=
+            OnUIVisibilityChanged;
+
+        _uiVisibilityToggle.VisibilityChanged +=
+            OnUIVisibilityChanged;
+
+        OnUIVisibilityChanged(
+            _uiVisibilityToggle.IsUIVisible);
+    }
+
+    private void OnUIVisibilityChanged(bool isUIVisible)
+    {
+        _nyangQuariumFreshLayoutUISprite?
+            .SetUIToggleSprite(isUIVisible);
     }
 
     private void AddButtonListeners()
@@ -492,7 +526,13 @@ public class NyangQuariumFreshLayoutUI : UIPopup, INyangquariumEntryReceiver
 
     private void OnDestroy()
     {
-        if (ReferenceEquals(ActiveInstance, this))
+        if (_uiVisibilityToggle != null)
+        {
+            _uiVisibilityToggle.VisibilityChanged -=
+                OnUIVisibilityChanged;
+        }
+
+        if (ActiveInstance == this)
             ActiveInstance = null;
     }
 }
