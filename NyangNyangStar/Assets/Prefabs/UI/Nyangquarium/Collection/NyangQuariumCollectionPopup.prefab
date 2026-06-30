@@ -930,7 +930,7 @@ MonoBehaviour:
   _brackishWaterFishButton: {fileID: 0}
   _environmentsButton: {fileID: 0}
   _fishSO: {fileID: 11400000, guid: 83d3494b1e111e44c91f704a62b69410, type: 2}
-  _collectionSO: {fileID: 11400000, guid: 0fc986c90daa4280a89b9952a7258efb, type: 2}
+  _nyangquariumSo: {fileID: 11400000, guid: 0fc986c90daa4280a89b9952a7258efb, type: 2}
   _progressText: {fileID: 0}
   _content: {fileID: 1335824349634436417}
   _fishSlotPrefab: {fileID: 8054924155996669399, guid: 808d7067c5c55e34a969391b6c7540c2, type: 3}
