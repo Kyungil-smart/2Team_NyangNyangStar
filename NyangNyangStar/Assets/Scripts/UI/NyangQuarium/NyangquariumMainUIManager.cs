@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using Core.Managers;
 using Data.Loader;
 using DG.Tweening;
+using TMPro;
 using UI.Base;
 using UI.Transition;
 using UnityEngine;
@@ -34,6 +35,10 @@ namespace UI.NyangQuarium
             "FishInfoPopup",
             "CollectionFishInfoPopup"
         };
+
+        private const string CollectionButtonSpriteKey = "NQ_Btn_Collection";
+        private const string FreshAquariumButtonSpriteKey = "NQ_Btn_FreshWater";
+        private const string OceanAquariumButtonSpriteKey = "NQ_Btn_SaltWater";
 
         [Header("메인 버튼")]
         [FormerlySerializedAs("_boardQuestButton")]
@@ -71,11 +76,11 @@ namespace UI.NyangQuarium
         [SerializeField] private Image _titleLogoImage;
         [SerializeField] private string _titleLogoSpriteKey = "NQ_Img_Title";
         [SerializeField] private string _boardSpriteKey = "NQ_Btn_Mergeboard";
-        [SerializeField] private string _collectionSpriteKey = "NQ_Btn_FishBook";
+        [SerializeField] private string _collectionSpriteKey = CollectionButtonSpriteKey;
         [SerializeField] private string _layoutSpriteKey = "NQ_Btn_Tank";
         [SerializeField] private string _backSpriteKey = "NQ_Btn_Back";
-        [SerializeField] private string _freshAquariumSpriteKey = "NQ_Btn_FishFresh";
-        [SerializeField] private string _oceanAquariumSpriteKey = "NQ_Btn_FishSalt";
+        [SerializeField] private string _freshAquariumSpriteKey = FreshAquariumButtonSpriteKey;
+        [SerializeField] private string _oceanAquariumSpriteKey = OceanAquariumButtonSpriteKey;
 
         [Header("연출")]
         [SerializeField] private CanvasGroup _canvasGroup;
@@ -110,6 +115,7 @@ namespace UI.NyangQuarium
             BindButtons();
             BindAquariumSelectButtons();
             BindAddressableSprites();
+            ApplyAquariumSelectStyle();
             ShowMainViewImmediately();
             RefreshButtonStates();
         }
@@ -246,6 +252,7 @@ namespace UI.NyangQuarium
             RegisterOwnedContent(_aquariumSelectRoot);
             InitializeChildContent(_aquariumSelectRoot);
             NotifyEntryMode(_aquariumSelectRoot, entryMode);
+            ApplyAquariumSelectStyle();
             ShowChildContentImmediately(_aquariumSelectRoot);
             RefreshButtonStates();
         }
@@ -625,6 +632,25 @@ namespace UI.NyangQuarium
             return null;
         }
 
+        private static Image FindImageIn(GameObject root, params string[] names)
+        {
+            if (root == null)
+                return null;
+
+            Image[] images = root.GetComponentsInChildren<Image>(true);
+
+            foreach (Image image in images)
+            {
+                foreach (string targetName in names)
+                {
+                    if (string.Equals(image.name, targetName, StringComparison.OrdinalIgnoreCase))
+                        return image;
+                }
+            }
+
+            return null;
+        }
+
         private GameObject FindGameObject(params string[] names)
         {
             Transform[] transforms = GetComponentsInChildren<Transform>(true);
@@ -676,6 +702,7 @@ namespace UI.NyangQuarium
         private void BindAddressableSprites()
         {
             DisposeSpriteControllers();
+            RegisterNyangquariumSpriteKeys();
 
             _backgroundSprite = BindSprite(_backgroundImage, _backgroundSpriteKey);
             _titleLogoSprite = BindSprite(_titleLogoImage, _titleLogoSpriteKey, true);
@@ -686,6 +713,119 @@ namespace UI.NyangQuarium
             _freshAquariumSprite = BindSprite(_freshAquariumButton, _freshAquariumSpriteKey);
             _oceanAquariumSprite = BindSprite(_oceanAquariumButton, _oceanAquariumSpriteKey);
             _aquariumSelectBackSprite = BindSprite(_aquariumSelectBackButton, _backSpriteKey);
+        }
+
+        private void ApplyAquariumSelectStyle()
+        {
+            if (_aquariumSelectRoot == null)
+                return;
+
+            if (_aquariumSelectRoot.transform is RectTransform rootRect)
+                StretchRect(rootRect);
+
+            Image dimImage = FindImageIn(_aquariumSelectRoot, "Dim");
+            if (dimImage != null)
+            {
+                StretchRect(dimImage.rectTransform);
+                dimImage.color = new Color(0f, 0f, 0f, 0.62f);
+                dimImage.raycastTarget = true;
+                dimImage.transform.SetAsFirstSibling();
+            }
+
+            Image frameImage = FindImageIn(_aquariumSelectRoot, "Frame", "Panel");
+            if (frameImage != null)
+            {
+                RectTransform frameRect = frameImage.rectTransform;
+                frameRect.anchorMin = new Vector2(0f, 0.5f);
+                frameRect.anchorMax = new Vector2(1f, 0.5f);
+                frameRect.pivot = new Vector2(0.5f, 0.5f);
+                frameRect.anchoredPosition = Vector2.zero;
+                frameRect.sizeDelta = new Vector2(0f, 360f);
+                frameImage.color = new Color(0f, 0f, 0f, 0.42f);
+                frameImage.raycastTarget = false;
+
+                if (frameImage.transform.parent == _aquariumSelectRoot.transform)
+                    frameImage.transform.SetSiblingIndex(Mathf.Min(1, _aquariumSelectRoot.transform.childCount - 1));
+            }
+
+            StyleAquariumSelectButton(_freshAquariumButton, new Vector2(-155f, 35f), "담수");
+            StyleAquariumSelectButton(_oceanAquariumButton, new Vector2(155f, 35f), "해수");
+        }
+
+        private static void StyleAquariumSelectButton(Button button, Vector2 anchoredPosition, string label)
+        {
+            if (button == null)
+                return;
+
+            if (button.transform is RectTransform buttonRect)
+            {
+                buttonRect.anchorMin = new Vector2(0.5f, 0.5f);
+                buttonRect.anchorMax = new Vector2(0.5f, 0.5f);
+                buttonRect.pivot = new Vector2(0.5f, 0.5f);
+                buttonRect.anchoredPosition = anchoredPosition;
+                buttonRect.sizeDelta = new Vector2(220f, 220f);
+            }
+
+            if (button.targetGraphic is Image buttonImage)
+            {
+                buttonImage.type = Image.Type.Simple;
+                buttonImage.preserveAspect = true;
+                buttonImage.color = Color.white;
+                buttonImage.raycastTarget = true;
+            }
+
+            TMP_Text text = button.GetComponentInChildren<TMP_Text>(true);
+            if (text == null)
+                return;
+
+            text.text = label;
+            text.color = Color.white;
+            text.fontSize = 60f;
+            text.enableAutoSizing = false;
+            text.alignment = TextAlignmentOptions.Center;
+            text.raycastTarget = false;
+
+            if (text.transform is RectTransform textRect)
+            {
+                textRect.anchorMin = new Vector2(0.5f, 0f);
+                textRect.anchorMax = new Vector2(0.5f, 0f);
+                textRect.pivot = new Vector2(0.5f, 1f);
+                textRect.anchoredPosition = new Vector2(0f, -10f);
+                textRect.sizeDelta = new Vector2(240f, 90f);
+            }
+        }
+
+        private static void StretchRect(RectTransform rectTransform)
+        {
+            if (rectTransform == null)
+                return;
+
+            rectTransform.anchorMin = Vector2.zero;
+            rectTransform.anchorMax = Vector2.one;
+            rectTransform.pivot = new Vector2(0.5f, 0.5f);
+            rectTransform.anchoredPosition = Vector2.zero;
+            rectTransform.sizeDelta = Vector2.zero;
+        }
+
+        private void RegisterNyangquariumSpriteKeys()
+        {
+            RegisterSpriteKeyIfMissing(_backgroundSpriteKey);
+            RegisterSpriteKeyIfMissing(_titleLogoSpriteKey);
+            RegisterSpriteKeyIfMissing(_boardSpriteKey);
+            RegisterSpriteKeyIfMissing(_collectionSpriteKey);
+            RegisterSpriteKeyIfMissing(_layoutSpriteKey);
+            RegisterSpriteKeyIfMissing(_backSpriteKey);
+            RegisterSpriteKeyIfMissing(_freshAquariumSpriteKey);
+            RegisterSpriteKeyIfMissing(_oceanAquariumSpriteKey);
+            RegisterSpriteKeyIfMissing(CollectionButtonSpriteKey);
+            RegisterSpriteKeyIfMissing(FreshAquariumButtonSpriteKey);
+            RegisterSpriteKeyIfMissing(OceanAquariumButtonSpriteKey);
+        }
+
+        private static void RegisterSpriteKeyIfMissing(string spriteKey)
+        {
+            if (!string.IsNullOrWhiteSpace(spriteKey))
+                KeyContainer.Sprites.Add(spriteKey);
         }
 
         private UISpriteController BindSprite(Button button, string key, bool fitHeightToSpriteAspect = false)
