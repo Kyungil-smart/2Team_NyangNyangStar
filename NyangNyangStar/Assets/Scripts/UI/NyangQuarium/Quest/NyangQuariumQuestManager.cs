@@ -24,13 +24,9 @@ namespace UI.NyangQuarium.Quest
 
         private int _activeQuestId;
         private readonly HashSet<int> _completedQuestIds = new();
-        private bool _storyQuestInitialized;
 
         // 활성 퀘스트 변경 시 알람 UI, 상세 팝업 갱신용
         public event Action<NyangQuariumQuestData> ActiveQuestChanged;
-
-        // Story 퀘스트 완료/슬롯 전환 시 맵 UI 갱신용
-        public event Action StoryQuestProgressChanged;
 
         public bool HasActiveQuest => _activeQuestId > 0;
 
@@ -43,151 +39,6 @@ namespace UI.NyangQuarium.Quest
             }
 
             Instance = this;
-        }
-
-        private void Start()
-        {
-            EnsureStoryQuestInitialized();
-        }
-
-        public bool IsQuestCompleted(int questId)
-            => questId > 0 && _completedQuestIds.Contains(questId);
-
-        public bool TryGetQuest(int questId, out NyangQuariumQuestData quest)
-        {
-            quest = null;
-            ResolveQuestSO();
-
-            if (_questSO == null || questId <= 0)
-                return false;
-
-            return _questSO.TryGetQuest(questId, out quest);
-        }
-
-        public void EnsureStoryQuestInitialized()
-        {
-            if (_storyQuestInitialized)
-                return;
-
-            ResolveQuestSO();
-
-            if (_questSO == null)
-                return;
-
-            int[] mapQuestIds = NyangQuariumStoryQuestMapUI.GetStoryMapQuestIds();
-
-            for (int i = 0; i < mapQuestIds.Length; i++)
-            {
-                int questId = mapQuestIds[i];
-
-                if (questId <= 0)
-                    continue;
-
-                if (IsQuestCompleted(questId))
-                    continue;
-
-                _activeQuestId = questId;
-                _storyQuestInitialized = true;
-
-                DebugTool.Log(
-                    $"[NyangQuariumQuestManager] Story 맵 퀘스트 초기화. ActiveQuestId:{questId}, Slot:{i}",
-                    DebugType.UI,
-                    this);
-
-                StoryQuestProgressChanged?.Invoke();
-                return;
-            }
-
-            List<NyangQuariumQuestData> storyQuests =
-                _questSO.GetQuestsByType(NyangQuariumQuestType.Story);
-
-            if (storyQuests.Count == 0)
-                return;
-
-            storyQuests.Sort((a, b) => a.ID.CompareTo(b.ID));
-
-            for (int i = 0; i < storyQuests.Count; i++)
-            {
-                NyangQuariumQuestData quest = storyQuests[i];
-
-                if (IsQuestCompleted(quest.ID))
-                    continue;
-
-                _activeQuestId = quest.ID;
-                _storyQuestInitialized = true;
-
-                DebugTool.Log(
-                    $"[NyangQuariumQuestManager] Story 퀘스트 초기화. ActiveQuestId:{quest.ID}",
-                    DebugType.UI,
-                    this);
-
-                StoryQuestProgressChanged?.Invoke();
-                return;
-            }
-
-            _activeQuestId = 0;
-            _storyQuestInitialized = true;
-            StoryQuestProgressChanged?.Invoke();
-        }
-
-        public bool TryGetActiveStoryMapSlotIndex(out int slotIndex)
-        {
-            slotIndex = -1;
-
-            if (_activeQuestId <= 0)
-                return false;
-
-            int[] mapQuestIds = NyangQuariumStoryQuestMapUI.GetStoryMapQuestIds();
-
-            for (int i = 0; i < mapQuestIds.Length; i++)
-            {
-                if (mapQuestIds[i] != _activeQuestId)
-                    continue;
-
-                slotIndex = i;
-                return true;
-            }
-
-            return false;
-        }
-
-        public bool TryGetActiveStoryQuestSlotIndex(out int slotIndex)
-        {
-            slotIndex = -1;
-            ResolveQuestSO();
-
-            if (_questSO == null || _activeQuestId <= 0)
-                return false;
-
-            if (!TryGetStoryQuestIndexById(_activeQuestId, out slotIndex))
-                return false;
-
-            return slotIndex >= 0;
-        }
-
-        private bool TryGetStoryQuestIndexById(int questId, out int index)
-        {
-            index = -1;
-            ResolveQuestSO();
-
-            if (_questSO == null || questId <= 0)
-                return false;
-
-            List<NyangQuariumQuestData> storyQuests =
-                _questSO.GetQuestsByType(NyangQuariumQuestType.Story);
-
-            storyQuests.Sort((a, b) => a.ID.CompareTo(b.ID));
-
-            for (int i = 0; i < storyQuests.Count; i++)
-            {
-                if (storyQuests[i].ID != questId)
-                    continue;
-
-                index = i;
-                return true;
-            }
-
-            return false;
         }
 
         // 첫 스토리 종료 시 스토리 시스템에서 호출
@@ -252,59 +103,6 @@ namespace UI.NyangQuarium.Quest
             return true;
         }
 
-        // Story 타입 퀘스트를 ID 순으로 조회 (0 = 첫 번째 Story 퀘스트)
-        public bool TryGetStoryQuestAt(int index, out NyangQuariumQuestData quest)
-        {
-            quest = null;
-            ResolveQuestSO();
-
-            if (_questSO == null)
-                return false;
-
-            List<NyangQuariumQuestData> storyQuests =
-                _questSO.GetQuestsByType(NyangQuariumQuestType.Story);
-
-            if (storyQuests.Count == 0)
-                return false;
-
-            storyQuests.Sort((a, b) => a.ID.CompareTo(b.ID));
-
-            if (index < 0 || index >= storyQuests.Count)
-                return false;
-
-            quest = storyQuests[index];
-            return true;
-        }
-
-        // Story 퀘스트 표시용 순번 (1부터 시작)
-        public bool TryGetStoryQuestDisplayIndex(NyangQuariumQuestData quest, out int displayIndex)
-        {
-            displayIndex = 0;
-            ResolveQuestSO();
-
-            if (_questSO == null || quest == null)
-                return false;
-
-            List<NyangQuariumQuestData> storyQuests =
-                _questSO.GetQuestsByType(NyangQuariumQuestType.Story);
-
-            if (storyQuests.Count == 0)
-                return false;
-
-            storyQuests.Sort((a, b) => a.ID.CompareTo(b.ID));
-
-            for (int i = 0; i < storyQuests.Count; i++)
-            {
-                if (storyQuests[i].ID != quest.ID)
-                    continue;
-
-                displayIndex = i + 1;
-                return true;
-            }
-
-            return false;
-        }
-
         // 현재 활성 퀘스트 조회
         public bool TryGetActiveQuest(out NyangQuariumQuestData quest)
         {
@@ -355,7 +153,7 @@ namespace UI.NyangQuarium.Quest
             if (string.IsNullOrWhiteSpace(condition) || amount <= 0)
                 return true;
 
-            if (NyangQuariumQuestConditionUtil.IsCoinCondition(condition))
+            if (IsCoinCondition(condition))
             {
                 bool hasEnough = PlayerResourceManager.Instance.HasEnough(PlayerResourceType.Coin, amount);
 
@@ -396,23 +194,6 @@ namespace UI.NyangQuarium.Quest
                 return false;
             }
 
-            return await CompleteQuestAsync(quest);
-        }
-
-        public async Task<bool> CompleteQuestAsync(NyangQuariumQuestData quest)
-        {
-            if (quest == null)
-            {
-                DebugTool.Warning("[NyangQuariumQuestManager] 완료할 퀘스트가 없습니다.", DebugType.UI, this);
-                return false;
-            }
-
-            if (IsQuestCompleted(quest.ID))
-            {
-                DebugTool.Log($"[NyangQuariumQuestManager] 이미 완료한 퀘스트입니다. ID:{quest.ID}", DebugType.UI, this);
-                return false;
-            }
-
             if (!CanCompleteQuest(quest))
             {
                 DebugTool.Log($"[NyangQuariumQuestManager] 완료 조건 미충족. QuestId:{quest.ID}", DebugType.UI, this);
@@ -428,66 +209,13 @@ namespace UI.NyangQuarium.Quest
             }
 
             _completedQuestIds.Add(quest.ID);
+            _activeQuestId = 0;
 
-            if (TryAdvanceStoryMapQuest(quest.ID))
-            {
-                DebugTool.Log(
-                    $"[NyangQuariumQuestManager] Story 맵 퀘스트 완료 → 다음 슬롯 활성화. Completed:{quest.ID}, Next:{_activeQuestId}",
-                    DebugType.UI,
-                    this);
-            }
-            else if (TryGetStoryQuestIndexById(quest.ID, out int completedIndex) &&
-                TryGetStoryQuestAt(completedIndex + 1, out NyangQuariumQuestData nextStoryQuest))
-            {
-                _activeQuestId = nextStoryQuest.ID;
+            // 알람 UI 숨김 처리
+            ActiveQuestChanged?.Invoke(null);
 
-                DebugTool.Log(
-                    $"[NyangQuariumQuestManager] Story 퀘스트 완료 → 다음 퀘스트 활성화. Completed:{quest.ID}, Next:{nextStoryQuest.ID}, Slot:{completedIndex + 1}",
-                    DebugType.UI,
-                    this);
-            }
-            else
-            {
-                if (_activeQuestId == quest.ID)
-                    _activeQuestId = 0;
-
-                ActiveQuestChanged?.Invoke(null);
-
-                DebugTool.Log(
-                    $"[NyangQuariumQuestManager] 퀘스트 완료. ID:{quest.ID}, NextStory:false",
-                    DebugType.UI,
-                    this);
-            }
-
-            StoryQuestProgressChanged?.Invoke();
+            DebugTool.Log($"[NyangQuariumQuestManager] 퀘스트 완료. ID:{quest.ID}", DebugType.UI, this);
             return true;
-        }
-
-        private bool TryAdvanceStoryMapQuest(int completedQuestId)
-        {
-            int[] mapQuestIds = NyangQuariumStoryQuestMapUI.GetStoryMapQuestIds();
-
-            if (mapQuestIds == null || mapQuestIds.Length == 0)
-                return false;
-
-            for (int i = 0; i < mapQuestIds.Length; i++)
-            {
-                if (mapQuestIds[i] != completedQuestId)
-                    continue;
-
-                if (i + 1 < mapQuestIds.Length && mapQuestIds[i + 1] > 0)
-                {
-                    _activeQuestId = mapQuestIds[i + 1];
-                    return true;
-                }
-
-                if (_activeQuestId == completedQuestId)
-                    _activeQuestId = 0;
-
-                return true;
-            }
-
-            return false;
         }
 
         private async Task<bool> ConsumeQuestConditionsAsync(NyangQuariumQuestData quest)
@@ -509,7 +237,7 @@ namespace UI.NyangQuarium.Quest
             if (string.IsNullOrWhiteSpace(condition) || amount <= 0)
                 return true;
 
-            if (NyangQuariumQuestConditionUtil.IsCoinCondition(condition))
+            if (IsCoinCondition(condition))
             {
                 bool spent = await PlayerResourceManager.Instance.TrySpendAsync(PlayerResourceType.Coin, amount);
 
@@ -554,6 +282,13 @@ namespace UI.NyangQuarium.Quest
             return MergeBoardItemService.Instance != null
                 ? MergeBoardItemService.Instance.GetOwnedItemCount(itemId)
                 : 0;
+        }
+
+        private bool IsCoinCondition(string condition)
+        {
+            return condition != null &&
+                   (condition.Equals("Coin", StringComparison.OrdinalIgnoreCase) ||
+                    condition.Equals("코인", StringComparison.OrdinalIgnoreCase));
         }
 
         // SheetLoader / NyangQuariumSheetLoader(TestLoader)에서 같은 SO를 채우므로, 비어 있으면 로더에서 가져옴
