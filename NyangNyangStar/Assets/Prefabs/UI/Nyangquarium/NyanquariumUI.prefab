@@ -135,7 +135,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &9177075379809836817
 RectTransform:
   m_ObjectHideFlags: 0
@@ -231,8 +231,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 1}
   m_AnchorMax: {x: 0.5, y: 1}
-  m_AnchoredPosition: {x: 0, y: -100}
-  m_SizeDelta: {x: 500, y: 200}
+  m_AnchoredPosition: {x: 0, y: -50}
+  m_SizeDelta: {x: 600, y: 300}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!222 &4534988704331892461
 CanvasRenderer:
@@ -741,11 +741,11 @@ MonoBehaviour:
   _titleLogoImage: {fileID: 7037887885233667986}
   _titleLogoSpriteKey: NQ_Img_Title
   _boardSpriteKey: NQ_Btn_Mergeboard
-  _collectionSpriteKey: NQ_Btn_FishBook
+  _collectionSpriteKey: NQ_Btn_Collection
   _layoutSpriteKey: NQ_Btn_Tank
   _backSpriteKey: NQ_Btn_Back
-  _freshAquariumSpriteKey: NQ_Btn_FishFresh
-  _oceanAquariumSpriteKey: NQ_Btn_FishSalt
+  _freshAquariumSpriteKey: NQ_Btn_FreshWater
+  _oceanAquariumSpriteKey: NQ_Btn_SaltWater
   _canvasGroup: {fileID: 8814279653102468137}
   _contentRoot: {fileID: 6627190258747934343}
   _openDuration: 0.2
@@ -1809,7 +1809,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1763121583756356801, guid: 1112680ec737cc340ab5bbda4ef2a63f, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2722391419948345071, guid: 1112680ec737cc340ab5bbda4ef2a63f, type: 3}
       propertyPath: m_Pivot.x
@@ -1929,15 +1929,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3412098106770638666, guid: 1112680ec737cc340ab5bbda4ef2a63f, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3412098106770638666, guid: 1112680ec737cc340ab5bbda4ef2a63f, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3412098106770638666, guid: 1112680ec737cc340ab5bbda4ef2a63f, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 0
+      value: -17
       objectReference: {fileID: 0}
     - target: {fileID: 4047145250018085117, guid: 1112680ec737cc340ab5bbda4ef2a63f, type: 3}
       propertyPath: m_AnchorMax.y
@@ -2084,7 +2084,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3207475418822083903, guid: 2b4b2eb86c606ad42b61f38c7d3752ff, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6669803075022502580, guid: 2b4b2eb86c606ad42b61f38c7d3752ff, type: 3}
       propertyPath: m_Pivot.x
@@ -2438,15 +2438,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2511563108021840925, guid: e5b1c5f1b117d1544949c2d755127a9f, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2511563108021840925, guid: e5b1c5f1b117d1544949c2d755127a9f, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2511563108021840925, guid: e5b1c5f1b117d1544949c2d755127a9f, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 0
+      value: -17
       objectReference: {fileID: 0}
     - target: {fileID: 3426508045400660301, guid: e5b1c5f1b117d1544949c2d755127a9f, type: 3}
       propertyPath: m_AnchorMax.y
@@ -2514,7 +2514,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6928494549463557804, guid: e5b1c5f1b117d1544949c2d755127a9f, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7204778975765604269, guid: e5b1c5f1b117d1544949c2d755127a9f, type: 3}
       propertyPath: m_AnchorMax.y

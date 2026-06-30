@@ -16,6 +16,8 @@ using Util;
 
 public class MainUI : UIScene
 {
+    private const string NyangquariumTransitionSpriteKey = "NQ_BG_Transition";
+
     [SerializeField] private Canvas _mainUICanvas;
 
     [Header("버튼")]
@@ -507,11 +509,16 @@ public class MainUI : UIScene
 
         BeginNyangquariumTransition();
         GameManager.Audio.PlaySfx("Main_SFX_Touch");
+        RegisterSpriteKeyIfMissing(NyangquariumTransitionSpriteKey);
 
-        transition.Cover(() =>
+        transition.Cover(NyangquariumTransitionSpriteKey, () =>
         {
             ShowNyangquariumPopupImmediately(popup);
-            transition.Reveal(EndNyangquariumTransition);
+            transition.Reveal(() =>
+            {
+                transition.RestoreDefaultCoverSprite();
+                EndNyangquariumTransition();
+            });
         });
     }
 
@@ -540,6 +547,12 @@ public class MainUI : UIScene
 
         if (_nyangquariumButton != null)
             _nyangquariumButton.interactable = true;
+    }
+
+    private static void RegisterSpriteKeyIfMissing(string spriteKey)
+    {
+        if (!string.IsNullOrWhiteSpace(spriteKey))
+            KeyContainer.Sprites.Add(spriteKey);
     }
 
     private void RemovePopupButton(Button button)
