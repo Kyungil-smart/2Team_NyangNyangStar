@@ -1,0 +1,72 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &3874418405802423898
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1089395625180357340}
+  - component: {fileID: 788558894830277953}
+  m_Layer: 0
+  m_Name: TestLoader
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1089395625180357340
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3874418405802423898}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 540, y: 960, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &788558894830277953
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3874418405802423898}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2af9d00446cea584786cb46ff0270d68, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _questURL:
+    <URL>k__BackingField: https://docs.google.com/spreadsheets/d/1ro0gVR7lp_vgE_fr_3ZF__i9p9OksPQeckfx0-jFtWY/edit?gid=0#gid=0
+    <Type>k__BackingField: 2
+  _questSO: {fileID: 11400000, guid: 73586c00d6e299b4f934070254c0d095, type: 2}
+  _questHeaderRowCount: 3
+  _questRewardURL:
+    <URL>k__BackingField: https://docs.google.com/spreadsheets/d/1ro0gVR7lp_vgE_fr_3ZF__i9p9OksPQeckfx0-jFtWY/edit?gid=1619698701#gid=1619698701
+    <Type>k__BackingField: 2
+  _questRewardSO: {fileID: 11400000, guid: 261e40d2aae6f53439e87872cb715de6, type: 2}
+  _questRewardHeaderRowCount: 3
+  _questStringURL:
+    <URL>k__BackingField: https://docs.google.com/spreadsheets/d/1ro0gVR7lp_vgE_fr_3ZF__i9p9OksPQeckfx0-jFtWY/edit?gid=1348082055#gid=1348082055
+    <Type>k__BackingField: 2
+  _questStringSO: {fileID: 11400000, guid: ee09a04531ae4ed41a465b2d8cf0806e, type: 2}
+  _questStringHeaderRowCount: 1
+  _generatorURL:
+    <URL>k__BackingField: https://docs.google.com/spreadsheets/d/1hD2NCEzCWr2aml-_aqHsHZu_8HeZ0xCLpMDt_A9NfoU/edit?gid=867677697#gid=867677697
+    <Type>k__BackingField: 2
+  _generatorSO: {fileID: 11400000, guid: f7e6d5c4b3a2918071625344a5b6c7d8, type: 2}
+  _generatorHeaderRowCount: 1
+  _fishURL:
+    <URL>k__BackingField: https://docs.google.com/spreadsheets/d/1hD2NCEzCWr2aml-_aqHsHZu_8HeZ0xCLpMDt_A9NfoU/edit?gid=1314847984#gid=1314847984
+    <Type>k__BackingField: 2
+  _fishSO: {fileID: 11400000, guid: 83d3494b1e111e44c91f704a62b69410, type: 2}
+  _fishHeaderRowCount: 1
+  _loadOnStart: 1

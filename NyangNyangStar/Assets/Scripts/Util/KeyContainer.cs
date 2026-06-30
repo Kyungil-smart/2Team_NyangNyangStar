@@ -11,7 +11,7 @@ namespace Util
     {
         public static Dictionary<string, List<GameObject>> PrefabKeyDict = new();
         private static Dictionary<string, KeyData> _keyDataDict  = new();
-        
+
         private static readonly Dictionary<AddressableGroupType, List<string>> _keysByGroup = new();
         private static readonly Dictionary<(AddressableGroupType group, LabelType label), List<string>> _keysByGroupAndLabel = new();
 
@@ -64,6 +64,22 @@ namespace Util
 
             // 스크래칭 타임 UI 프리팹
             public const string ScratchingTime = "ScratchingTimeScreen";
+
+            //냥쿠아리움
+            public const string NyangQuariumMainUI = "NyangQuariumMainCanvas";
+            public const string NyangQuariumMulMeongUI = "MulMeongCanvas";
+            public const string NyangQuariumFreshLayoutUI = "NyangQuariumFreshLayoutCanvas";
+            public const string NyangQuariumOceanLayoutUI = "NyangQuariumOceanLayoutCanvas";
+            public const string NyangQuariumCollectionPopupUI = "NyangQuariumCollectionPopupUI";
+            public const string NyangQuariumFishInfoPopupUI = "NyangQuariumFishInfoPopupUI";
+
+            // 냥쿠아 리움 UI 프리팹
+            public const string NyangQuariumQuestPopUp = "NyangQuariumQuestPopUp";
+            public const string Nyangquarium = "NyangquariumUI";
+
+            // 스토리 출력 UI
+            public const string StoryUI = "StoryUI";
+
         }
 
         public static void Register(KeyData data)
@@ -158,6 +174,17 @@ namespace Util
                 DebugTool.Log($"{key} : 존재 하지 않는 Prefab Key 입니다.", DebugType.Addressable);
                 return false;
             }
+
+            return true;
+        }
+
+        public static bool EnsurePrefabKey(string key)
+        {
+            if (string.IsNullOrWhiteSpace(key))
+                return false;
+
+            if (!PrefabKeyDict.ContainsKey(key))
+                PrefabKeyDict.Add(key, new List<GameObject>());
 
             return true;
         }
@@ -287,6 +314,18 @@ namespace Util
             
             // 뭉치를 찾아라
             PrefabKeyDict.Add(Prefabs.FindMoongchiPopupUI, new List<GameObject>());
+
+            //냥쿠아리움
+            PrefabKeyDict.Add(Prefabs.NyangQuariumMainUI, new List<GameObject>());
+            PrefabKeyDict.Add(Prefabs.NyangQuariumMulMeongUI, new List<GameObject>());
+            PrefabKeyDict.Add(Prefabs.NyangQuariumFreshLayoutUI, new List<GameObject>());
+            PrefabKeyDict.Add(Prefabs.NyangQuariumOceanLayoutUI, new List<GameObject>());
+            PrefabKeyDict.Add(Prefabs.NyangQuariumQuestPopUp, new List<GameObject>());
+            PrefabKeyDict.Add(Prefabs.Nyangquarium, new List<GameObject>());
+            PrefabKeyDict.Add(Prefabs.NyangQuariumCollectionPopupUI, new List<GameObject>());
+            PrefabKeyDict.Add(Prefabs.NyangQuariumFishInfoPopupUI, new List<GameObject>());
+            
+            PrefabKeyDict.Add(Prefabs.StoryUI, new List<GameObject>());
         }
 
         public static void PrintKeys()

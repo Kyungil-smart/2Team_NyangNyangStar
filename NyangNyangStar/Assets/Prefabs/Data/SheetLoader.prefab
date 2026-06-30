@@ -103,6 +103,26 @@ MonoBehaviour:
     <URL>k__BackingField: https://docs.google.com/spreadsheets/d/1hD2NCEzCWr2aml-_aqHsHZu_8HeZ0xCLpMDt_A9NfoU/edit?gid=2002201027#gid=2002201027
     <Type>k__BackingField: 2
   findMoongchiProfileSo: {fileID: 11400000, guid: dc6f03ddae9535e46946ff019e0327a3, type: 2}
+  nyangQuariumQuestURL:
+    <URL>k__BackingField: https://docs.google.com/spreadsheets/d/1ro0gVR7lp_vgE_fr_3ZF__i9p9OksPQeckfx0-jFtWY/edit?gid=0#gid=0
+    <Type>k__BackingField: 2
+  nyangQuariumQuestSo: {fileID: 11400000, guid: 73586c00d6e299b4f934070254c0d095, type: 2}
+  nyangQuariumQuestRewardURL:
+    <URL>k__BackingField: https://docs.google.com/spreadsheets/d/1ro0gVR7lp_vgE_fr_3ZF__i9p9OksPQeckfx0-jFtWY/edit?gid=1619698701#gid=1619698701
+    <Type>k__BackingField: 2
+  nyangQuariumQuestRewardSo: {fileID: 11400000, guid: 261e40d2aae6f53439e87872cb715de6, type: 2}
+  nyangQuariumQuestStringURL:
+    <URL>k__BackingField: https://docs.google.com/spreadsheets/d/1ro0gVR7lp_vgE_fr_3ZF__i9p9OksPQeckfx0-jFtWY/edit?gid=1348082055#gid=1348082055
+    <Type>k__BackingField: 2
+  nyangQuariumQuestStringSo: {fileID: 11400000, guid: ee09a04531ae4ed41a465b2d8cf0806e, type: 2}
+  nyangQuariumGeneratorURL:
+    <URL>k__BackingField: https://docs.google.com/spreadsheets/d/1hD2NCEzCWr2aml-_aqHsHZu_8HeZ0xCLpMDt_A9NfoU/edit?gid=867677697#gid=867677697
+    <Type>k__BackingField: 2
+  nyangQuariumGeneratorSo: {fileID: 11400000, guid: f7e6d5c4b3a2918071625344a5b6c7d8, type: 2}
+  nyangQuariumFishURL:
+    <URL>k__BackingField: https://docs.google.com/spreadsheets/d/1hD2NCEzCWr2aml-_aqHsHZu_8HeZ0xCLpMDt_A9NfoU/edit?gid=1314847984#gid=1314847984
+    <Type>k__BackingField: 2
+  nyangQuariumFishSo: {fileID: 11400000, guid: 83d3494b1e111e44c91f704a62b69410, type: 2}
   _pendingSheetCount: 0
 --- !u!114 &7187299137341658617
 MonoBehaviour:

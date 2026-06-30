@@ -89,6 +89,11 @@ MonoBehaviour:
     m_SerializedLabels:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2f5ed6f2a62d48044921e5b9d2a58071
+    m_Address: NyangQuariumQuestPopUp
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 396681227a450b4498fb5469e6f6cfd6
     m_Address: NQ_Btn_Complete
     m_ReadOnly: 0
@@ -166,6 +171,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels:
     - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6df76ecea50357c40afaefbb2f59e94c
+    m_Address: NyangquariumUI
+    m_ReadOnly: 0
+    m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 6f2559c4fd18e6843aca2432790e9e01
     m_Address: NQ_BG_Transition
@@ -334,6 +344,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels:
     - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: cf65175471e33c44584ef2247d814169
+    m_Address: StoryUI
+    m_ReadOnly: 0
+    m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: d0048ae021355b146b499309d99ee8ad
     m_Address: NQ_Btn_SaltWater
