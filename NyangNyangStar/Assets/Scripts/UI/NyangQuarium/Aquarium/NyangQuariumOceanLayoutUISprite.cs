@@ -37,13 +37,13 @@ public class NyangQuariumOceanLayoutUISprite : UIBase
         SetSprite(NyangQuariumOceanLayoutUIImage.Confirm, "NQ_Btn_Confirm");
         SetSprite(NyangQuariumOceanLayoutUIImage.Cancle, "NQ_Btn_Cancel");
 
-        SetSprite(NyangQuariumOceanLayoutUIImage.DeleteButton, "NQ_Btn_Delete");
+        SetSprite(NyangQuariumOceanLayoutUIImage.DeleteButton, "NQ_Btn_Delete", new Color32(0,0,0,255));
         SetSprite(NyangQuariumOceanLayoutUIImage.RealDeleteButton, "NQ_Btn_Confirm");
         SetSprite(NyangQuariumOceanLayoutUIImage.RealCancelButton, "NQ_Btn_Cancel");
 
         SetSprite(NyangQuariumOceanLayoutUIImage.UIToggleButton, UIToggleOnSpriteKey);
-        SetSprite(NyangQuariumOceanLayoutUIImage.FreshFishCountIcon, "NQ_Icon_Fish");
-        SetSprite(NyangQuariumOceanLayoutUIImage.FreshNatureCountIcon, "NQ_Icon_Environment");
+        SetSprite(NyangQuariumOceanLayoutUIImage.OceanFishCountIcon, "NQ_Icon_Fish");
+        SetSprite(NyangQuariumOceanLayoutUIImage.OceanNatureCountIcon, "NQ_Icon_Environment");
 
         SetSprite(NyangQuariumOceanLayoutUIImage.OceanwaterLayoutPanel, "Shape_Rectangle", _freshwaterLayoutPanel);
         SetSprite(NyangQuariumOceanLayoutUIImage.OceanWaterFishView, "Shape_Rectangle");
@@ -98,8 +98,8 @@ public enum NyangQuariumOceanLayoutUIImage
     RealDeleteButton,
     RealCancelButton,
     UIToggleButton,
-    FreshFishCountIcon,
-    FreshNatureCountIcon,
+    OceanFishCountIcon,
+    OceanNatureCountIcon,
     OceanwaterLayoutPanel,
     FishItemTemplate,
     CloseButton,

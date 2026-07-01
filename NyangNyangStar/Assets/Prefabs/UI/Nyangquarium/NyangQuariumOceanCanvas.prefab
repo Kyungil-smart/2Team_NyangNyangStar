@@ -309,7 +309,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 165, y: 145}
-  m_SizeDelta: {x: 160, y: 100}
+  m_SizeDelta: {x: 160, y: 160}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &6425243036929807916
 CanvasRenderer:
@@ -1830,6 +1830,7 @@ MonoBehaviour:
   _cancelButton: {fileID: 5835242005030813705}
   _natureConfirmOffset: {x: 30, y: 80}
   _natureCancelOffset: {x: -40, y: 80}
+  _invalidNatureColor: {r: 1, g: 0, b: 0, a: 1}
   _mainUIObjects:
   - {fileID: 114145423423191567}
   - {fileID: 2757235346983521900}
@@ -1857,6 +1858,7 @@ MonoBehaviour:
   _deleteConfirmPopup: {fileID: 335758942066932293}
   _confirmDeleteButton: {fileID: 844333236441803382}
   _cancelDeleteButton: {fileID: 7746652923840612129}
+  _deleteButtonOffsetX: 30
   _deleteButtonOffsetY: 70
   _fishNameOffsetY: 65
   _normalUIObjects:
@@ -2855,7 +2857,7 @@ GameObject:
   - component: {fileID: 4867872740604653731}
   - component: {fileID: 7942079343224062103}
   m_Layer: 5
-  m_Name: FreshNatureCountIcon
+  m_Name: OceanNatureCountIcon
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -4921,7 +4923,7 @@ GameObject:
   - component: {fileID: 4727821093080951858}
   - component: {fileID: 2930003035275386193}
   m_Layer: 5
-  m_Name: FreshFishCountIcon
+  m_Name: OceanFishCountIcon
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -5651,7 +5653,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: -165, y: 145}
-  m_SizeDelta: {x: 160, y: 100}
+  m_SizeDelta: {x: 160, y: 160}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &2930962643056763569
 CanvasRenderer:
@@ -6557,7 +6559,7 @@ GameObject:
   - component: {fileID: 5693154623062018409}
   - component: {fileID: 7973928692080174344}
   m_Layer: 5
-  m_Name: FreshNatureCountText
+  m_Name: OceanNatureCountText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -6841,7 +6843,7 @@ GameObject:
   - component: {fileID: 2600218522531592541}
   - component: {fileID: 2128984414413857038}
   m_Layer: 5
-  m_Name: FreshFishCountText
+  m_Name: OceanFishCountText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -6974,7 +6976,7 @@ GameObject:
   - component: {fileID: 3304843262439505011}
   - component: {fileID: 4590879743059124426}
   m_Layer: 5
-  m_Name: FreshCount
+  m_Name: OceanCount
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -7015,8 +7017,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d77713967fc7b894ab298b53a6375d8e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _freshFishCountText: {fileID: 2128984414413857038}
-  _freshNatureCountText: {fileID: 7973928692080174344}
+  _aquariumType: 2
+  _fishCountText: {fileID: 2128984414413857038}
+  _natureCountText: {fileID: 7973928692080174344}
 --- !u!1 &7407672982538930147
 GameObject:
   m_ObjectHideFlags: 0
@@ -7430,6 +7433,7 @@ GameObject:
   - component: {fileID: 2736298740110334245}
   - component: {fileID: 8768750349000318472}
   - component: {fileID: 6668672942204453606}
+  - component: {fileID: 537966034555391821}
   m_Layer: 5
   m_Name: NyangQuariumLayoutPanel
   m_TagString: Untagged
@@ -7519,6 +7523,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _areaRect: {fileID: 7610858523911840613}
+  _leftOffset: 0
+  _rightOffset: 0
+  _topOffset: 1255
+  _bottomOffset: 0
 --- !u!114 &6668672942204453606
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7543,6 +7551,18 @@ MonoBehaviour:
   - {fileID: 2757235346983521900}
   - {fileID: 5678765733162377681}
   - {fileID: 7735036152408262968}
+--- !u!114 &537966034555391821
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8276524435226739490}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f9e0ffbd5053bc946b990b1bf413c3a7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &8538253043364569628
 GameObject:
   m_ObjectHideFlags: 0
