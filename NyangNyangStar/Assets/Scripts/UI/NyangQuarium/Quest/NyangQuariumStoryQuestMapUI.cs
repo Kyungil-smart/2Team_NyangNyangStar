@@ -23,12 +23,16 @@ namespace UI.NyangQuarium.Quest
         private const string CompleteMarkerSpriteKey = "NQ_Marker_clear";
         private const string CoinIconKey = "Main_Icon_Coin";
         private static readonly string[] SlotObjectNames = { "FirstQuest", "SeconQuest", "ThirdQuest" };
+        private static readonly string[] TankTutorialObjectNames = { "Tank_Tutorial_01", "Tank_Tutorial_02" };
+        private static readonly string[] TankTutorialSpriteKeys = { "NQ_Object_Tank_T01", "NQ_Object_Tank_T02" };
         private static readonly int[] DefaultStoryMapQuestIds = { 43001, 43002, 43003 };
 
-        [Header("Story Map Quest IDs")] [SerializeField]
+        [Header("Story Map Quest IDs")]
+        [SerializeField]
         private int[] _storyMapQuestIds = { 43001, 43002, 43003 };
 
         private readonly StoryQuestSlotBinding[] _slotBindings = new StoryQuestSlotBinding[3];
+        private readonly TankTutorialBinding[] _tankTutorialBindings = new TankTutorialBinding[TankTutorialObjectNames.Length];
         private bool _initialized;
 
         private static NyangQuariumStoryQuestMapUI _instance;
@@ -47,7 +51,22 @@ namespace UI.NyangQuarium.Quest
             public int CurrentQuestItemBindId = -1;
         }
 
-        private void Awake() => _instance = this;
+        private sealed class TankTutorialBinding
+        {
+            public GameObject Root;
+            public Image Image;
+            public UISpriteController Sprite;
+            public string SpriteKey;
+            public bool SpriteRequested;
+            public bool SpriteLoaded;
+        }
+
+        private void Awake()
+        {
+            _instance = this;
+            InitializeSlots();
+            InitializeTankTutorials();
+        }
 
         private void OnEnable()
         {
@@ -57,7 +76,6 @@ namespace UI.NyangQuarium.Quest
 
         private void Start()
         {
-            InitializeSlots();
             EnsureSubscribed();
             StartCoroutine(PrepareStoryQuestCoroutine());
         }
@@ -79,6 +97,9 @@ namespace UI.NyangQuarium.Quest
                 binding.MarkerSprite?.Dispose();
                 binding.QuestItemSprite?.Dispose();
             }
+
+            for (int i = 0; i < _tankTutorialBindings.Length; i++)
+                _tankTutorialBindings[i]?.Sprite?.Dispose();
         }
 
         public static int[] GetStoryMapQuestIds()
@@ -103,6 +124,18 @@ namespace UI.NyangQuarium.Quest
 
             FindFirstObjectByType<NyangQuariumStoryQuestMapUI>()
                 ?.RefreshStoryQuestMap(force: true);
+        }
+
+        public static void ShowTankTutorial(int tierIndex)
+        {
+            if (_instance != null)
+            {
+                _instance.SetTankTutorialVisible(tierIndex, visible: true);
+                return;
+            }
+
+            FindFirstObjectByType<NyangQuariumStoryQuestMapUI>()
+                ?.SetTankTutorialVisible(tierIndex, visible: true);
         }
 
         public static bool CanCompleteStoryQuest(NyangQuariumQuestData quest)
@@ -147,6 +180,7 @@ namespace UI.NyangQuarium.Quest
         private void InitializeSlots()
         {
             EnsureMarkerSpriteKeys();
+            EnsureTankTutorialSpriteKeys();
 
             Transform[] transforms = GetComponentsInChildren<Transform>(true);
 
@@ -162,7 +196,9 @@ namespace UI.NyangQuarium.Quest
 
                 StoryQuestSlotBinding binding = new StoryQuestSlotBinding
                 {
-                    SlotIndex = i, Button = button, Root = root.gameObject
+                    SlotIndex = i,
+                    Button = button,
+                    Root = root.gameObject
                 };
 
                 Image markerImage = button.targetGraphic as Image ?? button.GetComponent<Image>();
@@ -189,7 +225,104 @@ namespace UI.NyangQuarium.Quest
                 button.onClick.AddListener(() => OnStoryQuestClicked(slotIndex));
 
                 _slotBindings[i] = binding;
+
+                if (binding.Root != null)
+                    binding.Root.SetActive(false);
             }
+        }
+
+        private void InitializeTankTutorials()
+        {
+            Transform[] transforms = GetComponentsInChildren<Transform>(true);
+
+            for (int i = 0; i < TankTutorialObjectNames.Length; i++)
+            {
+                Transform root = FindNamedTransform(transforms, TankTutorialObjectNames[i]);
+                if (root == null)
+                    continue;
+
+                Image image = root.GetComponent<Image>();
+                TankTutorialBinding binding = new TankTutorialBinding
+                {
+                    Root = root.gameObject,
+                    Image = image,
+                    SpriteKey = i < TankTutorialSpriteKeys.Length ? TankTutorialSpriteKeys[i] : null
+                };
+
+                if (image != null)
+                {
+                    image.sprite = null;
+                    image.enabled = false;
+                    binding.Sprite = new UISpriteController(image);
+                }
+
+                _tankTutorialBindings[i] = binding;
+
+                if (binding.Root != null)
+                    binding.Root.SetActive(false);
+            }
+        }
+
+        private void SetTankTutorialVisible(int tierIndex, bool visible)
+        {
+            if (tierIndex < 0 || tierIndex >= _tankTutorialBindings.Length)
+                return;
+
+            if (visible && tierIndex == 1)
+                SetTankTutorialVisible(tierIndex: 0, visible: false);
+
+            TankTutorialBinding binding = _tankTutorialBindings[tierIndex];
+            if (binding?.Root == null)
+            {
+                InitializeTankTutorials();
+                binding = _tankTutorialBindings[tierIndex];
+            }
+
+            if (binding?.Root == null)
+                return;
+
+            if (!visible)
+            {
+                binding.Root.SetActive(false);
+                return;
+            }
+
+            if (binding.SpriteLoaded && binding.Image != null && binding.Image.sprite != null)
+            {
+                binding.Image.enabled = true;
+                binding.Root.SetActive(true);
+                return;
+            }
+
+            binding.Root.SetActive(false);
+
+            if (binding.Sprite != null &&
+                !binding.SpriteRequested &&
+                !string.IsNullOrWhiteSpace(binding.SpriteKey))
+            {
+                binding.SpriteRequested = true;
+                binding.Sprite.ChangeSprite(
+                    binding.SpriteKey,
+                    onLoaded: () => OnTankTutorialSpriteLoaded(tierIndex));
+            }
+        }
+
+        private void OnTankTutorialSpriteLoaded(int tierIndex)
+        {
+            if (tierIndex < 0 || tierIndex >= _tankTutorialBindings.Length)
+                return;
+
+            TankTutorialBinding binding = _tankTutorialBindings[tierIndex];
+            if (binding?.Root == null || binding.Image?.sprite == null)
+                return;
+
+            binding.SpriteLoaded = true;
+
+            if (tierIndex == 1)
+                SetTankTutorialVisible(tierIndex: 0, visible: false);
+
+            binding.Image.enabled = true;
+            binding.Root.SetActive(true);
         }
 
         private IEnumerator PrepareStoryQuestCoroutine()
@@ -251,22 +384,6 @@ namespace UI.NyangQuarium.Quest
                 NyangQuariumQuestManager.Instance.TryGetActiveStoryMapSlotIndex(out int slotIndex))
             {
                 return slotIndex;
-            }
-
-            int[] questIds = GetStoryMapQuestIds();
-
-            for (int i = 0; i < questIds.Length && i < _slotBindings.Length; i++)
-            {
-                if (questIds[i] <= 0)
-                    continue;
-
-                if (NyangQuariumQuestManager.Instance != null &&
-                    NyangQuariumQuestManager.Instance.IsQuestCompleted(questIds[i]))
-                {
-                    continue;
-                }
-
-                return i;
             }
 
             return -1;
@@ -488,6 +605,16 @@ namespace UI.NyangQuarium.Quest
         {
             RegisterSpriteKeyIfMissing(NormalMarkerSpriteKey, AddressableGroupType.Nyangquarium);
             RegisterSpriteKeyIfMissing(CompleteMarkerSpriteKey, AddressableGroupType.Nyangquarium);
+        }
+
+        private static void EnsureTankTutorialSpriteKeys()
+        {
+            for (int i = 0; i < TankTutorialSpriteKeys.Length; i++)
+            {
+                RegisterSpriteKeyIfMissing(
+                    TankTutorialSpriteKeys[i],
+                    AddressableGroupType.Nyangquarium);
+            }
         }
 
         private static void RegisterSpriteKeyIfMissing(string key, AddressableGroupType groupType)
