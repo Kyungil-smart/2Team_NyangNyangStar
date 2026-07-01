@@ -236,6 +236,8 @@ public class PhotoCollectionPopupUI : UIPopup
 
     private void ApplyStarFilter()
     {
+        if (_starToggles == null) return;
+
         List<int> selectedStars = new();
 
         for (int i = 0; i < _starToggles.Length; i++)

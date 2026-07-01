@@ -44,3 +44,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cc9049188e6ace1429e406a1bc52c295, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _photoAlbumSO: {fileID: 11400000, guid: 7684103119f56cb468b94264b4781452, type: 2}
+  _runtimePhotoSO: {fileID: 11400000, guid: 3bc242fc7d9eb5f4e8b28801c2d9f037, type: 2}
