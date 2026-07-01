@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
@@ -10,6 +11,7 @@ public sealed class NyangQuariumFishPlacementDragHandler :
 {
     private RectTransform _rectTransform;
     private NyangQuariumFishPlacementArea _placementArea;
+    private Action<bool> _placementValidityChanged;
     private bool _canDrag;
 
     private void Awake()
@@ -17,10 +19,15 @@ public sealed class NyangQuariumFishPlacementDragHandler :
         _rectTransform = transform as RectTransform;
     }
 
-    public void Initialize(NyangQuariumFishPlacementArea placementArea)
+    public void Initialize(
+        NyangQuariumFishPlacementArea placementArea,
+        Action<bool> placementValidityChanged)
     {
         _placementArea = placementArea;
+        _placementValidityChanged = placementValidityChanged;
         _canDrag = true;
+
+        NotifyPlacementValidity();
     }
 
     public void SetDraggable(bool canDrag)
@@ -51,13 +58,27 @@ public sealed class NyangQuariumFishPlacementDragHandler :
         if (_rectTransform == null || _placementArea == null)
             return;
 
-        if (_placementArea.TryGetClampedLocalPosition(
+        if (!_placementArea.TryGetLocalPosition(
                 eventData.position,
                 eventData.pressEventCamera,
-                _rectTransform,
                 out Vector2 localPosition))
         {
-            _rectTransform.anchoredPosition = localPosition;
+            return;
         }
+
+        _rectTransform.anchoredPosition = localPosition;
+        NotifyPlacementValidity();
+    }
+
+    private void NotifyPlacementValidity()
+    {
+        if (_placementArea == null || _rectTransform == null)
+            return;
+
+        bool isValid =
+            _placementArea.IsFullyInsideNaturePlacementArea(
+                _rectTransform);
+
+        _placementValidityChanged?.Invoke(isValid);
     }
 }

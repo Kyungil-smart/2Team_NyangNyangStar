@@ -80,6 +80,7 @@ public class NyangQuariumOceanLayoutUI : UIPopup, INyangquariumEntryReceiver
 
     private NyangQuariumOceanLayoutUISprite _nyangQuariumOceanLayoutUISprite;
     private NyangQuariumUIVisibilityToggle _uiVisibilityToggle;
+    private NyangQuariumOutsideTouchArea _outsideTouchArea;
 
     public override void Init()
     {
@@ -101,6 +102,7 @@ public class NyangQuariumOceanLayoutUI : UIPopup, INyangquariumEntryReceiver
 
         BindButtons();
         ResolveInventoryRect();
+        BindOutsideTouchArea();
         RefreshFishGridCellSize();
         AddButtonListeners();
         InitializeUI();
@@ -155,6 +157,42 @@ public class NyangQuariumOceanLayoutUI : UIPopup, INyangquariumEntryReceiver
 
         if (_inventoryRect != null)
             _inventoryOpenedPosition = _inventoryRect.anchoredPosition;
+    }
+
+    private void BindOutsideTouchArea()
+    {
+        if (_outsideTouchArea == null)
+        {
+            _outsideTouchArea =
+                GetComponentInChildren<NyangQuariumOutsideTouchArea>(true);
+        }
+
+        if (_outsideTouchArea == null)
+        {
+            DebugTool.Warning(
+                $"[{GetType().Name}] 바깥 터치 영역을 찾을 수 없습니다.",
+                DebugType.UI,
+                this);
+
+            return;
+        }
+
+        _outsideTouchArea.Clicked -= HandleOutsideTouch;
+        _outsideTouchArea.Clicked += HandleOutsideTouch;
+    }
+
+    private void HandleOutsideTouch()
+    {
+        if (!_isInventoryOpened || _isInventoryAnimating)
+            return;
+
+        GameManager.Audio.PlaySfx("Main_SFX_Touch");
+        CloseInventory();
+
+        DebugTool.Log(
+            $"[{GetType().Name}] 배치 패널 바깥 터치로 인벤토리 닫기",
+            DebugType.UI,
+            this);
     }
 
     private void AddButtonListeners()
@@ -578,6 +616,9 @@ public class NyangQuariumOceanLayoutUI : UIPopup, INyangquariumEntryReceiver
 
     private void OnDestroy()
     {
+        if (_outsideTouchArea != null)
+            _outsideTouchArea.Clicked -= HandleOutsideTouch;
+
         if (_uiVisibilityToggle != null)
         {
             _uiVisibilityToggle.VisibilityChanged -=

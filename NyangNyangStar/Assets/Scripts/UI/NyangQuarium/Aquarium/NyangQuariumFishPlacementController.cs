@@ -1,6 +1,7 @@
 using Core.Managers;
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using UI.NyangQuarium;
 using UnityEngine;
 using UnityEngine.UI;
@@ -72,6 +73,11 @@ public sealed class NyangQuariumFishPlacementController : MonoBehaviour
     [SerializeField]
     private Vector2 _natureCancelOffset = new Vector2(70f, 80f);
 
+    [Header("자연 요소 배치 가능 여부 표시")]
+    [Tooltip("자연 요소가 배치 가능 영역을 벗어났을 때 적용할 색상")]
+    [SerializeField]
+    private Color _invalidNatureColor = Color.red;
+
     [Header("배치 모드에서 숨길 UI")]
     [SerializeField]
     private GameObject[] _mainUIObjects;
@@ -91,6 +97,10 @@ public sealed class NyangQuariumFishPlacementController : MonoBehaviour
 
     private NyangQuariumFishPlacementDragHandler
         _natureDragHandler;
+
+    private Image _naturePreviewImage;
+    private Color _naturePreviewDefaultColor = Color.white;
+    private bool _isNaturePlacementValid;
 
     private bool _isPlacementMode;
     private bool _hasLoadedPlacedFish;
@@ -245,6 +255,16 @@ public sealed class NyangQuariumFishPlacementController : MonoBehaviour
 
         GameManager.Audio.PlaySfx(
             "Main_SFX_Touch");
+
+        if (!_isNaturePlacementValid)
+        {
+            DebugTool.Warning("[NyangQuariumFishPlacementController] " +
+                "자연 요소가 배치 가능 영역을 벗어나 확정할 수 없습니다.",
+                DebugType.UI,
+                this);
+
+            return;
+        }
 
         if (!CanPlaceMoreNature())
             return;
@@ -514,22 +534,79 @@ public sealed class NyangQuariumFishPlacementController : MonoBehaviour
         return spawnedFish;
     }
 
-    public void SavePlacedFishSnapshot()
+    public async void SavePlacedFishSnapshot()
     {
         if (_placedFishRenderer == null)
             return;
 
-        SavePlacedFishSnapshotAsync(
-            _placedFishRenderer.GetCurrentPlacedFishData());
+        IReadOnlyList<NyangquariumPlacedFishData> placedFishData =
+            _placedFishRenderer.GetCurrentPlacedFishData();
+
+        bool isSaved =
+            await SavePlacedFishSnapshotAsync(placedFishData);
+
+        if (isSaved)
+        {
+            NyangQuariumPlacedCountUI.NotifyCountChanged(
+                _aquariumType);
+        }
     }
 
-    public void SavePlacedFishSnapshot(
+    public async void SavePlacedFishSnapshot(
         IReadOnlyList<NyangquariumPlacedFishData> placedFishData)
     {
-        SavePlacedFishSnapshotAsync(placedFishData);
+        bool isSaved =
+            await SavePlacedFishSnapshotAsync(placedFishData);
+
+        if (isSaved)
+        {
+            NyangQuariumPlacedCountUI.NotifyCountChanged(
+                _aquariumType);
+        }
     }
 
-    private async void SavePlacedFishSnapshotAsync(
+    /// <summary>
+    /// 선택된 물고기를 삭제하고 최신 배치 목록을 저장합니다.
+    /// 저장 성공 후 현재 수조의 카운트 UI에 변경을 알립니다.
+    /// </summary>
+    public async Task<bool> DeleteSelectedFishAsync()
+    {
+        if (_placedFishRenderer == null)
+        {
+            DebugTool.Warning("[NyangQuariumFishPlacementController] " +
+                "PlacedFishRenderer가 연결되지 않았습니다.",
+                DebugType.UI,
+                this);
+
+            return false;
+        }
+
+        if (!_placedFishRenderer.DeleteSelectedFish())
+        {
+            DebugTool.Warning("[NyangQuariumFishPlacementController] " +
+                "선택된 물고기를 삭제하지 못했습니다.",
+                DebugType.UI,
+                this);
+
+            return false;
+        }
+
+        IReadOnlyList<NyangquariumPlacedFishData> currentData =
+            _placedFishRenderer.GetCurrentPlacedFishData();
+
+        bool isSaved =
+            await SavePlacedFishSnapshotAsync(currentData);
+
+        if (!isSaved)
+            return false;
+
+        NyangQuariumPlacedCountUI.NotifyCountChanged(
+            _aquariumType);
+
+        return true;
+    }
+
+    private async Task<bool> SavePlacedFishSnapshotAsync(
         IEnumerable<NyangquariumPlacedFishData> placedFishData)
     {
         _placedFishMutationVersion++;
@@ -543,42 +620,99 @@ public sealed class NyangQuariumFishPlacementController : MonoBehaviour
                 "Firestore가 준비되지 않아 수조 배치 저장을 생략합니다.",
                 DebugType.UI,
                 this);
-            return;
+
+            return false;
         }
 
-        await firestoreSO.SavePlacedFishAsync(
+        bool isSaved = await firestoreSO.SavePlacedFishAsync(
             _aquariumType,
             placedFishData,
             _fishSO);
+
+        if (!isSaved)
+        {
+            DebugTool.Warning("[NyangQuariumFishPlacementController] " +
+                $"물고기 Firestore 저장 실패 - AquariumType:{_aquariumType}",
+                DebugType.UI,
+                this);
+
+            return false;
+        }
+
+        return true;
     }
     /// <summary>
     /// 현재 수조에 배치된 자연 요소의 식별 정보, 위치, 크기를 수집해 저장합니다.
     /// </summary>
-    public void SavePlacedNatureSnapshot()
+    public async void SavePlacedNatureSnapshot()
     {
-        SavePlacedNatureSnapshot(null);
+        if (_nyangQuariumLayoutPanel == null)
+            return;
+
+        IReadOnlyList<NyangQuariumPlacedNatureData> placedNatureData =
+            GetCurrentPlacedNatureData();
+
+        bool isSaved =
+            await SavePlacedNatureSnapshotAsync(placedNatureData);
+
+        if (isSaved)
+        {
+            NyangQuariumPlacedCountUI.NotifyCountChanged(
+                _aquariumType);
+        }
     }
 
     /// <summary>
-    /// 삭제 예정 오브젝트를 제외한 자연 요소 목록을 저장합니다.
-    /// Destroy가 프레임 종료에 처리되어도 삭제 결과가 정확히 반영됩니다.
+    /// 자연 요소 저장을 외부에서 요청할 때 사용합니다.
+    /// 삭제는 DeletePlacedNatureAsync를 사용합니다.
     /// </summary>
-    public void SavePlacedNatureSnapshot(
+    public async void SavePlacedNatureSnapshot(
         NyangQuariumPlacedNature excludedNature)
     {
         if (_nyangQuariumLayoutPanel == null)
-        {
-            DebugTool.Warning("[NyangQuariumFishPlacementController] " +
-                "NyangQuariumLayoutPanel이 연결되지 않아 자연 요소 저장을 진행할 수 없습니다.",
-                DebugType.UI,
-                this);
             return;
-        }
 
-        List<NyangQuariumPlacedNatureData> placedNatureData =
+        IReadOnlyList<NyangQuariumPlacedNatureData> placedNatureData =
             GetCurrentPlacedNatureData(excludedNature);
 
-        SavePlacedNatureSnapshotAsync(placedNatureData);
+        bool isSaved =
+            await SavePlacedNatureSnapshotAsync(placedNatureData);
+
+        if (isSaved)
+        {
+            NyangQuariumPlacedCountUI.NotifyCountChanged(
+                _aquariumType);
+        }
+    }
+
+    /// <summary>
+    /// 지정한 자연 요소를 제외한 목록을 저장한 뒤 오브젝트를 삭제합니다.
+    /// 저장 성공 후 현재 수조의 카운트 UI에 변경을 알립니다.
+    /// </summary>
+    public async Task<bool> DeletePlacedNatureAsync(
+        NyangQuariumPlacedNature targetNature)
+    {
+        if (targetNature == null ||
+            _nyangQuariumLayoutPanel == null)
+        {
+            return false;
+        }
+
+        IReadOnlyList<NyangQuariumPlacedNatureData> placedNatureData =
+            GetCurrentPlacedNatureData(targetNature);
+
+        bool isSaved =
+            await SavePlacedNatureSnapshotAsync(placedNatureData);
+
+        if (!isSaved)
+            return false;
+
+        Destroy(targetNature.gameObject);
+
+        NyangQuariumPlacedCountUI.NotifyCountChanged(
+            _aquariumType);
+
+        return true;
     }
 
     private List<NyangQuariumPlacedNatureData> GetCurrentPlacedNatureData(
@@ -616,7 +750,7 @@ public sealed class NyangQuariumFishPlacementController : MonoBehaviour
         return result;
     }
 
-    private async void SavePlacedNatureSnapshotAsync(
+    private async Task<bool> SavePlacedNatureSnapshotAsync(
         IReadOnlyList<NyangQuariumPlacedNatureData> placedNatureData)
     {
         _placedNatureMutationVersion++;
@@ -630,7 +764,8 @@ public sealed class NyangQuariumFishPlacementController : MonoBehaviour
                 "Firestore가 준비되지 않아 자연 요소 저장을 생략합니다.",
                 DebugType.UI,
                 this);
-            return;
+
+            return false;
         }
 
         bool isSaved = await firestoreSO.SavePlacedNatureAsync(
@@ -643,7 +778,8 @@ public sealed class NyangQuariumFishPlacementController : MonoBehaviour
                 $"자연 요소 Firestore 저장 실패 - AquariumType:{_aquariumType}",
                 DebugType.UI,
                 this);
-            return;
+
+            return false;
         }
 
         DebugTool.Log("[NyangQuariumFishPlacementController] " +
@@ -651,6 +787,8 @@ public sealed class NyangQuariumFishPlacementController : MonoBehaviour
             $"Count:{placedNatureData?.Count ?? 0}",
             DebugType.UI,
             this);
+
+        return true;
     }
 
     private async void LoadPlacedObjectsFromFirestore()
@@ -859,13 +997,14 @@ public sealed class NyangQuariumFishPlacementController : MonoBehaviour
 
         _naturePreview.SetAsLastSibling();
 
-        Image natureImage =
+        _naturePreviewImage =
             _naturePreview.GetComponent<Image>();
 
-        if (natureImage != null)
+        if (_naturePreviewImage != null)
         {
-            natureImage.raycastTarget = true;
-            natureImage.preserveAspect = true;
+            _naturePreviewImage.raycastTarget = true;
+            _naturePreviewImage.preserveAspect = true;
+            _naturePreviewDefaultColor = _naturePreviewImage.color;
         }
 
         _natureDragHandler =
@@ -880,7 +1019,12 @@ public sealed class NyangQuariumFishPlacementController : MonoBehaviour
         }
 
         _natureDragHandler.Initialize(
-            _placementArea);
+            _placementArea,
+            HandleNaturePlacementValidityChanged);
+
+        HandleNaturePlacementValidityChanged(
+            _placementArea.IsFullyInsideNaturePlacementArea(
+                _naturePreview));
 
         DebugTool.Log($"[NyangQuariumFishPlacementController] " +
             $"자연 요소 미리보기 생성 - " +
@@ -888,6 +1032,26 @@ public sealed class NyangQuariumFishPlacementController : MonoBehaviour
             $"SpriteKey:{_selectedSpriteKey}",
             DebugType.UI,
             this);
+    }
+
+
+    /// <summary>
+    /// 자연 요소가 배치 가능 영역 안에 완전히 포함되는지에 따라
+    /// 미리보기 색상과 확정 버튼 상태를 갱신합니다.
+    /// </summary>
+    private void HandleNaturePlacementValidityChanged(bool isValid)
+    {
+        _isNaturePlacementValid = isValid;
+
+        if (_naturePreviewImage != null)
+        {
+            _naturePreviewImage.color = isValid
+                ? _naturePreviewDefaultColor
+                : _invalidNatureColor;
+        }
+
+        if (_confirmButton != null)
+            _confirmButton.interactable = isValid;
     }
 
     /// <summary>
@@ -932,6 +1096,8 @@ public sealed class NyangQuariumFishPlacementController : MonoBehaviour
         _naturePreview = null;
         _naturePreviewController = null;
         _natureDragHandler = null;
+        _naturePreviewImage = null;
+        _isNaturePlacementValid = false;
 
         DebugTool.Log($"[NyangQuariumFishPlacementController] " +
             $"자연 요소 배치 확정 - " +
@@ -1066,6 +1232,8 @@ public sealed class NyangQuariumFishPlacementController : MonoBehaviour
         _naturePreview = null;
         _naturePreviewController = null;
         _natureDragHandler = null;
+        _naturePreviewImage = null;
+        _isNaturePlacementValid = false;
     }
 
     private void EnterPlacementMode()
@@ -1153,6 +1321,9 @@ public sealed class NyangQuariumFishPlacementController : MonoBehaviour
         {
             _confirmButton.gameObject.SetActive(
                 isActive);
+
+            _confirmButton.interactable =
+                isActive && _isNaturePlacementValid;
         }
 
         if (_cancelButton != null)
