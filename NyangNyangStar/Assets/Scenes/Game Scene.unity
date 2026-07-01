@@ -166,7 +166,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 95ac8995eb344c241bec512b53317767, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _story: {fileID: 11400000, guid: fe20ea439e7368e4abfad14c08126b76, type: 2}
+  _story: {fileID: 11400000, guid: a805b387d53f7304fac1a6708ca01a54, type: 2}
+  _afterFirstQuestStory: {fileID: 11400000, guid: fe20ea439e7368e4abfad14c08126b76, type: 2}
 --- !u!1 &1253025884
 GameObject:
   m_ObjectHideFlags: 0

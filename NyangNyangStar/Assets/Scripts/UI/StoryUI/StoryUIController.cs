@@ -61,7 +61,7 @@ public class StoryUIController : UIPopup
 
     private static StoryUIController _instance; // 한 번 생성 후 재사용 (닫을 때 비활성화만 하므로 살아있음)
 
-    public static async void ShowOnce(StoryDataSO story)
+    public static async void ShowOnce(StoryDataSO story, System.Action onFinished = null)
     {
         if (story == null)
         {
@@ -72,12 +72,17 @@ public class StoryUIController : UIPopup
         NyangQuariumFirestoreSO fso = await NyangQuariumFirestoreSO.WaitForReadyAsync();
 
         if (fso != null && fso.HasReadStory(story.storyId))
-            return; 
+        {
+            onFinished?.Invoke();
+            return;
+        }
 
-        System.Action onFinished = () =>
+        System.Action combinedOnFinished = () =>
         {
             if (fso != null)
                 _ = fso.MarkStoryReadAsync(story.storyId);
+
+            onFinished?.Invoke();
         };
 
         // 이미 만들어둔 인스턴스가 있으면 재사용 (닫을 때 비활성화만 하므로 살아있음)
@@ -85,7 +90,7 @@ public class StoryUIController : UIPopup
         {
             _instance.gameObject.SetActive(true);
             _instance.transform.SetAsLastSibling();
-            _instance.PlayStory(story, onFinished);
+            _instance.PlayStory(story, combinedOnFinished);
             return;
         }
 
@@ -95,7 +100,7 @@ public class StoryUIController : UIPopup
             popup =>
             {
                 _instance = popup;
-                popup.PlayStory(story, onFinished);
+                popup.PlayStory(story, combinedOnFinished);
             });
     }
 

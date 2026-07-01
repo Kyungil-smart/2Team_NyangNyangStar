@@ -19,7 +19,7 @@ namespace UI
         public UISpriteController(Image image)
             => _image = image;
 
-        public void ChangeSprite(string key, bool nativeSize = false)
+        public void ChangeSprite(string key, bool nativeSize = false, System.Action onLoaded = null)
         {
             if (_disposed)
                 return;
@@ -59,6 +59,8 @@ namespace UI
                     
                     if(nativeSize)
                         _image.SetNativeSize();
+
+                    onLoaded?.Invoke();
                 },
                 failedKey =>
                 {
@@ -66,6 +68,7 @@ namespace UI
                         return;
 
                     DebugTool.Warning($"{failedKey} : Sprite 로드 실패", DebugType.UI);
+                    onLoaded?.Invoke();
                 });
         }
 
