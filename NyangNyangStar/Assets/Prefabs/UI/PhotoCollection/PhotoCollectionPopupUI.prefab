@@ -1591,7 +1591,7 @@ MonoBehaviour:
   _star3Toggle: {fileID: 5537885279419258790}
   _star4Toggle: {fileID: 2541215158164095460}
   _star5Toggle: {fileID: 7437167655753365987}
-  _photoAlbumSO: {fileID: 11400000, guid: 7684103119f56cb468b94264b4781452, type: 2}
+  _runtimePhotoSO: {fileID: 11400000, guid: 3bc242fc7d9eb5f4e8b28801c2d9f037, type: 2}
   _content: {fileID: 4790034486642315090}
   _catPhotoSlotPrefab: {fileID: 8655329051593768335, guid: 277bc544a685c8749903dedc6f1da7cf, type: 3}
 --- !u!114 &2564817965524612480

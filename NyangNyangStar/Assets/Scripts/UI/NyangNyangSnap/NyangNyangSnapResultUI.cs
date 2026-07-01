@@ -13,6 +13,8 @@ public class NyangNyangSnapResultUI : UIPopup
 {
     [Header("사진 SO")]
     [SerializeField] private NyangNyangSnapPhotoAlbumSO _photoAlbumSO;
+    [Header("런타임 사진 SO")]
+    [SerializeField] private NyangNyangSnapRuntimePhotoSO _runtimePhotoSO;
 
     [Header("결과/보상 패널")]
     [SerializeField] private GameObject _resultCollectionPanel;
@@ -194,6 +196,7 @@ public class NyangNyangSnapResultUI : UIPopup
 
                         string photoId = uploadRecords[i].photoId;
                         NyangNyangSnapCaptureRecord record = uploadRecords[i].record;
+                        Timestamp createdAt = Timestamp.GetCurrentTimestamp();
 
                         NyangNyangSnapSavedPhotoData photoData = new()
                         {
@@ -206,10 +209,16 @@ public class NyangNyangSnapResultUI : UIPopup
                             backGroundScore = record.ScoreResult.BackgroundScore,
                             totalScore = record.ScoreResult.TotalScore,
                             starCount = record.ScoreResult.StarCount,
-                            createdAt = Timestamp.GetCurrentTimestamp()
+                            createdAt = createdAt
                         };
 
                         _photoAlbumSO.AddPhoto(photoData);
+                        _runtimePhotoSO.AddPhoto(new NyangNyangSnapRuntimePhotoData(
+                            photoId, 
+                            record.CapturedSprite,
+                            results[i].StoragePath,
+                            record.ScoreResult.StarCount,
+                            createdAt));
                         savedCount++;
                     }
 

@@ -31,7 +31,7 @@ public class PhotoCollectionPopupUI : UIPopup
     [SerializeField] private Toggle _star5Toggle;
 
     [Header("사진 데이터")]
-    [SerializeField] private NyangNyangSnapPhotoAlbumSO _photoAlbumSO;
+    [SerializeField] private NyangNyangSnapRuntimePhotoSO _runtimePhotoSO;
 
     [Header("사진 슬롯")]
     [SerializeField] private Transform _content;
@@ -121,47 +121,28 @@ public class PhotoCollectionPopupUI : UIPopup
         _selectedCatPopup = popup;
     }
 
-    private async void RefreshPhotoSlots()
+    private void RefreshPhotoSlots()
     {
-        try
-        {
-            await RefreshPhotoSlotsAsync();
-            DebugTool.Log("사진 목록 새로고침", DebugType.UI, this);
-        }
-        catch (System.Exception e)
-        {
-            DebugTool.Warning($"[PhotoCollectionPopupUI] 사진 목록 새로고침 실패: {e.Message}", DebugType.UI, this);
-        }
-    }
-
-    private async Task RefreshPhotoSlotsAsync()
-    {
-        if (!EnsurePhotoAlbumReady())
-            return;
-
-        // 서버에서 가져오기
-        await _photoAlbumSO.UpdateFromServerAsync(false);
-
         // 정렬
-        List<NyangNyangSnapSavedPhotoData> sortedPhotos = _photoAlbumSO.Photos
-            .OrderByDescending(x => x.starCount)
-            .ThenByDescending(x => x.createdAt)
+        List<NyangNyangSnapRuntimePhotoData> sortedPhotos = _runtimePhotoSO.RuntimePhotos
+            .OrderByDescending(x => x.StarCount)
+            .ThenByDescending(x => x.CreatedAt)
             .ToList();
 
-        // 서버에서 가져온 사진 id
+        // 서버에 저장된 사진 ID
         HashSet<string> serverPhotoIds = new();
 
         for (int i = 0; i < sortedPhotos.Count; i++)
         {
-            NyangNyangSnapSavedPhotoData photoData = sortedPhotos[i];
+            NyangNyangSnapRuntimePhotoData photoData = sortedPhotos[i];
 
-            if (string.IsNullOrEmpty(photoData.photoId)) continue;
+            if (photoData == null) continue;
 
-            serverPhotoIds.Add(photoData.photoId);
+            serverPhotoIds.Add(photoData.PhotoId);
 
-            if (!_photoDic.TryGetValue(photoData.photoId, out CatPhotoSlotUI slot))
+            if (!_photoDic.TryGetValue(photoData.PhotoId, out CatPhotoSlotUI slot))
             {
-                slot = CreateSlot(photoData.photoId);
+                slot = CreateSlot(photoData.PhotoId);
             }
 
             if (slot == null) continue;
@@ -173,21 +154,8 @@ public class PhotoCollectionPopupUI : UIPopup
 
         RemoveDeletedSlots(serverPhotoIds);
         ApplyStarFilter();
-    }
 
-    private bool EnsurePhotoAlbumReady()
-    {
-        if (_photoAlbumSO == null)
-        {
-            DebugTool.Warning("[PhotoCollectionPopupUI] PhotoAlbumSO가 연결되지 않았습니다.", DebugType.UI, this);
-            return false;
-        }
-
-        if (_photoAlbumSO.TryEnsureDatabaseReady())
-            return true;
-
-        DebugTool.Warning("[PhotoCollectionPopupUI] Firestore 준비 전이라 사진 목록 갱신을 건너뜁니다.", DebugType.UI, this);
-        return false;
+        DebugTool.Log("사진 목록 새로고침", DebugType.UI, this);
     }
 
     private CatPhotoSlotUI CreateSlot(string photoId)
