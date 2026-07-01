@@ -284,7 +284,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &520634314073524790
 RectTransform:
   m_ObjectHideFlags: 0
@@ -511,7 +511,6 @@ MonoBehaviour:
   _scrollRect: {fileID: 22517739340832046}
   _content: {fileID: 91082898750952406}
   _cardPrefab: {fileID: 5582647336375187666, guid: 56c17852877279741b46547d7b6ee7f0, type: 3}
-  cleared: 0
   _nextButton: {fileID: 3753731638108405109}
   _stories: []
   _titleText: {fileID: 0}
@@ -780,7 +779,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &6455321811202350490
 RectTransform:
   m_ObjectHideFlags: 0
@@ -921,7 +920,7 @@ RectTransform:
   m_Father: {fileID: 4397586637374885442}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
+  m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 20, y: 20}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -1085,8 +1084,8 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 2302751418896445424}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.000000059604645, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 20, y: 20}
   m_Pivot: {x: 0.5, y: 0.5}

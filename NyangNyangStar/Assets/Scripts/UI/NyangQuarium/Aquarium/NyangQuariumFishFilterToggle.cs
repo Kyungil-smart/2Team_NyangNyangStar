@@ -50,8 +50,8 @@ public sealed class NyangQuariumFishFilterToggle : MonoBehaviour
     {
         ValueChanged?.Invoke(this, isOn);
 
-        Debug.Log(
-            $"[NyangQuariumFishFilterToggle] Filter:{_filterType}, IsOn:{isOn}",
+        DebugTool.Log($"[NyangQuariumFishFilterToggle] Filter:{_filterType}, IsOn:{isOn}",
+            DebugType.UI,
             this);
     }
 }

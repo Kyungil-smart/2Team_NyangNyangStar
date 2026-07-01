@@ -15,9 +15,10 @@ public class NyangQuariumFirestoreSO : BaseFireStore
     [SerializeField] private List<int> _freshwaterPlacedFishIds = new();
     [SerializeField] private List<int> _saltwaterPlacedFishIds = new();
 
-    [Header("수조 배치")]
-    [SerializeField] private List<int> _freshwaterPlacedNatureIds = new();
-    [SerializeField] private List<int> _saltwaterPlacedNatureIds = new();
+    [Header("수조 자연 요소 배치 - 상세 데이터")]
+    [SerializeField] private List<NyangQuariumPlacedNatureData> _freshwaterPlacedNatureData = new();
+    [SerializeField] private List<NyangQuariumPlacedNatureData> _saltwaterPlacedNatureData = new();
+
 
     [Header("스토리")]
     [SerializeField] private List<int> _readStoryIds = new();
@@ -27,8 +28,8 @@ public class NyangQuariumFirestoreSO : BaseFireStore
     public IReadOnlyList<int> UnlockedFishIds => _unlockedFishIds;
     public IReadOnlyList<int> FreshwaterPlacedFishIds => _freshwaterPlacedFishIds;
     public IReadOnlyList<int> SaltwaterPlacedFishIds => _saltwaterPlacedFishIds;
-    public IReadOnlyList<int> FreshwaterPlacedFNatureIds => _freshwaterPlacedNatureIds;
-    public IReadOnlyList<int> SaltwaterPlacedFNatureIds => _saltwaterPlacedNatureIds;
+    public IReadOnlyList<NyangQuariumPlacedNatureData> FreshwaterPlacedNatureData => _freshwaterPlacedNatureData;
+    public IReadOnlyList<NyangQuariumPlacedNatureData> SaltwaterPlacedNatureData => _saltwaterPlacedNatureData;
 
     private void OnEnable()
     {
@@ -219,31 +220,26 @@ public class NyangQuariumFirestoreSO : BaseFireStore
     }
 
     /// <summary>
-    /// 현재 수조에 배치된 자연 요소 ID 목록을 Firestore에 저장합니다.
+    /// 현재 수조에 배치된 자연 요소의 식별 정보, 위치, 크기를 저장합니다.
     /// </summary>
     public async Task<bool> SavePlacedNatureAsync(
         FishType aquariumType,
-        IEnumerable<int> placedNatureIds)
+        IEnumerable<NyangQuariumPlacedNatureData> placedNatureData)
     {
         if (!TryEnsureDatabaseReady())
         {
             DebugTool.Warning(
-                "[NyangQuariumFirestoreSO] " +
-                "Firestore가 준비되지 않아 자연 요소 배치 저장을 생략합니다.",
+                "[NyangQuariumFirestoreSO] Firestore가 준비되지 않아 자연 요소 배치 저장을 생략합니다.",
                 DebugType.Data,
                 this);
-
             return false;
         }
 
-        SetPlacedNatureData(
-            aquariumType,
-            placedNatureIds);
-
+        SetPlacedNatureData(aquariumType, placedNatureData);
         await SetDataAsync(ToFirestoreDictionary());
-
         return true;
     }
+
 
     public void SetPlacedFishData(
         FishType aquariumType,
@@ -270,29 +266,37 @@ public class NyangQuariumFirestoreSO : BaseFireStore
         }
     }
 
-    /// <summary>
-    /// 현재 수조의 자연 요소 ID 목록을 교체합니다.
-    /// </summary>
+    public IReadOnlyList<NyangQuariumPlacedNatureData> GetPlacedNatureData(
+        FishType aquariumType)
+    {
+        return GetMutablePlacedNatureData(aquariumType);
+    }
+
     public void SetPlacedNatureData(
         FishType aquariumType,
-        IEnumerable<int> placedNatureIds)
+        IEnumerable<NyangQuariumPlacedNatureData> placedNatureData)
     {
-        List<int> targetList =
-            GetMutablePlacedNatureIds(aquariumType);
+        List<NyangQuariumPlacedNatureData> targetData =
+            GetMutablePlacedNatureData(aquariumType);
 
-        targetList.Clear();
+        targetData.Clear();
 
-        if (placedNatureIds == null)
+        if (placedNatureData == null)
             return;
 
-        foreach (int natureId in placedNatureIds)
+        foreach (NyangQuariumPlacedNatureData natureData in placedNatureData)
         {
-            if (natureId <= 0)
+            if (natureData == null ||
+                natureData.ItemId <= 0 ||
+                string.IsNullOrWhiteSpace(natureData.SpriteKey))
+            {
                 continue;
+            }
 
-            targetList.Add(natureId);
+            targetData.Add(natureData);
         }
     }
+
 
     public async Task<bool> UnlockFishAsync(int fishId)
     {
@@ -400,10 +404,6 @@ public class NyangQuariumFirestoreSO : BaseFireStore
         return aquariumType == FishType.Saltwater ? _saltwaterPlacedFishIds : _freshwaterPlacedFishIds;
     }
 
-    public IReadOnlyList<int> GetPacledNatureIds(FishType aquariumType)
-    {
-        return aquariumType == FishType.Saltwater ? _saltwaterPlacedNatureIds : _freshwaterPlacedNatureIds;
-    }
 
     private List<int> GetMutablePlacedFishIds(FishType aquariumType)
     {
@@ -417,17 +417,18 @@ public class NyangQuariumFirestoreSO : BaseFireStore
         return _freshwaterPlacedFishIds;
     }
 
-    private List<int> GetMutablePlacedNatureIds(
-    FishType aquariumType)
+
+    private List<NyangQuariumPlacedNatureData> GetMutablePlacedNatureData(
+        FishType aquariumType)
     {
         if (aquariumType == FishType.Saltwater)
         {
-            _saltwaterPlacedNatureIds ??= new List<int>();
-            return _saltwaterPlacedNatureIds;
+            _saltwaterPlacedNatureData ??= new List<NyangQuariumPlacedNatureData>();
+            return _saltwaterPlacedNatureData;
         }
 
-        _freshwaterPlacedNatureIds ??= new List<int>();
-        return _freshwaterPlacedNatureIds;
+        _freshwaterPlacedNatureData ??= new List<NyangQuariumPlacedNatureData>();
+        return _freshwaterPlacedNatureData;
     }
 
 
@@ -436,7 +437,7 @@ public class NyangQuariumFirestoreSO : BaseFireStore
         return fishType == FishType.None || fishData.FishType == fishType;
     }
 
-  
+
     public bool HasReadStory(int storyId)
     {
         return _readStoryIds != null && _readStoryIds.Contains(storyId);
@@ -474,11 +475,12 @@ public class NyangQuariumFirestoreSO : BaseFireStore
         _readStoryIds ??= new List<int>();
         _readStoryIds.Clear();
 
-        _freshwaterPlacedNatureIds ??= new List<int>();
-        _freshwaterPlacedNatureIds.Clear();
 
-        _saltwaterPlacedNatureIds ??= new List<int>();
-        _saltwaterPlacedNatureIds.Clear();
+        _freshwaterPlacedNatureData ??= new List<NyangQuariumPlacedNatureData>();
+        _freshwaterPlacedNatureData.Clear();
+
+        _saltwaterPlacedNatureData ??= new List<NyangQuariumPlacedNatureData>();
+        _saltwaterPlacedNatureData.Clear();
     }
 
     private void RebuildCacheIfNeeded()
@@ -515,8 +517,21 @@ public class NyangQuariumFirestoreSO : BaseFireStore
     }
     private void NormalizePlacedNatureList()
     {
-        NormalizePlacedFishList(ref _freshwaterPlacedNatureIds);
-        NormalizePlacedFishList(ref _saltwaterPlacedNatureIds);
+        NormalizePlacedNatureDataList(ref _freshwaterPlacedNatureData);
+        NormalizePlacedNatureDataList(ref _saltwaterPlacedNatureData);
+    }
+
+    private static void NormalizePlacedNatureDataList(
+        ref List<NyangQuariumPlacedNatureData> placedNatureData)
+    {
+        placedNatureData ??= new List<NyangQuariumPlacedNatureData>();
+
+        for (int i = placedNatureData.Count - 1; i >= 0; i--)
+        {
+            NyangQuariumPlacedNatureData data = placedNatureData[i];
+            if (data == null || data.ItemId <= 0 || string.IsNullOrWhiteSpace(data.SpriteKey))
+                placedNatureData.RemoveAt(i);
+        }
     }
 
     private static void NormalizePlacedFishList(ref List<int> placedFishIds)

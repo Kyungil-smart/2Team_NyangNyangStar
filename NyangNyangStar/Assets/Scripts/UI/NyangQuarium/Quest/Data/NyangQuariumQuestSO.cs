@@ -62,16 +62,12 @@ namespace Data.ScriptableObjects.NyangQuariumSO
             NyangQuariumQuestSection questSection =
                 ParseEnum(GetColumn(cols, 1), NyangQuariumQuestSection.None);
 
-            // 2번 컬럼: questName
-            // 실제 문구가 아니라 Q_NAME5 같은 스트링 키
-            string questNameKey = GetColumn(cols, 2);
-
-            // 3번 컬럼: questDesc
-            // 실제 문구가 아니라 Q_DESC5 같은 스트링 키
-            string questDescKey = GetColumn(cols, 3);
+            string questNameKey;
+            string questDescKey;
 
             string column4 = GetColumn(cols, 4);
             string column5 = GetColumn(cols, 5);
+            string column6 = GetColumn(cols, 6);
 
             int preQuestId;
             NyangQuariumQuestType questType;
@@ -82,10 +78,12 @@ namespace Data.ScriptableObjects.NyangQuariumSO
             int rewardIdIndex;
             int rewardAmountIndex;
 
-            // sub merge 행은 선행 퀘스트 없이 questType이 4번 컬럼에 올 수 있습니다.
+            // sub merge: id | sub | name | desc | merge | condition1 | amount1
             // 예: 43004 | sub | Q_NAME4 | Q_DESC4 | merge | 42001 | 2
             if (TryParseQuestType(column4, out questType))
             {
+                questNameKey = GetColumn(cols, 2);
+                questDescKey = GetColumn(cols, 3);
                 preQuestId = 0;
                 condition1Index = 5;
                 amount1Index = 6;
@@ -94,8 +92,25 @@ namespace Data.ScriptableObjects.NyangQuariumSO
                 rewardIdIndex = 9;
                 rewardAmountIndex = 10;
             }
+            // main + questSubject: id | section | subject | name | desc | preQuest | type | condition1 | amount1
+            // 예: 43001 | main | Q_Subject1 | Q_NAME1 | Q_DESC1 | - | story | 10033 | 1
+            else if (TryParseQuestType(column6, out questType))
+            {
+                questNameKey = GetColumn(cols, 3);
+                questDescKey = GetColumn(cols, 4);
+                preQuestId = ParseQuestId(column5);
+                condition1Index = 7;
+                amount1Index = 8;
+                condition2Index = 9;
+                amount2Index = 10;
+                rewardIdIndex = 11;
+                rewardAmountIndex = 12;
+            }
+            // legacy main: id | section | name | desc | preQuest | type | condition1 | amount1
             else
             {
+                questNameKey = GetColumn(cols, 2);
+                questDescKey = GetColumn(cols, 3);
                 preQuestId = ParseQuestId(column4);
                 questType = ParseEnum(column5, NyangQuariumQuestType.None);
                 condition1Index = 6;

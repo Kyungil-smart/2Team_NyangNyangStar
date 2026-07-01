@@ -47,6 +47,18 @@ public class NyangQuariumOceanLayoutUI : UIPopup, INyangquariumEntryReceiver
     [Tooltip("인벤토리 열기/닫기 시간")]
     [SerializeField] private float _inventoryMoveDuration = 0.3f;
 
+    [Header("물고기 그리드")]
+    [Tooltip("물고기 아이템들이 들어가는 FishLayoutGroup의 RectTransform")]
+    [SerializeField] private RectTransform _fishLayoutGroup;
+
+    [Tooltip("한 줄에 표시할 물고기 아이템 개수")]
+    [Min(1)]
+    [SerializeField] private int _fishColumnCount = 4;
+
+    [Tooltip("아이템 높이 비율. 2이면 높이가 너비의 2배입니다.")]
+    [Min(0.1f)]
+    [SerializeField] private float _fishCellHeightRatio = 2f;
+
     [Header("연결 레이아웃")]
     [Tooltip("담수 수조 레이아웃 하위 오브젝트입니다. 담당자가 프리팹을 넣은 뒤 연결하면 됩니다.")]
     [SerializeField] private UIPopup _freshLayoutUI;
@@ -68,6 +80,7 @@ public class NyangQuariumOceanLayoutUI : UIPopup, INyangquariumEntryReceiver
 
     private NyangQuariumOceanLayoutUISprite _nyangQuariumOceanLayoutUISprite;
     private NyangQuariumUIVisibilityToggle _uiVisibilityToggle;
+    private NyangQuariumOutsideTouchArea _outsideTouchArea;
 
     public override void Init()
     {
@@ -79,16 +92,18 @@ public class NyangQuariumOceanLayoutUI : UIPopup, INyangquariumEntryReceiver
         _entryMode = NyangquariumEntryContext.Current;
         Bind<Button>(typeof(NyangQuariumOceanLayoutUIButton));
 
-        _nyangQuariumOceanLayoutUISprite =GetComponent<NyangQuariumOceanLayoutUISprite>();
+        _nyangQuariumOceanLayoutUISprite = GetComponent<NyangQuariumOceanLayoutUISprite>();
 
         _nyangQuariumOceanLayoutUISprite?.Init();
 
-        _uiVisibilityToggle =GetComponent<NyangQuariumUIVisibilityToggle>();
+        _uiVisibilityToggle = GetComponent<NyangQuariumUIVisibilityToggle>();
 
         BindUIVisibilityToggle();
 
         BindButtons();
         ResolveInventoryRect();
+        BindOutsideTouchArea();
+        RefreshFishGridCellSize();
         AddButtonListeners();
         InitializeUI();
         ApplyEntryMode();
@@ -142,6 +157,42 @@ public class NyangQuariumOceanLayoutUI : UIPopup, INyangquariumEntryReceiver
 
         if (_inventoryRect != null)
             _inventoryOpenedPosition = _inventoryRect.anchoredPosition;
+    }
+
+    private void BindOutsideTouchArea()
+    {
+        if (_outsideTouchArea == null)
+        {
+            _outsideTouchArea =
+                GetComponentInChildren<NyangQuariumOutsideTouchArea>(true);
+        }
+
+        if (_outsideTouchArea == null)
+        {
+            DebugTool.Warning(
+                $"[{GetType().Name}] 바깥 터치 영역을 찾을 수 없습니다.",
+                DebugType.UI,
+                this);
+
+            return;
+        }
+
+        _outsideTouchArea.Clicked -= HandleOutsideTouch;
+        _outsideTouchArea.Clicked += HandleOutsideTouch;
+    }
+
+    private void HandleOutsideTouch()
+    {
+        if (!_isInventoryOpened || _isInventoryAnimating)
+            return;
+
+        GameManager.Audio.PlaySfx("Main_SFX_Touch");
+        CloseInventory();
+
+        DebugTool.Log(
+            $"[{GetType().Name}] 배치 패널 바깥 터치로 인벤토리 닫기",
+            DebugType.UI,
+            this);
     }
 
     private void AddButtonListeners()
@@ -415,6 +466,7 @@ public class NyangQuariumOceanLayoutUI : UIPopup, INyangquariumEntryReceiver
 
         _isInventoryAnimating = true;
         _oceanwaterLayoutPanel.SetActive(true);
+        RefreshFishGridCellSize();
 
         _inventoryRect.DOKill();
         _inventoryRect.anchoredPosition = GetInventoryClosedPosition();
@@ -428,6 +480,60 @@ public class NyangQuariumOceanLayoutUI : UIPopup, INyangquariumEntryReceiver
                 _isInventoryAnimating = false;
                 DebugTool.Log("[NyangQuariumOceanLayoutUI] 해수 통합 인벤토리 열기 완료", DebugType.UI, this);
             });
+    }
+
+    /// <summary>
+    /// FishLayoutGroup 너비를 기준으로 아이템 크기를 자동 계산합니다.
+    /// </summary>
+    private void RefreshFishGridCellSize()
+    {
+        if (_fishLayoutGroup == null)
+            return;
+
+        GridLayoutGroup grid =
+            _fishLayoutGroup.GetComponent<GridLayoutGroup>();
+
+        if (grid == null)
+        {
+            DebugTool.Warning(
+                $"[{GetType().Name}] FishLayoutGroup에 GridLayoutGroup이 없습니다.",
+                DebugType.UI,
+                this);
+
+            return;
+        }
+
+        Canvas.ForceUpdateCanvases();
+        LayoutRebuilder.ForceRebuildLayoutImmediate(_fishLayoutGroup);
+
+        float contentWidth = _fishLayoutGroup.rect.width;
+
+        if (contentWidth <= 0f)
+            return;
+
+        int columnCount = Mathf.Max(1, _fishColumnCount);
+        float horizontalPadding =
+            grid.padding.left + grid.padding.right;
+        float horizontalSpacing =
+            grid.spacing.x * (columnCount - 1);
+
+        float availableWidth =
+            contentWidth - horizontalPadding - horizontalSpacing;
+
+        if (availableWidth <= 0f)
+            return;
+
+        float cellWidth =
+            availableWidth / columnCount;
+        float cellHeight =
+            cellWidth * Mathf.Max(0.1f, _fishCellHeightRatio);
+
+        grid.constraint =
+            GridLayoutGroup.Constraint.FixedColumnCount;
+        grid.constraintCount =
+            columnCount;
+        grid.cellSize =
+            new Vector2(cellWidth, cellHeight);
     }
 
     private void CloseInventory()
@@ -479,6 +585,14 @@ public class NyangQuariumOceanLayoutUI : UIPopup, INyangquariumEntryReceiver
             _backButton.gameObject.SetActive(true);
     }
 
+    private void OnRectTransformDimensionsChange()
+    {
+        if (!isActiveAndEnabled)
+            return;
+
+        RefreshFishGridCellSize();
+    }
+
     private void OnDisable()
     {
         _isChangingLayout = false;
@@ -502,6 +616,9 @@ public class NyangQuariumOceanLayoutUI : UIPopup, INyangquariumEntryReceiver
 
     private void OnDestroy()
     {
+        if (_outsideTouchArea != null)
+            _outsideTouchArea.Clicked -= HandleOutsideTouch;
+
         if (_uiVisibilityToggle != null)
         {
             _uiVisibilityToggle.VisibilityChanged -=

@@ -199,6 +199,7 @@ namespace UI.NyangQuarium.MergeBoard
         {
             _board = board;
             _rewardQueue = rewardQueue;
+            _rewardQueue?.SetOnItemAddedToBoard(UnlockCollectionItem);
             BindButton();
             BindInputField();
         }
@@ -295,12 +296,9 @@ namespace UI.NyangQuarium.MergeBoard
                 _rewardQueue.EnqueueItem(item);
                 added = true;
             }
-
-            if (_board.TryAddItem(item))
+            else if (_board.TryAddItem(item))
             {
-                if (!added)
-                    added = true;
-
+                added = true;
                 UnlockCollectionItem(item);
             }
 
@@ -590,6 +588,7 @@ namespace UI.NyangQuarium.MergeBoard
         private TMP_Text _countText;
         private bool _initialized;
         private bool _isMoving;
+        private System.Action<NyangQuariumBoardItem> _onItemAddedToBoard;
 
         public void Init(NyangQuariumItemBoard board)
         {
@@ -602,6 +601,11 @@ namespace UI.NyangQuarium.MergeBoard
             }
 
             RefreshView();
+        }
+
+        public void SetOnItemAddedToBoard(System.Action<NyangQuariumBoardItem> onItemAddedToBoard)
+        {
+            _onItemAddedToBoard = onItemAddedToBoard;
         }
 
         public void EnqueueItem(NyangQuariumBoardItem item)
@@ -633,6 +637,7 @@ namespace UI.NyangQuarium.MergeBoard
                     return;
 
                 _rewardQueue.Dequeue();
+                _onItemAddedToBoard?.Invoke(item);
                 RefreshView();
             }
             finally

@@ -9,6 +9,7 @@ public class NyangQuariumOceanLayoutUISprite : UIBase
 
     private const string UIToggleOnSpriteKey = "NQ_Btn_On";
     private const string UIToggleOffSpriteKey = "NQ_Btn_Off";
+    [SerializeField] private Color _freshwaterLayoutPanel;
 
     private UISpriteController[] _spriteController;
 
@@ -36,18 +37,24 @@ public class NyangQuariumOceanLayoutUISprite : UIBase
         SetSprite(NyangQuariumOceanLayoutUIImage.Confirm, "NQ_Btn_Confirm");
         SetSprite(NyangQuariumOceanLayoutUIImage.Cancle, "NQ_Btn_Cancel");
 
-        SetSprite(NyangQuariumOceanLayoutUIImage.DeleteButton, "NQ_Btn_Delete");
+        SetSprite(NyangQuariumOceanLayoutUIImage.DeleteButton, "NQ_Btn_Delete", new Color32(0,0,0,255));
         SetSprite(NyangQuariumOceanLayoutUIImage.RealDeleteButton, "NQ_Btn_Confirm");
         SetSprite(NyangQuariumOceanLayoutUIImage.RealCancelButton, "NQ_Btn_Cancel");
 
         SetSprite(NyangQuariumOceanLayoutUIImage.UIToggleButton, UIToggleOnSpriteKey);
-        //SetSprite(NyangQuariumFreshLayoutUIImage.FreshwaterLayoutPanel, "NQ_Char_Moongchi");
-        //SetSprite(NyangQuariumFreshLayoutUIImage.FishItemTemplate, "NQ_Char_Moongchi");
+        SetSprite(NyangQuariumOceanLayoutUIImage.OceanFishCountIcon, "NQ_Icon_Fish");
+        SetSprite(NyangQuariumOceanLayoutUIImage.OceanNatureCountIcon, "NQ_Icon_Environment");
+
+        SetSprite(NyangQuariumOceanLayoutUIImage.OceanwaterLayoutPanel, "Shape_Rectangle", _freshwaterLayoutPanel);
+        SetSprite(NyangQuariumOceanLayoutUIImage.OceanWaterFishView, "Shape_Rectangle");
+
+        SetSprite(NyangQuariumOceanLayoutUIImage.FishItemTemplate, "Shape_Rectangle");
         SetSprite(NyangQuariumOceanLayoutUIImage.CloseButton, "Btn_Close");
         SetSprite(NyangQuariumOceanLayoutUIImage.confirmButton, "Snap_Btn_White");
         SetSprite(NyangQuariumOceanLayoutUIImage.FishTabButton, "Snap_Btn_White");
         SetSprite(NyangQuariumOceanLayoutUIImage.NatureTextButton, "Snap_Btn_White");
         SetSprite(NyangQuariumOceanLayoutUIImage.FilterButton, "FilterButton");
+        
     }
     public void SetUIToggleSprite(bool isUIVisible)
     {
@@ -91,11 +98,14 @@ public enum NyangQuariumOceanLayoutUIImage
     RealDeleteButton,
     RealCancelButton,
     UIToggleButton,
-    FreshwaterLayoutPanel,
+    OceanFishCountIcon,
+    OceanNatureCountIcon,
+    OceanwaterLayoutPanel,
     FishItemTemplate,
     CloseButton,
     confirmButton,
     FishTabButton,
     NatureTextButton,
-    FilterButton
+    FilterButton,
+    OceanWaterFishView
 }

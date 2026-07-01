@@ -147,8 +147,8 @@ public sealed class NyangQuariumWaterGazeController : MonoBehaviour
 
         WaterGazeModeChanged?.Invoke(true);
 
-        Debug.Log(
-            "[NyangQuariumWaterGazeController] 자동 물멍 모드 진입",
+        DebugTool.Log("[NyangQuariumWaterGazeController] 자동 물멍 모드 진입",
+            DebugType.UI,
             this);
     }
 
@@ -166,8 +166,8 @@ public sealed class NyangQuariumWaterGazeController : MonoBehaviour
         ResetIdleTimer();
         WaterGazeModeChanged?.Invoke(false);
 
-        Debug.Log(
-            "[NyangQuariumWaterGazeController] 자동 물멍 모드 종료",
+        DebugTool.Log("[NyangQuariumWaterGazeController] 자동 물멍 모드 종료",
+            DebugType.UI,
             this);
     }
 

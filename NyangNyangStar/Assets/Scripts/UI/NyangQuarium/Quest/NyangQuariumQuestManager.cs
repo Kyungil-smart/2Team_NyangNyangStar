@@ -32,6 +32,9 @@ namespace UI.NyangQuarium.Quest
         // Story 퀘스트 완료/슬롯 전환 시 맵 UI 갱신용
         public event Action StoryQuestProgressChanged;
 
+        // Story 맵 퀘스트(FirstQuest 등) 클리어 시 스토리 연출용
+        public event Action<int> StoryMapQuestCompleted;
+
         public bool HasActiveQuest => _activeQuestId > 0;
 
         private void Awake()
@@ -69,64 +72,14 @@ namespace UI.NyangQuarium.Quest
             if (_storyQuestInitialized)
                 return;
 
-            ResolveQuestSO();
-
-            if (_questSO == null)
-                return;
-
-            int[] mapQuestIds = NyangQuariumStoryQuestMapUI.GetStoryMapQuestIds();
-
-            for (int i = 0; i < mapQuestIds.Length; i++)
-            {
-                int questId = mapQuestIds[i];
-
-                if (questId <= 0)
-                    continue;
-
-                if (IsQuestCompleted(questId))
-                    continue;
-
-                _activeQuestId = questId;
-                _storyQuestInitialized = true;
-
-                DebugTool.Log(
-                    $"[NyangQuariumQuestManager] Story 맵 퀘스트 초기화. ActiveQuestId:{questId}, Slot:{i}",
-                    DebugType.UI,
-                    this);
-
-                StoryQuestProgressChanged?.Invoke();
-                return;
-            }
-
-            List<NyangQuariumQuestData> storyQuests =
-                _questSO.GetQuestsByType(NyangQuariumQuestType.Story);
-
-            if (storyQuests.Count == 0)
-                return;
-
-            storyQuests.Sort((a, b) => a.ID.CompareTo(b.ID));
-
-            for (int i = 0; i < storyQuests.Count; i++)
-            {
-                NyangQuariumQuestData quest = storyQuests[i];
-
-                if (IsQuestCompleted(quest.ID))
-                    continue;
-
-                _activeQuestId = quest.ID;
-                _storyQuestInitialized = true;
-
-                DebugTool.Log(
-                    $"[NyangQuariumQuestManager] Story 퀘스트 초기화. ActiveQuestId:{quest.ID}",
-                    DebugType.UI,
-                    this);
-
-                StoryQuestProgressChanged?.Invoke();
-                return;
-            }
-
             _activeQuestId = 0;
             _storyQuestInitialized = true;
+
+            DebugTool.Log(
+                "[NyangQuariumQuestManager] Story 맵 퀘스트 대기 — 첫 스토리 종료 후 FirstQuest 활성화",
+                DebugType.UI,
+                this);
+
             StoryQuestProgressChanged?.Invoke();
         }
 
@@ -190,15 +143,34 @@ namespace UI.NyangQuarium.Quest
             return false;
         }
 
-        // 첫 스토리 종료 시 스토리 시스템에서 호출
+        // 첫 스토리(Chapter1) 종료 시 StoryInit에서 호출
         public void OnIntroStoryFinished()
         {
+            int questId = ResolveFirstStoryMapQuestId();
+
             DebugTool.Log(
-                $"[NyangQuariumQuestManager] 첫 스토리 종료 → 퀘스트 활성화 시도. QuestId:{_introCoinQuestId}",
+                $"[NyangQuariumQuestManager] 첫 스토리 종료 → FirstQuest 활성화. QuestId:{questId}",
                 DebugType.UI,
                 this);
 
-            ActivateQuest(_introCoinQuestId);
+            if (questId > 0)
+                ActivateQuest(questId);
+        }
+
+        private static int ResolveFirstStoryMapQuestId()
+        {
+            int[] mapQuestIds = NyangQuariumStoryQuestMapUI.GetStoryMapQuestIds();
+            return mapQuestIds.Length > 0 ? mapQuestIds[0] : 0;
+        }
+
+        public bool ActivateStoryMapQuestAtSlot(int slotIndex)
+        {
+            int[] mapQuestIds = NyangQuariumStoryQuestMapUI.GetStoryMapQuestIds();
+
+            if (slotIndex < 0 || slotIndex >= mapQuestIds.Length)
+                return false;
+
+            return ActivateQuest(mapQuestIds[slotIndex]);
         }
 
         // 특정 퀘스트를 현재 활성 퀘스트로 설정
@@ -242,6 +214,7 @@ namespace UI.NyangQuarium.Quest
 
             _activeQuestId = quest.ID;
             ActiveQuestChanged?.Invoke(quest);
+            StoryQuestProgressChanged?.Invoke();
 
             DebugTool.Log(
                 $"[NyangQuariumQuestManager] 퀘스트 활성화. ID:{quest.ID}, NameKey:{quest.QuestNameKey}, " +
@@ -429,6 +402,9 @@ namespace UI.NyangQuarium.Quest
 
             _completedQuestIds.Add(quest.ID);
 
+            if (IsStoryMapQuestId(quest.ID))
+                StoryMapQuestCompleted?.Invoke(quest.ID);
+
             if (TryAdvanceStoryMapQuest(quest.ID))
             {
                 DebugTool.Log(
@@ -463,6 +439,22 @@ namespace UI.NyangQuarium.Quest
             return true;
         }
 
+        private static bool IsStoryMapQuestId(int questId)
+        {
+            if (questId <= 0)
+                return false;
+
+            int[] mapQuestIds = NyangQuariumStoryQuestMapUI.GetStoryMapQuestIds();
+
+            for (int i = 0; i < mapQuestIds.Length; i++)
+            {
+                if (mapQuestIds[i] == questId)
+                    return true;
+            }
+
+            return false;
+        }
+
         private bool TryAdvanceStoryMapQuest(int completedQuestId)
         {
             int[] mapQuestIds = NyangQuariumStoryQuestMapUI.GetStoryMapQuestIds();
@@ -475,14 +467,13 @@ namespace UI.NyangQuarium.Quest
                 if (mapQuestIds[i] != completedQuestId)
                     continue;
 
-                if (i + 1 < mapQuestIds.Length && mapQuestIds[i + 1] > 0)
-                {
-                    _activeQuestId = mapQuestIds[i + 1];
-                    return true;
-                }
-
                 if (_activeQuestId == completedQuestId)
                     _activeQuestId = 0;
+
+                DebugTool.Log(
+                    $"[NyangQuariumQuestManager] Story 맵 퀘스트 완료 — 다음 슬롯은 스토리/튜토리얼 게이트 후 활성화. Completed:{completedQuestId}",
+                    DebugType.UI,
+                    this);
 
                 return true;
             }

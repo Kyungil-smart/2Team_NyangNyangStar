@@ -49,8 +49,9 @@ public sealed class NyangQuariumUIVisibilityToggle : MonoBehaviour
 
     private void OnDisable()
     {
-        // 수조 재진입 시에는 기본 UI가 보이도록 초기화합니다.
-        ShowUIWithoutSound();
+        // 종료/비활성화 중에는 구독 중인 UI가 먼저 파괴될 수 있으므로
+        // VisibilityChanged 이벤트를 발생시키지 않고 상태만 초기화합니다.
+        ResetUIStateWithoutNotification();
     }
 
     private void OnDestroy()
@@ -62,8 +63,8 @@ public sealed class NyangQuariumUIVisibilityToggle : MonoBehaviour
     {
         if (_toggleButton == null)
         {
-            Debug.LogWarning(
-                "[NyangQuariumUIVisibilityToggle] UI 토글 버튼이 연결되지 않았습니다.",
+            DebugTool.Warning("[NyangQuariumUIVisibilityToggle] UI 토글 버튼이 연결되지 않았습니다.",
+                DebugType.UI,
                 this);
 
             return;
@@ -88,8 +89,8 @@ public sealed class NyangQuariumUIVisibilityToggle : MonoBehaviour
 
         SetUIVisible(!_isUIVisible);
 
-        Debug.Log(
-            $"[NyangQuariumUIVisibilityToggle] 기본 UI 표시 상태: {_isUIVisible}",
+        DebugTool.Log($"[NyangQuariumUIVisibilityToggle] 기본 UI 표시 상태: {_isUIVisible}",
+            DebugType.UI,
             this);
     }
 
@@ -158,5 +159,15 @@ public sealed class NyangQuariumUIVisibilityToggle : MonoBehaviour
 
         _isUIVisible = true;
         VisibilityChanged?.Invoke(true);
+    }
+
+    /// <summary>
+    /// 오브젝트 비활성화 또는 게임 종료 시 UI 상태만 초기화합니다.
+    /// 파괴 순서에 따른 NullReferenceException을 막기 위해 이벤트는 호출하지 않습니다.
+    /// </summary>
+    private void ResetUIStateWithoutNotification()
+    {
+        RestoreUI();
+        _isUIVisible = true;
     }
 }

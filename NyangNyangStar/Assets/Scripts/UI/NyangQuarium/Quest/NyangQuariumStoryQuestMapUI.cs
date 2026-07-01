@@ -1,7 +1,9 @@
+using System;
 using System.Collections;
-using System.Collections.Generic;
 using Core.Managers;
+using Data.LibrarySystem;
 using Data.ScriptableObjects.KeyContainerSO;
+using Data.ScriptableObjects.MergeBoard;
 using Data.ScriptableObjects.NyangQuariumSO;
 using Services.Enums;
 using UI;
@@ -16,25 +18,21 @@ namespace UI.NyangQuarium.Quest
     [RequireComponent(typeof(NyangQuariumQuestPopupOpener))]
     public sealed class NyangQuariumStoryQuestMapUI : MonoBehaviour
     {
-        private const string FirstQuestObjectName = "FirstQuest";
-        private const string SecondQuestObjectName = "SeconQuest";
-        private const string ThirdQuestObjectName = "ThirdQuest";
+        private const string QuestItemObjectName = "QuestItem";
         private const string NormalMarkerSpriteKey = "NQ_Marker_normal";
         private const string CompleteMarkerSpriteKey = "NQ_Marker_clear";
+        private const string CoinIconKey = "Main_Icon_Coin";
+        private static readonly string[] SlotObjectNames = { "FirstQuest", "SeconQuest", "ThirdQuest" };
+        private static readonly string[] TankTutorialObjectNames = { "Tank_Tutorial_01", "Tank_Tutorial_02" };
+        private static readonly string[] TankTutorialSpriteKeys = { "NQ_Object_Tank_T01", "NQ_Object_Tank_T02" };
         private static readonly int[] DefaultStoryMapQuestIds = { 43001, 43002, 43003 };
 
         [Header("Story Map Quest IDs")]
-        [SerializeField] private int[] _storyMapQuestIds = { 43001, 43002, 43003 };
-
-        [Header("Story Quest Buttons")]
-        [SerializeField] private Button _firstQuestButton;
-        [SerializeField] private GameObject _firstQuestRoot;
-        [SerializeField] private Button _secondQuestButton;
-        [SerializeField] private GameObject _secondQuestRoot;
-        [SerializeField] private Button _thirdQuestButton;
-        [SerializeField] private GameObject _thirdQuestRoot;
+        [SerializeField]
+        private int[] _storyMapQuestIds = { 43001, 43002, 43003 };
 
         private readonly StoryQuestSlotBinding[] _slotBindings = new StoryQuestSlotBinding[3];
+        private readonly TankTutorialBinding[] _tankTutorialBindings = new TankTutorialBinding[TankTutorialObjectNames.Length];
         private bool _initialized;
 
         private static NyangQuariumStoryQuestMapUI _instance;
@@ -44,16 +42,30 @@ namespace UI.NyangQuarium.Quest
             public int SlotIndex;
             public Button Button;
             public GameObject Root;
-            public Image MarkerImage;
             public UISpriteController MarkerSprite;
+            public UISpriteController QuestItemSprite;
+            public Image QuestItemImage;
             public NyangQuariumQuestData Quest;
             public bool IsCompleteReady;
             public string CurrentMarkerSpriteKey;
+            public int CurrentQuestItemBindId = -1;
+        }
+
+        private sealed class TankTutorialBinding
+        {
+            public GameObject Root;
+            public Image Image;
+            public UISpriteController Sprite;
+            public string SpriteKey;
+            public bool SpriteRequested;
+            public bool SpriteLoaded;
         }
 
         private void Awake()
         {
             _instance = this;
+            InitializeSlots();
+            InitializeTankTutorials();
         }
 
         private void OnEnable()
@@ -64,10 +76,7 @@ namespace UI.NyangQuarium.Quest
 
         private void Start()
         {
-            ResolveReferences();
-            BindButtons();
-            BindMarkerSprites();
-            SubscribeEvents();
+            EnsureSubscribed();
             StartCoroutine(PrepareStoryQuestCoroutine());
         }
 
@@ -81,42 +90,16 @@ namespace UI.NyangQuarium.Quest
             for (int i = 0; i < _slotBindings.Length; i++)
             {
                 StoryQuestSlotBinding binding = _slotBindings[i];
-
                 if (binding?.Button == null)
                     continue;
 
                 binding.Button.onClick.RemoveAllListeners();
                 binding.MarkerSprite?.Dispose();
-            }
-        }
-
-        private void EnsureSubscribed()
-        {
-            if (MainUI.Instance != null)
-            {
-                MainUI.Instance.MergeBoardVisibilityChanged -= RefreshStoryQuestMap;
-                MainUI.Instance.MergeBoardVisibilityChanged += RefreshStoryQuestMap;
+                binding.QuestItemSprite?.Dispose();
             }
 
-            if (NyangQuariumQuestManager.Instance != null)
-            {
-                NyangQuariumQuestManager.Instance.StoryQuestProgressChanged -= RefreshStoryQuestMap;
-                NyangQuariumQuestManager.Instance.StoryQuestProgressChanged += RefreshStoryQuestMap;
-            }
-        }
-
-        private void SubscribeEvents()
-        {
-            EnsureSubscribed();
-        }
-
-        private void UnsubscribeEvents()
-        {
-            if (MainUI.Instance != null)
-                MainUI.Instance.MergeBoardVisibilityChanged -= RefreshStoryQuestMap;
-
-            if (NyangQuariumQuestManager.Instance != null)
-                NyangQuariumQuestManager.Instance.StoryQuestProgressChanged -= RefreshStoryQuestMap;
+            for (int i = 0; i < _tankTutorialBindings.Length; i++)
+                _tankTutorialBindings[i]?.Sprite?.Dispose();
         }
 
         public static int[] GetStoryMapQuestIds()
@@ -139,80 +122,207 @@ namespace UI.NyangQuarium.Quest
                 return;
             }
 
-            NyangQuariumStoryQuestMapUI mapUI =
-                UnityEngine.Object.FindFirstObjectByType<NyangQuariumStoryQuestMapUI>();
-
-            mapUI?.RefreshStoryQuestMap(force: true);
+            FindFirstObjectByType<NyangQuariumStoryQuestMapUI>()
+                ?.RefreshStoryQuestMap(force: true);
         }
 
-        private void ResolveReferences()
+        public static void ShowTankTutorial(int tierIndex)
         {
-            ResolveSlot(0, FirstQuestObjectName, ref _firstQuestButton, ref _firstQuestRoot);
-            ResolveSlot(1, SecondQuestObjectName, ref _secondQuestButton, ref _secondQuestRoot);
-            ResolveSlot(2, ThirdQuestObjectName, ref _thirdQuestButton, ref _thirdQuestRoot);
-        }
-
-        private void ResolveSlot(
-            int slotIndex,
-            string objectName,
-            ref Button button,
-            ref GameObject root)
-        {
-            Transform target = FindTransform(objectName);
-
-            if (target == null)
-                return;
-
-            if (root == null)
-                root = target.gameObject;
-
-            if (button == null)
-                button = target.GetComponent<Button>();
-
-            _slotBindings[slotIndex] = new StoryQuestSlotBinding
+            if (_instance != null)
             {
-                SlotIndex = slotIndex,
-                Button = button,
-                Root = root
-            };
+                _instance.SetTankTutorialVisible(tierIndex, visible: true);
+                return;
+            }
+
+            FindFirstObjectByType<NyangQuariumStoryQuestMapUI>()
+                ?.SetTankTutorialVisible(tierIndex, visible: true);
         }
 
-        private void BindMarkerSprites()
+        public static bool CanCompleteStoryQuest(NyangQuariumQuestData quest)
+        {
+            if (quest == null)
+                return false;
+
+            if (NyangQuariumQuestManager.Instance != null)
+                return NyangQuariumQuestManager.Instance.CanCompleteQuest(quest);
+
+            if (!CanCompleteCondition(quest.QuestCondition1, quest.ConditionAmount1))
+                return false;
+
+            return !quest.HasCondition2 ||
+                   CanCompleteCondition(quest.QuestCondition2, quest.ConditionAmount2);
+        }
+
+        private void EnsureSubscribed()
+        {
+            if (MainUI.Instance != null)
+            {
+                MainUI.Instance.MergeBoardVisibilityChanged -= RefreshStoryQuestMap;
+                MainUI.Instance.MergeBoardVisibilityChanged += RefreshStoryQuestMap;
+            }
+
+            if (NyangQuariumQuestManager.Instance != null)
+            {
+                NyangQuariumQuestManager.Instance.StoryQuestProgressChanged -= RefreshStoryQuestMap;
+                NyangQuariumQuestManager.Instance.StoryQuestProgressChanged += RefreshStoryQuestMap;
+            }
+        }
+
+        private void UnsubscribeEvents()
+        {
+            if (MainUI.Instance != null)
+                MainUI.Instance.MergeBoardVisibilityChanged -= RefreshStoryQuestMap;
+
+            if (NyangQuariumQuestManager.Instance != null)
+                NyangQuariumQuestManager.Instance.StoryQuestProgressChanged -= RefreshStoryQuestMap;
+        }
+
+        private void InitializeSlots()
         {
             EnsureMarkerSpriteKeys();
+            EnsureTankTutorialSpriteKeys();
+
+            Transform[] transforms = GetComponentsInChildren<Transform>(true);
 
             for (int i = 0; i < _slotBindings.Length; i++)
             {
-                StoryQuestSlotBinding binding = _slotBindings[i];
-
-                if (binding?.Button == null)
+                Transform root = FindNamedTransform(transforms, SlotObjectNames[i]);
+                if (root == null)
                     continue;
 
-                binding.MarkerImage = binding.Button.targetGraphic as Image;
-
-                if (binding.MarkerImage == null)
-                    binding.MarkerImage = binding.Button.GetComponent<Image>();
-
-                if (binding.MarkerImage == null)
+                Button button = root.GetComponent<Button>();
+                if (button == null)
                     continue;
 
-                binding.MarkerSprite = new UISpriteController(binding.MarkerImage);
+                StoryQuestSlotBinding binding = new StoryQuestSlotBinding
+                {
+                    SlotIndex = i,
+                    Button = button,
+                    Root = root.gameObject
+                };
+
+                Image markerImage = button.targetGraphic as Image ?? button.GetComponent<Image>();
+                if (markerImage != null)
+                    binding.MarkerSprite = new UISpriteController(markerImage);
+
+                Transform questItemTransform = root.Find(QuestItemObjectName);
+                if (questItemTransform != null &&
+                    questItemTransform.TryGetComponent(out Image questItemImage))
+                {
+                    binding.QuestItemImage = questItemImage;
+                    binding.QuestItemSprite = new UISpriteController(questItemImage);
+                }
+                else
+                {
+                    DebugTool.Warning(
+                        $"[NyangQuariumStoryQuestMapUI] Slot:{i} {QuestItemObjectName} Image를 찾지 못했습니다.",
+                        DebugType.UI,
+                        this);
+                }
+
+                int slotIndex = i;
+                button.onClick.RemoveAllListeners();
+                button.onClick.AddListener(() => OnStoryQuestClicked(slotIndex));
+
+                _slotBindings[i] = binding;
+
+                if (binding.Root != null)
+                    binding.Root.SetActive(false);
             }
         }
 
-        private void BindButtons()
+        private void InitializeTankTutorials()
         {
-            for (int i = 0; i < _slotBindings.Length; i++)
-            {
-                StoryQuestSlotBinding binding = _slotBindings[i];
+            Transform[] transforms = GetComponentsInChildren<Transform>(true);
 
-                if (binding?.Button == null)
+            for (int i = 0; i < TankTutorialObjectNames.Length; i++)
+            {
+                Transform root = FindNamedTransform(transforms, TankTutorialObjectNames[i]);
+                if (root == null)
                     continue;
 
-                int slotIndex = binding.SlotIndex;
-                binding.Button.onClick.RemoveAllListeners();
-                binding.Button.onClick.AddListener(() => OnStoryQuestClicked(slotIndex));
+                Image image = root.GetComponent<Image>();
+                TankTutorialBinding binding = new TankTutorialBinding
+                {
+                    Root = root.gameObject,
+                    Image = image,
+                    SpriteKey = i < TankTutorialSpriteKeys.Length ? TankTutorialSpriteKeys[i] : null
+                };
+
+                if (image != null)
+                {
+                    image.sprite = null;
+                    image.enabled = false;
+                    binding.Sprite = new UISpriteController(image);
+                }
+
+                _tankTutorialBindings[i] = binding;
+
+                if (binding.Root != null)
+                    binding.Root.SetActive(false);
             }
+        }
+
+        private void SetTankTutorialVisible(int tierIndex, bool visible)
+        {
+            if (tierIndex < 0 || tierIndex >= _tankTutorialBindings.Length)
+                return;
+
+            if (visible && tierIndex == 1)
+                SetTankTutorialVisible(tierIndex: 0, visible: false);
+
+            TankTutorialBinding binding = _tankTutorialBindings[tierIndex];
+            if (binding?.Root == null)
+            {
+                InitializeTankTutorials();
+                binding = _tankTutorialBindings[tierIndex];
+            }
+
+            if (binding?.Root == null)
+                return;
+
+            if (!visible)
+            {
+                binding.Root.SetActive(false);
+                return;
+            }
+
+            if (binding.SpriteLoaded && binding.Image != null && binding.Image.sprite != null)
+            {
+                binding.Image.enabled = true;
+                binding.Root.SetActive(true);
+                return;
+            }
+
+            binding.Root.SetActive(false);
+
+            if (binding.Sprite != null &&
+                !binding.SpriteRequested &&
+                !string.IsNullOrWhiteSpace(binding.SpriteKey))
+            {
+                binding.SpriteRequested = true;
+                binding.Sprite.ChangeSprite(
+                    binding.SpriteKey,
+                    onLoaded: () => OnTankTutorialSpriteLoaded(tierIndex));
+            }
+        }
+
+        private void OnTankTutorialSpriteLoaded(int tierIndex)
+        {
+            if (tierIndex < 0 || tierIndex >= _tankTutorialBindings.Length)
+                return;
+
+            TankTutorialBinding binding = _tankTutorialBindings[tierIndex];
+            if (binding?.Root == null || binding.Image?.sprite == null)
+                return;
+
+            binding.SpriteLoaded = true;
+
+            if (tierIndex == 1)
+                SetTankTutorialVisible(tierIndex: 0, visible: false);
+
+            binding.Image.enabled = true;
+            binding.Root.SetActive(true);
         }
 
         private IEnumerator PrepareStoryQuestCoroutine()
@@ -224,7 +334,6 @@ namespace UI.NyangQuarium.Quest
             }
 
             BindStoryMapQuests();
-
             NyangQuariumQuestManager.Instance?.EnsureStoryQuestInitialized();
             EnsureSubscribed();
             _initialized = true;
@@ -233,10 +342,7 @@ namespace UI.NyangQuarium.Quest
             DebugTool.Log("[NyangQuariumStoryQuestMapUI] Story 퀘스트 맵 준비 완료", DebugType.UI, this);
         }
 
-        private void RefreshStoryQuestMap()
-        {
-            RefreshStoryQuestMap(force: false);
-        }
+        private void RefreshStoryQuestMap() => RefreshStoryQuestMap(force: false);
 
         private void RefreshStoryQuestMap(bool force)
         {
@@ -245,15 +351,9 @@ namespace UI.NyangQuarium.Quest
 
             int activeSlotIndex = ResolveActiveStoryQuestSlotIndex();
 
-            DebugTool.Log(
-                $"[NyangQuariumStoryQuestMapUI] 맵 갱신. ActiveSlot:{activeSlotIndex}, ActiveQuestId:{ResolveActiveQuestIdForLog()}",
-                DebugType.UI,
-                this);
-
             for (int i = 0; i < _slotBindings.Length; i++)
             {
                 StoryQuestSlotBinding binding = _slotBindings[i];
-
                 if (binding == null)
                     continue;
 
@@ -271,7 +371,8 @@ namespace UI.NyangQuarium.Quest
                     continue;
                 }
 
-                RefreshSlotReadyState(binding, force: true);
+                RefreshSlotMarker(binding);
+                RefreshQuestItemIcon(binding);
             }
 
             NyangQuariumQuestPopupOpener.RefreshOpenPopup();
@@ -285,24 +386,6 @@ namespace UI.NyangQuarium.Quest
                 return slotIndex;
             }
 
-            int[] questIds = GetStoryMapQuestIds();
-
-            for (int i = 0; i < questIds.Length && i < _slotBindings.Length; i++)
-            {
-                int questId = questIds[i];
-
-                if (questId <= 0)
-                    continue;
-
-                if (NyangQuariumQuestManager.Instance != null &&
-                    NyangQuariumQuestManager.Instance.IsQuestCompleted(questId))
-                {
-                    continue;
-                }
-
-                return i;
-            }
-
             return -1;
         }
 
@@ -313,42 +396,25 @@ namespace UI.NyangQuarium.Quest
             for (int i = 0; i < _slotBindings.Length; i++)
             {
                 StoryQuestSlotBinding binding = _slotBindings[i];
-
                 if (binding == null)
                     continue;
 
                 binding.Quest = null;
 
-                if (i >= questIds.Length)
+                if (i >= questIds.Length || questIds[i] <= 0)
                     continue;
 
-                int questId = questIds[i];
-
-                if (questId <= 0)
-                    continue;
-
-                if (TryResolveQuestById(questId, out NyangQuariumQuestData quest))
+                if (TryResolveQuestById(questIds[i], out NyangQuariumQuestData quest))
                 {
                     binding.Quest = quest;
                     continue;
                 }
 
                 DebugTool.Warning(
-                    $"[NyangQuariumStoryQuestMapUI] Story 맵 퀘스트를 찾지 못했습니다. Slot:{i}, QuestId:{questId}",
+                    $"[NyangQuariumStoryQuestMapUI] Story 맵 퀘스트를 찾지 못했습니다. Slot:{i}, QuestId:{questIds[i]}",
                     DebugType.UI,
                     this);
             }
-        }
-
-        private int ResolveActiveQuestIdForLog()
-        {
-            if (NyangQuariumQuestManager.Instance != null &&
-                NyangQuariumQuestManager.Instance.TryGetActiveQuest(out NyangQuariumQuestData quest))
-            {
-                return quest.ID;
-            }
-
-            return 0;
         }
 
         private static bool TryResolveQuestById(int questId, out NyangQuariumQuestData quest)
@@ -364,39 +430,138 @@ namespace UI.NyangQuarium.Quest
                 return quest != null;
             }
 
-            if (!NyangQuariumQuestSOLocator.TryResolveQuestSO(out NyangQuariumQuestSO questSO))
-                return false;
-
-            return questSO.TryGetQuest(questId, out quest);
+            return NyangQuariumQuestSOLocator.TryResolveQuestSO(out NyangQuariumQuestSO questSO) &&
+                   questSO.TryGetQuest(questId, out quest);
         }
 
-        private void RefreshSlotReadyState(StoryQuestSlotBinding binding, bool force = false)
+        private void RefreshSlotMarker(StoryQuestSlotBinding binding)
         {
             if (binding?.Quest == null || binding.MarkerSprite == null)
                 return;
 
             bool canComplete = CanCompleteStoryQuest(binding.Quest);
+            string spriteKey = canComplete ? CompleteMarkerSpriteKey : NormalMarkerSpriteKey;
 
-            if (!force &&
-                canComplete == binding.IsCompleteReady &&
-                !string.IsNullOrWhiteSpace(binding.CurrentMarkerSpriteKey))
+            if (canComplete == binding.IsCompleteReady &&
+                binding.CurrentMarkerSpriteKey == spriteKey)
             {
                 return;
             }
 
             binding.IsCompleteReady = canComplete;
-            string spriteKey = canComplete ? CompleteMarkerSpriteKey : NormalMarkerSpriteKey;
-
-            if (binding.CurrentMarkerSpriteKey == spriteKey)
-                return;
-
             binding.CurrentMarkerSpriteKey = spriteKey;
             binding.MarkerSprite.ChangeSprite(spriteKey, nativeSize: true);
+        }
 
-            DebugTool.Log(
-                $"[NyangQuariumStoryQuestMapUI] Slot:{binding.SlotIndex} 상태 갱신. QuestId:{binding.Quest.ID}, CanComplete:{canComplete}",
-                DebugType.UI,
-                this);
+        private void RefreshQuestItemIcon(StoryQuestSlotBinding binding)
+        {
+            if (binding?.Quest == null || binding.QuestItemImage == null)
+                return;
+
+            if (!TryResolveConditionItemIcon(
+                    binding.Quest,
+                    out int itemBindId,
+                    out string spriteKey,
+                    out Sprite embeddedSprite))
+            {
+                binding.CurrentQuestItemBindId = -1;
+                binding.QuestItemSprite?.ClearSprite();
+                binding.QuestItemImage.sprite = null;
+                binding.QuestItemImage.enabled = false;
+                return;
+            }
+
+            if (binding.CurrentQuestItemBindId == itemBindId)
+                return;
+
+            binding.CurrentQuestItemBindId = itemBindId;
+            binding.QuestItemImage.enabled = true;
+
+            if (!string.IsNullOrWhiteSpace(spriteKey))
+            {
+                RegisterSpriteKeyIfMissing(
+                    spriteKey,
+                    spriteKey == CoinIconKey ? AddressableGroupType.Main : AddressableGroupType.Items);
+                binding.QuestItemSprite?.ChangeSprite(spriteKey);
+                return;
+            }
+
+            binding.QuestItemSprite?.ClearSprite();
+            binding.QuestItemImage.sprite = embeddedSprite;
+        }
+
+        private static bool TryResolveConditionItemIcon(
+            NyangQuariumQuestData quest,
+            out int itemBindId,
+            out string spriteKey,
+            out Sprite embeddedSprite)
+        {
+            itemBindId = -1;
+            spriteKey = null;
+            embeddedSprite = null;
+
+            if (quest == null)
+                return false;
+
+            if (NyangQuariumQuestConditionUtil.IsCoinCondition(quest.QuestCondition1))
+            {
+                itemBindId = 0;
+                spriteKey = CoinIconKey;
+                return true;
+            }
+
+            if (!TryResolveStoryMapItemId(quest, out int itemId) ||
+                !TryGetItemData(itemId, out ItemData itemData))
+            {
+                return false;
+            }
+
+            itemBindId = itemId;
+
+            if (!string.IsNullOrWhiteSpace(itemData.AddressableKey))
+            {
+                spriteKey = itemData.AddressableKey;
+                return true;
+            }
+
+            if (itemData.ItemSprite == null)
+                return false;
+
+            embeddedSprite = itemData.ItemSprite;
+            return true;
+        }
+
+        private static bool TryResolveStoryMapItemId(NyangQuariumQuestData quest, out int itemId)
+        {
+            itemId = 0;
+
+            if (quest == null)
+                return false;
+
+            if (int.TryParse(quest.QuestCondition1, out itemId) && itemId > 0)
+                return true;
+
+            if (quest.QuestCondition1 != null &&
+                quest.QuestCondition1.Equals("story", StringComparison.OrdinalIgnoreCase) &&
+                quest.ConditionAmount1 > 0 &&
+                TryGetItemData(quest.ConditionAmount1, out _))
+            {
+                itemId = quest.ConditionAmount1;
+                return true;
+            }
+
+            return false;
+        }
+
+        private static bool TryGetItemData(int itemId, out ItemData itemData)
+        {
+            itemData = null;
+
+            if (itemId <= 0)
+                return false;
+
+            return LocalDataAccess.Instance?.Game != null &&
+                   LocalDataAccess.Instance.Game.TryGetMergeBoardItemById(itemId, out itemData);
         }
 
         private void OnStoryQuestClicked(int slotIndex)
@@ -405,7 +570,6 @@ namespace UI.NyangQuarium.Quest
                 return;
 
             StoryQuestSlotBinding binding = _slotBindings[slotIndex];
-
             if (binding?.Quest == null)
             {
                 DebugTool.Warning(
@@ -417,26 +581,6 @@ namespace UI.NyangQuarium.Quest
 
             GameManager.Audio.PlaySfx("Main_SFX_Touch");
             NyangQuariumQuestPopupOpener.Open(binding.Quest);
-        }
-
-        public static bool CanCompleteStoryQuest(NyangQuariumQuestData quest)
-        {
-            if (quest == null)
-                return false;
-
-            if (NyangQuariumQuestManager.Instance != null)
-                return NyangQuariumQuestManager.Instance.CanCompleteQuest(quest);
-
-            if (!CanCompleteCondition(quest.QuestCondition1, quest.ConditionAmount1))
-                return false;
-
-            if (quest.HasCondition2 &&
-                !CanCompleteCondition(quest.QuestCondition2, quest.ConditionAmount2))
-            {
-                return false;
-            }
-
-            return true;
         }
 
         private static bool CanCompleteCondition(string condition, int amount)
@@ -463,6 +607,16 @@ namespace UI.NyangQuarium.Quest
             RegisterSpriteKeyIfMissing(CompleteMarkerSpriteKey, AddressableGroupType.Nyangquarium);
         }
 
+        private static void EnsureTankTutorialSpriteKeys()
+        {
+            for (int i = 0; i < TankTutorialSpriteKeys.Length; i++)
+            {
+                RegisterSpriteKeyIfMissing(
+                    TankTutorialSpriteKeys[i],
+                    AddressableGroupType.Nyangquarium);
+            }
+        }
+
         private static void RegisterSpriteKeyIfMissing(string key, AddressableGroupType groupType)
         {
             if (KeyContainer.Sprites.Contains(key))
@@ -479,14 +633,11 @@ namespace UI.NyangQuarium.Quest
             });
         }
 
-        private Transform FindTransform(string objectName)
+        private static Transform FindNamedTransform(Transform[] transforms, string objectName)
         {
-            Transform[] transforms = GetComponentsInChildren<Transform>(true);
-
             for (int i = 0; i < transforms.Length; i++)
             {
                 Transform candidate = transforms[i];
-
                 if (candidate != null && candidate.name == objectName)
                     return candidate;
             }
@@ -503,49 +654,11 @@ namespace UI.NyangQuarium.Quest
 
             for (int i = 0; i < questIds.Length; i++)
             {
-                if (questIds[i] <= 0)
-                    continue;
-
-                if (questSO.TryGetQuest(questIds[i], out _))
+                if (questIds[i] > 0 && questSO.TryGetQuest(questIds[i], out _))
                     return true;
             }
 
             return questSO.GetQuestsByType(NyangQuariumQuestType.Story).Count > 0;
-        }
-
-        private static bool TryResolveStoryQuestAt(int index, out NyangQuariumQuestData quest)
-        {
-            if (NyangQuariumQuestManager.Instance != null &&
-                NyangQuariumQuestManager.Instance.TryGetStoryQuestAt(index, out quest))
-            {
-                return true;
-            }
-
-            if (!NyangQuariumQuestSOLocator.TryResolveQuestSO(out NyangQuariumQuestSO questSO))
-            {
-                quest = null;
-                return false;
-            }
-
-            List<NyangQuariumQuestData> storyQuests =
-                questSO.GetQuestsByType(NyangQuariumQuestType.Story);
-
-            if (storyQuests.Count == 0)
-            {
-                quest = null;
-                return false;
-            }
-
-            storyQuests.Sort((a, b) => a.ID.CompareTo(b.ID));
-
-            if (index < 0 || index >= storyQuests.Count)
-            {
-                quest = null;
-                return false;
-            }
-
-            quest = storyQuests[index];
-            return true;
         }
     }
 }

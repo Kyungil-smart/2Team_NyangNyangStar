@@ -121,9 +121,9 @@ public sealed class NyangQuariumFishInventoryItem : MonoBehaviour
     {
         if (_placementController == null)
         {
-            Debug.LogWarning(
-                $"[NyangQuariumFishInventoryItem] " +
+            DebugTool.Warning($"[NyangQuariumFishInventoryItem] " +
                 $"{name}에 PlacementController가 연결되지 않았습니다.",
+                DebugType.UI,
                 this);
 
             return;
@@ -132,9 +132,9 @@ public sealed class NyangQuariumFishInventoryItem : MonoBehaviour
         if (_itemImage == null ||
             _itemImage.sprite == null)
         {
-            Debug.LogWarning(
-                $"[NyangQuariumFishInventoryItem] " +
+            DebugTool.Warning($"[NyangQuariumFishInventoryItem] " +
                 $"{name}에 Item Sprite가 없습니다.",
+                DebugType.UI,
                 this);
 
             return;
@@ -145,10 +145,10 @@ public sealed class NyangQuariumFishInventoryItem : MonoBehaviour
             _itemImage.sprite,
             _category);
 
-        Debug.Log(
-            $"[NyangQuariumFishInventoryItem] " +
+        DebugTool.Log($"[NyangQuariumFishInventoryItem] " +
             $"아이템 선택 - " +
             $"ItemId:{_itemId}, Category:{_category}",
+            DebugType.UI,
             this);
     }
 
