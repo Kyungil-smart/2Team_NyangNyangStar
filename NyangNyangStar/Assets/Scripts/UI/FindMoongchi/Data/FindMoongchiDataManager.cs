@@ -60,6 +60,13 @@ namespace UI.FindMoongchi
         private static readonly IReadOnlyList<MoongchiProfileData> EmptyProfiles =
             Array.Empty<MoongchiProfileData>();
 
+        private sealed class ToolUseProgressSnapshot
+        {
+            public List<int> OpenedTileIDs;
+            public List<int> FoundTargetIDs;
+            public List<FindMoongchiMissionProgressData> MissionProgresses;
+        }
+
         public FindMoongchiProgressRuntimeData Progress => _progress;
         public bool IsProgressReady => _isProgressReady && _progress != null;
 
@@ -171,9 +178,11 @@ namespace UI.FindMoongchi
             int loadVersion = ++_progressLoadVersion;
             FindMoongchiProgressRuntimeData loaded = await LoadProgressAsync();
             string currentUserId = GetCurrentProgressUserId();
-            _loadingProgressUserId = string.Empty;
 
-            if (loadVersion != _progressLoadVersion &&
+            if (loadVersion == _progressLoadVersion)
+                _loadingProgressUserId = string.Empty;
+
+            if (loadVersion != _progressLoadVersion ||
                 !string.Equals(loadUserId, currentUserId, StringComparison.Ordinal))
             {
                 DebugTool.Warning(
@@ -215,6 +224,7 @@ namespace UI.FindMoongchi
             _progressLoadVersion++;
             _isProgressReady = false;
             _progress = null;
+            _loadingProgressUserId = string.Empty;
         }
 
         private static string GetCurrentProgressUserId()
@@ -374,9 +384,84 @@ namespace UI.FindMoongchi
             FindMoongchiGameLogic gameLogic,
             FindMoongchiUseToolResult result)
         {
+            ToolUseProgressSnapshot snapshot = CreateToolUseProgressSnapshot();
             TrackToolUseResult(result);
             CaptureBoardFromGame(gameLogic);
-            return await PersistProgressAsync();
+
+            bool saved = await PersistProgressAsync();
+
+            if (!saved)
+                RestoreToolUseProgressSnapshot(snapshot);
+
+            return saved;
+        }
+
+        private ToolUseProgressSnapshot CreateToolUseProgressSnapshot()
+        {
+            if (!IsProgressReady)
+                return null;
+
+            return new ToolUseProgressSnapshot
+            {
+                OpenedTileIDs = CloneIntList(_progress.OpenedTileIDs),
+                FoundTargetIDs = CloneIntList(_progress.FoundTargetIDs),
+                MissionProgresses = CloneMissionProgresses(_progress.MissionProgresses)
+            };
+        }
+
+        private void RestoreToolUseProgressSnapshot(ToolUseProgressSnapshot snapshot)
+        {
+            if (!IsProgressReady || snapshot == null)
+                return;
+
+            _progress.OpenedTileIDs ??= new List<int>();
+            _progress.OpenedTileIDs.Clear();
+            _progress.OpenedTileIDs.AddRange(snapshot.OpenedTileIDs);
+
+            _progress.FoundTargetIDs ??= new List<int>();
+            _progress.FoundTargetIDs.Clear();
+            _progress.FoundTargetIDs.AddRange(snapshot.FoundTargetIDs);
+
+            _progress.MissionProgresses ??= new List<FindMoongchiMissionProgressData>();
+            _progress.MissionProgresses.Clear();
+            _progress.MissionProgresses.AddRange(CloneMissionProgresses(snapshot.MissionProgresses));
+        }
+
+        private static List<FindMoongchiMissionProgressData> CloneMissionProgresses(
+            IReadOnlyList<FindMoongchiMissionProgressData> source)
+        {
+            List<FindMoongchiMissionProgressData> result = new List<FindMoongchiMissionProgressData>();
+
+            if (source == null)
+                return result;
+
+            for (int i = 0; i < source.Count; i++)
+            {
+                FindMoongchiMissionProgressData entry = source[i];
+
+                if (entry == null)
+                    continue;
+
+                result.Add(new FindMoongchiMissionProgressData(
+                    entry.MissionID,
+                    entry.CurrentAmount,
+                    entry.IsRewardClaimed));
+            }
+
+            return result;
+        }
+
+        private static List<int> CloneIntList(IReadOnlyList<int> source)
+        {
+            List<int> result = new List<int>();
+
+            if (source == null)
+                return result;
+
+            for (int i = 0; i < source.Count; i++)
+                result.Add(source[i]);
+
+            return result;
         }
 
         public async Task<bool> TryClaimMissionAndPersistAsync(int missionId)
