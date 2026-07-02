@@ -11,8 +11,6 @@ public class NyangStargramAlbumSlotSprite : UIBase
     private Image _photoImage;
     private Image _checkMark;
 
-    private Sprite _photoSprite;
-
     public Sprite PhotoSprite => _photoImage != null ? _photoImage.sprite : null;
 
     public override void Init()
@@ -45,21 +43,13 @@ public class NyangStargramAlbumSlotSprite : UIBase
         _spriteController[(int)image].ChangeSprite(key);
     }
 
-    public async void SetPhoto(string storagePath)
+    public async void SetPhoto(Sprite sprite)
     {
-        if (string.IsNullOrEmpty(storagePath)) return;
-
-        Sprite sprite = await FirebaseStorageHelper.LoadUserSpriteAsync(storagePath);
-
         if (sprite == null) return;
-
-        ReleasePhoto();
-
-        _photoSprite = sprite;
 
         if (_photoImage != null)
         {
-            _photoImage.sprite = _photoSprite;
+            _photoImage.sprite = sprite;
             _photoImage.color = Color.white;
         }
     }
@@ -79,20 +69,14 @@ public class NyangStargramAlbumSlotSprite : UIBase
             : Color.white;
     }
 
-    private void ReleasePhoto()
-    {
-        if (_photoSprite == null) return;
-
-        if (_photoSprite.texture != null)
-            Destroy(_photoSprite.texture);
-
-        Destroy(_photoSprite);
-        _photoSprite = null;
-    }
-
     private void OnDestroy()
     {
-        ReleasePhoto();
+        if (_spriteController == null) return;
+
+        foreach (UISpriteController controller in _spriteController)
+        {
+            controller?.ReleaseSprite();
+        }
     }
 }
 

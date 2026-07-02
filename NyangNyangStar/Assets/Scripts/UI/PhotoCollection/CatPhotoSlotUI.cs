@@ -8,10 +8,10 @@ public class CatPhotoSlotUI : UIBase
     [SerializeField] private Button _catImage;
 
     private CatPhotoSlotSprite _sprite;
-    private NyangNyangSnapSavedPhotoData _photoData;
+    private NyangNyangSnapRuntimePhotoData _photoData;
     private PhotoDetailPopupUI _detailPopup;
 
-    public int StarCount => _photoData.starCount;
+    public int StarCount => _photoData.StarCount;
 
     public override void Init()
     {
@@ -29,12 +29,12 @@ public class CatPhotoSlotUI : UIBase
         _detailPopup = detailPopup;
     }
 
-    public void SetData(NyangNyangSnapSavedPhotoData photoData)
+    public void SetData(NyangNyangSnapRuntimePhotoData photoData)
     {
         _photoData = photoData;
-        Debug.Log($"[CatPhotoSlotUI] SetData 호출 / id:{photoData.photoId} / star:{photoData.starCount} / storagePath:{photoData.storagePath}");
-        _sprite.SetPhoto(photoData.storagePath);
-        _sprite.SetStar(photoData.starCount);
+        Debug.Log($"[CatPhotoSlotUI] SetData 호출 / id:{photoData.PhotoId} / star:{photoData.StarCount}");
+        _sprite.SetPhoto(photoData.Sprite);
+        _sprite.SetStar(photoData.StarCount);
     }
 
     private void OpenDetailPopup()

@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using UI;
 using UI.Base;
 using UnityEngine;
@@ -19,8 +18,6 @@ public class PhotoDetailPopupSprite : UIBase
     private Image _star4;
     private Image _star5;
     private Image[] _stars;
-
-    private Sprite _photoSprite;
 
     public override void Init()
     {
@@ -58,20 +55,9 @@ public class PhotoDetailPopupSprite : UIBase
         _spriteController[(int)image].ChangeSprite(key);
     }
 
-    public async void SetPhoto(string storagePath)
+    public void SetPhoto(Sprite sprite)
     {
-        if (string.IsNullOrEmpty(storagePath)) return;
-
-        Sprite sprite = await FirebaseStorageHelper.LoadUserSpriteAsync(storagePath);
-
-        if (sprite == null) return;
-
-        ReleasePhoto();
-
-        _photoSprite = sprite;
-
-        if (_catImage != null)
-            _catImage.sprite = _photoSprite;
+        _catImage.sprite = sprite;
     }
 
     public void SetStar(int starCount)
@@ -86,20 +72,14 @@ public class PhotoDetailPopupSprite : UIBase
         }
     }
 
-    private void ReleasePhoto()
-    {
-        if (_photoSprite == null) return;
-
-        if (_photoSprite.texture != null)
-            Destroy(_photoSprite.texture);
-
-        Destroy(_photoSprite);
-        _photoSprite = null;
-    }
-
     private void OnDestroy()
     {
-        ReleasePhoto();
+        if (_spriteController == null) return;
+
+        foreach (UISpriteController controller in _spriteController)
+        {
+            controller?.ReleaseSprite();
+        }
     }
 }
 

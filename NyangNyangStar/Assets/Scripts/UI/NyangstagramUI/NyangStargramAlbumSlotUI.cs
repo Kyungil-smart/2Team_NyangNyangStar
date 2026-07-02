@@ -8,12 +8,10 @@ public class NyangStargramAlbumSlotUI : UIBase
 
     private NyangStargramAlbumSlotSprite _sprite;
     private NyangStargramAddPostUI _addPostUI;
-    private NyangNyangSnapSavedPhotoData _photoData;
+    private NyangNyangSnapRuntimePhotoData _photoData;
 
     private bool _isUploaded;
     private bool _isSelected;
-
-    public string PhotoId => _photoData.photoId;
 
     public override void Init()
     {
@@ -36,12 +34,12 @@ public class NyangStargramAlbumSlotUI : UIBase
         _addPostUI = addPostUI;
     }
 
-    public void SetData(NyangNyangSnapSavedPhotoData photoData, bool isUploaded)
+    public void SetData(NyangNyangSnapRuntimePhotoData photoData, bool isUploaded)
     {
         _photoData = photoData;
         _isUploaded = isUploaded;
 
-        _sprite.SetPhoto(photoData.storagePath);
+        _sprite.SetPhoto(photoData.Sprite);
 
         SetSelected(false);
         SetUploaded(_isUploaded);
