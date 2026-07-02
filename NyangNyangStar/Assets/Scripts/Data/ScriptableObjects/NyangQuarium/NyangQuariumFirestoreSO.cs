@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Firebase.Firestore;
@@ -36,13 +37,24 @@ public class NyangQuariumFirestoreSO : BaseFireStore
     public int AquariumLevel => _aquariumLevel;
     public int AquariumExp => _aquariumExp;
 
+    public event Action AquariumProgressChanged;
+
     private void OnEnable()
     {
         NormalizeAquariumLevel();
         RebuildCache();
         NormalizePlacedFishLists();
         NormalizePlacedNatureList();
+        NotifyAquariumProgressChanged();
     }
+
+#if UNITY_EDITOR
+    private void OnValidate()
+    {
+        NormalizeAquariumLevel();
+        NotifyAquariumProgressChanged();
+    }
+#endif
 
     public static async Task<NyangQuariumFirestoreSO> WaitForReadyAsync(int timeoutMs = 5000)
     {
@@ -84,15 +96,21 @@ public class NyangQuariumFirestoreSO : BaseFireStore
         InitDataBase(database, userId);
         ResetToDefault();
         await SetDataAsync(ToFirestoreDictionary());
+        NotifyAquariumProgressChanged();
     }
 
     public override void ApplyFromSnapshot(DocumentSnapshot snapshot)
     {
+        bool hasSnapshot = snapshot != null && snapshot.Exists;
+
         base.ApplyFromSnapshot(snapshot);
         NormalizeAquariumLevel();
         RebuildCache();
         NormalizePlacedFishLists();
         NormalizePlacedNatureList();
+
+        if (hasSnapshot)
+            NotifyAquariumProgressChanged();
     }
 
     public async Task<bool> LoadOrCreateFromServerAsync()
@@ -106,6 +124,7 @@ public class NyangQuariumFirestoreSO : BaseFireStore
 
         ResetToDefault();
         await SetDataAsync(ToFirestoreDictionary());
+        NotifyAquariumProgressChanged();
         return true;
     }
 
@@ -125,6 +144,7 @@ public class NyangQuariumFirestoreSO : BaseFireStore
         NormalizeAquariumLevel();
         _aquariumExp += expAmount;
         ApplyAquariumLevelUps(aquariumLevelSO);
+        NotifyAquariumProgressChanged();
 
         await SetDataAsync(ToFirestoreDictionary());
         return true;
@@ -593,6 +613,11 @@ public class NyangQuariumFirestoreSO : BaseFireStore
 
         if (_aquariumExp < 0)
             _aquariumExp = 0;
+    }
+
+    private void NotifyAquariumProgressChanged()
+    {
+        AquariumProgressChanged?.Invoke();
     }
 
     private void NormalizePlacedFishLists()
