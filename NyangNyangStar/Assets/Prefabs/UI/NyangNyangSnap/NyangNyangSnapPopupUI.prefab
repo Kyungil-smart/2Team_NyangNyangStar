@@ -1321,7 +1321,7 @@ GameObject:
   - component: {fileID: 8458765675615564522}
   - component: {fileID: 4018440967539049111}
   - component: {fileID: 2059334378902424238}
-  m_Layer: 5
+  m_Layer: 3
   m_Name: Text (TMP)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2524,7 +2524,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4562706607562699643}
-  m_Layer: 5
+  m_Layer: 3
   m_Name: AlertIconRoot
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2744,7 +2744,7 @@ GameObject:
   - component: {fileID: 5710663629039144230}
   - component: {fileID: 3465686997959130628}
   - component: {fileID: 4419289690824942654}
-  m_Layer: 5
+  m_Layer: 3
   m_Name: BackPanel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2864,7 +2864,7 @@ GameObject:
   - component: {fileID: 8405178368531046437}
   - component: {fileID: 4773059032378355124}
   - component: {fileID: 2356675290807441124}
-  m_Layer: 5
+  m_Layer: 3
   m_Name: Cat
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3390,7 +3390,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8370192271459856048}
-  m_Layer: 5
+  m_Layer: 3
   m_Name: PhotoRoot
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4043,7 +4043,7 @@ GameObject:
   - component: {fileID: 4628252606445199203}
   - component: {fileID: 6043276650540795960}
   - component: {fileID: 4904545676052625320}
-  m_Layer: 5
+  m_Layer: 3
   m_Name: Image
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4091,7 +4091,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 0, b: 0, a: 1}
-  m_RaycastTarget: 0
+  m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
