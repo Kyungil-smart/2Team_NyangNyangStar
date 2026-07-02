@@ -57,10 +57,22 @@ MonoBehaviour:
     m_SerializedLabels:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 580630516ac419441b7ff4df89aa66e6
+    m_Address: Snap_Slot_Unknown
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 5bc47388ba43c4f448a39529228b8a81
     m_Address: NyangNyangSnapResultCanvas
     m_ReadOnly: 0
     m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5c01b782fc68f2749b90be7238e7e646
+    m_Address: Snap_Panel_Name
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 5f98fb762f2e3b749a219071a983657e
     m_Address: Snap_Ani_Bite
