@@ -12,4 +12,124 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 95e8a900e750441692f946f37bdc1844, type: 3}
   m_Name: NyangQuariumAquariumLevel
   m_EditorClassIdentifier: 
-  _aquariumLevels: []
+  _aquariumLevels:
+  - _levelId: 44001
+    _level: 1
+    _description: "\uC218\uC870 Lv.1"
+    _requiredExp: 200
+    _maxPlaceableFish: 3
+    _maxPlaceableEnvironment: 1
+  - _levelId: 44002
+    _level: 2
+    _description: "\uC218\uC870 Lv.2"
+    _requiredExp: 500
+    _maxPlaceableFish: 3
+    _maxPlaceableEnvironment: 1
+  - _levelId: 44003
+    _level: 3
+    _description: "\uC218\uC870 Lv.3"
+    _requiredExp: 900
+    _maxPlaceableFish: 3
+    _maxPlaceableEnvironment: 1
+  - _levelId: 44004
+    _level: 4
+    _description: "\uC218\uC870 Lv.4"
+    _requiredExp: 1400
+    _maxPlaceableFish: 3
+    _maxPlaceableEnvironment: 1
+  - _levelId: 44005
+    _level: 5
+    _description: "\uC218\uC870 Lv.5"
+    _requiredExp: 2000
+    _maxPlaceableFish: 6
+    _maxPlaceableEnvironment: 2
+  - _levelId: 44006
+    _level: 6
+    _description: "\uC218\uC870 Lv.6"
+    _requiredExp: 2700
+    _maxPlaceableFish: 6
+    _maxPlaceableEnvironment: 2
+  - _levelId: 44007
+    _level: 7
+    _description: "\uC218\uC870 Lv.7"
+    _requiredExp: 3500
+    _maxPlaceableFish: 6
+    _maxPlaceableEnvironment: 2
+  - _levelId: 44008
+    _level: 8
+    _description: "\uC218\uC870 Lv.8"
+    _requiredExp: 4400
+    _maxPlaceableFish: 6
+    _maxPlaceableEnvironment: 2
+  - _levelId: 44009
+    _level: 9
+    _description: "\uC218\uC870 Lv.9"
+    _requiredExp: 5400
+    _maxPlaceableFish: 6
+    _maxPlaceableEnvironment: 2
+  - _levelId: 44010
+    _level: 10
+    _description: "\uC218\uC870 Lv.10"
+    _requiredExp: 6500
+    _maxPlaceableFish: 9
+    _maxPlaceableEnvironment: 3
+  - _levelId: 44011
+    _level: 11
+    _description: "\uC218\uC870 Lv.11"
+    _requiredExp: 7700
+    _maxPlaceableFish: 9
+    _maxPlaceableEnvironment: 3
+  - _levelId: 44012
+    _level: 12
+    _description: "\uC218\uC870 Lv.12"
+    _requiredExp: 9000
+    _maxPlaceableFish: 9
+    _maxPlaceableEnvironment: 3
+  - _levelId: 44013
+    _level: 13
+    _description: "\uC218\uC870 Lv.13"
+    _requiredExp: 10400
+    _maxPlaceableFish: 9
+    _maxPlaceableEnvironment: 3
+  - _levelId: 44014
+    _level: 14
+    _description: "\uC218\uC870 Lv.14"
+    _requiredExp: 11900
+    _maxPlaceableFish: 9
+    _maxPlaceableEnvironment: 3
+  - _levelId: 44015
+    _level: 15
+    _description: "\uC218\uC870 Lv.15"
+    _requiredExp: 13500
+    _maxPlaceableFish: 12
+    _maxPlaceableEnvironment: 3
+  - _levelId: 44016
+    _level: 16
+    _description: "\uC218\uC870 Lv.16"
+    _requiredExp: 15200
+    _maxPlaceableFish: 12
+    _maxPlaceableEnvironment: 4
+  - _levelId: 44017
+    _level: 17
+    _description: "\uC218\uC870 Lv.17"
+    _requiredExp: 17000
+    _maxPlaceableFish: 12
+    _maxPlaceableEnvironment: 4
+  - _levelId: 44018
+    _level: 18
+    _description: "\uC218\uC870 Lv.18"
+    _requiredExp: 18900
+    _maxPlaceableFish: 12
+    _maxPlaceableEnvironment: 4
+  - _levelId: 44019
+    _level: 19
+    _description: "\uC218\uC870 Lv.19"
+    _requiredExp: 20900
+    _maxPlaceableFish: 12
+    _maxPlaceableEnvironment: 4
+  - _levelId: 44020
+    _level: 20
+    _description: "\uC218\uC870 Lv.20"
+    _requiredExp: 0
+    _maxPlaceableFish: 15
+    _maxPlaceableEnvironment: 5

@@ -30,6 +30,8 @@ public class NyangQuariumFreshLayoutUISprite : UIBase
         SetSprite(NyangQuariumFreshLayoutUIImage.BackButton, "NQ_Btn_Back");
         SetSprite(NyangQuariumFreshLayoutUIImage.FreshWaterFishButton, "NQ_Btn_Inventory");
         SetSprite(NyangQuariumFreshLayoutUIImage.ChangeButton, "NQ_Btn_SaltWater");
+        SetSprite(NyangQuariumFreshLayoutUIImage.LockIcon, "NQ_Icon_Lock");
+
 
         SetSprite(NyangQuariumFreshLayoutUIImage.Window, "NQ_Img_AquaTunnel");
         SetSprite(NyangQuariumFreshLayoutUIImage.CatImage, "NQ_Char_Moongchi");
@@ -58,6 +60,8 @@ public class NyangQuariumFreshLayoutUISprite : UIBase
         SetSprite(NyangQuariumFreshLayoutUIImage.NatureTextButton, "Snap_Btn_White");
         SetSprite(NyangQuariumFreshLayoutUIImage.FilterButton, "FilterButton");
 
+        SetSprite(NyangQuariumFreshLayoutUIImage.FishTextImage, "Snap_Btn_White");
+
     }
 
     private void SetSprite(NyangQuariumFreshLayoutUIImage image, string key)
@@ -80,6 +84,7 @@ public enum NyangQuariumFreshLayoutUIImage
     BackButton,
     FreshWaterFishButton,
     ChangeButton,
+    LockIcon,
     Confirm,
     Cancle,
     DeleteButton,
@@ -96,5 +101,6 @@ public enum NyangQuariumFreshLayoutUIImage
     FishTabButton,
     NatureTextButton,
     FilterButton,
-    FreshwaterFishView
+    FreshwaterFishView,
+    FishTextImage
 }

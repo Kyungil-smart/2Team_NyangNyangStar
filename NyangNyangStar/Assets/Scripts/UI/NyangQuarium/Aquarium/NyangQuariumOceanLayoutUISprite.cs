@@ -52,7 +52,9 @@ public class NyangQuariumOceanLayoutUISprite : UIBase
         SetSprite(NyangQuariumOceanLayoutUIImage.FishTabButton, "Snap_Btn_White");
         SetSprite(NyangQuariumOceanLayoutUIImage.NatureTextButton, "Snap_Btn_White");
         SetSprite(NyangQuariumOceanLayoutUIImage.FilterButton, "FilterButton");
-        
+
+        SetSprite(NyangQuariumOceanLayoutUIImage.FishTextImage, "Snap_Btn_White");
+
     }
 
 
@@ -92,5 +94,6 @@ public enum NyangQuariumOceanLayoutUIImage
     FishTabButton,
     NatureTextButton,
     FilterButton,
-    OceanWaterFishView
+    OceanWaterFishView,
+    FishTextImage
 }

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using TMPro;
 using UI.NyangQuarium.MergeBoard;
 using UnityEngine;
 using UnityEngine.UI;
@@ -10,6 +11,12 @@ using UnityEngine.UI;
 /// </summary>
 public sealed class NyangQuariumFishInventoryListUI : MonoBehaviour
 {
+    private const string EmptyFishMessage =
+        "배치할 수 있는 관성어가 없습니다.";
+
+    private const string EmptyNatureMessage =
+        "배치할 수 있는 자연요소가 없습니다.";
+
     [Header("현재 수조")]
     [Tooltip("담수 수조는 Freshwater, 해수 수조는 Saltwater")]
     [SerializeField]
@@ -40,9 +47,10 @@ public sealed class NyangQuariumFishInventoryListUI : MonoBehaviour
     [SerializeField]
     private NyangQuariumFishPlacementController _placementController;
 
-    [Tooltip("아이템이 적어도 기본적으로 유지할 슬롯 개수")]
-    [SerializeField, Min(1)]
-    private int _minimumSlotCount = 8;
+    [Header("빈 목록 안내")]
+    [Tooltip("현재 카테고리에 보유 아이템이 없을 때 표시할 안내 Text")]
+    [SerializeField]
+    private TMP_Text _emptyMessageText;
 
     [Header("관상어 필터")]
     [SerializeField]
@@ -66,6 +74,7 @@ public sealed class NyangQuariumFishInventoryListUI : MonoBehaviour
     private NyangQuariumPlacementCategory _currentCategory =
         NyangQuariumPlacementCategory.Fish;
 
+    private NyangQuariumFishInventoryItem _selectedItem;
     private bool _isChangingToggleState;
 
     public NyangQuariumPlacementCategory CurrentCategory =>
@@ -75,6 +84,8 @@ public sealed class NyangQuariumFishInventoryListUI : MonoBehaviour
     {
         if (_itemTemplate != null)
             _itemTemplate.gameObject.SetActive(false);
+
+        SetEmptyMessageActive(false);
 
         BindCategoryButtons();
         BindFilterToggles();
@@ -119,7 +130,8 @@ public sealed class NyangQuariumFishInventoryListUI : MonoBehaviour
         ApplyCategoryUI();
         Refresh();
 
-        DebugTool.Log("[NyangQuariumFishInventoryListUI] 관상어 탭 활성화",
+        DebugTool.Log(
+            "[NyangQuariumFishInventoryListUI] 관상어 탭 활성화",
             DebugType.UI,
             this);
     }
@@ -141,24 +153,28 @@ public sealed class NyangQuariumFishInventoryListUI : MonoBehaviour
         ApplyCategoryUI();
         Refresh();
 
-        DebugTool.Log("[NyangQuariumFishInventoryListUI] 자연 요소 탭 활성화",
+        DebugTool.Log(
+            "[NyangQuariumFishInventoryListUI] 자연 요소 탭 활성화",
             DebugType.UI,
             this);
     }
 
     /// <summary>
     /// 현재 선택된 카테고리와 수조에 맞춰 목록을 다시 생성합니다.
+    /// 실제 보유 아이템만 표시하며 빈 슬롯은 생성하지 않습니다.
     /// </summary>
     public void Refresh()
     {
         ClearCreatedItems();
+        SetEmptyMessageActive(false);
 
         if (!NyangQuariumMergeBoardInventoryService.IsReady)
         {
-            FillEmptySlots();
+            ShowCurrentCategoryEmptyMessage();
 
-            DebugTool.Warning("[NyangQuariumFishInventoryListUI] " +
-                "머지보드가 등록되지 않아 빈 슬롯만 표시합니다.",
+            DebugTool.Warning(
+                "[NyangQuariumFishInventoryListUI] " +
+                "머지보드가 준비되지 않아 아이템 목록을 표시할 수 없습니다.",
                 DebugType.UI,
                 this);
 
@@ -176,7 +192,7 @@ public sealed class NyangQuariumFishInventoryListUI : MonoBehaviour
                 break;
 
             default:
-                FillEmptySlots();
+                ShowCurrentCategoryEmptyMessage();
                 break;
         }
     }
@@ -191,10 +207,12 @@ public sealed class NyangQuariumFishInventoryListUI : MonoBehaviour
         GroupOwnedFishEntries();
         CreateFishItems();
 
-        DebugTool.Log($"[NyangQuariumFishInventoryListUI] " +
+        DebugTool.Log(
+            "[NyangQuariumFishInventoryListUI] " +
             $"관상어 목록 갱신 완료 - " +
             $"Raw:{_ownedFishEntries.Count}, " +
-            $"Grouped:{_groupedFishEntries.Count}",
+            $"Grouped:{_groupedFishEntries.Count}, " +
+            $"Visible:{_createdItems.Count}",
             DebugType.UI,
             this);
     }
@@ -208,10 +226,12 @@ public sealed class NyangQuariumFishInventoryListUI : MonoBehaviour
         GroupOwnedNatureEntries();
         CreateNatureItems();
 
-        DebugTool.Log($"[NyangQuariumFishInventoryListUI] " +
+        DebugTool.Log(
+            "[NyangQuariumFishInventoryListUI] " +
             $"자연 요소 목록 갱신 완료 - " +
             $"Raw:{_ownedNatureEntries.Count}, " +
             $"Grouped:{_groupedNatureEntries.Count}, " +
+            $"Visible:{_createdItems.Count}, " +
             $"Aquarium:{_aquariumType}",
             DebugType.UI,
             this);
@@ -298,7 +318,10 @@ public sealed class NyangQuariumFishInventoryListUI : MonoBehaviour
     private void CreateFishItems()
     {
         if (!ValidateListReferences())
+        {
+            ShowCurrentCategoryEmptyMessage();
             return;
+        }
 
         foreach (GroupedFishEntry grouped
                  in _groupedFishEntries)
@@ -320,8 +343,12 @@ public sealed class NyangQuariumFishInventoryListUI : MonoBehaviour
                 grouped.Entry.FishId,
                 grouped.Count,
                 grouped.Entry.Sprite,
+                grouped.Entry.FishName,
+                GetFishTypeColor(
+                    grouped.Entry.FishType),
                 NyangQuariumPlacementCategory.Fish,
-                _placementController);
+                _placementController,
+                HandleItemSelected);
 
             item.gameObject.name =
                 $"FishInventoryItem_" +
@@ -331,13 +358,16 @@ public sealed class NyangQuariumFishInventoryListUI : MonoBehaviour
             _createdItems.Add(item);
         }
 
-        FillEmptySlots();
+        UpdateEmptyMessage();
     }
 
     private void CreateNatureItems()
     {
         if (!ValidateListReferences())
+        {
+            ShowCurrentCategoryEmptyMessage();
             return;
+        }
 
         foreach (GroupedNatureEntry grouped
                  in _groupedNatureEntries)
@@ -353,8 +383,12 @@ public sealed class NyangQuariumFishInventoryListUI : MonoBehaviour
                 grouped.Entry.ItemId,
                 grouped.Count,
                 grouped.Entry.Sprite,
+                grouped.Entry.ItemName,
+                GetNatureTypeColor(
+                    grouped.Entry.ItemKey),
                 NyangQuariumPlacementCategory.Nature,
-                _placementController);
+                _placementController,
+                HandleItemSelected);
 
             item.gameObject.name =
                 $"NatureInventoryItem_" +
@@ -364,7 +398,58 @@ public sealed class NyangQuariumFishInventoryListUI : MonoBehaviour
             _createdItems.Add(item);
         }
 
-        FillEmptySlots();
+        UpdateEmptyMessage();
+    }
+
+    /// <summary>
+    /// 선택된 슬롯 하나만 강조합니다.
+    /// </summary>
+    private void HandleItemSelected(
+        NyangQuariumFishInventoryItem selectedItem)
+    {
+        if (selectedItem == null)
+            return;
+
+        if (_selectedItem != null &&
+            _selectedItem != selectedItem)
+        {
+            _selectedItem.SetSelected(false);
+        }
+
+        _selectedItem = selectedItem;
+        _selectedItem.SetSelected(true);
+    }
+
+    private void UpdateEmptyMessage()
+    {
+        if (_createdItems.Count > 0)
+        {
+            SetEmptyMessageActive(false);
+            return;
+        }
+
+        ShowCurrentCategoryEmptyMessage();
+    }
+
+    private void ShowCurrentCategoryEmptyMessage()
+    {
+        if (_emptyMessageText == null)
+            return;
+
+        _emptyMessageText.text =
+            _currentCategory ==
+            NyangQuariumPlacementCategory.Fish
+                ? EmptyFishMessage
+                : EmptyNatureMessage;
+
+        SetEmptyMessageActive(true);
+    }
+
+    private void SetEmptyMessageActive(
+        bool isActive)
+    {
+        if (_emptyMessageText != null)
+            _emptyMessageText.gameObject.SetActive(isActive);
     }
 
     /// <summary>
@@ -415,44 +500,13 @@ public sealed class NyangQuariumFishInventoryListUI : MonoBehaviour
             return true;
         }
 
-        DebugTool.Warning("[NyangQuariumFishInventoryListUI] " +
+        DebugTool.Warning(
+            "[NyangQuariumFishInventoryListUI] " +
             "Content 또는 ItemTemplate이 연결되지 않았습니다.",
             DebugType.UI,
             this);
 
         return false;
-    }
-
-    private void FillEmptySlots()
-    {
-        if (_content == null ||
-            _itemTemplate == null)
-        {
-            return;
-        }
-
-        int emptySlotCount =
-            Mathf.Max(
-                0,
-                _minimumSlotCount - _createdItems.Count);
-
-        for (int i = 0;
-             i < emptySlotCount;
-             i++)
-        {
-            NyangQuariumFishInventoryItem emptyItem =
-                Instantiate(
-                    _itemTemplate,
-                    _content);
-
-            emptyItem.gameObject.SetActive(true);
-            emptyItem.InitializeEmpty();
-
-            emptyItem.gameObject.name =
-                $"EmptyInventorySlot_{i + 1}";
-
-            _createdItems.Add(emptyItem);
-        }
     }
 
     private bool MatchesCheckedFishFilters(
@@ -504,6 +558,79 @@ public sealed class NyangQuariumFishInventoryListUI : MonoBehaviour
             default:
                 return NyangQuariumFishFilterType.All;
         }
+    }
+
+    private static Color GetFishTypeColor(
+        FishType fishType)
+    {
+        switch (fishType)
+        {
+            case FishType.Freshwater:
+                return ParseHtmlColor("#B5F6E4");
+
+            case FishType.BrackishWater:
+                return ParseHtmlColor("#9AFFF5");
+
+            case FishType.Saltwater:
+                return ParseHtmlColor("#98D2F3");
+
+            default:
+                return Color.white;
+        }
+    }
+
+    private static Color GetNatureTypeColor(
+        string itemKey)
+    {
+        if (string.IsNullOrWhiteSpace(itemKey))
+            return Color.white;
+
+        if (itemKey.StartsWith(
+                "Env_Stone_",
+                StringComparison.Ordinal))
+        {
+            return ParseHtmlColor("#CFD8DC");
+        }
+
+        if (itemKey.StartsWith(
+                "Env_Plant_",
+                StringComparison.Ordinal))
+        {
+            return ParseHtmlColor("#C5E1A5");
+        }
+
+        if (itemKey.StartsWith(
+                "Env_Marine_",
+                StringComparison.Ordinal))
+        {
+            return ParseHtmlColor("#64B5F6");
+        }
+
+        if (itemKey.StartsWith(
+                "Env_Coral_",
+                StringComparison.Ordinal))
+        {
+            return ParseHtmlColor("#FFB7B2");
+        }
+
+        if (itemKey.StartsWith(
+                "Env_Shelter_",
+                StringComparison.Ordinal))
+        {
+            return ParseHtmlColor("#DCAE96");
+        }
+
+        return Color.white;
+    }
+
+    private static Color ParseHtmlColor(
+        string htmlColor)
+    {
+        return ColorUtility.TryParseHtmlString(
+            htmlColor,
+            out Color color)
+                ? color
+                : Color.white;
     }
 
     private void BindCategoryButtons()
@@ -670,7 +797,8 @@ public sealed class NyangQuariumFishInventoryListUI : MonoBehaviour
         }
     }
 
-    private void SetAllFilter(bool isOn)
+    private void SetAllFilter(
+        bool isOn)
     {
         foreach (NyangQuariumFishFilterToggle toggle
                  in _filterToggles)
@@ -704,6 +832,8 @@ public sealed class NyangQuariumFishInventoryListUI : MonoBehaviour
 
     private void ClearCreatedItems()
     {
+        _selectedItem = null;
+
         foreach (NyangQuariumFishInventoryItem item
                  in _createdItems)
         {
