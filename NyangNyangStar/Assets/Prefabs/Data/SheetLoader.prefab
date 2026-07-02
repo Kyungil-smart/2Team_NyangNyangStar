@@ -123,6 +123,10 @@ MonoBehaviour:
     <URL>k__BackingField: https://docs.google.com/spreadsheets/d/1hD2NCEzCWr2aml-_aqHsHZu_8HeZ0xCLpMDt_A9NfoU/edit?gid=1314847984#gid=1314847984
     <Type>k__BackingField: 2
   nyangQuariumFishSo: {fileID: 11400000, guid: 83d3494b1e111e44c91f704a62b69410, type: 2}
+  nyangQuariumExpItemURL:
+    <URL>k__BackingField: https://docs.google.com/spreadsheets/d/1hD2NCEzCWr2aml-_aqHsHZu_8HeZ0xCLpMDt_A9NfoU/edit?gid=537630819#gid=537630819
+    <Type>k__BackingField: 2
+  nyangQuariumExpItemSo: {fileID: 11400000, guid: c9e5a3b14d6f8c0273e1a4d6b8f0c2e4, type: 2}
   _pendingSheetCount: 0
 --- !u!114 &7187299137341658617
 MonoBehaviour:
