@@ -49,5 +49,19 @@ namespace UI.NyangQuarium.Quest
             NyangQuariumSheetLoader quariumLoader = NyangQuariumSheetLoader.Instance;
             return quariumLoader != null ? quariumLoader.QuestRewardSO : null;
         }
+
+        public static NyangQuariumAquariumLevelSO ResolveAquariumLevelSO()
+        {
+            SheetLoader sheetLoader = Object.FindFirstObjectByType<SheetLoader>();
+
+            if (sheetLoader != null &&
+                sheetLoader.TryGetNyangQuariumAquariumLevelSO(out NyangQuariumAquariumLevelSO aquariumLevelSO))
+            {
+                return aquariumLevelSO;
+            }
+
+            NyangQuariumSheetLoader quariumLoader = NyangQuariumSheetLoader.Instance;
+            return quariumLoader != null ? quariumLoader.AquariumLevelSO : null;
+        }
     }
 }

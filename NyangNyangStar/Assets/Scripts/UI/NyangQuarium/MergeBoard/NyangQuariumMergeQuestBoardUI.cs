@@ -1,6 +1,8 @@
 using Core.Managers;
 using Data.Loader;
+using Data.ScriptableObjects.MergeBoard;
 using Data.ScriptableObjects.NyangQuariumSO;
+using Services.Enums;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
@@ -78,12 +80,15 @@ namespace UI.NyangQuarium.MergeBoard
     {
         private const string QuestBoardNamePrefix = "QuestBoard";
         private const string MergeTargetItemName = "MergeTargetItem";
+        private const string RewardImageName = "RewardImage";
         private const string MergeTargetAmountTextName = "Text (TMP)";
         private const string CompleteButtonName = "Button";
 
         private readonly List<MergeQuestSlotBinding> _slotBindings = new();
         private readonly List<UI.UISpriteController> _spriteControllers = new();
 
+        private NyangQuariumExpItemSO _expItemSO;
+        private NyangQuariumRewardQueue _rewardQueue;
         private bool _initialized;
         private bool _initStarted;
 
@@ -160,6 +165,9 @@ namespace UI.NyangQuarium.MergeBoard
             while (!TryResolveFishSO(out fishSO) || fishSO.FishData == null || fishSO.FishData.Count == 0)
                 yield return null;
 
+            TryResolveExpItemSO(out _expItemSO);
+            _rewardQueue = ResolveRewardQueue();
+
             NyangQuariumMergeQuestSession.EnsureRegistered(questSO);
 
             if (!NyangQuariumMergeQuestSession.IsRegistered)
@@ -196,11 +204,14 @@ namespace UI.NyangQuarium.MergeBoard
                     continue;
 
                 questBoardSlots[i].gameObject.SetActive(true);
-                BindQuestSlot(questBoardSlots[i], quest, fishSO);
+                BindQuestSlot(questBoardSlots[i], quest, fishSO, _expItemSO);
             }
 
             for (int i = bindCount; i < questBoardSlots.Count; i++)
                 questBoardSlots[i].gameObject.SetActive(false);
+
+            if (_expItemSO == null || _expItemSO.DataCount == 0)
+                StartCoroutine(ApplyRewardSpritesWhenReady(questSO));
 
             RefreshCompleteButtons();
 
@@ -262,7 +273,8 @@ namespace UI.NyangQuarium.MergeBoard
         private void BindQuestSlot(
             Transform slotTransform,
             NyangQuariumQuestData quest,
-            NyangQuariumFishSO fishSO)
+            NyangQuariumFishSO fishSO,
+            NyangQuariumExpItemSO expItemSO)
         {
             if (slotTransform == null || quest == null)
                 return;
@@ -309,6 +321,7 @@ namespace UI.NyangQuarium.MergeBoard
 
             ApplyMergeTargetAmountText(amountText, quest);
             ApplyFishSprite(fishData.FishKey, targetImage);
+            ApplyRewardSprite(slotTransform, quest, expItemSO);
             SetupCompleteButton(slotTransform, quest, fishId);
         }
 
@@ -335,6 +348,101 @@ namespace UI.NyangQuarium.MergeBoard
             UI.UISpriteController controller = new UI.UISpriteController(targetImage);
             controller.ChangeSprite(fishKey);
             _spriteControllers.Add(controller);
+        }
+
+        private void ApplyRewardSprite(
+            Transform slotTransform,
+            NyangQuariumQuestData quest,
+            NyangQuariumExpItemSO expItemSO)
+        {
+            Transform rewardTransform = FindDirectChildByName(slotTransform, RewardImageName);
+            if (rewardTransform == null)
+            {
+                DebugTool.Warning(
+                    $"[NyangQuariumMergeQuestBoardUI] RewardImage를 찾지 못했습니다. Slot:{slotTransform.name}",
+                    DebugType.UI,
+                    this);
+                return;
+            }
+
+            Image rewardImage = rewardTransform.GetComponent<Image>();
+            if (rewardImage == null)
+            {
+                DebugTool.Warning(
+                    $"[NyangQuariumMergeQuestBoardUI] RewardImage Image 컴포넌트 없음. Slot:{slotTransform.name}",
+                    DebugType.UI,
+                    this);
+                return;
+            }
+
+            rewardImage.sprite = null;
+            rewardImage.enabled = false;
+            rewardImage.preserveAspect = true;
+
+            if (quest == null || !quest.HasReward)
+                return;
+
+            if (expItemSO == null || expItemSO.DataCount == 0)
+                return;
+
+            if (!expItemSO.TryGetById(quest.QuestRewardId, out NyangQuariumExpItemData expItemData))
+            {
+                DebugTool.Warning(
+                    $"[NyangQuariumMergeQuestBoardUI] 퀘스트 보상 경험치 아이템 데이터 없음. Quest:{quest.ID}, RewardId:{quest.QuestRewardId}",
+                    DebugType.UI,
+                    this);
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(expItemData.AddressableKey))
+            {
+                DebugTool.Warning(
+                    $"[NyangQuariumMergeQuestBoardUI] 퀘스트 보상 AddressableKey가 비어 있습니다. Quest:{quest.ID}, RewardId:{quest.QuestRewardId}",
+                    DebugType.UI,
+                    this);
+                return;
+            }
+
+            rewardImage.enabled = true;
+            rewardImage.gameObject.SetActive(true);
+
+            Color color = rewardImage.color;
+            color.a = 1f;
+            rewardImage.color = color;
+
+            UI.UISpriteController controller = new UI.UISpriteController(rewardImage);
+            controller.ChangeSprite(expItemData.AddressableKey);
+            _spriteControllers.Add(controller);
+        }
+
+        private IEnumerator ApplyRewardSpritesWhenReady(NyangQuariumQuestSO questSO)
+        {
+            float elapsed = 0f;
+            const float waitTimeoutSeconds = 15f;
+
+            while ((_expItemSO == null || _expItemSO.DataCount == 0) &&
+                   elapsed < waitTimeoutSeconds)
+            {
+                TryResolveExpItemSO(out _expItemSO);
+                elapsed += Time.unscaledDeltaTime;
+                yield return null;
+            }
+
+            if (_expItemSO == null || _expItemSO.DataCount == 0 || questSO == null)
+                yield break;
+
+            for (int i = 0; i < _slotBindings.Count; i++)
+            {
+                MergeQuestSlotBinding binding = _slotBindings[i];
+                if (binding == null ||
+                    binding.SlotTransform == null ||
+                    !questSO.TryGetQuest(binding.QuestId, out NyangQuariumQuestData quest))
+                {
+                    continue;
+                }
+
+                ApplyRewardSprite(binding.SlotTransform, quest, _expItemSO);
+            }
         }
 
         private void SetupCompleteButton(
@@ -393,6 +501,12 @@ namespace UI.NyangQuarium.MergeBoard
                 return;
             }
 
+            if (!TryCreateQuestRewardItem(binding.QuestId, out NyangQuariumBoardItem rewardItem, out int rewardCount))
+            {
+                RefreshCompleteButton(binding);
+                return;
+            }
+
             if (!NyangQuariumMergeBoardInventoryService.TryConsumeFish(binding.FishId, binding.RequiredAmount))
             {
                 DebugTool.Warning(
@@ -402,6 +516,8 @@ namespace UI.NyangQuarium.MergeBoard
                 RefreshCompleteButton(binding);
                 return;
             }
+
+            EnqueueQuestReward(binding.QuestId, rewardItem, rewardCount);
 
             binding.IsCompleted = true;
             NyangQuariumMergeQuestSession.RemoveQuest(binding.QuestId);
@@ -416,6 +532,92 @@ namespace UI.NyangQuarium.MergeBoard
 
             DebugTool.Log(
                 $"[NyangQuariumMergeQuestBoardUI] merge 퀘스트 완료. QuestId:{binding.QuestId}, FishId:{binding.FishId}, Amount:{binding.RequiredAmount}",
+                DebugType.UI,
+                this);
+        }
+
+        private bool TryCreateQuestRewardItem(
+            int questId,
+            out NyangQuariumBoardItem rewardItem,
+            out int rewardCount)
+        {
+            rewardItem = null;
+            rewardCount = 1;
+
+            if (!TryResolveQuestSO(out NyangQuariumQuestSO questSO) ||
+                !questSO.TryGetQuest(questId, out NyangQuariumQuestData quest))
+            {
+                DebugTool.Warning(
+                    $"[NyangQuariumMergeQuestBoardUI] 보상 지급용 퀘스트 데이터를 찾지 못했습니다. QuestId:{questId}",
+                    DebugType.UI,
+                    this);
+                return false;
+            }
+
+            if (!quest.HasReward)
+                return true;
+
+            if (_rewardQueue == null)
+                _rewardQueue = ResolveRewardQueue();
+
+            if (_rewardQueue == null)
+            {
+                DebugTool.Warning(
+                    $"[NyangQuariumMergeQuestBoardUI] RewardQueue를 찾지 못해 퀘스트를 완료할 수 없습니다. QuestId:{questId}",
+                    DebugType.UI,
+                    this);
+                return false;
+            }
+
+            rewardCount = Mathf.Max(1, quest.RewardAmount);
+
+            if (_expItemSO == null)
+                TryResolveExpItemSO(out _expItemSO);
+
+            if (_expItemSO == null ||
+                !_expItemSO.TryGetById(quest.QuestRewardId, out NyangQuariumExpItemData expItemData))
+            {
+                DebugTool.Warning(
+                    $"[NyangQuariumMergeQuestBoardUI] 퀘스트 보상 경험치 아이템 데이터 없음. Quest:{quest.ID}, RewardId:{quest.QuestRewardId}",
+                    DebugType.UI,
+                    this);
+                return false;
+            }
+
+            ItemData itemData = new(
+                expItemData.ItemId,
+                expItemData.ItemName,
+                Mathf.Max(1, expItemData.ItemLevel),
+                ItemType.Common,
+                expItemData.AddressableKey);
+
+            rewardItem = new NyangQuariumBoardItem(itemData);
+            return rewardItem.HasItem;
+        }
+
+        private void EnqueueQuestReward(int questId, NyangQuariumBoardItem rewardItem, int rewardCount)
+        {
+            if (rewardItem == null || !rewardItem.HasItem)
+                return;
+
+            if (_rewardQueue == null)
+                _rewardQueue = ResolveRewardQueue();
+
+            if (_rewardQueue == null)
+            {
+                DebugTool.Warning(
+                    $"[NyangQuariumMergeQuestBoardUI] RewardQueue를 찾지 못해 퀘스트 보상을 지급하지 못했습니다. QuestId:{questId}",
+                    DebugType.UI,
+                    this);
+                return;
+            }
+
+            int safeCount = Mathf.Max(1, rewardCount);
+            for (int i = 0; i < safeCount; i++)
+                _rewardQueue.EnqueueItem(rewardItem);
+
+            DebugTool.Log(
+                $"[NyangQuariumMergeQuestBoardUI] 퀘스트 보상 큐 지급 완료. QuestId:{questId}, RewardId:{rewardItem.Id}, Count:{safeCount}",
                 DebugType.UI,
                 this);
         }
@@ -534,6 +736,23 @@ namespace UI.NyangQuarium.MergeBoard
             NyangQuariumSheetLoader quariumLoader = NyangQuariumSheetLoader.Instance;
             fishSO = quariumLoader != null ? quariumLoader.FishSO : null;
             return fishSO != null;
+        }
+
+        private static bool TryResolveExpItemSO(out NyangQuariumExpItemSO expItemSO)
+        {
+            SheetLoader sheetLoader = Object.FindFirstObjectByType<SheetLoader>();
+
+            if (sheetLoader != null && sheetLoader.TryGetNyangQuariumExpItemSO(out expItemSO))
+                return expItemSO != null;
+
+            NyangQuariumSheetLoader quariumLoader = NyangQuariumSheetLoader.Instance;
+            expItemSO = quariumLoader != null ? quariumLoader.ExpItemSO : null;
+            return expItemSO != null;
+        }
+
+        private static NyangQuariumRewardQueue ResolveRewardQueue()
+        {
+            return Object.FindFirstObjectByType<NyangQuariumRewardQueue>();
         }
     }
 }

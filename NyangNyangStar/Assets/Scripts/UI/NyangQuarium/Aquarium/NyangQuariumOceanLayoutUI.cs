@@ -11,9 +11,6 @@ public class NyangQuariumOceanLayoutUI : UIPopup, INyangquariumEntryReceiver
     [Tooltip("뒤로가기 버튼")]
     [SerializeField] private Button _backButton;
 
-    [Tooltip("수조 유리 반응형 버튼")]
-    [SerializeField] private Button _windowButton;
-
     [Tooltip("담수 수조로 변경하는 버튼")]
     [SerializeField] private Button _changeButton;
 
@@ -98,8 +95,6 @@ public class NyangQuariumOceanLayoutUI : UIPopup, INyangquariumEntryReceiver
 
         _uiVisibilityToggle = GetComponent<NyangQuariumUIVisibilityToggle>();
 
-        BindUIVisibilityToggle();
-
         BindButtons();
         ResolveInventoryRect();
         BindOutsideTouchArea();
@@ -114,36 +109,9 @@ public class NyangQuariumOceanLayoutUI : UIPopup, INyangquariumEntryReceiver
             DebugType.UI,
             this);
     }
-    private void BindUIVisibilityToggle()
-    {
-        if (_uiVisibilityToggle == null)
-        {
-            DebugTool.Warning(
-                "[NyangQuariumOceanLayoutUI] " +
-                "NyangQuariumUIVisibilityToggle을 찾을 수 없습니다.",
-                DebugType.UI,
-                this);
-
-            return;
-        }
-
-        _uiVisibilityToggle.VisibilityChanged -= OnUIVisibilityChanged;
-        _uiVisibilityToggle.VisibilityChanged += OnUIVisibilityChanged;
-
-        OnUIVisibilityChanged(_uiVisibilityToggle.IsUIVisible);
-    }
-
-    private void OnUIVisibilityChanged(bool isUIVisible)
-    {
-        if (_nyangQuariumOceanLayoutUISprite == null)
-            return;
-
-        _nyangQuariumOceanLayoutUISprite.SetUIToggleSprite(isUIVisible);
-    }
     private void BindButtons()
     {
         _backButton = Get<Button>((int)NyangQuariumOceanLayoutUIButton.BackButton);
-        _windowButton = Get<Button>((int)NyangQuariumOceanLayoutUIButton.WindowButton);
         _changeButton = Get<Button>((int)NyangQuariumOceanLayoutUIButton.ChangeButton);
         _oceanFishButton = Get<Button>((int)NyangQuariumOceanLayoutUIButton.OceanFishButton);
         _oceanWaterWeedButton = Get<Button>((int)NyangQuariumOceanLayoutUIButton.OceanWaterWeedButton);
@@ -569,9 +537,6 @@ public class NyangQuariumOceanLayoutUI : UIPopup, INyangquariumEntryReceiver
 
     private void SetMainUIActive(bool isActive)
     {
-        if (_windowButton != null)
-            _windowButton.gameObject.SetActive(isActive);
-
         if (_changeButton != null)
             _changeButton.gameObject.SetActive(isActive);
 
@@ -618,12 +583,6 @@ public class NyangQuariumOceanLayoutUI : UIPopup, INyangquariumEntryReceiver
     {
         if (_outsideTouchArea != null)
             _outsideTouchArea.Clicked -= HandleOutsideTouch;
-
-        if (_uiVisibilityToggle != null)
-        {
-            _uiVisibilityToggle.VisibilityChanged -=
-                OnUIVisibilityChanged;
-        }
     }
 }
 

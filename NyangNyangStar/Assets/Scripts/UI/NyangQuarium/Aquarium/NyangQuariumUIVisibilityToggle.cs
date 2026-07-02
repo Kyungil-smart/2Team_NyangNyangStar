@@ -5,113 +5,121 @@ using UnityEngine.UI;
 
 /// <summary>
 /// 수조 기본 UI의 표시/숨김 상태를 관리합니다.
-///
-/// UI 숨김 상태에서도 토글 버튼은 계속 표시되며,
-/// 배치된 물고기 선택과 삭제 기능은 그대로 사용할 수 있습니다.
+/// On/Off 버튼을 각각 미리 준비하고 활성화 상태만 교체하여 즉시 반응합니다.
 /// </summary>
 public sealed class NyangQuariumUIVisibilityToggle : MonoBehaviour
 {
     [Header("UI 토글 버튼")]
-    [Tooltip("기본 UI 표시 상태를 전환하는 버튼")]
-    [SerializeField]
-    private Button _toggleButton;
+    [Tooltip("기본 UI가 보일 때 표시되는 On 버튼")]
+    [SerializeField] private Button _toggleOnButton;
+
+    [Tooltip("기본 UI가 숨겨졌을 때 표시되는 Off 버튼")]
+    [SerializeField] private Button _toggleOffButton;
 
     [Header("숨길 기본 UI")]
     [Tooltip("토글 버튼을 제외하고 숨길 UI 오브젝트")]
-    [SerializeField]
-    private GameObject[] _targetUIObjects;
+    [SerializeField] private GameObject[] _targetUIObjects;
 
     private bool _isUIVisible = true;
     private bool[] _previousActiveStates;
 
-    /// <summary>
-    /// 현재 기본 UI 표시 여부입니다.
-    /// </summary>
     public bool IsUIVisible => _isUIVisible;
-
-    /// <summary>
-    /// UI 토글 버튼으로 기본 UI를 수동 숨김한 상태입니다.
-    /// 자동 물멍 타이머는 이 상태에서 정지해야 합니다.
-    /// </summary>
     public bool IsManualHidden => !_isUIVisible;
 
-    /// <summary>
-    /// 기본 UI 표시 상태가 바뀌었을 때 호출됩니다.
-    /// true는 표시, false는 숨김입니다.
-    /// </summary>
     public event Action<bool> VisibilityChanged;
 
     private void Awake()
     {
-        BindButton();
+        BindButtons();
         ShowUIWithoutSound();
     }
 
     private void OnDisable()
     {
-        // 종료/비활성화 중에는 구독 중인 UI가 먼저 파괴될 수 있으므로
-        // VisibilityChanged 이벤트를 발생시키지 않고 상태만 초기화합니다.
         ResetUIStateWithoutNotification();
     }
 
     private void OnDestroy()
     {
-        UnbindButton();
+        UnbindButtons();
     }
 
-    private void BindButton()
+    private void BindButtons()
     {
-        if (_toggleButton == null)
+        if (_toggleOnButton == null || _toggleOffButton == null)
         {
-            DebugTool.Warning("[NyangQuariumUIVisibilityToggle] UI 토글 버튼이 연결되지 않았습니다.",
+            DebugTool.Warning(
+                "[NyangQuariumUIVisibilityToggle] UI On/Off 버튼 연결을 확인해주세요.",
                 DebugType.UI,
                 this);
-
-            return;
         }
 
-        _toggleButton.onClick.RemoveListener(ToggleUI);
-        _toggleButton.onClick.AddListener(ToggleUI);
+        if (_toggleOnButton != null)
+        {
+            _toggleOnButton.onClick.RemoveListener(HideUIByButton);
+            _toggleOnButton.onClick.AddListener(HideUIByButton);
+        }
+
+        if (_toggleOffButton != null)
+        {
+            _toggleOffButton.onClick.RemoveListener(ShowUIByButton);
+            _toggleOffButton.onClick.AddListener(ShowUIByButton);
+        }
     }
 
-    private void UnbindButton()
+    private void UnbindButtons()
     {
-        if (_toggleButton != null)
-            _toggleButton.onClick.RemoveListener(ToggleUI);
+        if (_toggleOnButton != null)
+            _toggleOnButton.onClick.RemoveListener(HideUIByButton);
+
+        if (_toggleOffButton != null)
+            _toggleOffButton.onClick.RemoveListener(ShowUIByButton);
+    }
+
+    private void HideUIByButton()
+    {
+        GameManager.Audio.PlaySfx("Main_SFX_Touch");
+        SetUIVisible(false);
+    }
+
+    private void ShowUIByButton()
+    {
+        GameManager.Audio.PlaySfx("Main_SFX_Touch");
+        SetUIVisible(true);
     }
 
     /// <summary>
-    /// 현재 상태의 반대로 기본 UI를 전환합니다.
+    /// 기존 외부 호출 호환용 토글 함수입니다.
     /// </summary>
     public void ToggleUI()
     {
         GameManager.Audio.PlaySfx("Main_SFX_Touch");
-
         SetUIVisible(!_isUIVisible);
-
-        DebugTool.Log($"[NyangQuariumUIVisibilityToggle] 기본 UI 표시 상태: {_isUIVisible}",
-            DebugType.UI,
-            this);
     }
 
-    /// <summary>
-    /// 기본 UI 표시 상태를 직접 설정합니다.
-    /// </summary>
     public void SetUIVisible(bool isVisible)
     {
         if (_isUIVisible == isVisible)
             return;
 
+        // 버튼 이미지는 이미 로드되어 있으므로 활성화 상태를 먼저 즉시 교체합니다.
+        SetToggleButtonsActive(isVisible);
+
         if (isVisible)
             RestoreUI();
         else
-            HideUI();
+            HideTargetUI();
 
         _isUIVisible = isVisible;
         VisibilityChanged?.Invoke(_isUIVisible);
+
+        DebugTool.Log(
+            $"[NyangQuariumUIVisibilityToggle] 기본 UI 표시 상태: {_isUIVisible}",
+            DebugType.UI,
+            this);
     }
 
-    private void HideUI()
+    private void HideTargetUI()
     {
         if (_targetUIObjects == null)
             return;
@@ -153,21 +161,27 @@ public sealed class NyangQuariumUIVisibilityToggle : MonoBehaviour
         _previousActiveStates = null;
     }
 
+    private void SetToggleButtonsActive(bool isUIVisible)
+    {
+        if (_toggleOnButton != null)
+            _toggleOnButton.gameObject.SetActive(isUIVisible);
+
+        if (_toggleOffButton != null)
+            _toggleOffButton.gameObject.SetActive(!isUIVisible);
+    }
+
     private void ShowUIWithoutSound()
     {
         RestoreUI();
-
         _isUIVisible = true;
+        SetToggleButtonsActive(true);
         VisibilityChanged?.Invoke(true);
     }
 
-    /// <summary>
-    /// 오브젝트 비활성화 또는 게임 종료 시 UI 상태만 초기화합니다.
-    /// 파괴 순서에 따른 NullReferenceException을 막기 위해 이벤트는 호출하지 않습니다.
-    /// </summary>
     private void ResetUIStateWithoutNotification()
     {
         RestoreUI();
         _isUIVisible = true;
+        SetToggleButtonsActive(true);
     }
 }
