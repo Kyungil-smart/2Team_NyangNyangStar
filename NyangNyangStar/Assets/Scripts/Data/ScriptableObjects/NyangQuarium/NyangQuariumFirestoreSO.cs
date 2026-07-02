@@ -19,6 +19,10 @@ public class NyangQuariumFirestoreSO : BaseFireStore
     [SerializeField] private List<NyangQuariumPlacedNatureData> _freshwaterPlacedNatureData = new();
     [SerializeField] private List<NyangQuariumPlacedNatureData> _saltwaterPlacedNatureData = new();
 
+    [Header("Aquarium Level")]
+    [SerializeField] private int _aquariumLevel = 1;
+    [SerializeField] private int _aquariumExp;
+
 
     [Header("스토리")]
     [SerializeField] private List<int> _readStoryIds = new();
@@ -30,9 +34,12 @@ public class NyangQuariumFirestoreSO : BaseFireStore
     public IReadOnlyList<int> SaltwaterPlacedFishIds => _saltwaterPlacedFishIds;
     public IReadOnlyList<NyangQuariumPlacedNatureData> FreshwaterPlacedNatureData => _freshwaterPlacedNatureData;
     public IReadOnlyList<NyangQuariumPlacedNatureData> SaltwaterPlacedNatureData => _saltwaterPlacedNatureData;
+    public int AquariumLevel => _aquariumLevel;
+    public int AquariumExp => _aquariumExp;
 
     private void OnEnable()
     {
+        NormalizeAquariumLevel();
         RebuildCache();
         NormalizePlacedFishLists();
         NormalizePlacedNatureList();
@@ -83,6 +90,7 @@ public class NyangQuariumFirestoreSO : BaseFireStore
     public override void ApplyFromSnapshot(DocumentSnapshot snapshot)
     {
         base.ApplyFromSnapshot(snapshot);
+        NormalizeAquariumLevel();
         RebuildCache();
         NormalizePlacedFishLists();
         NormalizePlacedNatureList();
@@ -100,6 +108,58 @@ public class NyangQuariumFirestoreSO : BaseFireStore
         ResetToDefault();
         await SetDataAsync(ToFirestoreDictionary());
         return true;
+    }
+
+    public async Task<bool> AddAquariumExpAsync(
+        int expAmount,
+        NyangQuariumAquariumLevelSO aquariumLevelSO = null)
+    {
+        if (expAmount <= 0)
+            return false;
+
+        NormalizeAquariumLevel();
+        _aquariumExp += expAmount;
+        ApplyAquariumLevelUps(aquariumLevelSO);
+
+        if (!TryEnsureDatabaseReady())
+        {
+            DebugTool.Warning("[NyangQuariumFirestoreSO] Firestore is not ready. Aquarium EXP was updated locally only.", DebugType.Data, this);
+            return false;
+        }
+
+        await SetDataAsync(ToFirestoreDictionary());
+        return true;
+    }
+
+    public bool TryGetCurrentAquariumLevelData(
+        NyangQuariumAquariumLevelSO aquariumLevelSO,
+        out NyangQuariumAquariumLevelData levelData)
+    {
+        levelData = null;
+
+        if (aquariumLevelSO == null)
+            return false;
+
+        NormalizeAquariumLevel();
+        return aquariumLevelSO.TryGetByLevel(_aquariumLevel, out levelData);
+    }
+
+    public bool TryGetCurrentMaxPlaceableCount(
+        NyangQuariumAquariumLevelSO aquariumLevelSO,
+        out int maxPlaceableFish,
+        out int maxPlaceableEnvironment)
+    {
+        maxPlaceableFish = 0;
+        maxPlaceableEnvironment = 0;
+
+        if (aquariumLevelSO == null)
+            return false;
+
+        NormalizeAquariumLevel();
+        return aquariumLevelSO.TryGetMaxPlaceableCount(
+            _aquariumLevel,
+            out maxPlaceableFish,
+            out maxPlaceableEnvironment);
     }
 
     public bool IsUnlocked(int fishId)
@@ -475,6 +535,8 @@ public class NyangQuariumFirestoreSO : BaseFireStore
         _readStoryIds ??= new List<int>();
         _readStoryIds.Clear();
 
+        _aquariumLevel = 1;
+        _aquariumExp = 0;
 
         _freshwaterPlacedNatureData ??= new List<NyangQuariumPlacedNatureData>();
         _freshwaterPlacedNatureData.Clear();
@@ -508,6 +570,30 @@ public class NyangQuariumFirestoreSO : BaseFireStore
             if (fishId <= 0 || !_unlockedFishIdSet.Add(fishId))
                 _unlockedFishIds.RemoveAt(i);
         }
+    }
+
+    private void ApplyAquariumLevelUps(NyangQuariumAquariumLevelSO aquariumLevelSO)
+    {
+        if (aquariumLevelSO == null)
+            return;
+
+        while (aquariumLevelSO.TryGetByLevel(_aquariumLevel, out NyangQuariumAquariumLevelData levelData))
+        {
+            if (levelData.RequiredExp <= 0 || _aquariumExp < levelData.RequiredExp)
+                break;
+
+            _aquariumExp -= levelData.RequiredExp;
+            _aquariumLevel++;
+        }
+    }
+
+    private void NormalizeAquariumLevel()
+    {
+        if (_aquariumLevel <= 0)
+            _aquariumLevel = 1;
+
+        if (_aquariumExp < 0)
+            _aquariumExp = 0;
     }
 
     private void NormalizePlacedFishLists()
