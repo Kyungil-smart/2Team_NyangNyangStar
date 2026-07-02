@@ -25,6 +25,8 @@ public class NyangStargramAddPostUI : UIPopup
 
     [Header("선택 이미지")]
     [SerializeField] private Image _newPostImage;
+    [SerializeField] private Color _newPostColor;
+    [SerializeField] private TMP_Text _noImageText;
 
     [Header("사진 데이터")]
     [SerializeField] private NyangNyangSnapRuntimePhotoSO _runtimePhotoSO;
@@ -54,6 +56,7 @@ public class NyangStargramAddPostUI : UIPopup
         _albumDropdown = UIBase.FindChild<TMP_Dropdown>(gameObject, "Dropdown", true);
         _newPostImage = UIBase.FindChild<Image>(gameObject, "New Post Image", true);
         _albumContent = UIBase.FindChild<Transform>(gameObject, "AlbumContent", true);
+        _noImageText = UIBase.FindChild<TMP_Text>(gameObject, "NoImageText", true);
 
         RefreshAlbumGridCellSize();
 
@@ -96,6 +99,10 @@ public class NyangStargramAddPostUI : UIPopup
 
         if (_newPostImage != null)
             _newPostImage.sprite = null;
+            _newPostImage.color = _newPostColor;
+        
+        if (_noImageText != null)
+            _noImageText.gameObject.SetActive(true);
 
         RefreshAlbumGridCellSize();
         RefreshAlbumSlots();
@@ -172,6 +179,8 @@ public class NyangStargramAddPostUI : UIPopup
 
         _selectedPhotoData = photoData;
         _hasSelectedPhoto = true;
+
+        _noImageText.gameObject.SetActive(false);
 
         _newPostImage.sprite = sprite;
         _newPostImage.color = Color.white;
