@@ -6,7 +6,7 @@ using UnityEngine.UI;
 
 public class RewardedAdsButton : MonoBehaviour, IUnityAdsLoadListener, IUnityAdsShowListener
 {
-    [SerializeField] string _androidAdUnitId = "Rewarded_Android";
+    [SerializeField] string _androidAdUnitId = "NNSnapRewarded_Android";
     [SerializeField] string _iOSAdUnitId = "Rewarded_iOS";
 
     [SerializeField] private Button _showAdButton;

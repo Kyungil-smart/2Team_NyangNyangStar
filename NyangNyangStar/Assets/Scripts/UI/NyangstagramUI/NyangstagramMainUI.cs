@@ -176,7 +176,7 @@ public class NyangstagramMainUI : UIPopup
         );
     }
 
-    public void AddPost(NyangNyangSnapSavedPhotoData photoData)
+    public void AddPost(NyangNyangSnapRuntimePhotoData photoData)
     {
         NyangStargramPostSlotUI slot = Instantiate(_postSlotPrefab, _postContent);
 
@@ -186,16 +186,16 @@ public class NyangstagramMainUI : UIPopup
 
         _postSlots.Add(slot);
 
-        DebugTool.Log($"게시물 추가 : {photoData.photoId}", DebugType.UI, this);
+        DebugTool.Log($"게시물 추가 : {photoData.PhotoId}", DebugType.UI, this);
     }
 
-    private void OpenPostPopup(NyangNyangSnapSavedPhotoData photoData)
+    private void OpenPostPopup(NyangNyangSnapRuntimePhotoData photoData)
     {
         if (!_cachedPopups.TryGetValue(KeyContainer.Prefabs.NyangStargramPostPopUpUI, out UIPopup popup)) return;
 
         if (popup is NyangStargramPostUI postUI)
         {
-            postUI.SetPhoto(photoData.storagePath);
+            postUI.SetPhoto(photoData.Sprite);
         }
 
         ShowCachedPopup(popup);

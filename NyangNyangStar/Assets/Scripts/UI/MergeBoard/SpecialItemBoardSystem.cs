@@ -157,7 +157,13 @@ namespace UI.MergeBoard
             SpecialItemSlotData newSlotData = new SpecialItemSlotData(slotNumber, CreateRuntimeItem(itemData), newCount);
 
             SetSlotData(slotNumber, newSlotData);
-            await SaveSlotSafeAsync(slotNumber);
+
+            if (!await SaveSlotSafeAsync(slotNumber))
+            {
+                SetSlotData(slotNumber, currentData);
+                return false;
+            }
+
             return true;
         }
 
@@ -212,7 +218,12 @@ namespace UI.MergeBoard
                 : new SpecialItemSlotData(slotNumber, currentData.ItemData, newCount);
 
             SetSlotData(slotNumber, newSlotData);
-            await SaveSlotSafeAsync(slotNumber);
+
+            if (!await SaveSlotSafeAsync(slotNumber))
+            {
+                SetSlotData(slotNumber, currentData);
+                return 0;
+            }
 
             if (_selectedSlot != null && _selectedSlot.SlotNumber == slotNumber)
             {
@@ -287,7 +298,12 @@ namespace UI.MergeBoard
                     : new SpecialItemSlotData(slotNumber, currentData.ItemData, newCount);
 
                 SetSlotData(slotNumber, newSlotData);
-                await SaveSlotSafeAsync(slotNumber);
+
+                if (!await SaveSlotSafeAsync(slotNumber))
+                {
+                    SetSlotData(slotNumber, currentData);
+                    return false;
+                }
 
                 if (newSlotData.HasItem)
                 {
@@ -544,18 +560,20 @@ namespace UI.MergeBoard
             return slotNumber >= 1 && slotNumber <= SlotCount;
         }
 
-        private async Task SaveSlotSafeAsync(int slotNumber)
+        private async Task<bool> SaveSlotSafeAsync(int slotNumber)
         {
             if (!ResolveMergeBoardFirestore())
-                return;
+                return false;
 
             try
             {
                 await _mergeBoardFirestore.SaveSpecialSlotAsync(slotNumber, _specialSlotDict[slotNumber]);
+                return true;
             }
             catch (Exception exception)
             {
                 Debug.LogException(exception, this);
+                return false;
             }
         }
     }

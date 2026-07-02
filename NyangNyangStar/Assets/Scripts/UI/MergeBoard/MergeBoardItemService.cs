@@ -3,6 +3,7 @@ using Data.LibrarySystem;
 using Data.ScriptableObjects.MergeBoard;
 using Services.Enums;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using TMPro;
 using UI.FindMoongchi;
@@ -48,6 +49,8 @@ namespace UI.MergeBoard
         [SerializeField] private bool _enableRuntimeDiagnostics = true;
 
         private const int GeneralBoardSlotCount = 63;
+
+        private readonly SemaphoreSlim _addItemSemaphore = new(1, 1);
 
         private bool _isAddingItem;
         private bool _isConsumingItem;
@@ -135,9 +138,6 @@ namespace UI.MergeBoard
 
         public async Task<bool> AddItemByIdAsync(int itemID, int count = 1)
         {
-            if (_isAddingItem)
-                return false;
-
             if (itemID <= 0)
             {
                 DebugTool.Warning($"유효하지 않은 아이템 ID입니다. ID: {itemID}", DebugType.Board, this);
@@ -150,21 +150,12 @@ namespace UI.MergeBoard
                 return false;
             }
 
-            _isAddingItem = true;
-
-            try
-            {
-                return await AddItemAsync(itemData, count);
-            }
-            finally
-            {
-                _isAddingItem = false;
-            }
+            return await AddItemQueuedAsync(itemData, count);
         }
 
         public void AddItem(ItemData itemData, int count = 1)
         {
-            _ = AddItemAsync(itemData, count);
+            _ = AddItemQueuedAsync(itemData, count);
         }
 
         public async Task<bool> AddItemAsync(ItemData itemData, int count = 1)
@@ -265,12 +256,12 @@ namespace UI.MergeBoard
 
         public async void ReceiveItem(ItemData itemData)
         {
-            await AddItemAsync(itemData, 1);
+            await AddItemQueuedAsync(itemData, 1);
         }
 
         public async void ReceiveItem(ItemData itemData, int count)
         {
-            await AddItemAsync(itemData, count);
+            await AddItemQueuedAsync(itemData, count);
         }
 
         public void ReceiveRandomTestItem()
@@ -331,6 +322,8 @@ namespace UI.MergeBoard
 
             _isAddingItem = true;
 
+            await _addItemSemaphore.WaitAsync();
+
             try
             {
                 RuntimeLog($"아이템 생성 처리 시작 / ID:{itemData.ItemID}, Count:{safeCount}, EnergyCost:{energyCost}, Type:{itemData.ItemType}");
@@ -344,7 +337,19 @@ namespace UI.MergeBoard
                 if (!await TrySpendGenerateEnergyAsync(energyCost))
                     return false;
 
-                bool added = await AddItemAsync(itemData, safeCount);
+                bool added;
+
+                try
+                {
+                    added = await AddItemAsync(itemData, safeCount);
+                }
+                catch (System.Exception exception)
+                {
+                    Debug.LogException(exception, this);
+                    RuntimeWarning($"아이템 추가 중 예외가 발생해 에너지를 환불합니다. ID:{itemData.ItemID}, Refund:{energyCost}");
+                    await RefundGenerateEnergyAsync(energyCost);
+                    return false;
+                }
 
                 if (!added)
                 {
@@ -353,13 +358,42 @@ namespace UI.MergeBoard
                     return false;
                 }
 
-                await NotifyFindMoongchiEnergySpentAsync(energyCost);
+                try
+                {
+                    await NotifyFindMoongchiEnergySpentAsync(energyCost);
+                }
+                catch (System.Exception exception)
+                {
+                    Debug.LogException(exception, this);
+                    RuntimeWarning("아이템 생성은 완료됐지만 FindMoongchi 에너지 사용 진행도 갱신에 실패했습니다.");
+                }
+
                 RuntimeLog($"아이템 생성 완료 / ID:{itemData.ItemID}, Count:{safeCount}");
                 return true;
             }
             finally
             {
+                _addItemSemaphore.Release();
                 _isAddingItem = false;
+            }
+        }
+
+        private async Task<bool> AddItemQueuedAsync(ItemData itemData, int count)
+        {
+            await _addItemSemaphore.WaitAsync();
+
+            try
+            {
+                return await AddItemAsync(itemData, count);
+            }
+            catch (System.Exception exception)
+            {
+                Debug.LogException(exception, this);
+                return false;
+            }
+            finally
+            {
+                _addItemSemaphore.Release();
             }
         }
 

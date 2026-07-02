@@ -39,6 +39,8 @@ namespace UI.NyangQuarium
         private const string CollectionButtonSpriteKey = "NQ_Btn_Collection";
         private const string FreshAquariumButtonSpriteKey = "NQ_Btn_FreshWater";
         private const string OceanAquariumButtonSpriteKey = "NQ_Btn_SaltWater";
+        private const string TransitionSpriteKey = "NQ_BG_Transition";
+        private const string TankLevelBubbleSpriteKey = "NQ_Icon_TankLevel";
 
         [Header("메인 버튼")]
         [FormerlySerializedAs("_boardQuestButton")]
@@ -82,6 +84,14 @@ namespace UI.NyangQuarium
         [SerializeField] private string _freshAquariumSpriteKey = FreshAquariumButtonSpriteKey;
         [SerializeField] private string _oceanAquariumSpriteKey = OceanAquariumButtonSpriteKey;
 
+        [Header("수조 레벨 방울")]
+        [SerializeField] private NyangQuariumLevelBubbleUI levelBubbleUI;
+        [SerializeField] private string _tankLevelBubbleSpriteKey = TankLevelBubbleSpriteKey;
+        [Tooltip("거북이 이미지가 Addressable에 추가되면 키를 넣어 연결합니다. 비워두면 숨깁니다.")]
+        [SerializeField] private string _tankLevelTurtleSpriteKey;
+        [SerializeField] private int _tankLevel = 1;
+        [SerializeField, Range(0f, 1f)] private float _tankLevelExpRatio;
+
         [Header("연출")]
         [SerializeField] private CanvasGroup _canvasGroup;
         [SerializeField] private RectTransform _contentRoot;
@@ -108,6 +118,15 @@ namespace UI.NyangQuarium
 
         public static NyangquariumMainUIManager Active { get; private set; }
 
+        private void OnValidate()
+        {
+            _tankLevel = Mathf.Max(1, _tankLevel);
+            _tankLevelExpRatio = Mathf.Clamp01(_tankLevelExpRatio);
+
+            if (levelBubbleUI != null)
+                levelBubbleUI.SetLevelProgress(_tankLevel, _tankLevelExpRatio);
+        }
+
         public override void Init()
         {
             Active = this;
@@ -115,6 +134,7 @@ namespace UI.NyangQuarium
             BindButtons();
             BindAquariumSelectButtons();
             BindAddressableSprites();
+            EnsureTankLevelBubbleUI();
             ApplyAquariumSelectStyle();
             ShowMainViewImmediately();
             RefreshButtonStates();
@@ -166,12 +186,34 @@ namespace UI.NyangQuarium
             if (_contentRoot != null)
                 _contentRoot.localScale = Vector3.one;
 
+            EnsureTankLevelBubbleUI();
             ShowMainViewImmediately();
             RefreshButtonStates();
             EnsureFishSpritePreload();
         }
 
         public void OpenStory() => OpenChildContent(_storyContent, NyangquariumEntryMode.Story);
+
+        public void SetTankLevelProgress(int level, float expRatio)
+        {
+            _tankLevel = Mathf.Max(1, level);
+            _tankLevelExpRatio = Mathf.Clamp01(expRatio);
+            EnsureTankLevelBubbleUI();
+            levelBubbleUI?.SetLevelProgress(_tankLevel, _tankLevelExpRatio);
+        }
+
+        public void SetTankLevelExperience(int level, int currentExp, int maxExp)
+        {
+            float ratio = maxExp <= 0 ? 0f : (float)Mathf.Clamp(currentExp, 0, maxExp) / maxExp;
+            SetTankLevelProgress(level, ratio);
+        }
+
+        public void SetTankLevelTurtleSpriteKey(string turtleSpriteKey)
+        {
+            _tankLevelTurtleSpriteKey = turtleSpriteKey ?? string.Empty;
+            EnsureTankLevelBubbleUI();
+            levelBubbleUI?.SetTurtleSpriteKey(_tankLevelTurtleSpriteKey);
+        }
 
         public void OpenBoard()
         {
@@ -303,10 +345,14 @@ namespace UI.NyangQuarium
                 return;
             }
 
-            transition.Cover(() =>
+            transition.Cover(TransitionSpriteKey, () =>
             {
                 ShowContent();
-                transition.Reveal(Unlock);
+                transition.Reveal(() =>
+                {
+                    transition.RestoreDefaultCoverSprite();
+                    Unlock();
+                });
             });
         }
 
@@ -339,10 +385,14 @@ namespace UI.NyangQuarium
                 return;
             }
 
-            transition.Cover(() =>
+            transition.Cover(TransitionSpriteKey, () =>
             {
                 coveredAction?.Invoke();
-                transition.Reveal(Unlock);
+                transition.Reveal(() =>
+                {
+                    transition.RestoreDefaultCoverSprite();
+                    Unlock();
+                });
             });
         }
 
@@ -752,6 +802,49 @@ namespace UI.NyangQuarium
             StyleAquariumSelectButton(_oceanAquariumButton, new Vector2(155f, 35f), "해수");
         }
 
+        private void EnsureTankLevelBubbleUI()
+        {
+            if (levelBubbleUI == null)
+                levelBubbleUI = GetComponentInChildren<NyangQuariumLevelBubbleUI>(true);
+
+            Transform parent = _mainMenuRoot != null ? _mainMenuRoot.transform : transform;
+            bool createdRuntimeBubble = false;
+
+            if (levelBubbleUI == null)
+            {
+                GameObject bubbleObject = new("TankLevelBubble", typeof(RectTransform));
+                bubbleObject.layer = parent.gameObject.layer;
+                bubbleObject.transform.SetParent(parent, false);
+                levelBubbleUI = bubbleObject.AddComponent<NyangQuariumLevelBubbleUI>();
+                createdRuntimeBubble = true;
+            }
+
+            levelBubbleUI.gameObject.SetActive(true);
+
+            if (createdRuntimeBubble)
+                ConfigureTankLevelBubbleRect(levelBubbleUI.transform as RectTransform);
+
+            levelBubbleUI.transform.SetAsLastSibling();
+            levelBubbleUI.Initialize(
+                _tankLevelBubbleSpriteKey,
+                _tankLevelTurtleSpriteKey,
+                _tankLevel,
+                _tankLevelExpRatio);
+        }
+
+        private static void ConfigureTankLevelBubbleRect(RectTransform rectTransform)
+        {
+            if (rectTransform == null)
+                return;
+
+            rectTransform.anchorMin = new Vector2(1f, 0.5f);
+            rectTransform.anchorMax = new Vector2(1f, 0.5f);
+            rectTransform.pivot = new Vector2(1f, 0.5f);
+            rectTransform.anchoredPosition = new Vector2(-18f, 28f);
+            rectTransform.sizeDelta = new Vector2(118f, 118f);
+            rectTransform.localScale = Vector3.one;
+        }
+
         private static void StyleAquariumSelectButton(Button button, Vector2 anchoredPosition, string label)
         {
             if (button == null)
@@ -817,9 +910,12 @@ namespace UI.NyangQuarium
             RegisterSpriteKeyIfMissing(_backSpriteKey);
             RegisterSpriteKeyIfMissing(_freshAquariumSpriteKey);
             RegisterSpriteKeyIfMissing(_oceanAquariumSpriteKey);
+            RegisterSpriteKeyIfMissing(_tankLevelBubbleSpriteKey);
+            RegisterSpriteKeyIfMissing(_tankLevelTurtleSpriteKey);
             RegisterSpriteKeyIfMissing(CollectionButtonSpriteKey);
             RegisterSpriteKeyIfMissing(FreshAquariumButtonSpriteKey);
             RegisterSpriteKeyIfMissing(OceanAquariumButtonSpriteKey);
+            RegisterSpriteKeyIfMissing(TankLevelBubbleSpriteKey);
         }
 
         private static void RegisterSpriteKeyIfMissing(string spriteKey)

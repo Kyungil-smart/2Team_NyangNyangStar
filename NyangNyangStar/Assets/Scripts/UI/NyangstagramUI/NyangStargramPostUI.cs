@@ -41,9 +41,9 @@ public class NyangStargramPostUI : UIPopup
         DebugTool.Log("NyangstagramUI Init 실행됨", DebugType.UI, this);
     }
 
-    public void SetPhoto(string storagePath)
+    public void SetPhoto(Sprite sprite)
     {
-        _nyangStargramPostUISprite.SetPhoto(storagePath);
+        _nyangStargramPostUISprite.SetPhoto(sprite);
     }
 
     private void BindButtons()
