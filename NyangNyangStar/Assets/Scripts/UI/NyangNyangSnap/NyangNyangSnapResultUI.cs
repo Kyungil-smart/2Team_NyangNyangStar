@@ -214,8 +214,8 @@ public class NyangNyangSnapResultUI : UIPopup
 
                         _photoAlbumSO.AddPhoto(photoData);
                         _runtimePhotoSO.AddPhoto(new NyangNyangSnapRuntimePhotoData(
-                            photoId, 
-                            record.CapturedSprite,
+                            photoId,
+                            CopySprite(record.CapturedSprite, photoId),
                             results[i].StoragePath,
                             record.ScoreResult.StarCount,
                             createdAt));
@@ -273,6 +273,30 @@ public class NyangNyangSnapResultUI : UIPopup
             if (_saveButton != null)
                 _saveButton.interactable = true;
         }
+    }
+
+    private Sprite CopySprite(Sprite sourceSprite, string photoId)
+    {
+        Texture2D sourceTexture = sourceSprite.texture;
+
+        Texture2D copiedTexture = new Texture2D(
+            sourceTexture.width,
+            sourceTexture.height,
+            TextureFormat.RGBA32,
+            false
+        );
+
+        copiedTexture.SetPixels(sourceTexture.GetPixels());
+        copiedTexture.Apply();
+
+        Sprite copiedSprite = Sprite.Create(
+            copiedTexture,
+            new Rect(0, 0, copiedTexture.width, copiedTexture.height),
+            new Vector2(0.5f, 0.5f)
+        );
+
+        copiedSprite.name = $"{photoId}";
+        return copiedSprite;
     }
 
     private bool EnsurePhotoAlbumReady()
