@@ -8,24 +8,23 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "NyangQuariumFirestoreSO", menuName = "SO/NyangQuarium/NyangQuarium Firestore SO")]
 public class NyangQuariumFirestoreSO : BaseFireStore
 {
-    [Header("도감")]
-    [SerializeField] private List<int> _unlockedFishIds = new();
+    [Header("도감")] [SerializeField] private List<int> _unlockedFishIds = new();
 
-    [Header("수조 배치")]
-    [SerializeField] private List<int> _freshwaterPlacedFishIds = new();
+    [Header("수조 배치")] [SerializeField] private List<int> _freshwaterPlacedFishIds = new();
     [SerializeField] private List<int> _saltwaterPlacedFishIds = new();
 
-    [Header("수조 자연 요소 배치 - 상세 데이터")]
-    [SerializeField] private List<NyangQuariumPlacedNatureData> _freshwaterPlacedNatureData = new();
+    [Header("수조 자연 요소 배치 - 상세 데이터")] [SerializeField]
+    private List<NyangQuariumPlacedNatureData> _freshwaterPlacedNatureData = new();
+
     [SerializeField] private List<NyangQuariumPlacedNatureData> _saltwaterPlacedNatureData = new();
 
-    [Header("Aquarium Level")]
-    [SerializeField] private int _aquariumLevel = 1;
+    [Header("Aquarium Level")] [SerializeField]
+    private int _aquariumLevel = 1;
+
     [SerializeField] private int _aquariumExp;
 
 
-    [Header("스토리")]
-    [SerializeField] private List<int> _readStoryIds = new();
+    [Header("스토리")] [SerializeField] private List<int> _readStoryIds = new();
 
     private readonly HashSet<int> _unlockedFishIdSet = new();
 
@@ -117,15 +116,15 @@ public class NyangQuariumFirestoreSO : BaseFireStore
         if (expAmount <= 0)
             return false;
 
+        if (!TryEnsureDatabaseReady())
+        {
+            DebugTool.Warning("[NyangQuariumFirestoreSO] Firestore가 준비되지 않아 수조 경험치 저장을 생략했습니다.", DebugType.Data, this);
+            return false;
+        }
+
         NormalizeAquariumLevel();
         _aquariumExp += expAmount;
         ApplyAquariumLevelUps(aquariumLevelSO);
-
-        if (!TryEnsureDatabaseReady())
-        {
-            DebugTool.Warning("[NyangQuariumFirestoreSO] Firestore is not ready. Aquarium EXP was updated locally only.", DebugType.Data, this);
-            return false;
-        }
 
         await SetDataAsync(ToFirestoreDictionary());
         return true;
@@ -512,7 +511,7 @@ public class NyangQuariumFirestoreSO : BaseFireStore
 
         if (!TryEnsureDatabaseReady())
         {
-            DebugTool.Warning("[NyangQuariumFirestoreSO] Firestore가 준비되지 않아 스토리 읽음 저장을 생략합니다.", DebugType.Data, this);
+            DebugTool.Warning("[NyangQuariumFirestoreSO] Firestore가 없습니다.", DebugType.Data, this);
             return;
         }
 
@@ -601,6 +600,7 @@ public class NyangQuariumFirestoreSO : BaseFireStore
         NormalizePlacedFishList(ref _freshwaterPlacedFishIds);
         NormalizePlacedFishList(ref _saltwaterPlacedFishIds);
     }
+
     private void NormalizePlacedNatureList()
     {
         NormalizePlacedNatureDataList(ref _freshwaterPlacedNatureData);
