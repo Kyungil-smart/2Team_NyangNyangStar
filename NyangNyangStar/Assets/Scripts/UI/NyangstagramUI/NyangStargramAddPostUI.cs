@@ -283,9 +283,9 @@ public class NyangStargramAddPostUI : UIPopup
     {
         if (_panel == null) return;
 
-        //_panel.anchoredPosition = new Vector2(0f, -1000f);
-        //_panel.DOAnchorPos(Vector2.zero, _popupScaleDuration)
-        //    .SetEase(Ease.OutSine);
+        _panel.anchoredPosition = new Vector2(0f, -1000f);
+        _panel.DOAnchorPos(Vector2.zero, _popupScaleDuration)
+            .SetEase(Ease.OutSine);
     }
 
     private void CloseAddPostPopup()
