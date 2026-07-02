@@ -389,6 +389,7 @@ MonoBehaviour:
   _scrollRect: {fileID: 22517739340832046}
   _content: {fileID: 91082898750952406}
   _cardPrefab: {fileID: 5582647336375187666, guid: 56c17852877279741b46547d7b6ee7f0, type: 3}
+  _opponentCardPrefab: {fileID: 5582647336375187666, guid: 83e070cd6855d9e41bba222c74f65bae, type: 3}
   _nextButton: {fileID: 0}
   _stories: []
   _titleText: {fileID: 0}
