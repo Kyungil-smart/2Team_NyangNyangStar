@@ -29,6 +29,7 @@ namespace UI.NyangQuarium.MergeBoard
         private NyangQuariumItemSlot _selectedSlot;
         private Transform _slotRoot;
         private bool _initialized;
+        private bool _isUsingExpItem;
 
         private void Awake()
         {
@@ -319,11 +320,17 @@ namespace UI.NyangQuarium.MergeBoard
         }
 
         // 슬롯 클릭 시 선택 표시 + 하단 Info 패널 갱신
-        public void SelectSlot(NyangQuariumItemSlot slot)
+        public async void SelectSlot(NyangQuariumItemSlot slot)
         {
             if (slot == null || !slot.HasItem)
             {
                 ClearSelection();
+                return;
+            }
+
+            if (_selectedSlot == slot)
+            {
+                await TryUseSelectedExpItemAsync(slot);
                 return;
             }
 
@@ -335,6 +342,81 @@ namespace UI.NyangQuarium.MergeBoard
 
             if (_infoPanel != null)
                 _infoPanel.Show(slot.Item);
+        }
+
+        private async Task<bool> TryUseSelectedExpItemAsync(NyangQuariumItemSlot slot)
+        {
+            if (_isUsingExpItem || slot == null || !slot.HasItem)
+                return false;
+
+            if (!TryResolveExpItemData(slot.Item.Id, out NyangQuariumExpItemData expItemData) ||
+                expItemData.ExpValue <= 0)
+            {
+                return false;
+            }
+
+            _isUsingExpItem = true;
+
+            try
+            {
+                NyangQuariumFirestoreSO firestoreSO =
+                    await NyangQuariumFirestoreSO.WaitForReadyAsync();
+
+                if (firestoreSO == null)
+                {
+                    DebugTool.Warning(
+                        $"[NyangQuariumItemBoard] NyangQuariumFirestoreSO not ready. Exp item was not used. ItemId:{slot.Item.Id}",
+                        DebugType.Data,
+                        this);
+                    return false;
+                }
+
+                NyangQuariumAquariumLevelSO aquariumLevelSO =
+                    NyangQuariumQuestSOLocator.ResolveAquariumLevelSO();
+
+                bool saved = await firestoreSO.AddAquariumExpAsync(
+                    expItemData.ExpValue,
+                    aquariumLevelSO);
+
+                if (!saved)
+                    return false;
+
+                int slotIndex = _slots.IndexOf(slot);
+                bool cleared = TryClearSlot(slotIndex);
+
+                if (cleared)
+                    NyangQuariumMergeBoardInventoryService.NotifyInventoryChanged();
+
+                return cleared;
+            }
+            finally
+            {
+                _isUsingExpItem = false;
+            }
+        }
+
+        private static bool TryResolveExpItemData(
+            int itemId,
+            out NyangQuariumExpItemData expItemData)
+        {
+            expItemData = null;
+
+            if (itemId <= 0)
+                return false;
+
+            SheetLoader sheetLoader = UnityEngine.Object.FindFirstObjectByType<SheetLoader>();
+
+            if (sheetLoader != null &&
+                sheetLoader.TryGetNyangQuariumExpItemSO(out NyangQuariumExpItemSO expItemSO) &&
+                expItemSO != null)
+            {
+                return expItemSO.TryGetById(itemId, out expItemData);
+            }
+
+            NyangQuariumSheetLoader quariumLoader = NyangQuariumSheetLoader.Instance;
+            expItemSO = quariumLoader != null ? quariumLoader.ExpItemSO : null;
+
+            return expItemSO != null && expItemSO.TryGetById(itemId, out expItemData);
         }
 
         private void ClearSelection()
