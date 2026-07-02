@@ -6,6 +6,7 @@ using Data.Loader;
 using DG.Tweening;
 using TMPro;
 using UI.Base;
+using UI.NyangQuarium.Quest;
 using UI.Transition;
 using UnityEngine;
 using UnityEngine.Serialization;
@@ -114,9 +115,23 @@ namespace UI.NyangQuarium
         private UISpriteController _aquariumSelectBackSprite;
         private readonly List<GameObject> _ownedContents = new();
         private readonly HashSet<UIPopup> _initializedChildPopups = new();
+        private NyangQuariumFirestoreSO _nyangquariumFirestoreSO;
+        private NyangQuariumAquariumLevelSO _aquariumLevelSO;
+        private bool _isTankLevelBubbleVisible = true;
         private bool _warnedCollectionDetailOnlyContent;
 
         public static NyangquariumMainUIManager Active { get; private set; }
+
+        private void OnEnable()
+        {
+            if (Application.isPlaying)
+                BindAquariumProgressStoreAsync();
+        }
+
+        private void OnDisable()
+        {
+            UnbindAquariumProgressStore();
+        }
 
         private void OnValidate()
         {
@@ -135,6 +150,7 @@ namespace UI.NyangQuarium
             BindAquariumSelectButtons();
             BindAddressableSprites();
             EnsureTankLevelBubbleUI();
+            BindAquariumProgressStoreAsync();
             ApplyAquariumSelectStyle();
             ShowMainViewImmediately();
             RefreshButtonStates();
@@ -187,6 +203,7 @@ namespace UI.NyangQuarium
                 _contentRoot.localScale = Vector3.one;
 
             EnsureTankLevelBubbleUI();
+            BindAquariumProgressStoreAsync();
             ShowMainViewImmediately();
             RefreshButtonStates();
             EnsureFishSpritePreload();
@@ -196,10 +213,7 @@ namespace UI.NyangQuarium
 
         public void SetTankLevelProgress(int level, float expRatio)
         {
-            _tankLevel = Mathf.Max(1, level);
-            _tankLevelExpRatio = Mathf.Clamp01(expRatio);
-            EnsureTankLevelBubbleUI();
-            levelBubbleUI?.SetLevelProgress(_tankLevel, _tankLevelExpRatio);
+            ApplyTankLevelProgress(level, expRatio);
         }
 
         public void SetTankLevelExperience(int level, int currentExp, int maxExp)
@@ -213,6 +227,119 @@ namespace UI.NyangQuarium
             _tankLevelTurtleSpriteKey = turtleSpriteKey ?? string.Empty;
             EnsureTankLevelBubbleUI();
             levelBubbleUI?.SetTurtleSpriteKey(_tankLevelTurtleSpriteKey);
+        }
+
+        public void NotifyPopupContentClosed(GameObject content)
+        {
+            if (content != null && ReferenceEquals(_activeContent, content))
+                _activeContent = null;
+
+            if (HasVisibleChildContent())
+                return;
+
+            SetTankLevelBubbleVisible(true);
+            RefreshButtonStates();
+        }
+
+        public void RefreshTankLevelFromFirestore()
+        {
+            if (_nyangquariumFirestoreSO == null)
+                TryBindLoadedAquariumProgressStore();
+
+            if (_nyangquariumFirestoreSO == null)
+                return;
+
+            int level = _nyangquariumFirestoreSO.AquariumLevel;
+            int exp = _nyangquariumFirestoreSO.AquariumExp;
+            float expRatio = CalculateTankLevelExpRatio(level, exp);
+            ApplyTankLevelProgress(level, expRatio);
+        }
+
+        private async void BindAquariumProgressStoreAsync()
+        {
+            if (TryBindLoadedAquariumProgressStore())
+                return;
+
+            NyangQuariumFirestoreSO store = await NyangQuariumFirestoreSO.WaitForReadyAsync();
+
+            if (this == null || !isActiveAndEnabled || store == null)
+                return;
+
+            BindAquariumProgressStore(store);
+            RefreshTankLevelFromFirestore();
+        }
+
+        private bool TryBindLoadedAquariumProgressStore()
+        {
+            FireStoreManager manager = FireStoreManager.Instance;
+
+            if (manager == null ||
+                !manager.IsInitialized ||
+                !manager.TryGetStore(out NyangQuariumFirestoreSO store) ||
+                store == null)
+            {
+                return false;
+            }
+
+            BindAquariumProgressStore(store);
+            RefreshTankLevelFromFirestore();
+            return true;
+        }
+
+        private void BindAquariumProgressStore(NyangQuariumFirestoreSO store)
+        {
+            if (_nyangquariumFirestoreSO == store)
+                return;
+
+            UnbindAquariumProgressStore();
+            _nyangquariumFirestoreSO = store;
+            _nyangquariumFirestoreSO.AquariumProgressChanged += OnAquariumProgressChanged;
+        }
+
+        private void UnbindAquariumProgressStore()
+        {
+            if (_nyangquariumFirestoreSO == null)
+                return;
+
+            _nyangquariumFirestoreSO.AquariumProgressChanged -= OnAquariumProgressChanged;
+            _nyangquariumFirestoreSO = null;
+        }
+
+        private void OnAquariumProgressChanged()
+        {
+            RefreshTankLevelFromFirestore();
+        }
+
+        private float CalculateTankLevelExpRatio(int level, int exp)
+        {
+            NyangQuariumAquariumLevelSO levelSO = ResolveAquariumLevelSO();
+
+            if (levelSO == null ||
+                !levelSO.TryGetByLevel(level, out NyangQuariumAquariumLevelData levelData))
+            {
+                return 0f;
+            }
+
+            if (levelData.RequiredExp <= 0)
+                return 1f;
+
+            return Mathf.Clamp01((float)Mathf.Max(0, exp) / levelData.RequiredExp);
+        }
+
+        private NyangQuariumAquariumLevelSO ResolveAquariumLevelSO()
+        {
+            if (_aquariumLevelSO == null)
+                _aquariumLevelSO = NyangQuariumQuestSOLocator.ResolveAquariumLevelSO();
+
+            return _aquariumLevelSO;
+        }
+
+        private void ApplyTankLevelProgress(int level, float expRatio)
+        {
+            _tankLevel = Mathf.Max(1, level);
+            _tankLevelExpRatio = Mathf.Clamp01(expRatio);
+            EnsureTankLevelBubbleUI();
+            levelBubbleUI?.SetLevelProgress(_tankLevel, _tankLevelExpRatio);
         }
 
         public void OpenBoard()
@@ -275,6 +402,7 @@ namespace UI.NyangQuarium
             RunCoveredTransition(() =>
             {
                 HideChildContents();
+                SetTankLevelBubbleVisible(false);
                 SetMainMenuVisible(true);
                 gameObject.SetActive(false);
             });
@@ -290,6 +418,7 @@ namespace UI.NyangQuarium
             NyangquariumEntryContext.Set(entryMode);
 
             HideChildContents();
+            SetTankLevelBubbleVisible(false);
             SetMainMenuVisible(false);
             RegisterOwnedContent(_aquariumSelectRoot);
             InitializeChildContent(_aquariumSelectRoot);
@@ -329,6 +458,7 @@ namespace UI.NyangQuarium
             {
                 NyangquariumEntryContext.Set(entryMode);
                 HideChildContents();
+                SetTankLevelBubbleVisible(false);
                 SetMainMenuVisible(false);
                 PrepareOwnedContent(content, entryMode);
 
@@ -367,6 +497,7 @@ namespace UI.NyangQuarium
             InitializeChildContent(content);
             NotifyEntryMode(content, entryMode);
             content.transform.SetAsLastSibling();
+            SetTankLevelBubbleVisible(false);
             ShowChildContentImmediately(content);
             RefreshButtonStates();
         }
@@ -424,6 +555,7 @@ namespace UI.NyangQuarium
             gameObject.SetActive(true);
             HideChildContents();
             SetMainMenuVisible(true);
+            SetTankLevelBubbleVisible(true);
         }
 
         private void HideChildContents()
@@ -446,10 +578,39 @@ namespace UI.NyangQuarium
             _activeContent = null;
         }
 
+        private bool HasVisibleChildContent()
+        {
+            if (IsContentVisible(_storyContent) ||
+                IsContentVisible(_boardContent) ||
+                IsContentVisible(_collectionContent) ||
+                IsContentVisible(_aquariumSelectRoot) ||
+                IsContentVisible(_freshAquariumContent) ||
+                IsContentVisible(_oceanAquariumContent))
+            {
+                return true;
+            }
+
+            for (int i = 0; i < _ownedContents.Count; i++)
+            {
+                if (IsContentVisible(_ownedContents[i]))
+                    return true;
+            }
+
+            return false;
+        }
+
         private void SetMainMenuVisible(bool isVisible)
         {
             if (_mainMenuRoot != null)
                 _mainMenuRoot.SetActive(isVisible);
+        }
+
+        private void SetTankLevelBubbleVisible(bool isVisible)
+        {
+            _isTankLevelBubbleVisible = isVisible;
+
+            if (levelBubbleUI != null)
+                levelBubbleUI.gameObject.SetActive(isVisible);
         }
 
         private static void SetContentActive(GameObject content, bool isActive)
@@ -457,6 +618,9 @@ namespace UI.NyangQuarium
             if (content != null)
                 content.SetActive(isActive);
         }
+
+        private static bool IsContentVisible(GameObject content)
+            => content != null && content.activeSelf;
 
         private void InitializeChildContent(GameObject content)
         {
@@ -819,7 +983,7 @@ namespace UI.NyangQuarium
                 createdRuntimeBubble = true;
             }
 
-            levelBubbleUI.gameObject.SetActive(true);
+            levelBubbleUI.gameObject.SetActive(_isTankLevelBubbleVisible);
 
             if (createdRuntimeBubble)
                 ConfigureTankLevelBubbleRect(levelBubbleUI.transform as RectTransform);
@@ -1096,6 +1260,7 @@ namespace UI.NyangQuarium
             if (ReferenceEquals(Active, this))
                 Active = null;
 
+            UnbindAquariumProgressStore();
             DisposeSpriteControllers();
             _canvasGroup?.DOKill();
             _contentRoot?.DOKill();

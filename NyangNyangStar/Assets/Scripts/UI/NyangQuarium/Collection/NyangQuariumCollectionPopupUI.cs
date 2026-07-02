@@ -2,6 +2,7 @@ using Core.Managers;
 using System.Collections.Generic;
 using TMPro;
 using UI.Base;
+using UI.NyangQuarium;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -93,6 +94,13 @@ public class NyangQuariumCollectionPopupUI : UIPopup
 
         RefreshFishSlots();
         ShowFishType(_currentFishType);
+    }
+
+    private void OnDisable()
+    {
+        if (!_isInitialized) return;
+
+        NyangquariumMainUIManager.Active?.NotifyPopupContentClosed(gameObject);
     }
 
     private void RefreshPhotoGridCellSize()
