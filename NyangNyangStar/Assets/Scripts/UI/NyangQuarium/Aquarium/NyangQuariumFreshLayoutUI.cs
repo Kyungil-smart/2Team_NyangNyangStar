@@ -14,9 +14,6 @@ public class NyangQuariumFreshLayoutUI : UIPopup, INyangquariumEntryReceiver
     [Tooltip("뒤로가기 버튼")]
     [SerializeField] private Button _backButton;
 
-    [Tooltip("수조 유리 반응형 버튼")]
-    [SerializeField] private Button _windowButton;
-
     [Tooltip("해수 수조로 변경하는 버튼")]
     [SerializeField] private Button _changeButton;
 
@@ -104,7 +101,6 @@ public class NyangQuariumFreshLayoutUI : UIPopup, INyangquariumEntryReceiver
 
         _uiVisibilityToggle = GetComponent<NyangQuariumUIVisibilityToggle>();
 
-        BindUIVisibilityToggle();
 
 
         BindButtons();
@@ -122,7 +118,6 @@ public class NyangQuariumFreshLayoutUI : UIPopup, INyangquariumEntryReceiver
     private void BindButtons()
     {
         _backButton = Get<Button>((int)NyangQuariumFreshLayoutUIButton.BackButton);
-        _windowButton = Get<Button>((int)NyangQuariumFreshLayoutUIButton.WindowButton);
         _changeButton = Get<Button>((int)NyangQuariumFreshLayoutUIButton.ChangeButton);
         _freshWaterFishButton = Get<Button>((int)NyangQuariumFreshLayoutUIButton.FreshWaterFishButton);
         _freshWaterWeedButton = Get<Button>((int)NyangQuariumFreshLayoutUIButton.FreshWaterWeedButton);
@@ -136,34 +131,6 @@ public class NyangQuariumFreshLayoutUI : UIPopup, INyangquariumEntryReceiver
 
         if (_inventoryRect != null)
             _inventoryOpenedPosition = _inventoryRect.anchoredPosition;
-    }
-    private void BindUIVisibilityToggle()
-    {
-        if (_uiVisibilityToggle == null)
-        {
-            DebugTool.Warning(
-                "[NyangQuariumFreshLayoutUI] " +
-                "NyangQuariumUIVisibilityToggle을 찾을 수 없습니다.",
-                DebugType.UI,
-                this);
-
-            return;
-        }
-
-        _uiVisibilityToggle.VisibilityChanged -=
-            OnUIVisibilityChanged;
-
-        _uiVisibilityToggle.VisibilityChanged +=
-            OnUIVisibilityChanged;
-
-        OnUIVisibilityChanged(
-            _uiVisibilityToggle.IsUIVisible);
-    }
-
-    private void OnUIVisibilityChanged(bool isUIVisible)
-    {
-        _nyangQuariumFreshLayoutUISprite?
-            .SetUIToggleSprite(isUIVisible);
     }
 
     private void BindOutsideTouchArea()
@@ -593,8 +560,6 @@ public class NyangQuariumFreshLayoutUI : UIPopup, INyangquariumEntryReceiver
 
     private void SetMainUIActive(bool isActive)
     {
-        if (_windowButton != null)
-            _windowButton.gameObject.SetActive(isActive);
 
         if (_changeButton != null)
             _changeButton.gameObject.SetActive(isActive);
@@ -643,11 +608,6 @@ public class NyangQuariumFreshLayoutUI : UIPopup, INyangquariumEntryReceiver
         if (_outsideTouchArea != null)
             _outsideTouchArea.Clicked -= HandleOutsideTouch;
 
-        if (_uiVisibilityToggle != null)
-        {
-            _uiVisibilityToggle.VisibilityChanged -=
-                OnUIVisibilityChanged;
-        }
 
         if (ActiveInstance == this)
             ActiveInstance = null;

@@ -6,9 +6,6 @@ using UnityEngine.UI;
 
 public class NyangQuariumFreshLayoutUISprite : UIBase
 {
-    private const string UIToggleOnSpriteKey = "NQ_Btn_On";
-    private const string UIToggleOffSpriteKey = "NQ_Btn_Off";
-
     [SerializeField] private Color _freshwaterLayoutPanelColor;
 
     private UISpriteController[] _spriteController;
@@ -34,7 +31,7 @@ public class NyangQuariumFreshLayoutUISprite : UIBase
         SetSprite(NyangQuariumFreshLayoutUIImage.FreshWaterFishButton, "NQ_Btn_Inventory");
         SetSprite(NyangQuariumFreshLayoutUIImage.ChangeButton, "NQ_Btn_SaltWater");
 
-        SetSprite(NyangQuariumFreshLayoutUIImage.WindowButton, "NQ_Img_AquaTunnel");
+        SetSprite(NyangQuariumFreshLayoutUIImage.Window, "NQ_Img_AquaTunnel");
         SetSprite(NyangQuariumFreshLayoutUIImage.CatImage, "NQ_Char_Moongchi");
         SetSprite(NyangQuariumFreshLayoutUIImage.Confirm, "NQ_Btn_Confirm");
         SetSprite(NyangQuariumFreshLayoutUIImage.Cancle, "NQ_Btn_Cancel");
@@ -43,7 +40,10 @@ public class NyangQuariumFreshLayoutUISprite : UIBase
         SetSprite(NyangQuariumFreshLayoutUIImage.RealDeleteButton, "NQ_Btn_Confirm");
         SetSprite(NyangQuariumFreshLayoutUIImage.RealCancelButton, "NQ_Btn_Cancel");
 
-        SetSprite(NyangQuariumFreshLayoutUIImage.UIToggleButton, UIToggleOnSpriteKey);
+        SetSprite(NyangQuariumFreshLayoutUIImage.UIToggleOnButton, "NQ_Btn_On");
+        SetSprite(NyangQuariumFreshLayoutUIImage.UIToggleOffButton, "NQ_Btn_Off");
+
+
         SetSprite(NyangQuariumFreshLayoutUIImage.FreshFishCountIcon, "NQ_Icon_Fish");
         SetSprite(NyangQuariumFreshLayoutUIImage.FreshNatureCountIcon, "NQ_Icon_Environment");
 
@@ -58,20 +58,6 @@ public class NyangQuariumFreshLayoutUISprite : UIBase
         SetSprite(NyangQuariumFreshLayoutUIImage.NatureTextButton, "Snap_Btn_White");
         SetSprite(NyangQuariumFreshLayoutUIImage.FilterButton, "FilterButton");
 
-    }
-    public void SetUIToggleSprite(bool isUIVisible)
-    {
-        string spriteKey = isUIVisible
-            ? UIToggleOnSpriteKey
-            : UIToggleOffSpriteKey;
-
-        SetSprite(
-            NyangQuariumFreshLayoutUIImage.UIToggleButton,
-            spriteKey);
-
-        DebugTool.Log($"[NyangQuariumFreshLayoutUISprite] UI 토글 이미지 변경: {spriteKey}",
-            DebugType.UI,
-            this);
     }
 
     private void SetSprite(NyangQuariumFreshLayoutUIImage image, string key)
@@ -89,7 +75,7 @@ public class NyangQuariumFreshLayoutUISprite : UIBase
 public enum NyangQuariumFreshLayoutUIImage
 {
     NyangQuariumLayoutPanel,
-    WindowButton,
+    Window,
     CatImage,
     BackButton,
     FreshWaterFishButton,
@@ -99,7 +85,8 @@ public enum NyangQuariumFreshLayoutUIImage
     DeleteButton,
     RealDeleteButton,
     RealCancelButton,
-    UIToggleButton,
+    UIToggleOnButton,
+    UIToggleOffButton,
     FreshFishCountIcon,
     FreshNatureCountIcon,
     FreshwaterLayoutPanel,
