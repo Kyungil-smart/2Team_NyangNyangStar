@@ -322,6 +322,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _boardSystem: {fileID: 1933188620078206294}
+  _specialItemBoardSystem: {fileID: 0}
   _mergeBoardFirestore: {fileID: 11400000, guid: 7aa4ad0242b992e4283c9aa473891fac, type: 2}
   _queueSlotViews:
   - {fileID: 7714997014406962539}
@@ -2148,6 +2149,10 @@ MonoBehaviour:
   _refreshOnEnable: 1
   _loadIconsOnEnable: 1
   _showLabels: 0
+  _applyTopSafeAreaPadding: 1
+  _minimumTallMobileTopInsetPixels: 32
+  _topSafeAreaSpacingPixels: 8
+  _maximumTopSafeAreaOffsetPixels: 40
 --- !u!1 &4642481884388283271
 GameObject:
   m_ObjectHideFlags: 0
@@ -4123,6 +4128,8 @@ MonoBehaviour:
   _itemIdInputField: {fileID: 674147720004455596}
   _testReceiveButton: {fileID: 6602850170933857246}
   _generateItemEnergyCost: 10
+  _runtimeDataWaitTimeoutSeconds: 5
+  _enableRuntimeDiagnostics: 1
 --- !u!4 &4129029772688656472 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 5142774498657601557, guid: 3de316d8114e3b649bf197d9f3286756, type: 3}

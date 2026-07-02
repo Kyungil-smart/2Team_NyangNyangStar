@@ -302,14 +302,32 @@ public class NyangNyangSnapUI : UIPopup
         _isCapturing = true;
         SetPhotoButtonInteractable(false);
 
-        // RenderTexture 촬영 결과에 Center가 나오지 않도록
-        // GameObject가 아니라 Image 컴포넌트만 잠시 숨깁니다.
+        // 촬영 전 범위 이미지의 활성 상태를 저장합니다.
+        AutoAssignPlacementController();
+
+        bool wasRangeImageVisible =
+            _placementController != null &&
+            _placementController.IsRangeImageVisible;
+
+        // RenderTexture 촬영 결과에 Center와 아이템 범위 이미지가
+        // 나오지 않도록 촬영 중에만 숨깁니다.
         _compositionCalculator.SetTargetImageVisible(false);
+
+        if (_placementController != null)
+            _placementController.SetRangeImageVisible(false);
 
         _photoFrameCapture.CapturePhoto(capturedSprite =>
         {
-            // 캡처 성공 여부와 관계없이 사용자 화면에는 Center를 다시 표시합니다.
+            // 캡처 성공 여부와 관계없이 Center와 범위 이미지를
+            // 촬영 전 활성 상태로 복구합니다.
             _compositionCalculator.SetTargetImageVisible(true);
+
+            if (_placementController != null)
+            {
+                _placementController.SetRangeImageVisible(
+                    wasRangeImageVisible
+                );
+            }
 
             _isCapturing = false;
 
@@ -572,7 +590,7 @@ public class NyangNyangSnapUI : UIPopup
 
                 // 결과창으로 넘어갔으므로 냥냥스냅 Canvas 비활성화
                 gameObject.SetActive(false);
-              
+
             }
         );
     }

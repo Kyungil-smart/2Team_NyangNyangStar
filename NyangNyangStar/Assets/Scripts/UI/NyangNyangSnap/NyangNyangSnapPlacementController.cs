@@ -106,6 +106,8 @@ public class NyangNyangSnapPlacementController : MonoBehaviour
     public bool LastPlacementWasSnack => _lastPlacementWasSnack;
     public bool IsSnackDragging => _snackState == SnackPlacementState.Dragging;
     public bool IsSnackWaitingForCat => _snackState == SnackPlacementState.WaitingForCat;
+    public bool IsRangeImageVisible =>
+        _rangeImage != null && _rangeImage.gameObject.activeSelf;
 
     public event Action<int> OnItemPlaced;
     public event Action OnToyDropFailed;
@@ -927,6 +929,11 @@ public class NyangNyangSnapPlacementController : MonoBehaviour
     {
         if (_markerImage != null)
             _markerImage.gameObject.SetActive(isActive);
+    }
+
+    public void SetRangeImageVisible(bool isVisible)
+    {
+        SetRangeActive(isVisible);
     }
 
     private void SetRangeActive(bool isActive)

@@ -48,10 +48,38 @@ namespace UI.MergeBoard
         public int SlotCount => _width * _height;
         public IReadOnlyDictionary<int, ItemData> SlotItemDict => _slotItemDict;
 
+        private const string SlotRootObjectName = "@Slot Root";
+
         private void Awake()
         {
+            ResolveSlotRootReferences();
+        }
+
+        private void ResolveSlotRootReferences()
+        {
             if (_slotRoot == null)
-                _slotRoot = GameObject.Find("@Slot Root");
+            {
+                Transform slotRootTransform = transform.Find(SlotRootObjectName);
+
+                if (slotRootTransform == null)
+                {
+                    Transform[] descendants = GetComponentsInChildren<Transform>(true);
+
+                    for (int i = 0; i < descendants.Length; i++)
+                    {
+                        Transform child = descendants[i];
+
+                        if (child != null && child.name == SlotRootObjectName)
+                        {
+                            slotRootTransform = child;
+                            break;
+                        }
+                    }
+                }
+
+                if (slotRootTransform != null)
+                    _slotRoot = slotRootTransform.gameObject;
+            }
 
             if (_slotRoot == null)
             {

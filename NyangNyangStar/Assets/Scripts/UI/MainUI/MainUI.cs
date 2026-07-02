@@ -1,11 +1,14 @@
-using System.Collections;
-using System.Threading.Tasks;
+using System;
 using Core.Managers;
+using System.Collections;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using TMPro;
-using UI.Common;
 using UI;
 using UI.Base;
+using UI.Common;
 using UI.MergeBoard;
+using UI.NyangQuarium;
 using UI.Transition;
 using UnityEngine;
 using UnityEngine.UI;
@@ -13,6 +16,8 @@ using Util;
 
 public class MainUI : UIScene
 {
+    private const string NyangquariumTransitionSpriteKey = "NQ_BG_Transition";
+
     [SerializeField] private Canvas _mainUICanvas;
 
     [Header("버튼")]
@@ -33,6 +38,7 @@ public class MainUI : UIScene
     [Tooltip("로그 아웃")][SerializeField] private Button _logOutButton;
     
     [Tooltip("뭉치를 찾아라")] [SerializeField] private Button _findMoongchiButton;
+    [Tooltip("냥쿠아 리움")] [SerializeField] private Button _nyangquariumButton;
 
     private MainUISprite _mainUISprite;
     private MergeBoardController _mergeBoardController;
@@ -42,9 +48,12 @@ public class MainUI : UIScene
     private NotebookPopupUI _notebookPopup;
     private bool _isMergeBoardTransitioning;
     private bool _isMergeBoardVisible;
+    private bool _isNyangquariumTransitioning;
 
     [SerializeField] private UsersSO _usersSO;
     [SerializeField] private TMP_Text _uidText;
+
+    [SerializeField] private List<StoryDataSO> _stories = new List<StoryDataSO>();
 
     public static MainUI Instance { get; private set; }
 
@@ -81,6 +90,7 @@ public class MainUI : UIScene
         _mainMergeBoardButton = Get<Button>((int)MainUIButtons.MainMergeBoardButton);
         _logOutButton = Get<Button>((int)MainUIButtons.LogOutButton);
         _findMoongchiButton = Get<Button>((int)MainUIButtons.FindMoongchiButton);
+        _nyangquariumButton = Get<Button>((int)MainUIButtons.NyangquariumButton);
 
         if (_mainUICanvas != null)
         {
@@ -112,6 +122,7 @@ public class MainUI : UIScene
         InitPopup(KeyContainer.Prefabs.NyangNyangSnapStagePopUpUI, _nyangNyangSnapButton);
         InitNyangStargramPopup();
         InitPopup(KeyContainer.Prefabs.FindMoongchiPopupUI, _findMoongchiButton);
+        InitNyangquariumPopup();
 
         if (_logOutButton != null)
             _logOutButton.onClick.AddListener(LogOutButton);
@@ -136,6 +147,7 @@ public class MainUI : UIScene
         RemovePopupButton(_nyangNyangSnapButton);
         RemovePopupButton(_meowMeowStarButton);
         RemovePopupButton(_findMoongchiButton);
+        RemovePopupButton(_nyangquariumButton);
 
         if (_mainMergeBoardButton != null)
             _mainMergeBoardButton.onClick.RemoveAllListeners();
@@ -148,6 +160,8 @@ public class MainUI : UIScene
 
         if (_logOutButton != null)
             _logOutButton.onClick.RemoveAllListeners();
+
+        _isNyangquariumTransitioning = false;
     }
 
     private void OnDestroy()
@@ -193,6 +207,13 @@ public class MainUI : UIScene
 
         _resourceDisplay.ResolveReferencesFrom(transform);
         _ = PlayerResourceManager.Instance.RefreshAsync();
+    }
+
+    public event Action MergeBoardVisibilityChanged;
+
+    public void OpenMergeBoardFromQuest()
+    {
+        OpenMergeBoard();
     }
 
     private void OpenMergeBoard()
@@ -271,11 +292,15 @@ public class MainUI : UIScene
 
     private void SetMergeBoardVisible(bool isOpen)
     {
+        bool wasVisible = _isMergeBoardVisible;
         _isMergeBoardVisible = isOpen;
         _mergeBoardController.SetVisible(isOpen);
 
         if (_mainUICanvas != null)
             _mainUICanvas.sortingOrder = isOpen ? 0 : 2;
+
+        if (wasVisible && !isOpen)
+            MergeBoardVisibilityChanged?.Invoke();
     }
 
     private void LoadScratchingTime()
@@ -396,12 +421,22 @@ public class MainUI : UIScene
 
     private void InitNyangStargramPopup()
     {
+
         GameManager.UI.ShowPopupUI<UIPopup>(KeyContainer.Prefabs.NyangStargramHomeProfile,
             onLoaded =>
             {
                 _nyangStargramPopup = onLoaded;
                 AddPopupButton(_meowMeowStarButton, onLoaded);
             },
+            false);
+    }
+
+    private void InitNyangquariumPopup()
+    {
+
+        GameManager.UI.ShowPopupUI<UIPopup>(
+            KeyContainer.Prefabs.Nyangquarium,
+            onLoaded => AddNyangquariumButton(_nyangquariumButton, onLoaded),
             false);
     }
 
@@ -416,6 +451,80 @@ public class MainUI : UIScene
             PlayPopupOpenAnimation(popup);
             GameManager.Audio.PlaySfx("Main_SFX_Touch");
         });
+    }
+
+    private void AddNyangquariumButton(Button button, UIPopup popup)
+    {
+        if (button == null)
+            return;
+
+        button.onClick.AddListener(() => OpenNyangquariumPopup(popup));
+    }
+
+    private void OpenNyangquariumPopup(UIPopup popup)
+    {
+        if (popup == null || _isNyangquariumTransitioning)
+            return;
+
+        ScreenTransitionManager transition = ScreenTransitionManager.Instance;
+
+        if (transition == null)
+        {
+            popup.gameObject.SetActive(true);
+            PlayPopupOpenAnimation(popup);
+            GameManager.Audio.PlaySfx("Main_SFX_Touch");
+            return;
+        }
+
+        if (transition.IsTransitioning)
+            return;
+
+        BeginNyangquariumTransition();
+        GameManager.Audio.PlaySfx("Main_SFX_Touch");
+        RegisterSpriteKeyIfMissing(NyangquariumTransitionSpriteKey);
+
+        transition.Cover(NyangquariumTransitionSpriteKey, () =>
+        {
+            ShowNyangquariumPopupImmediately(popup);
+            transition.Reveal(() =>
+            {
+                transition.RestoreDefaultCoverSprite();
+                EndNyangquariumTransition();
+            });
+        });
+    }
+
+    private void ShowNyangquariumPopupImmediately(UIPopup popup)
+    {
+        if (popup is NyangquariumMainUIManager mainManager)
+        {
+            mainManager.ShowImmediately();
+            return;
+        }
+
+        popup.gameObject.SetActive(true);
+    }
+
+    private void BeginNyangquariumTransition()
+    {
+        _isNyangquariumTransitioning = true;
+
+        if (_nyangquariumButton != null)
+            _nyangquariumButton.interactable = false;
+    }
+
+    private void EndNyangquariumTransition()
+    {
+        _isNyangquariumTransitioning = false;
+
+        if (_nyangquariumButton != null)
+            _nyangquariumButton.interactable = true;
+    }
+
+    private static void RegisterSpriteKeyIfMissing(string spriteKey)
+    {
+        if (!string.IsNullOrWhiteSpace(spriteKey))
+            KeyContainer.Sprites.Add(spriteKey);
     }
 
     private void RemovePopupButton(Button button)
@@ -466,4 +575,5 @@ public enum MainUIButtons
     MainMergeBoardButton,
     LogOutButton,
     FindMoongchiButton,
+    NyangquariumButton
 }

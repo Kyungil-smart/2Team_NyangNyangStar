@@ -1,0 +1,135 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1b0899485f964e7eb612c46599d79531, type: 3}
+  m_Name: NyangQuariumQuestSO
+  m_EditorClassIdentifier: 
+  _quests:
+  - _id: 43001
+    _questSection: 2
+    _questNameKey: Q_NAME1
+    _questDescKey: Q_DESC1
+    _preQuestId: 0
+    _questType: 1
+    _questCondition1: 10033
+    _conditionAmount1: 1
+    _questCondition2: 
+    _conditionAmount2: 0
+    _questRewardId: 0
+    _rewardAmount: 0
+  - _id: 43002
+    _questSection: 2
+    _questNameKey: Q_NAME2
+    _questDescKey: Q_DESC2
+    _preQuestId: 0
+    _questType: 43001
+    _questCondition1: story
+    _conditionAmount1: 10034
+    _questCondition2: 1
+    _conditionAmount2: 0
+    _questRewardId: 0
+    _rewardAmount: 0
+  - _id: 43003
+    _questSection: 2
+    _questNameKey: Q_NAME3
+    _questDescKey: Q_DESC3
+    _preQuestId: 0
+    _questType: 43002
+    _questCondition1: story
+    _conditionAmount1: 10044
+    _questCondition2: 1
+    _conditionAmount2: 0
+    _questRewardId: 0
+    _rewardAmount: 0
+  - _id: 43004
+    _questSection: 3
+    _questNameKey: Q_NAME4
+    _questDescKey: Q_DESC4
+    _preQuestId: 0
+    _questType: 2
+    _questCondition1: 42001
+    _conditionAmount1: 2
+    _questCondition2: 
+    _conditionAmount2: 0
+    _questRewardId: 0
+    _rewardAmount: 0
+  - _id: 43005
+    _questSection: 3
+    _questNameKey: Q_NAME5
+    _questDescKey: Q_DESC5
+    _preQuestId: 0
+    _questType: 2
+    _questCondition1: 42002
+    _conditionAmount1: 1
+    _questCondition2: 
+    _conditionAmount2: 0
+    _questRewardId: 0
+    _rewardAmount: 0
+  - _id: 43006
+    _questSection: 3
+    _questNameKey: Q_NAME6
+    _questDescKey: Q_DESC6
+    _preQuestId: 0
+    _questType: 2
+    _questCondition1: 42008
+    _conditionAmount1: 1
+    _questCondition2: 
+    _conditionAmount2: 0
+    _questRewardId: 0
+    _rewardAmount: 0
+  - _id: 43007
+    _questSection: 3
+    _questNameKey: Q_NAME7
+    _questDescKey: Q_DESC7
+    _preQuestId: 0
+    _questType: 2
+    _questCondition1: 42009
+    _conditionAmount1: 1
+    _questCondition2: 
+    _conditionAmount2: 0
+    _questRewardId: 0
+    _rewardAmount: 0
+  - _id: 43008
+    _questSection: 3
+    _questNameKey: Q_NAME8
+    _questDescKey: Q_DESC8
+    _preQuestId: 0
+    _questType: 2
+    _questCondition1: 42015
+    _conditionAmount1: 1
+    _questCondition2: 
+    _conditionAmount2: 0
+    _questRewardId: 0
+    _rewardAmount: 0
+  - _id: 43009
+    _questSection: 3
+    _questNameKey: Q_NAME9
+    _questDescKey: Q_DESC9
+    _preQuestId: 0
+    _questType: 2
+    _questCondition1: 42016
+    _conditionAmount1: 1
+    _questCondition2: 
+    _conditionAmount2: 0
+    _questRewardId: 0
+    _rewardAmount: 0
+  - _id: 43010
+    _questSection: 3
+    _questNameKey: Q_NAME10
+    _questDescKey: Q_DESC10
+    _preQuestId: 0
+    _questType: 2
+    _questCondition1: 42003
+    _conditionAmount1: 1
+    _questCondition2: 
+    _conditionAmount2: 0
+    _questRewardId: 0
+    _rewardAmount: 0

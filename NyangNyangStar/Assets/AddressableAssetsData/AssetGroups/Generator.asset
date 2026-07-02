@@ -1,0 +1,97 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
+  m_Name: Generator
+  m_EditorClassIdentifier: 
+  m_GroupName: Generator
+  m_Data:
+    m_SerializedData: []
+  m_GUID: 3d0643f4e1e5297438023e1c02f1f39d
+  m_SerializeEntries:
+  - m_GUID: 1b65d9256ff3d2646b8804443dcadc41
+    m_Address: Gen_SaltTank_Small
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4c23a5c337ecb3748a2445dfcfe0192a
+    m_Address: Gen_BrackishTank_Medium
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 510bac0c501844b469e102b0f9748f26
+    m_Address: Gen_FreshTank_Small
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6b3c334d3a03a8645b235cdb2fdc9bbb
+    m_Address: Gen_FreshTank_Large
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6cb9ca91730ce304b91532b13f0f04f7
+    m_Address: Gen_SaltTank_Medium
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 73bd307c5a858364e97e52a5de071004
+    m_Address: Gen_BrackishTank_Large
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8f6e7bf2093d07447b9ef4a6a8487f1b
+    m_Address: Gen_EnvBox_Large
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ab4804f4e219f0e4384a9c8edcb57560
+    m_Address: Gen_BrackishTank_Small
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b42e04d68964d9a46b11239df920c5a2
+    m_Address: Gen_SaltTank_Large
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: cd6ef2dcab70b3c44bc4c7d115b04b4f
+    m_Address: Gen_FreshTank_Medium
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f40ed302213dcb0448e7f40cd4bc46c2
+    m_Address: Gen_EnvBox_Medium
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: fe77a9bb2be2d2341a8a1425f2678ef4
+    m_Address: Gen_EnvBox_Small
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  m_ReadOnly: 0
+  m_Settings: {fileID: 11400000, guid: 567802e293b80b747b23153796443c26, type: 2}
+  m_SchemaSet:
+    m_Schemas:
+    - {fileID: 11400000, guid: 5b2435e233826134ebbc0959608e9025, type: 2}
+    - {fileID: 11400000, guid: ac71a52541bdcec43a131b9118b524f5, type: 2}

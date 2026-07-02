@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0201fa2421b84da29291bcade56862f5, type: 3}
+  m_Name: NyangQuariumFirestoreSO
+  m_EditorClassIdentifier: 
+  m_DocumentId: Data
+  m_EnumType: 0
+  subCollections: []
+  _unlockedFishIds: 2da400002aa400001fa4000022a4000018a4000029a4000028a4000015a400002ba4000021a4000024a400002ca4000016a400001ba4000026a400001da4000031a4000033a400001ca4000030a4000011a4000019a400002fa4000032a4000017a4000027a4000012a4000034a400001aa4000013a400002ea4000020a4000025a400001ea4000023a4000014a40000
+  _freshwaterPlacedFishIds: 1aa4000011a4000015a40000
+  _saltwaterPlacedFishIds: 
+  _freshwaterPlacedNatureIds: 
+  _saltwaterPlacedNatureIds: 
+  _readStoryIds: 01000000

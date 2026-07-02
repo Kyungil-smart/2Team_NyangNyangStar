@@ -17,8 +17,50 @@ MonoBehaviour:
     m_SerializedData: []
   m_GUID: c0a561bf8b2742f4d82ea6d84764c6aa
   m_SerializeEntries:
+  - m_GUID: 09978fd5d3f30da42a3e4ea7f226f919
+    m_Address: NQ_Img_AquaTunnel
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 0b8bcd780806c5e4eacbee4bc092c996
+    m_Address: NQ_TextBox_Me
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 0e62218ad1fd22f44933b88519488485
+    m_Address: NQ_TextBox_Opponent
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1242ce3fa5cdbf34abdcbbf90e9625dd
+    m_Address: Item_Exp_Small
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 12b6f26c62c75d74f8458da965bfd9fe
+    m_Address: NQ_BG_Main
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 19fb0cdea18c05747a74d25b66c009a6
     m_Address: NQ_Btn_Skip
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1ab49ddd06d2a2f479d604831378ed52
+    m_Address: Item_Exp_Medium
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1b19567331e51354a81a74eed815a453
+    m_Address: NQ_Object_Tank_03
     m_ReadOnly: 0
     m_SerializedLabels:
     - Sprite
@@ -29,8 +71,79 @@ MonoBehaviour:
     m_SerializedLabels:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 4c07df0845f32c24194378ec437d5584
-    m_Address: NQ_Object_Tank_02
+  - m_GUID: 2400a63e5da88f44d9b019bb5a01b581
+    m_Address: NQ_Icon_Fish
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2cdfdbe06c5f8dc49b9f7769b70dbf5a
+    m_Address: NQ_Btn_Inventory
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2cfeeeb062fb0674f97fd4b55fcadc25
+    m_Address: NQ_Btn_ItemSell
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2f5ed6f2a62d48044921e5b9d2a58071
+    m_Address: NyangQuariumQuestPopUp
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 396681227a450b4498fb5469e6f6cfd6
+    m_Address: NQ_Btn_Complete
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 39c43f964cfdd014e9f95132b8410472
+    m_Address: NQ_Btn_FreshWater
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 48ae306448c3c964da90f57500a20f8e
+    m_Address: NQ_Object_Tank_T01
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 48f9678cd097f1046b3c1fb333265082
+    m_Address: NQ_BG_SaltWater
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 495f3838ca3155d41a66a1c46e091465
+    m_Address: NQ_Btn_Off
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4c4dff458bb301545ab1e6901b1758f4
+    m_Address: NQ_BG_Aquarium
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 50ac65b9fcdc65e4d9809b6f6fff6195
+    m_Address: NQ_Btn_Delete
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 55fe61d897b3da847a886bfd3bedb49f
+    m_Address: NQ_Object_Tank_05
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5b73404a8e89f1543ac03634f0f88666
+    m_Address: NQ_Img_Title
     m_ReadOnly: 0
     m_SerializedLabels:
     - Sprite
@@ -41,8 +154,8 @@ MonoBehaviour:
     m_SerializedLabels:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 6400332d4d22e8b408d828a05a61e5d1
-    m_Address: NQ_Object_Tank_01
+  - m_GUID: 61971dea82d378c4583d11cc3c510d28
+    m_Address: NQ_Object_Tank_04
     m_ReadOnly: 0
     m_SerializedLabels:
     - Sprite
@@ -53,8 +166,61 @@ MonoBehaviour:
     m_SerializedLabels:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 67e621dd87a99ae4c824de59aa0ec615
+    m_Address: NQ_Panel_Quest
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6df76ecea50357c40afaefbb2f59e94c
+    m_Address: NyangquariumUI
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6f2559c4fd18e6843aca2432790e9e01
+    m_Address: NQ_BG_Transition
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 79ab3084bafa05e4ba5b0880133a1155
+    m_Address: NQ_Panel_ItemInfo
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7a470910354f95448b3ca61a4d1ddafc
+    m_Address: NQ_Panel_ItemStorage
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 7b593c069369f5c48bc18b9162f09fb0
     m_Address: NQ_Marker_clear
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7fec3887f9b44604f87b37a0438acd29
+    m_Address: NQ_Panel_QuestReward
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 800b7ad6d9a9fab4a880fb51cd65a6fe
+    m_Address: NQ_Icon_TankLevel
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 83766f51a71cf624c9a0c5aabefee2eb
+    m_Address: NQ_Panel_Item
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 83e2c574c0bf1f9448b25eaaf9764af4
+    m_Address: NQ_Bar_Progress
     m_ReadOnly: 0
     m_SerializedLabels:
     - Sprite
@@ -77,8 +243,157 @@ MonoBehaviour:
     m_SerializedLabels:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: b975578b9613e334a9033f9d0cce5990
-    m_Address: NQ_Object_Tank_03
+  - m_GUID: 8f0577267433ba04aa2f2e994cf18447
+    m_Address: NQ_Btn_Confirm
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8f19a8bdd62632e46af8c8de89e37e2e
+    m_Address: NQ_Char_Moongchi
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 94a4d54d7335d194d9834c3fc1b7f6ad
+    m_Address: NQ_Panel_QuestBoard
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 94b11497845ab654384791b1e2fdf5b5
+    m_Address: NQ_Object_Tank_01
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 98491f56af991424cab607d96300abf3
+    m_Address: NQ_Btn_Mergeboard
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9c720d26934b1014684f6d7c6fff67f5
+    m_Address: NQ_Btn_Collection
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9d21bf4f39ba5ce4081e9cb8d7acfdd9
+    m_Address: NQ_Panel_Portrait
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a1ffd51d65cf45548a11c01effc069ff
+    m_Address: NQ_Btn_Back
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a9a5373a09075be4fa3eb0883e3946e6
+    m_Address: NQ_Btn_On
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ac65c32faf7440843831446e0796dfc0
+    m_Address: NQ_Icon_Environment
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b0538463d33c75241aefa4558461c86f
+    m_Address: NQ_BG_Mergeboard
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b22c55a57400a204b85fedf15e748f45
+    m_Address: NQ_Object_Tank_T02
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b8c4f163f809e2741bbbe040da09e646
+    m_Address: NQ_Object_Tank_02
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c0b98f31aefe60a44a863977e019ca67
+    m_Address: Item_Exp_Large
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c46718669072de546bafdecf22903615
+    m_Address: NQ_Panel_Dialog
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: cab404ee06c2384449c1699f49210fd5
+    m_Address: NQ_Btn_MergeBack
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ccbc92bc83774604fb9e1a08ed62078b
+    m_Address: NQ_Btn_Cancel
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: cf65175471e33c44584ef2247d814169
+    m_Address: StoryUI
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d0048ae021355b146b499309d99ee8ad
+    m_Address: NQ_Btn_SaltWater
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e2d9692c76f67c74ea2a0a3a437bb23d
+    m_Address: NQ_Btn_Home
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e88743d7d97ce9f43a3d6be305f76f5a
+    m_Address: NQ_Btn_Close
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: eb70cca5d76ab294cb6180d0e59505e4
+    m_Address: NQ_BG_FreshWater
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f23294a1e754c2b41b86efa41063e574
+    m_Address: NQ_Btn_Tank
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f74452e8301eaa6419d82f0508fae4a3
+    m_Address: NQ_Char_Seoltang
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f82574023db4fe044a5a02a6c8e146b3
+    m_Address: NQ_Panel_QuestInfo
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: fab53b071016038409ea79941b327f8e
+    m_Address: NQ_Icon_Lock
     m_ReadOnly: 0
     m_SerializedLabels:
     - Sprite
