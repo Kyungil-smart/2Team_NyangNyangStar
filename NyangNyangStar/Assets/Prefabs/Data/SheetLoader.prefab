@@ -127,6 +127,10 @@ MonoBehaviour:
     <URL>k__BackingField: https://docs.google.com/spreadsheets/d/1hD2NCEzCWr2aml-_aqHsHZu_8HeZ0xCLpMDt_A9NfoU/edit?gid=537630819#gid=537630819
     <Type>k__BackingField: 2
   nyangQuariumExpItemSo: {fileID: 11400000, guid: c9e5a3b14d6f8c0273e1a4d6b8f0c2e4, type: 2}
+  nyangQuariumAquariumLevelURL:
+    <URL>k__BackingField: https://docs.google.com/spreadsheets/d/1hD2NCEzCWr2aml-_aqHsHZu_8HeZ0xCLpMDt_A9NfoU/edit?gid=1853021783#gid=1853021783
+    <Type>k__BackingField: 2
+  nyangQuariumAquariumLevelSo: {fileID: 11400000, guid: afe905e2c83ba0d4d8e6b69f64857b27, type: 2}
   _pendingSheetCount: 0
 --- !u!114 &7187299137341658617
 MonoBehaviour:

@@ -400,6 +400,8 @@ namespace UI.NyangQuarium.Quest
                 return false;
             }
 
+            await GrantAquariumExpRewardAsync(quest);
+
             _completedQuestIds.Add(quest.ID);
 
             if (IsStoryMapQuestId(quest.ID))
@@ -437,6 +439,37 @@ namespace UI.NyangQuarium.Quest
 
             StoryQuestProgressChanged?.Invoke();
             return true;
+        }
+
+        private static async Task GrantAquariumExpRewardAsync(NyangQuariumQuestData quest)
+        {
+            if (quest == null || quest.QuestRewardId <= 0)
+                return;
+
+            NyangQuariumQuestRewardSO rewardSO = NyangQuariumQuestSOLocator.ResolveQuestRewardSO();
+
+            if (rewardSO == null ||
+                !rewardSO.TryGetReward(quest.QuestRewardId, out NyangQuariumQuestRewardData rewardData) ||
+                !rewardData.HasExpReward)
+            {
+                return;
+            }
+
+            NyangQuariumFirestoreSO firestoreSO =
+                await NyangQuariumFirestoreSO.WaitForReadyAsync();
+
+            if (firestoreSO == null)
+            {
+                DebugTool.Warning(
+                    $"[NyangQuariumQuestManager] NyangQuariumFirestoreSO not ready. Aquarium EXP reward skipped. QuestId:{quest.ID}, Exp:{rewardData.ExpAmount}",
+                    DebugType.Data);
+                return;
+            }
+
+            NyangQuariumAquariumLevelSO aquariumLevelSO =
+                NyangQuariumQuestSOLocator.ResolveAquariumLevelSO();
+
+            await firestoreSO.AddAquariumExpAsync(rewardData.ExpAmount, aquariumLevelSO);
         }
 
         private static bool IsStoryMapQuestId(int questId)
