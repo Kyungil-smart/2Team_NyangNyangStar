@@ -31,10 +31,11 @@ public class NotebookPopupSprite : UIBase
     {
         SetSprite(NotebookPopupImages.Panel, "Snap_Panel_Note");
         SetSprite(NotebookPopupImages.CloseButton, "Btn_Close");
-        //SetSprite(NotebookPopupImages.CatBackground1, "");
-        //SetSprite(NotebookPopupImages.CatName1, "");
+        SetSpriteRange(NotebookPopupImages.CatSilhouette1, NotebookPopupImages.CatSilhouette12, "Snap_Slot_Unknown");
+        SetSprite(NotebookPopupImages.CatBackground1, "Shape_Square");
+        SetSprite(NotebookPopupImages.CatName1, "Snap_Panel_Name");
         SetSprite(NotebookPopupImages.CatImage1, "FM_Target_Moongchi");
-        SetSprite(NotebookPopupImages.Location1, "Shape_Square", _locationColor);
+        SetSprite(NotebookPopupImages.Location1, "Shape_Rectangle", _locationColor);
         SetSprite(NotebookPopupImages.RedPoint1, "Shape_Circle", Color.red);
     }
 
@@ -47,6 +48,14 @@ public class NotebookPopupSprite : UIBase
     {
         _spriteController[(int)image].ChangeColor(color);
         _spriteController[(int)image].ChangeSprite(key);
+    }
+
+    private void SetSpriteRange(NotebookPopupImages start, NotebookPopupImages end, string key)
+    {
+        for (int i = (int)start; i <= (int)end; i++)
+        {
+            _spriteController[i].ChangeSprite(key);
+        }
     }
 
     public void SetRedPoint(bool isOn)
@@ -69,8 +78,11 @@ public enum NotebookPopupImages
 {
     Panel,
     CloseButton,
-    //CatBackground1,
-    //CatName1,
+    CatSilhouette1, CatSilhouette2, CatSilhouette3, CatSilhouette4,
+    CatSilhouette5, CatSilhouette6, CatSilhouette7, CatSilhouette8,
+    CatSilhouette9, CatSilhouette10, CatSilhouette11, CatSilhouette12,
+    CatBackground1,
+    CatName1,
     CatImage1,
     Location1,
     RedPoint1
