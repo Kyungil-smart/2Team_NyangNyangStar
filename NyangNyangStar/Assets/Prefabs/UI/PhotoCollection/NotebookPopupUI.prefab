@@ -5575,6 +5575,7 @@ MonoBehaviour:
   _closeButton: {fileID: 0}
   _background: {fileID: 0}
   _catBackground: {fileID: 0}
+  _content: {fileID: 3190640583439936963}
 --- !u!114 &7152911489490160651
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -8723,15 +8724,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Padding:
-    m_Left: 0
-    m_Right: 0
+    m_Left: 20
+    m_Right: 20
     m_Top: 20
     m_Bottom: 0
   m_ChildAlignment: 1
   m_StartCorner: 0
   m_StartAxis: 0
   m_CellSize: {x: 250, y: 300}
-  m_Spacing: {x: 50, y: 50}
+  m_Spacing: {x: 25, y: 30}
   m_Constraint: 1
   m_ConstraintCount: 3
 --- !u!114 &3542682119067094669
