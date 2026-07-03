@@ -25,7 +25,7 @@ public class NyangQuariumFreshLayoutUI : UIPopup, INyangquariumEntryReceiver
     [SerializeField] private GameObject _oceanLockIcon;
 
     [Tooltip("잠금 상태에서 해수 전환 버튼에 적용할 색상")]
-    [SerializeField]private Color _oceanLockedColor = new Color(0.45f, 0.45f, 0.45f, 1f);
+    [SerializeField] private Color _oceanLockedColor = new Color(0.45f, 0.45f, 0.45f, 1f);
 
     [Tooltip("잠긴 해수 전환 버튼을 눌렀을 때 표시할 안내 텍스트")]
     [SerializeField] private TMP_Text _oceanLockMessageText;
@@ -58,6 +58,12 @@ public class NyangQuariumFreshLayoutUI : UIPopup, INyangquariumEntryReceiver
 
     [Tooltip("필터 목록이 들어 있는 패널")]
     [SerializeField] private GameObject _filterTab;
+
+    [Tooltip("자연 요소 필터 목록이 들어 있는 패널")]
+    [SerializeField] private GameObject _natureFilterTab;
+
+    [Tooltip("현재 인벤토리 카테고리를 확인할 목록 UI")]
+    [SerializeField] private NyangQuariumFishInventoryListUI _inventoryListUI;
 
     [Tooltip("비워두면 패널의 RectTransform을 자동으로 사용합니다.")]
     [SerializeField] private RectTransform _inventoryRect;
@@ -264,6 +270,13 @@ public class NyangQuariumFreshLayoutUI : UIPopup, INyangquariumEntryReceiver
         if (_inventoryRect == null && _freshwaterLayoutPanel != null)
             _inventoryRect = _freshwaterLayoutPanel.GetComponent<RectTransform>();
 
+        if (_inventoryListUI == null && _freshwaterLayoutPanel != null)
+        {
+            _inventoryListUI =
+                _freshwaterLayoutPanel.GetComponentInChildren<
+                    NyangQuariumFishInventoryListUI>(true);
+        }
+
         if (_inventoryRect != null)
             _inventoryOpenedPosition = _inventoryRect.anchoredPosition;
     }
@@ -326,6 +339,9 @@ public class NyangQuariumFreshLayoutUI : UIPopup, INyangquariumEntryReceiver
 
         if (_filterTab != null)
             _filterTab.SetActive(false);
+
+        if (_natureFilterTab != null)
+            _natureFilterTab.SetActive(false);
 
         if (_freshwaterLayoutPanel != null)
             _freshwaterLayoutPanel.SetActive(false);
@@ -579,18 +595,57 @@ public class NyangQuariumFreshLayoutUI : UIPopup, INyangquariumEntryReceiver
 
     private void OnClickFilterButton()
     {
-        if (_filterButton == null)
+        GameObject currentFilterTab = GetCurrentFilterTab();
+
+        if (currentFilterTab == null)
+        {
+            DebugTool.Warning(
+                "[NyangQuariumFreshLayoutUI] 현재 카테고리의 FilterTab이 연결되지 않았습니다.",
+                DebugType.UI,
+                this);
             return;
+        }
 
         GameManager.Audio.PlaySfx("Main_SFX_Touch");
 
-        bool isOpen = !_filterTab.activeSelf;
-        _filterTab.SetActive(isOpen);
+        if (_filterTab != null && _filterTab != currentFilterTab)
+            _filterTab.SetActive(false);
 
-        DebugTool.Log(
-            $"[NyangQuariumFreshLayoutUI] 필터 탭 {(isOpen ? "열기" : "닫기")}",
-            DebugType.UI,
-            this);
+        if (_natureFilterTab != null &&
+            _natureFilterTab != currentFilterTab)
+        {
+            _natureFilterTab.SetActive(false);
+        }
+
+        currentFilterTab.SetActive(
+            !currentFilterTab.activeSelf);
+    }
+
+    private GameObject GetCurrentFilterTab()
+    {
+        if (_inventoryListUI == null && _freshwaterLayoutPanel != null)
+        {
+            _inventoryListUI =
+                _freshwaterLayoutPanel.GetComponentInChildren<
+                    NyangQuariumFishInventoryListUI>(true);
+        }
+
+        if (_inventoryListUI == null)
+            return _filterTab;
+
+        return _inventoryListUI.CurrentCategory ==
+               NyangQuariumPlacementCategory.Nature
+            ? _natureFilterTab
+            : _filterTab;
+    }
+
+    private void CloseFilterTabs()
+    {
+        if (_filterTab != null)
+            _filterTab.SetActive(false);
+
+        if (_natureFilterTab != null)
+            _natureFilterTab.SetActive(false);
     }
 
     private void OnClickCloseButton()
@@ -687,8 +742,7 @@ public class NyangQuariumFreshLayoutUI : UIPopup, INyangquariumEntryReceiver
         _isInventoryOpened = false;
         _isInventoryAnimating = true;
 
-        if (_filterTab != null)
-            _filterTab.SetActive(false);
+        CloseFilterTabs();
 
         _inventoryRect.DOKill();
         _inventoryRect
@@ -755,8 +809,7 @@ public class NyangQuariumFreshLayoutUI : UIPopup, INyangquariumEntryReceiver
             _inventoryRect.anchoredPosition = GetInventoryClosedPosition();
         }
 
-        if (_filterTab != null)
-            _filterTab.SetActive(false);
+        CloseFilterTabs();
 
         if (_freshwaterLayoutPanel != null)
             _freshwaterLayoutPanel.SetActive(false);

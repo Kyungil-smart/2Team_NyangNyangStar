@@ -104,7 +104,7 @@ public sealed class NyangQuariumFishInventoryItem : MonoBehaviour
         if (_countText != null)
         {
             _countText.text = $"x{count}";
-            _countText.gameObject.SetActive(count > 1);
+            _countText.gameObject.SetActive(count >= 1);
         }
 
         if (_fishText != null)
@@ -121,8 +121,8 @@ public sealed class NyangQuariumFishInventoryItem : MonoBehaviour
         {
             _fishTextImage.color = _nameBackgroundColor;
 
-            // 초기에는 선택되지 않은 상태이므로 숨깁니다.
-            _fishTextImage.gameObject.SetActive(false);
+            // 이름 패널은 선택 여부와 관계없이 항상 표시합니다.
+            _fishTextImage.gameObject.SetActive(true);
         }
 
         if (_button != null)
@@ -134,7 +134,7 @@ public sealed class NyangQuariumFishInventoryItem : MonoBehaviour
 
     /// <summary>
     /// 슬롯의 선택 강조 상태를 변경합니다.
-    /// FishTextImage는 선택된 슬롯에서만 표시됩니다.
+    /// 이름 패널은 항상 표시하고 슬롯 배경색으로만 선택을 구분합니다.
     /// </summary>
     public void SetSelected(bool isSelected)
     {
@@ -149,7 +149,7 @@ public sealed class NyangQuariumFishInventoryItem : MonoBehaviour
         if (_fishTextImage != null)
         {
             _fishTextImage.color = _nameBackgroundColor;
-            _fishTextImage.gameObject.SetActive(isSelected);
+            _fishTextImage.gameObject.SetActive(true);
         }
     }
 

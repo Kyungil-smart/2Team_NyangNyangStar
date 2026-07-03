@@ -32,10 +32,14 @@ public sealed class NyangQuariumFishInventoryListUI : MonoBehaviour
     [SerializeField]
     private Button _natureTabButton;
 
-    [Header("관상어 필터 UI")]
-    [Tooltip("자연 요소 탭에서 숨길 관상어 필터 관련 오브젝트")]
+    [Header("카테고리별 필터 UI")]
+    [Tooltip("관상어 탭에서 표시할 필터 관련 오브젝트")]
     [SerializeField]
     private GameObject[] _fishFilterObjects;
+
+    [Tooltip("자연 요소 탭에서 표시할 필터 관련 오브젝트")]
+    [SerializeField]
+    private GameObject[] _natureFilterObjects;
 
     [Header("목록")]
     [SerializeField]
@@ -55,6 +59,10 @@ public sealed class NyangQuariumFishInventoryListUI : MonoBehaviour
     [Header("관상어 필터")]
     [SerializeField]
     private NyangQuariumFishFilterToggle[] _filterToggles;
+
+    [Header("자연 요소 필터")]
+    [SerializeField]
+    private NyangQuariumFishFilterToggle[] _natureFilterToggles;
 
     private readonly List<NyangQuariumMergeBoardFishEntry>
         _ownedFishEntries = new();
@@ -105,6 +113,8 @@ public sealed class NyangQuariumFishInventoryListUI : MonoBehaviour
     {
         NyangQuariumMergeBoardInventoryService.InventoryChanged -=
             Refresh;
+
+        ClearInventorySelection();
     }
 
     private void OnDestroy()
@@ -372,6 +382,12 @@ public sealed class NyangQuariumFishInventoryListUI : MonoBehaviour
         foreach (GroupedNatureEntry grouped
                  in _groupedNatureEntries)
         {
+            if (!MatchesCheckedNatureFilters(
+                    grouped.Entry.ItemKey))
+            {
+                continue;
+            }
+
             NyangQuariumFishInventoryItem item =
                 Instantiate(
                     _itemTemplate,
@@ -541,6 +557,79 @@ public sealed class NyangQuariumFishInventoryListUI : MonoBehaviour
         return false;
     }
 
+    private bool MatchesCheckedNatureFilters(
+        string itemKey)
+    {
+        if (_natureFilterToggles == null ||
+            _natureFilterToggles.Length == 0)
+        {
+            return true;
+        }
+
+        NyangQuariumFishFilterType targetFilter =
+            ToNatureFilterType(itemKey);
+
+        foreach (NyangQuariumFishFilterToggle toggle
+                 in _natureFilterToggles)
+        {
+            if (toggle == null || !toggle.IsOn)
+                continue;
+
+            if (toggle.FilterType ==
+                    NyangQuariumFishFilterType.All ||
+                toggle.FilterType == targetFilter)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static NyangQuariumFishFilterType ToNatureFilterType(
+        string itemKey)
+    {
+        if (string.IsNullOrWhiteSpace(itemKey))
+            return NyangQuariumFishFilterType.All;
+
+        if (itemKey.StartsWith(
+                "Env_Stone_",
+                StringComparison.Ordinal))
+        {
+            return NyangQuariumFishFilterType.Stone;
+        }
+
+        if (itemKey.StartsWith(
+                "Env_Plant_",
+                StringComparison.Ordinal))
+        {
+            return NyangQuariumFishFilterType.Plant;
+        }
+
+        if (itemKey.StartsWith(
+                "Env_Marine_",
+                StringComparison.Ordinal))
+        {
+            return NyangQuariumFishFilterType.Marine;
+        }
+
+        if (itemKey.StartsWith(
+                "Env_Coral_",
+                StringComparison.Ordinal))
+        {
+            return NyangQuariumFishFilterType.Coral;
+        }
+
+        if (itemKey.StartsWith(
+                "Env_Shelter_",
+                StringComparison.Ordinal))
+        {
+            return NyangQuariumFishFilterType.Shelter;
+        }
+
+        return NyangQuariumFishFilterType.All;
+    }
+
     private static NyangQuariumFishFilterType ToFilterType(
         FishType fishType)
     {
@@ -675,69 +764,76 @@ public sealed class NyangQuariumFishInventoryListUI : MonoBehaviour
             _currentCategory ==
             NyangQuariumPlacementCategory.Fish;
 
-        if (_fishFilterObjects == null)
+        SetFilterObjectsActive(
+            _fishFilterObjects,
+            isFishCategory);
+
+        SetFilterObjectsActive(
+            _natureFilterObjects,
+            !isFishCategory);
+    }
+
+    private static void SetFilterObjectsActive(
+        GameObject[] targets,
+        bool isActive)
+    {
+        if (targets == null)
             return;
 
-        foreach (GameObject target
-                 in _fishFilterObjects)
+        foreach (GameObject target in targets)
         {
             if (target != null)
-                target.SetActive(isFishCategory);
+                target.SetActive(isActive);
         }
     }
 
     private void BindFilterToggles()
     {
-        if (_filterToggles == null)
+        BindFilterToggleArray(_filterToggles);
+        BindFilterToggleArray(_natureFilterToggles);
+    }
+
+    private void BindFilterToggleArray(
+        NyangQuariumFishFilterToggle[] toggles)
+    {
+        if (toggles == null)
             return;
 
-        foreach (NyangQuariumFishFilterToggle toggle
-                 in _filterToggles)
+        foreach (NyangQuariumFishFilterToggle toggle in toggles)
         {
             if (toggle == null)
                 continue;
 
-            toggle.ValueChanged -=
-                HandleFilterChanged;
-
-            toggle.ValueChanged +=
-                HandleFilterChanged;
+            toggle.ValueChanged -= HandleFilterChanged;
+            toggle.ValueChanged += HandleFilterChanged;
         }
     }
 
     private void UnbindFilterToggles()
     {
-        if (_filterToggles == null)
+        UnbindFilterToggleArray(_filterToggles);
+        UnbindFilterToggleArray(_natureFilterToggles);
+    }
+
+    private void UnbindFilterToggleArray(
+        NyangQuariumFishFilterToggle[] toggles)
+    {
+        if (toggles == null)
             return;
 
-        foreach (NyangQuariumFishFilterToggle toggle
-                 in _filterToggles)
+        foreach (NyangQuariumFishFilterToggle toggle in toggles)
         {
             if (toggle != null)
-            {
-                toggle.ValueChanged -=
-                    HandleFilterChanged;
-            }
+                toggle.ValueChanged -= HandleFilterChanged;
         }
     }
 
     private void InitializeFilterState()
     {
-        if (_filterToggles == null)
-            return;
-
         _isChangingToggleState = true;
 
-        foreach (NyangQuariumFishFilterToggle toggle
-                 in _filterToggles)
-        {
-            if (toggle == null)
-                continue;
-
-            toggle.SetIsOnWithoutNotify(
-                toggle.FilterType ==
-                NyangQuariumFishFilterType.All);
-        }
+        EnableOnlyAll(_filterToggles);
+        EnableOnlyAll(_natureFilterToggles);
 
         _isChangingToggleState = false;
     }
@@ -746,12 +842,14 @@ public sealed class NyangQuariumFishInventoryListUI : MonoBehaviour
         NyangQuariumFishFilterToggle changedToggle,
         bool isOn)
     {
-        if (_isChangingToggleState ||
-            _currentCategory !=
-            NyangQuariumPlacementCategory.Fish)
-        {
+        if (_isChangingToggleState || changedToggle == null)
             return;
-        }
+
+        NyangQuariumFishFilterToggle[] activeToggles =
+            GetCurrentCategoryFilterToggles();
+
+        if (!ContainsToggle(activeToggles, changedToggle))
+            return;
 
         _isChangingToggleState = true;
 
@@ -760,9 +858,9 @@ public sealed class NyangQuariumFishInventoryListUI : MonoBehaviour
         {
             if (isOn)
             {
-                EnableOnlyAll();
+                EnableOnlyAll(activeToggles);
             }
-            else if (!HasEnabledFilter())
+            else if (!HasEnabledFilter(activeToggles))
             {
                 changedToggle.SetIsOnWithoutNotify(true);
             }
@@ -771,11 +869,22 @@ public sealed class NyangQuariumFishInventoryListUI : MonoBehaviour
         {
             if (isOn)
             {
-                SetAllFilter(false);
+                SetAllFilter(activeToggles, false);
+
+                if (AreAllIndividualFiltersEnabled(activeToggles))
+                {
+                    EnableOnlyAll(activeToggles);
+
+                    DebugTool.Log(
+                        "[NyangQuariumFishInventoryListUI] " +
+                        "모든 개별 필터가 선택되어 전체 필터로 전환했습니다.",
+                        DebugType.UI,
+                        this);
+                }
             }
-            else if (!HasEnabledFilter())
+            else if (!HasEnabledFilter(activeToggles))
             {
-                SetAllFilter(true);
+                SetAllFilter(activeToggles, true);
             }
         }
 
@@ -783,10 +892,111 @@ public sealed class NyangQuariumFishInventoryListUI : MonoBehaviour
         Refresh();
     }
 
-    private void EnableOnlyAll()
+    private NyangQuariumFishFilterToggle[]
+        GetCurrentCategoryFilterToggles()
     {
-        foreach (NyangQuariumFishFilterToggle toggle
-                 in _filterToggles)
+        return _currentCategory ==
+               NyangQuariumPlacementCategory.Fish
+            ? _filterToggles
+            : _natureFilterToggles;
+    }
+
+    private static bool ContainsToggle(
+        NyangQuariumFishFilterToggle[] toggles,
+        NyangQuariumFishFilterToggle target)
+    {
+        if (toggles == null || target == null)
+            return false;
+
+        foreach (NyangQuariumFishFilterToggle toggle in toggles)
+        {
+            if (toggle == target)
+                return true;
+        }
+
+        return false;
+    }
+
+    private bool AreAllIndividualFiltersEnabled(
+        NyangQuariumFishFilterToggle[] toggles)
+    {
+        if (toggles == null)
+            return false;
+
+        bool hasApplicableFilter = false;
+
+        foreach (NyangQuariumFishFilterToggle toggle in toggles)
+        {
+            if (toggle == null ||
+                !IsFilterApplicableToCurrentCategory(
+                    toggle.FilterType))
+            {
+                continue;
+            }
+
+            hasApplicableFilter = true;
+
+            if (!toggle.IsOn)
+                return false;
+        }
+
+        return hasApplicableFilter;
+    }
+
+    private bool IsFilterApplicableToCurrentCategory(
+        NyangQuariumFishFilterType filterType)
+    {
+        if (filterType == NyangQuariumFishFilterType.All)
+            return false;
+
+        if (_currentCategory == NyangQuariumPlacementCategory.Fish)
+            return IsFishFilterForCurrentAquarium(filterType);
+
+        return IsNatureFilterForCurrentAquarium(filterType);
+    }
+
+    private bool IsFishFilterForCurrentAquarium(
+        NyangQuariumFishFilterType filterType)
+    {
+        if (filterType ==
+            NyangQuariumFishFilterType.BrackishWater)
+        {
+            return true;
+        }
+
+        return _aquariumType == FishType.Freshwater
+            ? filterType == NyangQuariumFishFilterType.Freshwater
+            : filterType == NyangQuariumFishFilterType.Saltwater;
+    }
+
+    private bool IsNatureFilterForCurrentAquarium(
+        NyangQuariumFishFilterType filterType)
+    {
+        if (filterType == NyangQuariumFishFilterType.Shelter)
+            return true;
+
+        if (_aquariumType == FishType.Freshwater)
+        {
+            return filterType == NyangQuariumFishFilterType.Stone ||
+                   filterType == NyangQuariumFishFilterType.Plant;
+        }
+
+        if (_aquariumType == FishType.Saltwater)
+        {
+            return filterType == NyangQuariumFishFilterType.Marine ||
+                   filterType == NyangQuariumFishFilterType.Coral;
+        }
+
+        return false;
+    }
+
+    private static void EnableOnlyAll(
+        NyangQuariumFishFilterToggle[] toggles)
+    {
+        if (toggles == null)
+            return;
+
+        foreach (NyangQuariumFishFilterToggle toggle in toggles)
         {
             if (toggle == null)
                 continue;
@@ -797,11 +1007,14 @@ public sealed class NyangQuariumFishInventoryListUI : MonoBehaviour
         }
     }
 
-    private void SetAllFilter(
+    private static void SetAllFilter(
+        NyangQuariumFishFilterToggle[] toggles,
         bool isOn)
     {
-        foreach (NyangQuariumFishFilterToggle toggle
-                 in _filterToggles)
+        if (toggles == null)
+            return;
+
+        foreach (NyangQuariumFishFilterToggle toggle in toggles)
         {
             if (toggle == null ||
                 toggle.FilterType !=
@@ -815,24 +1028,36 @@ public sealed class NyangQuariumFishInventoryListUI : MonoBehaviour
         }
     }
 
-    private bool HasEnabledFilter()
+    private static bool HasEnabledFilter(
+        NyangQuariumFishFilterToggle[] toggles)
     {
-        foreach (NyangQuariumFishFilterToggle toggle
-                 in _filterToggles)
+        if (toggles == null)
+            return false;
+
+        foreach (NyangQuariumFishFilterToggle toggle in toggles)
         {
-            if (toggle != null &&
-                toggle.IsOn)
-            {
+            if (toggle != null && toggle.IsOn)
                 return true;
-            }
         }
 
         return false;
     }
 
+    /// <summary>
+    /// 슬롯 강조 상태와 배치 컨트롤러의 선택 데이터를 함께 초기화합니다.
+    /// </summary>
+    private void ClearInventorySelection()
+    {
+        if (_selectedItem != null)
+            _selectedItem.SetSelected(false);
+
+        _selectedItem = null;
+        _placementController?.ClearSelectedItem();
+    }
+
     private void ClearCreatedItems()
     {
-        _selectedItem = null;
+        ClearInventorySelection();
 
         foreach (NyangQuariumFishInventoryItem item
                  in _createdItems)

@@ -33,6 +33,16 @@ namespace UI.NyangQuarium
         [SerializeField] private bool _isMovementEnabled;
         [SerializeField] private bool _isSelectable;
 
+        [Header("Movement Blocked Areas")]
+        [Tooltip("물고기가 목적지와 이동 경로에서 항상 피해야 하는 UI 영역입니다.")]
+        [SerializeField] private RectTransform[] _movementBlockedAreas;
+
+        [Tooltip("물고기 크기 외에 금지 영역에 추가할 여유 거리입니다.")]
+        [SerializeField] private float _blockedAreaPadding = 10f;
+
+        [Tooltip("안전한 목적지를 찾기 위한 최대 재시도 횟수입니다.")]
+        [SerializeField] private int _targetPickAttempts = 50;
+
         private AsyncOperationHandle<Sprite> _spriteHandle;
         private Vector2 _target;
         private float _baseScale = 1f;
@@ -263,6 +273,21 @@ namespace UI.NyangQuarium
             UpdateImageState();
         }
 
+        /// <summary>
+        /// 물고기가 항상 피해야 하는 UI 금지 영역을 설정합니다.
+        /// UI 활성화 여부와 관계없이 RectTransform 좌표를 사용합니다.
+        /// </summary>
+        public void SetMovementBlockedAreas(
+            RectTransform[] blockedAreas,
+            float blockedAreaPadding)
+        {
+            _movementBlockedAreas = blockedAreas;
+            _blockedAreaPadding = Mathf.Max(0f, blockedAreaPadding);
+
+            if (_isMovementEnabled)
+                PickNewTarget();
+        }
+
         public void SetSelected(bool isSelected)
         {
             _isSelected = isSelected;
@@ -312,11 +337,46 @@ namespace UI.NyangQuarium
 
         public void PickNewTarget()
         {
-            _target = GetRandomPosition();
-            _hasTarget = true;
+            ResolveComponents();
 
-            if (_rectTransform != null)
-                ApplyFishDirection(_target - _rectTransform.anchoredPosition, true);
+            Vector2 currentPosition =
+                _rectTransform != null
+                    ? _rectTransform.anchoredPosition
+                    : Vector2.zero;
+
+            int attempts = Mathf.Max(1, _targetPickAttempts);
+
+            for (int i = 0; i < attempts; i++)
+            {
+                Vector2 candidate = GetRandomPosition();
+
+                if (IsMovementPathBlocked(
+                        currentPosition,
+                        candidate))
+                {
+                    continue;
+                }
+
+                _target = candidate;
+                _hasTarget = true;
+
+                if (_rectTransform != null)
+                {
+                    ApplyFishDirection(
+                        _target - currentPosition,
+                        true);
+                }
+
+                return;
+            }
+
+            _hasTarget = false;
+
+            DebugTool.Warning(
+                "[냥쿠아리움 물고기 컨트롤러] " +
+                "UI 금지 구역을 피하는 이동 경로를 찾지 못했습니다.",
+                DebugType.UI,
+                this);
         }
 
         private void Move(float deltaTime)
@@ -419,6 +479,193 @@ namespace UI.NyangQuarium
             }
 
             return new Vector2(UnityEngine.Random.Range(minX, maxX), UnityEngine.Random.Range(minY, maxY));
+        }
+
+        private bool IsMovementPathBlocked(
+            Vector2 start,
+            Vector2 end)
+        {
+            if (_movementBlockedAreas == null ||
+                _movementBlockedAreas.Length == 0)
+            {
+                return false;
+            }
+
+            foreach (RectTransform blockedArea
+                     in _movementBlockedAreas)
+            {
+                if (blockedArea == null)
+                    continue;
+
+                if (!TryGetBlockedRectInSwimArea(
+                        blockedArea,
+                        out Rect blockedRect))
+                {
+                    continue;
+                }
+
+                if (blockedRect.Contains(end) ||
+                    DoesSegmentIntersectRect(
+                        start,
+                        end,
+                        blockedRect))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private bool TryGetBlockedRectInSwimArea(
+            RectTransform blockedArea,
+            out Rect blockedRect)
+        {
+            blockedRect = default;
+
+            RectTransform swimArea =
+                _swimArea != null
+                    ? _swimArea
+                    : _rectTransform != null
+                        ? _rectTransform.parent as RectTransform
+                        : null;
+
+            if (swimArea == null)
+                return false;
+
+            Vector3[] worldCorners = new Vector3[4];
+            blockedArea.GetWorldCorners(worldCorners);
+
+            Vector2 min = new(
+                float.PositiveInfinity,
+                float.PositiveInfinity);
+            Vector2 max = new(
+                float.NegativeInfinity,
+                float.NegativeInfinity);
+
+            for (int i = 0; i < worldCorners.Length; i++)
+            {
+                Vector3 localPoint =
+                    swimArea.InverseTransformPoint(
+                        worldCorners[i]);
+
+                min = Vector2.Min(min, localPoint);
+                max = Vector2.Max(max, localPoint);
+            }
+
+            Vector2 fishHalfSize =
+                GetFishHalfSizeInSwimArea();
+            float extraPadding =
+                Mathf.Max(0f, _blockedAreaPadding);
+
+            blockedRect = Rect.MinMaxRect(
+                min.x - fishHalfSize.x - extraPadding,
+                min.y - fishHalfSize.y - extraPadding,
+                max.x + fishHalfSize.x + extraPadding,
+                max.y + fishHalfSize.y + extraPadding);
+
+            return true;
+        }
+
+        private Vector2 GetFishHalfSizeInSwimArea()
+        {
+            if (_rectTransform == null)
+                return Vector2.zero;
+
+            RectTransform swimArea =
+                _swimArea != null
+                    ? _swimArea
+                    : _rectTransform.parent as RectTransform;
+
+            if (swimArea == null)
+                return _rectTransform.rect.size * 0.5f;
+
+            Vector3[] worldCorners = new Vector3[4];
+            _rectTransform.GetWorldCorners(worldCorners);
+
+            Vector2 min = new(
+                float.PositiveInfinity,
+                float.PositiveInfinity);
+            Vector2 max = new(
+                float.NegativeInfinity,
+                float.NegativeInfinity);
+
+            for (int i = 0; i < worldCorners.Length; i++)
+            {
+                Vector3 localPoint =
+                    swimArea.InverseTransformPoint(
+                        worldCorners[i]);
+
+                min = Vector2.Min(min, localPoint);
+                max = Vector2.Max(max, localPoint);
+            }
+
+            return (max - min) * 0.5f;
+        }
+
+        private static bool DoesSegmentIntersectRect(
+            Vector2 start,
+            Vector2 end,
+            Rect rect)
+        {
+            if (rect.Contains(start) ||
+                rect.Contains(end))
+            {
+                return true;
+            }
+
+            Vector2 bottomLeft =
+                new(rect.xMin, rect.yMin);
+            Vector2 bottomRight =
+                new(rect.xMax, rect.yMin);
+            Vector2 topRight =
+                new(rect.xMax, rect.yMax);
+            Vector2 topLeft =
+                new(rect.xMin, rect.yMax);
+
+            return DoSegmentsIntersect(
+                       start,
+                       end,
+                       bottomLeft,
+                       bottomRight) ||
+                   DoSegmentsIntersect(
+                       start,
+                       end,
+                       bottomRight,
+                       topRight) ||
+                   DoSegmentsIntersect(
+                       start,
+                       end,
+                       topRight,
+                       topLeft) ||
+                   DoSegmentsIntersect(
+                       start,
+                       end,
+                       topLeft,
+                       bottomLeft);
+        }
+
+        private static bool DoSegmentsIntersect(
+            Vector2 a,
+            Vector2 b,
+            Vector2 c,
+            Vector2 d)
+        {
+            float abC = Cross(b - a, c - a);
+            float abD = Cross(b - a, d - a);
+            float cdA = Cross(d - c, a - c);
+            float cdB = Cross(d - c, b - c);
+
+            return abC * abD <= 0f &&
+                   cdA * cdB <= 0f;
+        }
+
+        private static float Cross(
+            Vector2 lhs,
+            Vector2 rhs)
+        {
+            return lhs.x * rhs.y -
+                   lhs.y * rhs.x;
         }
 
         private Rect GetMovementRect()
