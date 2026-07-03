@@ -35,6 +35,12 @@ public class NyangQuariumOceanLayoutUI : UIPopup, INyangquariumEntryReceiver
     [Tooltip("전체, 해수, 기수 필터가 들어 있는 패널")]
     [SerializeField] private GameObject _filterTab;
 
+    [Tooltip("자연 요소 필터 목록이 들어 있는 패널")]
+    [SerializeField] private GameObject _natureFilterTab;
+
+    [Tooltip("현재 인벤토리 카테고리를 확인할 목록 UI")]
+    [SerializeField] private NyangQuariumFishInventoryListUI _inventoryListUI;
+
     [Tooltip("비워두면 패널의 RectTransform을 자동으로 사용합니다.")]
     [SerializeField] private RectTransform _inventoryRect;
 
@@ -123,6 +129,13 @@ public class NyangQuariumOceanLayoutUI : UIPopup, INyangquariumEntryReceiver
         if (_inventoryRect == null && _oceanwaterLayoutPanel != null)
             _inventoryRect = _oceanwaterLayoutPanel.GetComponent<RectTransform>();
 
+        if (_inventoryListUI == null && _oceanwaterLayoutPanel != null)
+        {
+            _inventoryListUI =
+                _oceanwaterLayoutPanel.GetComponentInChildren<
+                    NyangQuariumFishInventoryListUI>(true);
+        }
+
         if (_inventoryRect != null)
             _inventoryOpenedPosition = _inventoryRect.anchoredPosition;
     }
@@ -186,6 +199,11 @@ public class NyangQuariumOceanLayoutUI : UIPopup, INyangquariumEntryReceiver
         if (_filterTab != null)
         {
             _filterTab.SetActive(false);
+        }
+
+        if (_natureFilterTab != null)
+        {
+            _natureFilterTab.SetActive(false);
         }
 
         if (_oceanwaterLayoutPanel != null)
@@ -404,18 +422,57 @@ public class NyangQuariumOceanLayoutUI : UIPopup, INyangquariumEntryReceiver
 
     private void OnClickFilterButton()
     {
-        if (_filterTab == null)
+        GameObject currentFilterTab = GetCurrentFilterTab();
+
+        if (currentFilterTab == null)
+        {
+            DebugTool.Warning(
+                "[NyangQuariumOceanLayoutUI] 현재 카테고리의 FilterTab이 연결되지 않았습니다.",
+                DebugType.UI,
+                this);
             return;
+        }
 
         GameManager.Audio.PlaySfx("Main_SFX_Touch");
 
-        bool isOpen = !_filterTab.activeSelf;
-        _filterTab.SetActive(isOpen);
+        if (_filterTab != null && _filterTab != currentFilterTab)
+            _filterTab.SetActive(false);
 
-        DebugTool.Log(
-            $"[NyangQuariumOceanLayoutUI] 필터 탭 {(isOpen ? "열기" : "닫기")}",
-            DebugType.UI,
-            this);
+        if (_natureFilterTab != null &&
+            _natureFilterTab != currentFilterTab)
+        {
+            _natureFilterTab.SetActive(false);
+        }
+
+        currentFilterTab.SetActive(
+            !currentFilterTab.activeSelf);
+    }
+
+    private GameObject GetCurrentFilterTab()
+    {
+        if (_inventoryListUI == null && _oceanwaterLayoutPanel != null)
+        {
+            _inventoryListUI =
+                _oceanwaterLayoutPanel.GetComponentInChildren<
+                    NyangQuariumFishInventoryListUI>(true);
+        }
+
+        if (_inventoryListUI == null)
+            return _filterTab;
+
+        return _inventoryListUI.CurrentCategory ==
+               NyangQuariumPlacementCategory.Nature
+            ? _natureFilterTab
+            : _filterTab;
+    }
+
+    private void CloseFilterTabs()
+    {
+        if (_filterTab != null)
+            _filterTab.SetActive(false);
+
+        if (_natureFilterTab != null)
+            _natureFilterTab.SetActive(false);
     }
 
     private void OnClickCloseButton()
@@ -512,10 +569,7 @@ public class NyangQuariumOceanLayoutUI : UIPopup, INyangquariumEntryReceiver
         _isInventoryOpened = false;
         _isInventoryAnimating = true;
 
-        if (_filterTab != null)
-        {
-            _filterTab.SetActive(false);
-        }
+        CloseFilterTabs();
 
         _inventoryRect.DOKill();
         _inventoryRect
@@ -570,8 +624,7 @@ public class NyangQuariumOceanLayoutUI : UIPopup, INyangquariumEntryReceiver
             _inventoryRect.anchoredPosition = GetInventoryClosedPosition();
         }
 
-        if (_filterTab != null)
-            _filterTab.SetActive(false);
+        CloseFilterTabs();
 
         if (_oceanwaterLayoutPanel != null)
             _oceanwaterLayoutPanel.SetActive(false);

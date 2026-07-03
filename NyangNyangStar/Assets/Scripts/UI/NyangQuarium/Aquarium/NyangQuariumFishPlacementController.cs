@@ -215,6 +215,25 @@ public sealed class NyangQuariumFishPlacementController : MonoBehaviour
     }
 
     /// <summary>
+    /// 인벤토리 탭 이동 또는 인벤토리 종료 시
+    /// 현재 선택된 배치 아이템 정보를 초기화합니다.
+    /// 자연 요소 배치 모드에서는 선택 데이터가 필요하므로 초기화하지 않습니다.
+    /// </summary>
+    public void ClearSelectedItem()
+    {
+        if (_isPlacementMode)
+            return;
+
+        ClearSelection();
+
+        DebugTool.Log(
+            "[NyangQuariumFishPlacementController] " +
+            "인벤토리 선택 정보 초기화",
+            DebugType.UI,
+            this);
+    }
+
+    /// <summary>
     /// FreshwaterLayoutPanel의 배치 버튼에서 호출합니다.
     /// 물고기는 즉시 배치하고, 자연 요소는 미리보기 배치 모드로 진입합니다.
     /// </summary>
@@ -1028,6 +1047,9 @@ public sealed class NyangQuariumFishPlacementController : MonoBehaviour
                 placedNature = rect.gameObject.AddComponent<NyangQuariumPlacedNature>();
 
             placedNature.Initialize(data.ItemId, data.SpriteKey, visualController);
+
+            // 복원된 자연 요소는 물고기 유영 레이어보다 뒤에 배치합니다.
+            MoveNatureBehindFishLayer(rect);
         }
 
         DebugTool.Log("[NyangQuariumFishPlacementController] " +
@@ -1230,6 +1252,10 @@ public sealed class NyangQuariumFishPlacementController : MonoBehaviour
             _selectedSpriteKey,
             _naturePreviewController);
 
+        // 배치 중에는 최상단에 보이지만,
+        // 확정 후에는 물고기 유영 레이어보다 뒤로 이동합니다.
+        MoveNatureBehindFishLayer(confirmedNature);
+
         _naturePreview = null;
         _naturePreviewController = null;
         _natureDragHandler = null;
@@ -1244,6 +1270,56 @@ public sealed class NyangQuariumFishPlacementController : MonoBehaviour
             this);
 
         return confirmedNature;
+    }
+
+    /// <summary>
+    /// 자연 요소를 물고기 유영 레이어보다 뒤쪽 형제 순서로 이동합니다.
+    /// 물고기 Renderer가 중첩된 오브젝트에 있어도
+    /// LayoutPanel 바로 아래의 루트 레이어를 찾아 처리합니다.
+    /// </summary>
+    private void MoveNatureBehindFishLayer(RectTransform natureRect)
+    {
+        if (natureRect == null ||
+            _nyangQuariumLayoutPanel == null ||
+            _placedFishRenderer == null)
+        {
+            return;
+        }
+
+        Transform fishLayerRoot =
+            _placedFishRenderer.transform;
+
+        while (fishLayerRoot.parent != null &&
+               fishLayerRoot.parent != _nyangQuariumLayoutPanel)
+        {
+            fishLayerRoot = fishLayerRoot.parent;
+        }
+
+        if (fishLayerRoot.parent != _nyangQuariumLayoutPanel)
+        {
+            DebugTool.Warning(
+                "[NyangQuariumFishPlacementController] " +
+                "물고기 레이어가 NyangQuariumLayoutPanel 하위에 없어 " +
+                "자연 요소 레이어 순서를 조정하지 못했습니다.",
+                DebugType.UI,
+                this);
+
+            return;
+        }
+
+        int fishLayerSiblingIndex =
+            fishLayerRoot.GetSiblingIndex();
+
+        natureRect.SetSiblingIndex(
+            fishLayerSiblingIndex);
+
+        DebugTool.Log(
+            "[NyangQuariumFishPlacementController] " +
+            $"자연 요소를 물고기 레이어 뒤로 이동했습니다. " +
+            $"Nature:{natureRect.name}, " +
+            $"FishLayer:{fishLayerRoot.name}",
+            DebugType.UI,
+            this);
     }
 
     /// <summary>

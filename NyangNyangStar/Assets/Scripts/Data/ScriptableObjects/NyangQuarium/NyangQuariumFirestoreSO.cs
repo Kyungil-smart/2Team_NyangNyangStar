@@ -27,6 +27,10 @@ public class NyangQuariumFirestoreSO : BaseFireStore
 
     [Header("스토리")] [SerializeField] private List<int> _readStoryIds = new();
 
+    [SerializeField] private bool _storyMapQuestInitialized;
+    [SerializeField] private int _activeStoryMapQuestId;
+    [SerializeField] private List<int> _completedStoryMapQuestIds = new();
+
     private readonly HashSet<int> _unlockedFishIdSet = new();
 
     public IReadOnlyList<int> UnlockedFishIds => _unlockedFishIds;
@@ -36,6 +40,9 @@ public class NyangQuariumFirestoreSO : BaseFireStore
     public IReadOnlyList<NyangQuariumPlacedNatureData> SaltwaterPlacedNatureData => _saltwaterPlacedNatureData;
     public int AquariumLevel => _aquariumLevel;
     public int AquariumExp => _aquariumExp;
+    public bool StoryMapQuestInitialized => _storyMapQuestInitialized;
+    public int ActiveStoryMapQuestId => _activeStoryMapQuestId;
+    public IReadOnlyList<int> CompletedStoryMapQuestIds => _completedStoryMapQuestIds;
 
     public event Action AquariumProgressChanged;
 
@@ -45,6 +52,7 @@ public class NyangQuariumFirestoreSO : BaseFireStore
         RebuildCache();
         NormalizePlacedFishLists();
         NormalizePlacedNatureList();
+        NormalizeStoryMapQuestState();
         NotifyAquariumProgressChanged();
     }
 
@@ -108,6 +116,7 @@ public class NyangQuariumFirestoreSO : BaseFireStore
         RebuildCache();
         NormalizePlacedFishLists();
         NormalizePlacedNatureList();
+        NormalizeStoryMapQuestState();
 
         if (hasSnapshot)
             NotifyAquariumProgressChanged();
@@ -539,6 +548,46 @@ public class NyangQuariumFirestoreSO : BaseFireStore
         await SetDataAsync(ToFirestoreDictionary());
     }
 
+    public async Task SaveStoryMapQuestStateAsync(
+        int activeQuestId,
+        IEnumerable<int> completedQuestIds,
+        bool initialized)
+    {
+        SetStoryMapQuestState(activeQuestId, completedQuestIds, initialized);
+
+        if (!TryEnsureDatabaseReady())
+        {
+            DebugTool.Warning("[NyangQuariumFirestoreSO] Firestore is not ready. Story map quest state save skipped.", DebugType.Data, this);
+            return;
+        }
+
+        await SetDataAsync(ToFirestoreDictionary());
+    }
+
+    private void SetStoryMapQuestState(
+        int activeQuestId,
+        IEnumerable<int> completedQuestIds,
+        bool initialized)
+    {
+        _storyMapQuestInitialized = initialized;
+        _activeStoryMapQuestId = Mathf.Max(0, activeQuestId);
+        _completedStoryMapQuestIds ??= new List<int>();
+        _completedStoryMapQuestIds.Clear();
+
+        if (completedQuestIds == null)
+            return;
+
+        HashSet<int> seen = new();
+
+        foreach (int questId in completedQuestIds)
+        {
+            if (questId <= 0 || !seen.Add(questId))
+                continue;
+
+            _completedStoryMapQuestIds.Add(questId);
+        }
+    }
+
     private void ResetToDefault()
     {
         _unlockedFishIds ??= new List<int>();
@@ -553,6 +602,10 @@ public class NyangQuariumFirestoreSO : BaseFireStore
 
         _readStoryIds ??= new List<int>();
         _readStoryIds.Clear();
+        _completedStoryMapQuestIds ??= new List<int>();
+        _completedStoryMapQuestIds.Clear();
+        _storyMapQuestInitialized = false;
+        _activeStoryMapQuestId = 0;
 
         _aquariumLevel = 1;
         _aquariumExp = 0;
@@ -613,6 +666,22 @@ public class NyangQuariumFirestoreSO : BaseFireStore
 
         if (_aquariumExp < 0)
             _aquariumExp = 0;
+    }
+
+    private void NormalizeStoryMapQuestState()
+    {
+        _activeStoryMapQuestId = Mathf.Max(0, _activeStoryMapQuestId);
+        _completedStoryMapQuestIds ??= new List<int>();
+
+        HashSet<int> seen = new();
+
+        for (int i = _completedStoryMapQuestIds.Count - 1; i >= 0; i--)
+        {
+            int questId = _completedStoryMapQuestIds[i];
+
+            if (questId <= 0 || !seen.Add(questId))
+                _completedStoryMapQuestIds.RemoveAt(i);
+        }
     }
 
     private void NotifyAquariumProgressChanged()
