@@ -6,6 +6,8 @@ using UnityEngine.UI;
 
 public class MainUISprite : UIBase
 {
+    private const string NyangquariumTankSpritePrefix = "NQ_Object_Tank_";
+
     [SerializeField] private Color _workshopMergeBoardColor;
     [SerializeField] private Color _mainMergeBoardColor;
     private UISpriteController[] _spriteController;
@@ -72,6 +74,23 @@ public class MainUISprite : UIBase
     public void SetNotebookAlert(bool isOn)
     {
         _notebookAlert.gameObject.SetActive(isOn);
+    }
+
+    public void SetNyangquariumTankLevel(int level)
+    {
+        SetSprite(MainUIImages.NyangquariumButton, ResolveNyangquariumTankSpriteKey(level));
+    }
+
+    private static string ResolveNyangquariumTankSpriteKey(int level)
+    {
+        int tankIndex =
+            level >= 20 ? 5 :
+            level >= 15 ? 4 :
+            level >= 10 ? 3 :
+            level >= 5 ? 2 :
+            1;
+
+        return $"{NyangquariumTankSpritePrefix}{tankIndex:00}";
     }
 }
 

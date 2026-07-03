@@ -3,9 +3,10 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using UI.NyangQuarium;
+using UI.NyangQuarium.MergeBoard;
+using UI.NyangQuarium.Quest;
 using UnityEngine;
 using UnityEngine.UI;
-using UI.NyangQuarium.MergeBoard;
 
 /// <summary>
 /// 물고기와 자연 요소의 배치 흐름을 관리합니다.
@@ -25,9 +26,6 @@ using UI.NyangQuarium.MergeBoard;
 /// </summary>
 public sealed class NyangQuariumFishPlacementController : MonoBehaviour
 {
-    private const int MaxPlaceableFishCount = 15;
-    private const int MaxPlaceableNatureCount = 5;
-
     [Header("인벤토리")]
     [SerializeField]
     private GameObject _inventoryPanel;
@@ -112,6 +110,10 @@ public sealed class NyangQuariumFishPlacementController : MonoBehaviour
     private int _placedFishMutationVersion;
     private int _placedNatureMutationVersion;
 
+    private NyangQuariumFirestoreSO _firestoreSO;
+    private NyangQuariumAquariumLevelSO _aquariumLevelSO;
+    private bool _isPlacementLimitReady;
+
     public bool IsPlacementMode => _isPlacementMode;
     public FishType AquariumType => _aquariumType;
 
@@ -134,11 +136,16 @@ public sealed class NyangQuariumFishPlacementController : MonoBehaviour
         SetDecisionButtonsActive(false);
         SetInventoryConfirmInteractable(false);
         SetNaturePlacementBorderActive(false);
+
+        _ = RefreshPlacementLimitDataAsync();
     }
 
     private void OnEnable()
     {
         LoadPlacedObjectsFromFirestore();
+
+        // 화면에 다시 들어올 때 현재 수조 레벨과 배치 한도를 갱신합니다.
+        _ = RefreshPlacementLimitDataAsync();
     }
 
     private void OnDestroy()
@@ -396,21 +403,133 @@ public sealed class NyangQuariumFishPlacementController : MonoBehaviour
             DebugType.UI,
             this);
     }
+    /// <summary>
+    /// Firestore의 현재 수조 레벨과 수조 레벨 SO를 준비합니다.
+    /// </summary>
+    private async Task RefreshPlacementLimitDataAsync()
+    {
+        _isPlacementLimitReady = false;
+
+        _aquariumLevelSO =
+            NyangQuariumQuestSOLocator.ResolveAquariumLevelSO();
+
+        if (_aquariumLevelSO == null)
+        {
+            DebugTool.Warning(
+                "[NyangQuariumFishPlacementController] " +
+                "NyangQuariumAquariumLevelSO를 찾지 못했습니다.",
+                DebugType.UI,
+                this);
+
+            return;
+        }
+
+        _firestoreSO =
+            await NyangQuariumFirestoreSO.WaitForReadyAsync();
+
+        if (_firestoreSO == null)
+        {
+            DebugTool.Warning(
+                "[NyangQuariumFishPlacementController] " +
+                "Firestore에서 현재 수조 레벨을 가져오지 못했습니다.",
+                DebugType.UI,
+                this);
+
+            return;
+        }
+
+        if (!_firestoreSO.TryGetCurrentMaxPlaceableCount(
+                _aquariumLevelSO,
+                out int maxPlaceableFish,
+                out int maxPlaceableNature))
+        {
+            DebugTool.Warning(
+                "[NyangQuariumFishPlacementController] " +
+                $"현재 수조 레벨의 배치 한도 데이터를 찾지 못했습니다. " +
+                $"AquariumLevel:{_firestoreSO.AquariumLevel}",
+                DebugType.UI,
+                this);
+
+            return;
+        }
+
+        _isPlacementLimitReady = true;
+
+        DebugTool.Log(
+            "[NyangQuariumFishPlacementController] " +
+            $"배치 한도 데이터 준비 완료 - " +
+            $"AquariumLevel:{_firestoreSO.AquariumLevel}, " +
+            $"Fish:{maxPlaceableFish}, " +
+            $"Nature:{maxPlaceableNature}",
+            DebugType.UI,
+            this);
+    }
+
+    /// <summary>
+    /// 현재 수조 레벨에 해당하는 물고기와 자연 요소 최대 배치 수를 가져옵니다.
+    /// </summary>
+    private bool TryGetCurrentPlacementLimits(out int maxPlaceableFish, out int maxPlaceableNature)
+    {
+        maxPlaceableFish = 0;
+        maxPlaceableNature = 0;
+
+        if (!_isPlacementLimitReady ||
+            _firestoreSO == null ||
+            _aquariumLevelSO == null)
+        {
+            DebugTool.Warning(
+                "[NyangQuariumFishPlacementController] " +
+                "배치 한도 데이터가 아직 준비되지 않았습니다.",
+                DebugType.UI,
+                this);
+
+            return false;
+        }
+
+        if (!_firestoreSO.TryGetCurrentMaxPlaceableCount(
+                _aquariumLevelSO,
+                out maxPlaceableFish,
+                out maxPlaceableNature))
+        {
+            DebugTool.Warning(
+                "[NyangQuariumFishPlacementController] " +
+                $"현재 수조 레벨의 배치 한도 조회에 실패했습니다. " +
+                $"AquariumLevel:{_firestoreSO.AquariumLevel}",
+                DebugType.UI,
+                this);
+
+            return false;
+        }
+
+        return true;
+    }
 
     /// <summary>
     /// 현재 수조에 물고기를 추가로 배치할 수 있는지 확인합니다.
     /// 레벨 시스템 적용 전까지 최대 15마리로 제한합니다.
     /// </summary>
+    /// <summary>
+    /// 현재 수조 레벨의 물고기 최대 배치 수를 기준으로
+    /// 물고기를 추가 배치할 수 있는지 확인합니다.
+    /// </summary>
     private bool CanPlaceMoreFish()
     {
         if (_placedFishRenderer == null)
         {
-            DebugTool.Warning("[NyangQuariumFishPlacementController] " +
+            DebugTool.Warning(
+                "[NyangQuariumFishPlacementController] " +
                 "PlacedFishRenderer가 연결되지 않아 " +
                 "물고기 배치 개수를 확인할 수 없습니다.",
                 DebugType.UI,
                 this);
 
+            return false;
+        }
+
+        if (!TryGetCurrentPlacementLimits(
+                out int maxPlaceableFish,
+                out _))
+        {
             return false;
         }
 
@@ -421,7 +540,7 @@ public sealed class NyangQuariumFishPlacementController : MonoBehaviour
 
         return ValidatePlacementCount(
             currentCount,
-            MaxPlaceableFishCount,
+            maxPlaceableFish,
             "물고기");
     }
 
@@ -429,11 +548,16 @@ public sealed class NyangQuariumFishPlacementController : MonoBehaviour
     /// 현재 수조에 자연 요소를 추가로 배치할 수 있는지 확인합니다.
     /// 레벨 시스템 적용 전까지 최대 5개로 제한합니다.
     /// </summary>
+    /// <summary>
+    /// 현재 수조 레벨의 자연 요소 최대 배치 수를 기준으로
+    /// 자연 요소를 추가 배치할 수 있는지 확인합니다.
+    /// </summary>
     private bool CanPlaceMoreNature()
     {
         if (_nyangQuariumLayoutPanel == null)
         {
-            DebugTool.Warning("[NyangQuariumFishPlacementController] " +
+            DebugTool.Warning(
+                "[NyangQuariumFishPlacementController] " +
                 "NyangQuariumLayoutPanel이 연결되지 않아 " +
                 "자연 요소 배치 개수를 확인할 수 없습니다.",
                 DebugType.UI,
@@ -442,12 +566,19 @@ public sealed class NyangQuariumFishPlacementController : MonoBehaviour
             return false;
         }
 
+        if (!TryGetCurrentPlacementLimits(
+                out _,
+                out int maxPlaceableNature))
+        {
+            return false;
+        }
+
         int currentCount =
             GetCurrentPlacedNatureData().Count;
 
         return ValidatePlacementCount(
             currentCount,
-            MaxPlaceableNatureCount,
+            maxPlaceableNature,
             "자연 요소");
     }
 

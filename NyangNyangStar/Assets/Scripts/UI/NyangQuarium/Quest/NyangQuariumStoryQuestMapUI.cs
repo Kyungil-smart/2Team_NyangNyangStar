@@ -138,6 +138,18 @@ namespace UI.NyangQuarium.Quest
                 ?.SetTankTutorialVisible(tierIndex, visible: true);
         }
 
+        public static void HideTankTutorial(int tierIndex)
+        {
+            if (_instance != null)
+            {
+                _instance.SetTankTutorialVisible(tierIndex, visible: false);
+                return;
+            }
+
+            FindFirstObjectByType<NyangQuariumStoryQuestMapUI>()
+                ?.SetTankTutorialVisible(tierIndex, visible: false);
+        }
+
         public static bool CanCompleteStoryQuest(NyangQuariumQuestData quest)
         {
             if (quest == null)

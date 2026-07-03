@@ -9,6 +9,7 @@ using UI.Base;
 using UI.Common;
 using UI.MergeBoard;
 using UI.NyangQuarium;
+using UI.NyangQuarium.Quest;
 using UI.Transition;
 using UnityEngine;
 using UnityEngine.UI;
@@ -49,6 +50,9 @@ public class MainUI : UIScene
     private bool _isMergeBoardTransitioning;
     private bool _isMergeBoardVisible;
     private bool _isNyangquariumTransitioning;
+    private bool _isNyangquariumUnlocked;
+    private Coroutine _nyangquariumUnlockCoroutine;
+    private NyangQuariumFirestoreSO _nyangquariumProgressStore;
 
     [SerializeField] private UsersSO _usersSO;
     [SerializeField] private TMP_Text _uidText;
@@ -65,6 +69,7 @@ public class MainUI : UIScene
     private void OnEnable()
     {
         SubscribeUserIdChanged();
+        RestartNyangquariumWatchersIfReady();
         UpdateUidText();
     }
 
@@ -103,6 +108,8 @@ public class MainUI : UIScene
         EnsureResourceDisplay();
 
         InitPopups();
+        StartNyangquariumUnlockWatcher();
+        BindNyangquariumProgressStoreAsync();
         SubscribeUserIdChanged();
         UpdateUidText();
         SetPhotoAlert(false);
@@ -161,6 +168,8 @@ public class MainUI : UIScene
         if (_logOutButton != null)
             _logOutButton.onClick.RemoveAllListeners();
 
+        StopNyangquariumUnlockWatcher();
+        UnbindNyangquariumProgressStore();
         _isNyangquariumTransitioning = false;
     }
 
@@ -463,7 +472,7 @@ public class MainUI : UIScene
 
     private void OpenNyangquariumPopup(UIPopup popup)
     {
-        if (popup == null || _isNyangquariumTransitioning)
+        if (popup == null || _isNyangquariumTransitioning || !_isNyangquariumUnlocked)
             return;
 
         ScreenTransitionManager transition = ScreenTransitionManager.Instance;
@@ -519,6 +528,145 @@ public class MainUI : UIScene
 
         if (_nyangquariumButton != null)
             _nyangquariumButton.interactable = true;
+    }
+
+    private void StartNyangquariumUnlockWatcher()
+    {
+        SetNyangquariumUnlocked(IsThirdStoryMapQuestCompleted());
+
+        if (_nyangquariumUnlockCoroutine != null)
+            StopCoroutine(_nyangquariumUnlockCoroutine);
+
+        _nyangquariumUnlockCoroutine = StartCoroutine(WaitForNyangquariumQuestManager());
+    }
+
+    private void StopNyangquariumUnlockWatcher()
+    {
+        if (_nyangquariumUnlockCoroutine != null)
+        {
+            StopCoroutine(_nyangquariumUnlockCoroutine);
+            _nyangquariumUnlockCoroutine = null;
+        }
+
+        if (NyangQuariumQuestManager.Instance != null)
+            NyangQuariumQuestManager.Instance.StoryQuestProgressChanged -= HandleNyangquariumQuestProgressChanged;
+    }
+
+    private IEnumerator WaitForNyangquariumQuestManager()
+    {
+        while (NyangQuariumQuestManager.Instance == null)
+        {
+            SetNyangquariumUnlocked(false);
+            yield return null;
+        }
+
+        NyangQuariumQuestManager.Instance.StoryQuestProgressChanged -= HandleNyangquariumQuestProgressChanged;
+        NyangQuariumQuestManager.Instance.StoryQuestProgressChanged += HandleNyangquariumQuestProgressChanged;
+        HandleNyangquariumQuestProgressChanged();
+        _nyangquariumUnlockCoroutine = null;
+    }
+
+    private void HandleNyangquariumQuestProgressChanged()
+    {
+        SetNyangquariumUnlocked(IsThirdStoryMapQuestCompleted());
+    }
+
+    private void SetNyangquariumUnlocked(bool unlocked)
+    {
+        _isNyangquariumUnlocked = unlocked;
+
+        if (_nyangquariumButton != null)
+        {
+            _nyangquariumButton.gameObject.SetActive(unlocked);
+            _nyangquariumButton.interactable = !_isNyangquariumTransitioning;
+        }
+    }
+
+    private static bool IsThirdStoryMapQuestCompleted()
+    {
+        if (NyangQuariumQuestManager.Instance == null)
+            return false;
+
+        int[] questIds = NyangQuariumStoryQuestMapUI.GetStoryMapQuestIds();
+        return questIds.Length > 2 &&
+               NyangQuariumQuestManager.Instance.IsQuestCompleted(questIds[2]);
+    }
+
+    private void RestartNyangquariumWatchersIfReady()
+    {
+        if (_nyangquariumButton == null || _mainUISprite == null)
+            return;
+
+        StartNyangquariumUnlockWatcher();
+        BindNyangquariumProgressStoreAsync();
+    }
+
+    private async void BindNyangquariumProgressStoreAsync()
+    {
+        RefreshNyangquariumButtonTankSprite();
+
+        if (TryBindLoadedNyangquariumProgressStore())
+            return;
+
+        NyangQuariumFirestoreSO store = await NyangQuariumFirestoreSO.WaitForReadyAsync();
+
+        if (this == null || !isActiveAndEnabled || store == null)
+            return;
+
+        BindNyangquariumProgressStore(store);
+    }
+
+    private bool TryBindLoadedNyangquariumProgressStore()
+    {
+        FireStoreManager manager = FireStoreManager.Instance;
+
+        if (manager == null ||
+            !manager.IsInitialized ||
+            !manager.TryGetStore(out NyangQuariumFirestoreSO store) ||
+            store == null)
+        {
+            return false;
+        }
+
+        BindNyangquariumProgressStore(store);
+        return true;
+    }
+
+    private void BindNyangquariumProgressStore(NyangQuariumFirestoreSO store)
+    {
+        if (_nyangquariumProgressStore == store)
+        {
+            RefreshNyangquariumButtonTankSprite();
+            return;
+        }
+
+        UnbindNyangquariumProgressStore();
+        _nyangquariumProgressStore = store;
+        _nyangquariumProgressStore.AquariumProgressChanged += HandleNyangquariumAquariumProgressChanged;
+        RefreshNyangquariumButtonTankSprite();
+    }
+
+    private void UnbindNyangquariumProgressStore()
+    {
+        if (_nyangquariumProgressStore == null)
+            return;
+
+        _nyangquariumProgressStore.AquariumProgressChanged -= HandleNyangquariumAquariumProgressChanged;
+        _nyangquariumProgressStore = null;
+    }
+
+    private void HandleNyangquariumAquariumProgressChanged()
+    {
+        RefreshNyangquariumButtonTankSprite();
+    }
+
+    private void RefreshNyangquariumButtonTankSprite()
+    {
+        int aquariumLevel = _nyangquariumProgressStore != null
+            ? _nyangquariumProgressStore.AquariumLevel
+            : 1;
+
+        _mainUISprite?.SetNyangquariumTankLevel(aquariumLevel);
     }
 
     private static void RegisterSpriteKeyIfMissing(string spriteKey)

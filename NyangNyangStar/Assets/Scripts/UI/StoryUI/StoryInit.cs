@@ -61,7 +61,7 @@ public class StoryInit : MonoBehaviour
         }
 
         if (mapQuestIds.Length > 2 && mapQuestIds[2] == questId)
-            NyangQuariumStoryQuestMapUI.ShowTankTutorial(tierIndex: 1);
+            NyangQuariumStoryQuestMapUI.HideTankTutorial(tierIndex: 0);
     }
 
     private void HandleChapter2Finished()

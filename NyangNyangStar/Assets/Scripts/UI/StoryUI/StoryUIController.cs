@@ -15,6 +15,8 @@ public class StoryUIController : UIPopup, IPointerClickHandler
     [SerializeField] private ScrollRect _scrollRect;
     [SerializeField] private RectTransform _content;
     [SerializeField] private GameObject _cardPrefab;
+    [Tooltip("상대방 대사용 카드 (포트레잇 좌측)")]
+    [SerializeField] private GameObject _opponentCardPrefab;
     [SerializeField] private Button _nextButton;
 
     [Header("스토리 데이터")]
@@ -186,7 +188,9 @@ public class StoryUIController : UIPopup, IPointerClickHandler
 
         DialogueCard data = _currentStory.cards[_currentIndex];
 
-        GameObject card = Instantiate(_cardPrefab, _content);
+        // 상대방 대사면 상대방 카드, 아니면 주인공 카드 (없으면 기본 카드로 폴백)
+        GameObject prefab = (data.isOpponent && _opponentCardPrefab != null) ? _opponentCardPrefab : _cardPrefab;
+        GameObject card = Instantiate(prefab, _content);
 
         StoryDialogueCardView view = card.GetComponent<StoryDialogueCardView>();
         if (view != null)

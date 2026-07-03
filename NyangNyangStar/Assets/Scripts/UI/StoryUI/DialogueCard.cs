@@ -14,4 +14,5 @@ public struct DialogueCard
     [TextArea] public string dialogue; // 대사 (여러 줄 입력 가능)
     public string card_bg;       // 카드 배경 키
     public bool end;             // 중단점 (true면 이 카드 출력 후 멈춤)
+    public bool isOpponent;      // true면 상대방 대사(포트레잇 좌측 카드)
 }
