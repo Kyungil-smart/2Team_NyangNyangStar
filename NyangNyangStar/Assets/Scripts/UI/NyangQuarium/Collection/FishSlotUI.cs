@@ -13,7 +13,6 @@ public class FishSlotUI : UIBase
     private FishSlotSprite _sprite;
     private NyangQuariumFishData _fishData;
     private NyangQuariumCollectionPopupUI _collectionPopup;
-    private bool _isUnlocked;
 
     public FishType FishType => _fishData.FishType;
     public int FishId => _fishData.FishId;
@@ -49,8 +48,6 @@ public class FishSlotUI : UIBase
 
     public void RefreshUnlockState(bool isUnlocked)
     {
-        _isUnlocked = isUnlocked;
-
         _sprite.SetFishImageColor(isUnlocked ? Color.white : Color.black);
         _lockedOverlay.SetActive(!isUnlocked);
 
@@ -63,7 +60,7 @@ public class FishSlotUI : UIBase
     {
         GameManager.Audio.PlaySfx("Main_SFX_Touch");
 
-        _collectionPopup.OnClickFishSlot(_fishData, _isUnlocked);
+        _collectionPopup.OnClickFishSlot(_fishData);
     }
 
     private void OnDestroy()
