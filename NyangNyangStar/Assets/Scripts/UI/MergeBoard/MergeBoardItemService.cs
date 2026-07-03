@@ -51,9 +51,11 @@ namespace UI.MergeBoard
         private const int GeneralBoardSlotCount = 63;
 
         private readonly SemaphoreSlim _addItemSemaphore = new(1, 1);
+        private readonly Dictionary<int, int> _serverItemCountCache = new();
 
         private bool _isAddingItem;
         private bool _isConsumingItem;
+        private bool _hasServerItemCountCache;
 
         protected virtual void Awake()
         {
@@ -231,17 +233,49 @@ namespace UI.MergeBoard
             ResolveReferences();
 
             int count = 0;
+            bool hasLoadedRuntimeInventory = false;
 
             if (_boardSystem != null && _boardSystem.IsServerDataLoaded)
+            {
                 count += _boardSystem.GetItemCountById(itemID);
+                hasLoadedRuntimeInventory = true;
+            }
 
             if (_rewardQueue != null && _rewardQueue.IsLoaded)
+            {
                 count += _rewardQueue.GetItemCountById(itemID);
+                hasLoadedRuntimeInventory = true;
+            }
 
             if (_specialItemBoardSystem != null && _specialItemBoardSystem.IsServerDataLoaded)
+            {
                 count += _specialItemBoardSystem.GetItemCountById(itemID);
+                hasLoadedRuntimeInventory = true;
+            }
+
+            if (!hasLoadedRuntimeInventory && _hasServerItemCountCache &&
+                _serverItemCountCache.TryGetValue(itemID, out int cachedCount))
+            {
+                count = cachedCount;
+            }
 
             return count;
+        }
+
+        public async Task EnsureInventoryLoadedAsync()
+        {
+            ResolveReferences();
+
+            if (_boardSystem != null && !_boardSystem.IsServerDataLoaded)
+                await _boardSystem.LoadBoardFromServerAsync();
+
+            if (_rewardQueue != null && !_rewardQueue.IsLoaded)
+                await _rewardQueue.LoadQueueFromServerAsync();
+
+            if (_specialItemBoardSystem != null && !_specialItemBoardSystem.IsServerDataLoaded)
+                await _specialItemBoardSystem.LoadSpecialBoardFromServerAsync();
+
+            await RefreshServerItemCountCacheAsync();
         }
 
         public void ReceiveItemById(int itemID)
@@ -965,6 +999,73 @@ namespace UI.MergeBoard
             }
 
             return count;
+        }
+
+        
+        // 아이템 캐시를 새로 만들기
+        // 기존 값을 초기화 
+        private async Task RefreshServerItemCountCacheAsync()
+        {
+            
+            _serverItemCountCache.Clear();
+            _hasServerItemCountCache = false;
+
+            if (!TryResolveStores())
+                return;
+
+            Dictionary<int, ItemData> boardData = await _boardSlotsStore.LoadBoardAsync();
+            AddBoardItemsToCountCache(boardData);
+
+            List<ItemData> queueItems = await _rewardQueueStore.LoadRewardQueueAsync();
+            AddListItemsToCountCache(queueItems);
+
+            Dictionary<int, SpecialItemSlotData> specialBoard = await _specialStore.LoadSpecialBoardAsync();
+            AddSpecialBoardItemsToCountCache(specialBoard);
+
+            _hasServerItemCountCache = true;
+        }
+
+        private void AddBoardItemsToCountCache(Dictionary<int, ItemData> boardData)
+        {
+            if (boardData == null)
+                return;
+
+            foreach (var pair in boardData)
+                AddItemToCountCache(pair.Value, 1);
+        }
+
+        private void AddListItemsToCountCache(List<ItemData> items)
+        {
+            if (items == null)
+                return;
+
+            for (int i = 0; i < items.Count; i++)
+                AddItemToCountCache(items[i], 1);
+        }
+
+        private void AddSpecialBoardItemsToCountCache(Dictionary<int, SpecialItemSlotData> specialBoard)
+        {
+            if (specialBoard == null)
+                return;
+
+            foreach (var pair in specialBoard)
+            {
+                SpecialItemSlotData slotData = pair.Value;
+
+                if (slotData == null || !slotData.HasItem)
+                    continue;
+
+                AddItemToCountCache(slotData.ItemData, slotData.Count);
+            }
+        }
+
+        private void AddItemToCountCache(ItemData itemData, int count)
+        {
+            if (itemData == null || !itemData.HasItem || itemData.ItemID <= 0 || count <= 0)
+                return;
+
+            _serverItemCountCache.TryGetValue(itemData.ItemID, out int currentCount);
+            _serverItemCountCache[itemData.ItemID] = currentCount + count;
         }
 
         private int RemoveItemsFromList(List<ItemData> items, int itemID, int removeCount)

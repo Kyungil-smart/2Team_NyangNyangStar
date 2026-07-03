@@ -34,6 +34,7 @@ namespace UI.NyangQuarium.Quest
         private readonly StoryQuestSlotBinding[] _slotBindings = new StoryQuestSlotBinding[3];
         private readonly TankTutorialBinding[] _tankTutorialBindings = new TankTutorialBinding[TankTutorialObjectNames.Length];
         private bool _initialized;
+        private bool _waitingForMergeBoardInventory;
 
         private static NyangQuariumStoryQuestMapUI _instance;
 
@@ -72,6 +73,8 @@ namespace UI.NyangQuarium.Quest
         {
             EnsureSubscribed();
             RefreshStoryQuestMap();
+            RefreshTankTutorialsFromQuestProgress();
+            StartCoroutine(RefreshWhenMergeBoardInventoryReady());
         }
 
         private void Start()
@@ -387,7 +390,49 @@ namespace UI.NyangQuarium.Quest
                 RefreshQuestItemIcon(binding);
             }
 
+            RefreshTankTutorialsFromQuestProgress();
             NyangQuariumQuestPopupOpener.RefreshOpenPopup();
+        }
+
+        private void RefreshTankTutorialsFromQuestProgress()
+        {
+            if (NyangQuariumQuestManager.Instance == null)
+                return;
+
+            int[] questIds = GetStoryMapQuestIds();
+
+            if (questIds.Length == 0)
+                return;
+
+            bool firstQuestCompleted =
+                questIds.Length > 0 &&
+                NyangQuariumQuestManager.Instance.IsQuestCompleted(questIds[0]);
+
+            bool thirdQuestCompleted =
+                questIds.Length > 2 &&
+                NyangQuariumQuestManager.Instance.IsQuestCompleted(questIds[2]);
+
+            SetTankTutorialVisible(tierIndex: 0, firstQuestCompleted && !thirdQuestCompleted);
+        }
+
+        private IEnumerator RefreshWhenMergeBoardInventoryReady()
+        {
+            if (_waitingForMergeBoardInventory)
+                yield break;
+
+            _waitingForMergeBoardInventory = true;
+
+            while (MergeBoardItemService.Instance == null)
+                yield return null;
+
+            System.Threading.Tasks.Task inventoryTask =
+                MergeBoardItemService.Instance.EnsureInventoryLoadedAsync();
+
+            while (inventoryTask != null && !inventoryTask.IsCompleted)
+                yield return null;
+
+            _waitingForMergeBoardInventory = false;
+            RefreshStoryQuestMap(force: true);
         }
 
         private int ResolveActiveStoryQuestSlotIndex()
