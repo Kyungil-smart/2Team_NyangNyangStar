@@ -28,9 +28,6 @@ public class NyangStargramAddPostUI : UIPopup
     [SerializeField] private Color _newPostColor;
     [SerializeField] private TMP_Text _noImageText;
 
-    [Header("사진 데이터")]
-    [SerializeField] private NyangNyangSnapRuntimePhotoSO _runtimePhotoSO;
-
     [Header("앨범 슬롯")]
     [SerializeField] private Transform _albumContent;
     [SerializeField] private NyangStargramAlbumSlotUI _albumSlotPrefab;
@@ -98,9 +95,11 @@ public class NyangStargramAddPostUI : UIPopup
         _hasSelectedPhoto = false;
 
         if (_newPostImage != null)
+        {
             _newPostImage.sprite = null;
             _newPostImage.color = _newPostColor;
-        
+        }
+
         if (_noImageText != null)
             _noImageText.gameObject.SetActive(true);
 
@@ -111,7 +110,7 @@ public class NyangStargramAddPostUI : UIPopup
     private void RefreshAlbumSlots()
     {
         // 정렬
-        List<NyangNyangSnapRuntimePhotoData> sortedPhotos = _runtimePhotoSO.RuntimePhotos
+        List<NyangNyangSnapRuntimePhotoData> sortedPhotos = NyangNyangSnapPhotoManager.Instance.RuntimePhotos
             .OrderByDescending(photo => photo.CreatedAt)
             .ToList();
 

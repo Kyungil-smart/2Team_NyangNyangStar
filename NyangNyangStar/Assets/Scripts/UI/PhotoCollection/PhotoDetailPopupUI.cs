@@ -19,8 +19,6 @@ public class PhotoDetailPopupUI : UIPopup
 
     [Header("사진 데이터")]
     [SerializeField] private NyangNyangSnapPhotoAlbumSO _photoAlbumSO;
-    [Header("런타임 사진 데이터")]
-    [SerializeField] private NyangNyangSnapRuntimePhotoSO _runtimePhotoSO;
 
     private NyangNyangSnapRuntimePhotoData _photoData;
     private PhotoDetailPopupSprite _sprite;
@@ -127,7 +125,7 @@ public class PhotoDetailPopupUI : UIPopup
         try
         {
             _photoAlbumSO.RemovePhoto(_photoData.PhotoId);
-            _runtimePhotoSO.RemovePhoto(_photoData.PhotoId);
+            NyangNyangSnapPhotoManager.Instance.RemovePhoto(_photoData.PhotoId);
 
             await _photoAlbumSO.UpdateDataAsync();
         }
