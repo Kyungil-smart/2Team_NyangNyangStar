@@ -31,7 +31,7 @@ public class PhotoCollectionPopupUI : UIPopup
     [SerializeField] private Toggle _star5Toggle;
 
     [Header("사진 슬롯")]
-    [SerializeField] private Transform _content;
+    [SerializeField] private RectTransform _content;
     [SerializeField] private CatPhotoSlotUI _catPhotoSlotPrefab;
 
     private readonly Dictionary<string, CatPhotoSlotUI> _photoDic = new();
@@ -93,13 +93,11 @@ public class PhotoCollectionPopupUI : UIPopup
     {
         if (_content == null) return;
 
-        RectTransform contentRect = _content as RectTransform;
         GridLayoutGroup grid = _content.GetComponent<GridLayoutGroup>();
 
-        if (contentRect == null || grid == null)
-            return;
+        if (grid == null) return;
 
-        float contentWidth = contentRect.rect.width;
+        float contentWidth = _content.rect.width;
 
         float padding = grid.padding.left + grid.padding.right;
         float spacing = grid.spacing.x * (PhotoColumnCount - 1);
