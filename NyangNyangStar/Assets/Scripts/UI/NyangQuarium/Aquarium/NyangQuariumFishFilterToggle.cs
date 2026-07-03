@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>
-/// 하나의 Toggle과 관상어 필터 종류를 연결합니다.
+/// 하나의 Toggle과 냥쿠아리움 인벤토리 필터 종류를 연결합니다.
 /// </summary>
 [RequireComponent(typeof(Toggle))]
 public sealed class NyangQuariumFishFilterToggle : MonoBehaviour
@@ -57,12 +57,21 @@ public sealed class NyangQuariumFishFilterToggle : MonoBehaviour
 }
 
 /// <summary>
-/// 관상어 배치 패널에서 사용하는 필터 종류입니다.
+/// 관상어와 자연 요소 인벤토리에서 사용하는 필터 종류입니다.
 /// </summary>
 public enum NyangQuariumFishFilterType
 {
     All,
+
+    // 관상어
     Freshwater,
     Saltwater,
-    BrackishWater
+    BrackishWater,
+
+    // 자연 요소
+    Stone,
+    Plant,
+    Marine,
+    Coral,
+    Shelter
 }
