@@ -30,9 +30,6 @@ public class PhotoCollectionPopupUI : UIPopup
     [SerializeField] private Toggle _star4Toggle;
     [SerializeField] private Toggle _star5Toggle;
 
-    [Header("사진 데이터")]
-    [SerializeField] private NyangNyangSnapRuntimePhotoSO _runtimePhotoSO;
-
     [Header("사진 슬롯")]
     [SerializeField] private Transform _content;
     [SerializeField] private CatPhotoSlotUI _catPhotoSlotPrefab;
@@ -124,7 +121,7 @@ public class PhotoCollectionPopupUI : UIPopup
     private void RefreshPhotoSlots()
     {
         // 정렬
-        List<NyangNyangSnapRuntimePhotoData> sortedPhotos = _runtimePhotoSO.RuntimePhotos
+        List<NyangNyangSnapRuntimePhotoData> sortedPhotos = NyangNyangSnapPhotoManager.Instance.RuntimePhotos
             .OrderByDescending(x => x.StarCount)
             .ThenByDescending(x => x.CreatedAt)
             .ToList();

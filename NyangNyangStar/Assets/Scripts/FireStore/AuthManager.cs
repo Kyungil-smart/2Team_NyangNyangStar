@@ -16,7 +16,6 @@ public class AuthManager : MonoBehaviour
 
     [Header("냥냥스냅 사진 로드")]
     [SerializeField] private NyangNyangSnapPhotoAlbumSO _photoAlbumSO;
-    [SerializeField] private NyangNyangSnapRuntimePhotoSO _runtimePhotoSO;
 
     private FirebaseAuth auth;
     private bool firebaseReady;
@@ -264,7 +263,7 @@ public class AuthManager : MonoBehaviour
 
     private async Task LoadPhotosAsync()
     {
-        _runtimePhotoSO.ClearPhotos();
+        NyangNyangSnapPhotoManager.Instance.ClearPhotos();
 
         await _photoAlbumSO.UpdateFromServerAsync(false);
 
@@ -276,7 +275,7 @@ public class AuthManager : MonoBehaviour
 
             if (sprite == null) continue;
 
-            _runtimePhotoSO.AddPhoto(new NyangNyangSnapRuntimePhotoData(
+            NyangNyangSnapPhotoManager.Instance.AddPhoto(new NyangNyangSnapRuntimePhotoData(
                     photo.photoId,
                     sprite,
                     photo.storagePath,
@@ -285,7 +284,7 @@ public class AuthManager : MonoBehaviour
         }
 
         DebugTool.Log(
-            $"사진 로드 완료: {_runtimePhotoSO.RuntimePhotos.Count}장",
+            $"사진 로드 완료: {NyangNyangSnapPhotoManager.Instance.RuntimePhotos.Count}장",
             DebugType.Network,
             this);
     }

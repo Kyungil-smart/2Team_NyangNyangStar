@@ -13,8 +13,6 @@ public class NyangNyangSnapResultUI : UIPopup
 {
     [Header("사진 SO")]
     [SerializeField] private NyangNyangSnapPhotoAlbumSO _photoAlbumSO;
-    [Header("런타임 사진 SO")]
-    [SerializeField] private NyangNyangSnapRuntimePhotoSO _runtimePhotoSO;
 
     [Header("결과/보상 패널")]
     [SerializeField] private GameObject _resultCollectionPanel;
@@ -213,7 +211,7 @@ public class NyangNyangSnapResultUI : UIPopup
                         };
 
                         _photoAlbumSO.AddPhoto(photoData);
-                        _runtimePhotoSO.AddPhoto(new NyangNyangSnapRuntimePhotoData(
+                        NyangNyangSnapPhotoManager.Instance.AddPhoto(new NyangNyangSnapRuntimePhotoData(
                             photoId,
                             CopySprite(record.CapturedSprite, photoId),
                             results[i].StoragePath,
@@ -295,7 +293,7 @@ public class NyangNyangSnapResultUI : UIPopup
             new Vector2(0.5f, 0.5f)
         );
 
-        copiedSprite.name = $"{photoId}";
+        copiedSprite.name = photoId;
         return copiedSprite;
     }
 
