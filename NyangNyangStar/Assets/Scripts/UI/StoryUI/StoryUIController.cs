@@ -4,11 +4,12 @@ using System.Collections.Generic;
 using TMPro;
 using UI.Base;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using Util;
 
 
-public class StoryUIController : UIPopup
+public class StoryUIController : UIPopup, IPointerClickHandler
 {
     [Header("연결")]
     [SerializeField] private ScrollRect _scrollRect;
@@ -37,8 +38,13 @@ public class StoryUIController : UIPopup
         }
     }
 
-    // 다른 토글형 팝업처럼: 닫을 때 파괴(Release)하지 않고 비활성화만 한다.
-    // (기본 ClosePopup은 ClosePopupUI→TryReleasePrefab로 파괴되어 다른 팝업에 영향)
+
+    public void OnPointerClick(PointerEventData eventData)
+    {
+        ShowNextCard();
+    }
+
+
     public override void ClosePopup()
     {
         gameObject.SetActive(false);
@@ -59,7 +65,7 @@ public class StoryUIController : UIPopup
     }
 
 
-    private static StoryUIController _instance; // 한 번 생성 후 재사용 (닫을 때 비활성화만 하므로 살아있음)
+    private static StoryUIController _instance; 
 
     public static async void ShowOnce(StoryDataSO story, System.Action onFinished = null)
     {
@@ -85,7 +91,7 @@ public class StoryUIController : UIPopup
             onFinished?.Invoke();
         };
 
-        // 이미 만들어둔 인스턴스가 있으면 재사용 (닫을 때 비활성화만 하므로 살아있음)
+        
         if (_instance != null)
         {
             _instance.gameObject.SetActive(true);
@@ -94,7 +100,7 @@ public class StoryUIController : UIPopup
             return;
         }
 
-        // 처음 한 번만 생성
+
         GameManager.UI.ShowPopupUI<StoryUIController>(
             KeyContainer.Prefabs.StoryUI,
             popup =>

@@ -78,6 +78,10 @@ public sealed class NyangQuariumFishPlacementController : MonoBehaviour
     [SerializeField]
     private Color _invalidNatureColor = Color.red;
 
+    [Tooltip("Top, Bottom, Left, Right Image를 포함하는 배치 가능구역 테두리 부모")]
+    [SerializeField]
+    private GameObject _naturePlacementAreaBorder;
+
     [Header("배치 모드에서 숨길 UI")]
     [SerializeField]
     private GameObject[] _mainUIObjects;
@@ -129,6 +133,7 @@ public sealed class NyangQuariumFishPlacementController : MonoBehaviour
         BindButtons();
         SetDecisionButtonsActive(false);
         SetInventoryConfirmInteractable(false);
+        SetNaturePlacementBorderActive(false);
     }
 
     private void OnEnable()
@@ -372,6 +377,7 @@ public sealed class NyangQuariumFishPlacementController : MonoBehaviour
             return;
 
         EnterPlacementMode();
+        SetNaturePlacementBorderActive(true);
         CreateNaturePreview();
 
         if (_naturePreview == null)
@@ -1255,6 +1261,28 @@ public sealed class NyangQuariumFishPlacementController : MonoBehaviour
 
         RestoreMainUIStates();
         SetDecisionButtonsActive(false);
+        SetNaturePlacementBorderActive(false);
+    }
+
+    /// <summary>
+    /// 자연 요소 배치 가능구역의 네 방향 테두리를 함께 표시하거나 숨깁니다.
+    /// </summary>
+    private void SetNaturePlacementBorderActive(bool isActive)
+    {
+        if (_naturePlacementAreaBorder == null)
+        {
+            if (isActive)
+            {
+                DebugTool.Warning("[NyangQuariumFishPlacementController] " +
+                    "자연 요소 배치 가능구역 테두리가 연결되지 않았습니다.",
+                    DebugType.UI,
+                    this);
+            }
+
+            return;
+        }
+
+        _naturePlacementAreaBorder.SetActive(isActive);
     }
 
     /// <summary>

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Firebase.Firestore;
@@ -8,20 +9,23 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "NyangQuariumFirestoreSO", menuName = "SO/NyangQuarium/NyangQuarium Firestore SO")]
 public class NyangQuariumFirestoreSO : BaseFireStore
 {
-    [Header("도감")]
-    [SerializeField] private List<int> _unlockedFishIds = new();
+    [Header("도감")] [SerializeField] private List<int> _unlockedFishIds = new();
 
-    [Header("수조 배치")]
-    [SerializeField] private List<int> _freshwaterPlacedFishIds = new();
+    [Header("수조 배치")] [SerializeField] private List<int> _freshwaterPlacedFishIds = new();
     [SerializeField] private List<int> _saltwaterPlacedFishIds = new();
 
-    [Header("수조 자연 요소 배치 - 상세 데이터")]
-    [SerializeField] private List<NyangQuariumPlacedNatureData> _freshwaterPlacedNatureData = new();
+    [Header("수조 자연 요소 배치 - 상세 데이터")] [SerializeField]
+    private List<NyangQuariumPlacedNatureData> _freshwaterPlacedNatureData = new();
+
     [SerializeField] private List<NyangQuariumPlacedNatureData> _saltwaterPlacedNatureData = new();
 
+    [Header("Aquarium Level")] [SerializeField]
+    private int _aquariumLevel = 1;
 
-    [Header("스토리")]
-    [SerializeField] private List<int> _readStoryIds = new();
+    [SerializeField] private int _aquariumExp;
+
+
+    [Header("스토리")] [SerializeField] private List<int> _readStoryIds = new();
 
     private readonly HashSet<int> _unlockedFishIdSet = new();
 
@@ -30,13 +34,27 @@ public class NyangQuariumFirestoreSO : BaseFireStore
     public IReadOnlyList<int> SaltwaterPlacedFishIds => _saltwaterPlacedFishIds;
     public IReadOnlyList<NyangQuariumPlacedNatureData> FreshwaterPlacedNatureData => _freshwaterPlacedNatureData;
     public IReadOnlyList<NyangQuariumPlacedNatureData> SaltwaterPlacedNatureData => _saltwaterPlacedNatureData;
+    public int AquariumLevel => _aquariumLevel;
+    public int AquariumExp => _aquariumExp;
+
+    public event Action AquariumProgressChanged;
 
     private void OnEnable()
     {
+        NormalizeAquariumLevel();
         RebuildCache();
         NormalizePlacedFishLists();
         NormalizePlacedNatureList();
+        NotifyAquariumProgressChanged();
     }
+
+#if UNITY_EDITOR
+    private void OnValidate()
+    {
+        NormalizeAquariumLevel();
+        NotifyAquariumProgressChanged();
+    }
+#endif
 
     public static async Task<NyangQuariumFirestoreSO> WaitForReadyAsync(int timeoutMs = 5000)
     {
@@ -78,14 +96,21 @@ public class NyangQuariumFirestoreSO : BaseFireStore
         InitDataBase(database, userId);
         ResetToDefault();
         await SetDataAsync(ToFirestoreDictionary());
+        NotifyAquariumProgressChanged();
     }
 
     public override void ApplyFromSnapshot(DocumentSnapshot snapshot)
     {
+        bool hasSnapshot = snapshot != null && snapshot.Exists;
+
         base.ApplyFromSnapshot(snapshot);
+        NormalizeAquariumLevel();
         RebuildCache();
         NormalizePlacedFishLists();
         NormalizePlacedNatureList();
+
+        if (hasSnapshot)
+            NotifyAquariumProgressChanged();
     }
 
     public async Task<bool> LoadOrCreateFromServerAsync()
@@ -99,7 +124,61 @@ public class NyangQuariumFirestoreSO : BaseFireStore
 
         ResetToDefault();
         await SetDataAsync(ToFirestoreDictionary());
+        NotifyAquariumProgressChanged();
         return true;
+    }
+
+    public async Task<bool> AddAquariumExpAsync(
+        int expAmount,
+        NyangQuariumAquariumLevelSO aquariumLevelSO = null)
+    {
+        if (expAmount <= 0)
+            return false;
+
+        if (!TryEnsureDatabaseReady())
+        {
+            DebugTool.Warning("[NyangQuariumFirestoreSO] Firestore가 준비되지 않아 수조 경험치 저장을 생략했습니다.", DebugType.Data, this);
+            return false;
+        }
+
+        NormalizeAquariumLevel();
+        _aquariumExp += expAmount;
+        ApplyAquariumLevelUps(aquariumLevelSO);
+        NotifyAquariumProgressChanged();
+
+        await SetDataAsync(ToFirestoreDictionary());
+        return true;
+    }
+
+    public bool TryGetCurrentAquariumLevelData(
+        NyangQuariumAquariumLevelSO aquariumLevelSO,
+        out NyangQuariumAquariumLevelData levelData)
+    {
+        levelData = null;
+
+        if (aquariumLevelSO == null)
+            return false;
+
+        NormalizeAquariumLevel();
+        return aquariumLevelSO.TryGetByLevel(_aquariumLevel, out levelData);
+    }
+
+    public bool TryGetCurrentMaxPlaceableCount(
+        NyangQuariumAquariumLevelSO aquariumLevelSO,
+        out int maxPlaceableFish,
+        out int maxPlaceableEnvironment)
+    {
+        maxPlaceableFish = 0;
+        maxPlaceableEnvironment = 0;
+
+        if (aquariumLevelSO == null)
+            return false;
+
+        NormalizeAquariumLevel();
+        return aquariumLevelSO.TryGetMaxPlaceableCount(
+            _aquariumLevel,
+            out maxPlaceableFish,
+            out maxPlaceableEnvironment);
     }
 
     public bool IsUnlocked(int fishId)
@@ -452,7 +531,7 @@ public class NyangQuariumFirestoreSO : BaseFireStore
 
         if (!TryEnsureDatabaseReady())
         {
-            DebugTool.Warning("[NyangQuariumFirestoreSO] Firestore가 준비되지 않아 스토리 읽음 저장을 생략합니다.", DebugType.Data, this);
+            DebugTool.Warning("[NyangQuariumFirestoreSO] Firestore가 없습니다.", DebugType.Data, this);
             return;
         }
 
@@ -475,6 +554,8 @@ public class NyangQuariumFirestoreSO : BaseFireStore
         _readStoryIds ??= new List<int>();
         _readStoryIds.Clear();
 
+        _aquariumLevel = 1;
+        _aquariumExp = 0;
 
         _freshwaterPlacedNatureData ??= new List<NyangQuariumPlacedNatureData>();
         _freshwaterPlacedNatureData.Clear();
@@ -510,11 +591,41 @@ public class NyangQuariumFirestoreSO : BaseFireStore
         }
     }
 
+    private void ApplyAquariumLevelUps(NyangQuariumAquariumLevelSO aquariumLevelSO)
+    {
+        if (aquariumLevelSO == null)
+            return;
+
+        while (aquariumLevelSO.TryGetByLevel(_aquariumLevel, out NyangQuariumAquariumLevelData levelData))
+        {
+            if (levelData.RequiredExp <= 0 || _aquariumExp < levelData.RequiredExp)
+                break;
+
+            _aquariumExp -= levelData.RequiredExp;
+            _aquariumLevel++;
+        }
+    }
+
+    private void NormalizeAquariumLevel()
+    {
+        if (_aquariumLevel <= 0)
+            _aquariumLevel = 1;
+
+        if (_aquariumExp < 0)
+            _aquariumExp = 0;
+    }
+
+    private void NotifyAquariumProgressChanged()
+    {
+        AquariumProgressChanged?.Invoke();
+    }
+
     private void NormalizePlacedFishLists()
     {
         NormalizePlacedFishList(ref _freshwaterPlacedFishIds);
         NormalizePlacedFishList(ref _saltwaterPlacedFishIds);
     }
+
     private void NormalizePlacedNatureList()
     {
         NormalizePlacedNatureDataList(ref _freshwaterPlacedNatureData);

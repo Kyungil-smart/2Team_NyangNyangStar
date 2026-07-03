@@ -88,6 +88,16 @@ namespace Data.Loader
         [SerializeField] private SheetData nyangQuariumFishURL;
         [SerializeField] private NyangQuariumFishSO nyangQuariumFishSo;
 
+        [Space(8)]
+        [Header("냥쿠아리움 경험치")]
+        [SerializeField] private SheetData nyangQuariumExpItemURL;
+        [SerializeField] private NyangQuariumExpItemSO nyangQuariumExpItemSo;
+
+        [Space(8)]
+        [Header("냥쿠아리움 수조 레벨")]
+        [SerializeField] private SheetData nyangQuariumAquariumLevelURL;
+        [SerializeField] private NyangQuariumAquariumLevelSO nyangQuariumAquariumLevelSo;
+
         [Space(8)][SerializeField] private int _pendingSheetCount;
         public int PendingSheetCount => _pendingSheetCount;
 
@@ -139,6 +149,18 @@ namespace Data.Loader
             return fishSO != null;
         }
 
+        public bool TryGetNyangQuariumExpItemSO(out NyangQuariumExpItemSO expItemSO)
+        {
+            expItemSO = nyangQuariumExpItemSo;
+            return expItemSO != null;
+        }
+
+        public bool TryGetNyangQuariumAquariumLevelSO(out NyangQuariumAquariumLevelSO aquariumLevelSO)
+        {
+            aquariumLevelSO = nyangQuariumAquariumLevelSo;
+            return aquariumLevelSO != null;
+        }
+
         public event Action<float, string> OnSheetLoadProgressChanged;
 
         private int _totalLoadStepCount;
@@ -162,7 +184,7 @@ namespace Data.Loader
             StopAllCoroutines();
             _pendingSheetCount = 0;
             _completedLoadStepCount = 0;
-            _totalLoadStepCount = Mathf.Max(1, (keyCotainerURL?.Count ?? 0) + 13);
+            _totalLoadStepCount = Mathf.Max(1, (keyCotainerURL?.Count ?? 0) + 15);
 
             ReportSheetProgress("시트 로드 시작");
 
@@ -191,7 +213,7 @@ namespace Data.Loader
 
         private void LoadContentSheets()
         {
-            _pendingSheetCount = 13;
+            _pendingSheetCount = 15;
 
             LoadSheetData(scratchingURL, scratchingSo, 1, () =>
             {
@@ -288,6 +310,20 @@ namespace Data.Loader
                 nyangQuariumFishSo.PrintData();
                 NyangQuariumFishSpriteCache.BeginPreload(this, nyangQuariumFishSo);
                 OnSheetCompleted("냥쿠아리움 물고기 시트 로드 완료");
+            });
+
+            LoadSheetData(nyangQuariumExpItemURL, nyangQuariumExpItemSo, 1, () =>
+            {
+                OnSheetCompleted("냥쿠아리움 경험치 시트 로드 완료");
+                nyangQuariumExpItemSo?.SortData();
+                nyangQuariumExpItemSo?.PrintData();
+            });
+
+            LoadSheetData(nyangQuariumAquariumLevelURL, nyangQuariumAquariumLevelSo, 1, () =>
+            {
+                OnSheetCompleted("냥쿠아리움 수조 레벨 시트 로드 완료");
+                nyangQuariumAquariumLevelSo?.SortData();
+                nyangQuariumAquariumLevelSo?.PrintData();
             });
         }
 
@@ -636,6 +672,8 @@ namespace Data.Loader
             nyangQuariumQuestStringSo?.ClearData();
             nyangQuariumGeneratorSo?.ClearData();
             nyangQuariumFishSo?.ClearData();
+            nyangQuariumExpItemSo?.ClearData();
+            nyangQuariumAquariumLevelSo?.ClearData();
             NyangQuariumFishSpriteCache.Clear();
 
             _keyContainerDict.Clear();
