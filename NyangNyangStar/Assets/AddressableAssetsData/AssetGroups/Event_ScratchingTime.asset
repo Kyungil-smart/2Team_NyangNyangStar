@@ -17,31 +17,13 @@ MonoBehaviour:
     m_SerializedData: []
   m_GUID: 80e072f4a0298ee4285200d25d280eed
   m_SerializeEntries:
-  - m_GUID: 066da3c1d4a9eb145bf1daaf9c1c6cc6
-    m_Address: ST_Effect_Normal
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - Sprite
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 08fbf7630aaf60045a5d8b402b4b34d1
     m_Address: ScratchingTimeScreen
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 1c95adba8d51b0a46a70f242eac8d919
-    m_Address: ST_Effect_Critical
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - Sprite
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 3994982f0efb9d842a173fac28e6ca85
     m_Address: ST_BG_Cloud_Face
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - Sprite
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 3ea861654b96554449ff4b44fe4f01c2
-    m_Address: ST_Boss_Day
     m_ReadOnly: 0
     m_SerializedLabels:
     - Sprite
@@ -66,12 +48,6 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: bdef56c579292274da6ba750706d9f5d
     m_Address: ST_Highlight_Straight
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - Sprite
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: bebacb41e8112564c8a25752eebb9f47
-    m_Address: ST_Boss_Week
     m_ReadOnly: 0
     m_SerializedLabels:
     - Sprite
