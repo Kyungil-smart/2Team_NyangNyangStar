@@ -4879,7 +4879,7 @@ MonoBehaviour:
   _periodText: {fileID: 2887150432461245836}
   _periodTextColorHex: 7A3A2E
   _eventCoin: 0
-  _searchChance: 10
+  _searchChance: 2
   _energySpendProgress: 0
   _currentWeek: 1
   _completedMissionMock: 0
