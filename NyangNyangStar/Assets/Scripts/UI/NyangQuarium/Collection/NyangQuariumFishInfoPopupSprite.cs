@@ -32,6 +32,8 @@ public class NyangQuariumFishInfoPopupSprite : UIBase
         SetSprite(NyangQuariumFishInfoPopupImages.CloseButton, "Btn_Close");
         SetSprite(NyangQuariumFishInfoPopupImages.FishBackground, "NQ_BG_Info");
         SetSprite(NyangQuariumFishInfoPopupImages.InfoBackground, "Shape_Square", _infoBackgroundColor);
+        SetSprite(NyangQuariumFishInfoPopupImages.PreviousButton, "Main_Btn_Mergeboard");
+        SetSprite(NyangQuariumFishInfoPopupImages.NextButton, "Main_Btn_Mergeboard");
     }
 
     private void SetSprite(NyangQuariumFishInfoPopupImages image, string key)
@@ -45,9 +47,9 @@ public class NyangQuariumFishInfoPopupSprite : UIBase
         _spriteController[(int)image].ChangeSprite(key);
     }
 
-    public void SetFishImage(string key)
+    public void SetFishImage(string key, bool isUnlocked)
     {
-        SetSprite(NyangQuariumFishInfoPopupImages.FishImage, key);
+        SetSprite(NyangQuariumFishInfoPopupImages.FishImage, key, isUnlocked ? Color.white : Color.black);
     }
 
     private void OnDestroy()
@@ -68,5 +70,7 @@ public enum NyangQuariumFishInfoPopupImages
     CloseButton,
     FishBackground,
     FishImage,
-    InfoBackground
+    InfoBackground,
+    PreviousButton,
+    NextButton
 }

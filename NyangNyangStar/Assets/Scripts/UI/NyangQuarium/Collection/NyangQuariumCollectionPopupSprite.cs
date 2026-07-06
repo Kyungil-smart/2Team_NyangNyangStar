@@ -17,7 +17,6 @@ public class NyangQuariumCollectionPopupSprite : UIBase
     [Tooltip("비활성화탭")][SerializeField] private Color _tabButtonColor;
     [Tooltip("게이지 배경")][SerializeField] private Color _progressBackgroundColor;
     [Tooltip("게이지 채움")][SerializeField] private Color _progressFillColor;
-    [Tooltip("게이지 채움")][SerializeField] private Color _lockedPopupColor;
 
 
     private UISpriteController[] _spriteController;
@@ -52,7 +51,6 @@ public class NyangQuariumCollectionPopupSprite : UIBase
         SetSprite(NyangQuariumCollectionPopupImages.TabPanel, RectangleKey, _tabPanelColor);
         SetSprite(NyangQuariumCollectionPopupImages.ProgressBackground, SquareKey, _progressBackgroundColor);
         SetSprite(NyangQuariumCollectionPopupImages.ProgressFill, SquareKey, _progressFillColor);
-        SetSprite(NyangQuariumCollectionPopupImages.LockedPopup, RectangleKey, _lockedPopupColor);
     }
 
     private void SetSprite(NyangQuariumCollectionPopupImages image, string key)
@@ -92,11 +90,6 @@ public class NyangQuariumCollectionPopupSprite : UIBase
         _progressFill.fillAmount = Mathf.Clamp01(progress);
     }
 
-    public void SetLockedFishImage(string key)
-    {
-        SetSprite(NyangQuariumCollectionPopupImages.LockedFishImage, key, Color.black);
-    }
-
     private void OnDestroy()
     {
         if (_spriteController == null) return;
@@ -121,6 +114,4 @@ public enum NyangQuariumCollectionPopupImages
     TabPanel,
     ProgressBackground,
     ProgressFill,
-    LockedPopup,
-    LockedFishImage
 }

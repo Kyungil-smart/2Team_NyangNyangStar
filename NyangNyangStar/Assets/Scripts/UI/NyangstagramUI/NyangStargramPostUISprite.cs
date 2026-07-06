@@ -56,7 +56,7 @@ public class NyangStargramPostUISprite : UIBase
         DebugTool.Log($"좋아요 아이콘 변경: {spriteKey}", DebugType.UI, this);
     }
 
-    public async void SetPhoto(Sprite sprite)
+    public void SetPhoto(Sprite sprite)
     {
         if (sprite == null) return;
 

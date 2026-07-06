@@ -29,7 +29,7 @@ public class NyangStargramAddPostUI : UIPopup
     [SerializeField] private TMP_Text _noImageText;
 
     [Header("앨범 슬롯")]
-    [SerializeField] private Transform _albumContent;
+    [SerializeField] private RectTransform _albumContent;
     [SerializeField] private NyangStargramAlbumSlotUI _albumSlotPrefab;
 
     private readonly Dictionary<string, NyangStargramAlbumSlotUI> _albumSlotDic = new();
@@ -52,7 +52,7 @@ public class NyangStargramAddPostUI : UIPopup
 
         _albumDropdown = UIBase.FindChild<TMP_Dropdown>(gameObject, "Dropdown", true);
         _newPostImage = UIBase.FindChild<Image>(gameObject, "New Post Image", true);
-        _albumContent = UIBase.FindChild<Transform>(gameObject, "AlbumContent", true);
+        _albumContent = UIBase.FindChild<RectTransform>(gameObject, "AlbumContent", true);
         _noImageText = UIBase.FindChild<TMP_Text>(gameObject, "NoImageText", true);
 
         RefreshAlbumGridCellSize();
@@ -68,12 +68,12 @@ public class NyangStargramAddPostUI : UIPopup
 
     private void RefreshAlbumGridCellSize()
     {
-        RectTransform contentRect = _albumContent as RectTransform;
         GridLayoutGroup grid = _albumContent.GetComponent<GridLayoutGroup>();
 
-        if (contentRect == null || grid == null) return;
+        if (grid == null) return;
 
-        float contentWidth = contentRect.rect.width;
+        float contentWidth = _albumContent.rect.width;
+
         float padding = grid.padding.left + grid.padding.right;
         float spacing = grid.spacing.x * (AlbumColumnCount - 1);
 
