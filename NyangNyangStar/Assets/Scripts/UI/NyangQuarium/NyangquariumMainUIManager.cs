@@ -71,6 +71,13 @@ namespace UI.NyangQuarium
         [SerializeField] private Button _oceanAquariumButton;
         [SerializeField] private Button _aquariumSelectBackButton;
 
+        [Header("수조 선택 버튼 잠금")]
+        [SerializeField] private GameObject _oceanLockIcon;
+        [SerializeField] private TMP_Text _oceanLockMessageText;
+        [SerializeField] private int _oceanUnlockLevel = 5;
+        [SerializeField] private string _oceanLockedMessage = "수조 레벨 5 이상에서 해수 수조를 열 수 있습니다.";
+        [SerializeField, Range(0f, 1f)] private float _lockedButtonAlpha = 0.5f;
+
         [Header("기본 화면 Addressables 스프라이트")]
         [FormerlySerializedAs("_tankImage")]
         [SerializeField] private Image _backgroundImage;
@@ -84,6 +91,7 @@ namespace UI.NyangQuarium
         [SerializeField] private string _backSpriteKey = "NQ_Btn_Back";
         [SerializeField] private string _freshAquariumSpriteKey = FreshAquariumButtonSpriteKey;
         [SerializeField] private string _oceanAquariumSpriteKey = OceanAquariumButtonSpriteKey;
+        [SerializeField] private string _lockIconSpriteKey = "NQ_Icon_Lock";
 
         [Header("수조 레벨 방울")]
         [SerializeField] private NyangQuariumLevelBubbleUI levelBubbleUI;
@@ -113,6 +121,7 @@ namespace UI.NyangQuarium
         private UISpriteController _freshAquariumSprite;
         private UISpriteController _oceanAquariumSprite;
         private UISpriteController _aquariumSelectBackSprite;
+        private UISpriteController _oceanLockIconSprite;
         private readonly List<GameObject> _ownedContents = new();
         private readonly HashSet<UIPopup> _initializedChildPopups = new();
         private NyangQuariumFirestoreSO _nyangquariumFirestoreSO;
@@ -340,6 +349,10 @@ namespace UI.NyangQuarium
             _tankLevelExpRatio = Mathf.Clamp01(expRatio);
             EnsureTankLevelBubbleUI();
             levelBubbleUI?.SetLevelProgress(_tankLevel, _tankLevelExpRatio);
+
+            ApplyOceanAquariumLockState();
+
+            DebugTool.Log($"[NyangquariumMainUIManager] 수조 레벨: {_tankLevel}, 경험치 비율: {_tankLevelExpRatio:P1}", DebugType.UI, this);
         }
 
         public void OpenBoard()
@@ -424,6 +437,7 @@ namespace UI.NyangQuarium
             InitializeChildContent(_aquariumSelectRoot);
             NotifyEntryMode(_aquariumSelectRoot, entryMode);
             ApplyAquariumSelectStyle();
+            ApplyOceanAquariumLockState();
             ShowChildContentImmediately(_aquariumSelectRoot);
             RefreshButtonStates();
         }
@@ -442,7 +456,17 @@ namespace UI.NyangQuarium
             => OpenChildContent(_freshAquariumContent, _pendingAquariumEntryMode);
 
         public void OpenOceanAquarium()
-            => OpenChildContent(_oceanAquariumContent, _pendingAquariumEntryMode);
+        {
+            if (!IsOceanAquariumUnlocked())
+            {
+                PlayClickSfx();
+                ShowOceanLockedMessage();
+
+                return;
+            }
+
+            OpenChildContent(_oceanAquariumContent, _pendingAquariumEntryMode);
+        }
 
         private void OpenChildContent(GameObject content, NyangquariumEntryMode entryMode)
         {
@@ -927,6 +951,12 @@ namespace UI.NyangQuarium
             _freshAquariumSprite = BindSprite(_freshAquariumButton, _freshAquariumSpriteKey);
             _oceanAquariumSprite = BindSprite(_oceanAquariumButton, _oceanAquariumSpriteKey);
             _aquariumSelectBackSprite = BindSprite(_aquariumSelectBackButton, _backSpriteKey);
+
+            Image lockIconImage = _oceanLockIcon != null
+                ? _oceanLockIcon.GetComponent<Image>()
+                : null;
+
+            _oceanLockIconSprite = BindSprite(lockIconImage, _lockIconSpriteKey, true);
         }
 
         private void ApplyAquariumSelectStyle()
@@ -1074,6 +1104,7 @@ namespace UI.NyangQuarium
             RegisterSpriteKeyIfMissing(_backSpriteKey);
             RegisterSpriteKeyIfMissing(_freshAquariumSpriteKey);
             RegisterSpriteKeyIfMissing(_oceanAquariumSpriteKey);
+            RegisterSpriteKeyIfMissing(_lockIconSpriteKey);
             RegisterSpriteKeyIfMissing(_tankLevelBubbleSpriteKey);
             RegisterSpriteKeyIfMissing(_tankLevelTurtleSpriteKey);
             RegisterSpriteKeyIfMissing(CollectionButtonSpriteKey);
@@ -1183,8 +1214,12 @@ namespace UI.NyangQuarium
             RefreshRouteButton(_collectionButton, _collectionContent);
             RefreshRouteButton(_layoutButton, _aquariumSelectRoot);
             RefreshRouteButton(_freshAquariumButton, _freshAquariumContent);
+
+            // Lv.5 미만이어도 버튼 클릭은 가능해야 안내 문구를 보여줄 수 있음.
             RefreshRouteButton(_oceanAquariumButton, _oceanAquariumContent);
+
             SetInteractable(_aquariumSelectBackButton, !_isTransitioning);
+            ApplyOceanAquariumLockState();
         }
 
         private void SetButtonsInteractable(bool interactable)
@@ -1205,7 +1240,60 @@ namespace UI.NyangQuarium
 
             button.interactable = !_isTransitioning && targetContent != null;
         }
+        private bool IsOceanAquariumUnlocked()
+        {
+            return _tankLevel >= _oceanUnlockLevel;
+        }
 
+        private void ApplyOceanAquariumLockState()
+        {
+            bool isUnlocked = IsOceanAquariumUnlocked();
+
+            if (_oceanLockIcon != null)
+                _oceanLockIcon.SetActive(!isUnlocked);
+
+            if (_oceanLockMessageText != null)
+                _oceanLockMessageText.gameObject.SetActive(false);
+
+            Image oceanButtonImage = _oceanAquariumButton != null
+                ? _oceanAquariumButton.targetGraphic as Image
+                : null;
+
+            if (oceanButtonImage != null)
+            {
+                float alpha = isUnlocked ? 1f : _lockedButtonAlpha;
+                oceanButtonImage.color = new Color(1f, 1f, 1f, alpha);
+            }
+        }
+
+        private void ShowOceanLockedMessage()
+        {
+            if (_oceanLockMessageText == null)
+            {
+                DebugTool.Warning(
+                    "[NyangquariumMainUIManager] _oceanLockMessageText가 연결되지 않아 해수 잠금 안내 문구를 표시할 수 없습니다.",
+                    DebugType.UI,
+                    this);
+
+                return;
+            }
+
+            _oceanLockMessageText.text = _oceanLockedMessage;
+            _oceanLockMessageText.gameObject.SetActive(true);
+
+            _oceanLockMessageText.DOKill();
+            _oceanLockMessageText.alpha = 1f;
+
+            _oceanLockMessageText
+                .DOFade(0f, 1.2f)
+                .SetDelay(1.2f)
+                .SetUpdate(true)
+                .OnComplete(() =>
+                {
+                    if (_oceanLockMessageText != null)
+                        _oceanLockMessageText.gameObject.SetActive(false);
+                });
+        }
         private static void SetInteractable(Button button, bool interactable)
         {
             if (button != null)
@@ -1243,6 +1331,7 @@ namespace UI.NyangQuarium
             _freshAquariumSprite?.Dispose();
             _oceanAquariumSprite?.Dispose();
             _aquariumSelectBackSprite?.Dispose();
+            _oceanLockIconSprite?.Dispose();
 
             _backgroundSprite = null;
             _titleLogoSprite = null;
@@ -1253,6 +1342,7 @@ namespace UI.NyangQuarium
             _freshAquariumSprite = null;
             _oceanAquariumSprite = null;
             _aquariumSelectBackSprite = null;
+            _oceanLockIconSprite = null;
         }
 
         private void OnDestroy()
