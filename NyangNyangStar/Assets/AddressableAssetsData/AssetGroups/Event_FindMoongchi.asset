@@ -108,7 +108,7 @@ MonoBehaviour:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 826aad36096914d4386c60412830930b
-    m_Address: FM_BG_GameBoard
+    m_Address: FM_Btn_Back
     m_ReadOnly: 0
     m_SerializedLabels:
     - Sprite
