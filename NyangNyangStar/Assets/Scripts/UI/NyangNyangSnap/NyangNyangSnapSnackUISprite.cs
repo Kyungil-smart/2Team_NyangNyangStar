@@ -29,7 +29,6 @@ public class NyangNyangSnapSnackUISprite : UIBase
     {
         SetSprite(NyangNyangSnapSnackUIImage.ScrollView, "Snap_Panel_ToolList");
         SetSprite(NyangNyangSnapSnackUIImage.CloseButton, "Btn_Close", new Color32(0,0,0,255));
-        SetSprite(NyangNyangSnapSnackUIImage.SnackButton, "Shape_Rectangle");
 
     }
 
@@ -56,8 +55,7 @@ public class NyangNyangSnapSnackUISprite : UIBase
     public enum NyangNyangSnapSnackUIImage
     {
         ScrollView,
-        CloseButton,
-        SnackButton
+        CloseButton
     }
 }
 

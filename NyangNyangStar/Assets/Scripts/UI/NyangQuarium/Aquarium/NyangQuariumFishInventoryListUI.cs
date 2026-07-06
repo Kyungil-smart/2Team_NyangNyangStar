@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using TMPro;
 using UI.NyangQuarium.MergeBoard;
 using UnityEngine;
@@ -12,12 +11,10 @@ using UnityEngine.UI;
 /// </summary>
 public sealed class NyangQuariumFishInventoryListUI : MonoBehaviour
 {
-    [SerializeField]
-    private string EmptyFishMessage =
-        "배치할 수 있는 관상어가 없습니다.";
+    private const string EmptyFishMessage =
+        "배치할 수 있는 관성어가 없습니다.";
 
-    [SerializeField]
-    private string EmptyNatureMessage =
+    private const string EmptyNatureMessage =
         "배치할 수 있는 자연요소가 없습니다.";
 
     [Header("현재 수조")]
@@ -88,9 +85,6 @@ public sealed class NyangQuariumFishInventoryListUI : MonoBehaviour
     private NyangQuariumFishInventoryItem _selectedItem;
     private bool _isChangingToggleState;
 
-    private bool _isRefreshingFromFirestore;
-    private int _refreshRequestId;
-
     public NyangQuariumPlacementCategory CurrentCategory =>
         _currentCategory;
 
@@ -110,17 +104,15 @@ public sealed class NyangQuariumFishInventoryListUI : MonoBehaviour
     private void OnEnable()
     {
         NyangQuariumMergeBoardInventoryService.InventoryChanged +=
-            HandleMergeBoardInventoryChanged;
+            Refresh;
 
-        _ = RefreshFromFirestoreAndRebuildAsync();
+        Refresh();
     }
 
     private void OnDisable()
     {
-        _refreshRequestId++;
-
         NyangQuariumMergeBoardInventoryService.InventoryChanged -=
-            HandleMergeBoardInventoryChanged;
+            Refresh;
 
         ClearInventorySelection();
     }
@@ -213,75 +205,6 @@ public sealed class NyangQuariumFishInventoryListUI : MonoBehaviour
                 ShowCurrentCategoryEmptyMessage();
                 break;
         }
-    }
-    /// <summary>
-    /// 배치 패널이 열릴 때 Firestore의 냥쿠아리움 머지보드 데이터를 다시 읽고,
-    /// 로드 완료 후 인벤토리 버튼과 Sprite를 다시 생성합니다.
-    /// </summary>
-    public async Task RefreshFromFirestoreAndRebuildAsync()
-    {
-        int requestId = ++_refreshRequestId;
-
-        _isRefreshingFromFirestore = true;
-
-        ClearCreatedItems();
-        SetEmptyMessageActive(false);
-
-        try
-        {
-            bool isRefreshed =
-                await NyangQuariumMergeBoardInventoryService
-                    .RefreshFromFirestoreAsync();
-
-            if (requestId != _refreshRequestId ||
-                !isActiveAndEnabled)
-            {
-                return;
-            }
-
-            if (!isRefreshed)
-            {
-                DebugTool.Warning(
-                    "[NyangQuariumFishInventoryListUI] " +
-                    "Firestore 최신화에 실패했습니다. 현재 캐시 또는 머지보드 상태로 목록을 갱신합니다.",
-                    DebugType.UI,
-                    this);
-            }
-
-            Refresh();
-
-            DebugTool.Log(
-                "[NyangQuariumFishInventoryListUI] " +
-                "배치 패널 진입 시 머지보드 최신 데이터로 인벤토리를 갱신했습니다.",
-                DebugType.UI,
-                this);
-        }
-        catch (Exception exception)
-        {
-            Debug.LogError(
-                $"[NyangQuariumFishInventoryListUI] 인벤토리 Firestore 갱신 중 오류: {exception.Message}");
-
-            if (requestId == _refreshRequestId &&
-                isActiveAndEnabled)
-            {
-                Refresh();
-            }
-        }
-        finally
-        {
-            if (requestId == _refreshRequestId)
-                _isRefreshingFromFirestore = false;
-        }
-    }
-
-    private void HandleMergeBoardInventoryChanged()
-    {
-        if (_isRefreshingFromFirestore)
-            return;
-
-        // 머지보드에서 아이템을 생성/삭제하면 런타임 보드 데이터가 아니라
-        // Firestore의 NyangQuariumMergeBoard 슬롯을 다시 읽어서 버튼/Sprite를 재생성합니다.
-        _ = RefreshFromFirestoreAndRebuildAsync();
     }
 
     private void RefreshFishItems()

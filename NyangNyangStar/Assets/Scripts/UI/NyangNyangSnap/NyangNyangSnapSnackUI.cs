@@ -423,56 +423,20 @@ public class NyangNyangSnapSnackUI : UIPopup
         _createdButtons.Add(createdButton);
     }
 
-    private Image GetSnackItemImage(Button button)
-    {
-        if (button == null)
-            return null;
-
-        Transform imageTransform = button.transform.Find("SnackImage");
-
-        if (imageTransform == null)
-        {
-            DebugTool.Warning(
-                "[NyangNyangSnapSnackUI] SnackButton 자식에서 SnackImage를 찾지 못했습니다.",
-                DebugType.UI,
-                this
-            );
-
-            return null;
-        }
-
-        Image itemImage = imageTransform.GetComponent<Image>();
-
-        if (itemImage == null)
-        {
-            DebugTool.Warning(
-                "[NyangNyangSnapSnackUI] SnackImage에 Image 컴포넌트가 없습니다.",
-                DebugType.UI,
-                this
-            );
-
-            return null;
-        }
-
-        return itemImage;
-    }
-
     private void SetButtonSprite(Button createdButton, NyangNyangSnapInventoryItem item)
     {
-        Image itemImage = GetSnackItemImage(createdButton);
+        Image itemImage = createdButton.GetComponent<Image>();
 
         if (itemImage == null)
         {
             DebugTool.Warning(
-                $"[NyangNyangSnapSnackUI] 생성된 버튼의 SnackImage를 찾지 못했습니다. ItemID:{item.ItemID}",
+                $"[NyangNyangSnapSnackUI] 생성된 버튼에 Image가 없습니다. ItemID:{item.ItemID}",
                 DebugType.UI,
                 this
             );
 
             return;
         }
-
-        itemImage.preserveAspect = true;
 
         UISpriteController spriteController = new UISpriteController(itemImage);
 
@@ -583,7 +547,7 @@ public class NyangNyangSnapSnackUI : UIPopup
         if (_selectedButton == selectedButton && _selectedItemID == item.ItemID)
             return;
 
-        Image itemImage = GetSnackItemImage(selectedButton);
+        Image itemImage = selectedButton.GetComponent<Image>();
 
         if (itemImage == null || itemImage.sprite == null)
         {
