@@ -35,7 +35,7 @@ public class NyangStargramPostSlotSprite : UIBase
         _spriteController[(int)image].ChangeSprite(key);
     }
 
-    public async void SetPhoto(Sprite sprite)
+    public void SetPhoto(Sprite sprite)
     {
         if (sprite == null) return;
 

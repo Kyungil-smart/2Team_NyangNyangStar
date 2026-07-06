@@ -33,7 +33,7 @@ public class NyangstagramMainUI : UIPopup
     [SerializeField] private GameObject _profileView;
 
     [Header("게시물")]
-    [SerializeField] private Transform _postContent;
+    [SerializeField] private RectTransform _postContent;
     [SerializeField] private NyangStargramPostSlotUI _postSlotPrefab;
 
     private readonly Dictionary<string, UIPopup> _cachedPopups = new();
@@ -112,12 +112,11 @@ public class NyangstagramMainUI : UIPopup
 
     private void RefreshPostGridCellSize()
     {
-        RectTransform contentRect = _postContent as RectTransform;
         GridLayoutGroup grid = _postContent.GetComponent<GridLayoutGroup>();
 
-        if (contentRect == null || grid == null) return;
+        if (grid == null) return;
 
-        float contentWidth = contentRect.rect.width;
+        float contentWidth = _postContent.rect.width;
         float padding = grid.padding.left + grid.padding.right;
         float spacing = grid.spacing.x * (PostColumnCount - 1);
 
