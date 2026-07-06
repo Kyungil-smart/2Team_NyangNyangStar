@@ -429,10 +429,9 @@ MonoBehaviour:
   _albumDropdown: {fileID: 3609386969262791865}
   _newPostImage: {fileID: 3171826927304608}
   _newPostColor: {r: 0.30588236, g: 0.21568629, b: 0.35686275, a: 1}
-  _noImageText: {fileID: 0}
+  _runtimePhotoSO: {fileID: 11400000, guid: 3bc242fc7d9eb5f4e8b28801c2d9f037, type: 2}
   _albumContent: {fileID: 4539887315127821709}
   _albumSlotPrefab: {fileID: 5972116444966970632, guid: 8c3d5fb44372d1542bc088402cd49451, type: 3}
-  _postSO: {fileID: 11400000, guid: 8d64698eafa63f8458db278b9066f553, type: 2}
 --- !u!114 &-3628285157971783594
 MonoBehaviour:
   m_ObjectHideFlags: 0

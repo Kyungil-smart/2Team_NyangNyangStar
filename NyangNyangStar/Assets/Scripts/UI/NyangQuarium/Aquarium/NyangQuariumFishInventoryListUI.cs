@@ -11,10 +11,10 @@ using UnityEngine.UI;
 /// </summary>
 public sealed class NyangQuariumFishInventoryListUI : MonoBehaviour
 {
-    [SerializeField]private string EmptyFishMessage =
-        "배치할 수 있는 관상어가 없습니다.";
+    private const string EmptyFishMessage =
+        "배치할 수 있는 관성어가 없습니다.";
 
-    [SerializeField]private string EmptyNatureMessage =
+    private const string EmptyNatureMessage =
         "배치할 수 있는 자연요소가 없습니다.";
 
     [Header("현재 수조")]

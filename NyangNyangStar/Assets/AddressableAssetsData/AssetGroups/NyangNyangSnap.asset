@@ -98,12 +98,6 @@ MonoBehaviour:
     m_SerializedLabels:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 730bd5ef9ea1786439a0b2f388017765
-    m_Address: Snap_Ani_Idle
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - Sprite
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 743a1bd7105bf6e40b45253bdce50de5
     m_Address: Snap_Btn_Blue
     m_ReadOnly: 0
@@ -120,6 +114,12 @@ MonoBehaviour:
     m_Address: NyangNyangSnapSnackCanvas
     m_ReadOnly: 0
     m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 82d68fb5f4a699d4a929bda53fa680ef
+    m_Address: Snap_Ani_Idle
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 845b21341fa3ff34cb6859735c5d54fb
     m_Address: Snap_Ani_Run

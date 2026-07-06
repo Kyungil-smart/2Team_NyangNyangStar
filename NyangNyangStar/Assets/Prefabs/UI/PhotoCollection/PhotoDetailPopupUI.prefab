@@ -1755,7 +1755,7 @@ MonoBehaviour:
   _uploadButton: {fileID: 0}
   _deleteButton: {fileID: 0}
   _photoAlbumSO: {fileID: 11400000, guid: 7684103119f56cb468b94264b4781452, type: 2}
-  _postSO: {fileID: 11400000, guid: 8d64698eafa63f8458db278b9066f553, type: 2}
+  _runtimePhotoSO: {fileID: 11400000, guid: 3bc242fc7d9eb5f4e8b28801c2d9f037, type: 2}
 --- !u!114 &6188141096515385112
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -36,11 +36,6 @@ public class NyangNyangSnapPhotoManager : MonoBehaviour
     {
         _runtimePhotos.RemoveAll(photo => photo.PhotoId == photoId);
     }
-
-    public NyangNyangSnapRuntimePhotoData GetPhoto(string photoId)
-    {
-        return _runtimePhotos.Find(photo => photo.PhotoId == photoId);
-    }
 }
 
 public class NyangNyangSnapRuntimePhotoData

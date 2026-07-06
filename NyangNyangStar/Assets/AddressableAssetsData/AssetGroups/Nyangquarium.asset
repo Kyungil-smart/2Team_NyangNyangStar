@@ -94,6 +94,12 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 396681227a450b4498fb5469e6f6cfd6
+    m_Address: NQ_Btn_Complete
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 39c43f964cfdd014e9f95132b8410472
     m_Address: NQ_Btn_FreshWater
     m_ReadOnly: 0
@@ -201,6 +207,12 @@ MonoBehaviour:
     m_SerializedLabels:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 800b7ad6d9a9fab4a880fb51cd65a6fe
+    m_Address: NQ_Icon_TankLevel
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 83766f51a71cf624c9a0c5aabefee2eb
     m_Address: NQ_Panel_Item
     m_ReadOnly: 0
@@ -213,12 +225,6 @@ MonoBehaviour:
     m_SerializedLabels:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 88b9adb7837e3c04ab995b9c19b5278f
-    m_Address: NQ_Icon_Turtle
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - Sprite
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 88d5859c0745bc049b8f381e07f512cb
     m_Address: NQ_Btn_ScrollTop
     m_ReadOnly: 0
@@ -227,6 +233,12 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 8b49b351f69679647816f387beb8b029
     m_Address: NQ_Marker_normal
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8dc4244d739806347849c970bb49f314
+    m_Address: NQ_BG_Info
     m_ReadOnly: 0
     m_SerializedLabels:
     - Sprite
@@ -244,7 +256,7 @@ MonoBehaviour:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 94a4d54d7335d194d9834c3fc1b7f6ad
-    m_Address: "\uD018\uC2A4\uD2B8\uBCF4\uB4DC"
+    m_Address: NQ_Panel_QuestBoard
     m_ReadOnly: 0
     m_SerializedLabels:
     - Sprite
@@ -338,12 +350,6 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: cfb770a5d0ed17b4893c801b73761d6b
-    m_Address: NQ_Icon_TankLevel
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - Sprite
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: d0048ae021355b146b499309d99ee8ad
     m_Address: NQ_Btn_SaltWater
     m_ReadOnly: 0
@@ -351,7 +357,7 @@ MonoBehaviour:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: e2d9692c76f67c74ea2a0a3a437bb23d
-    m_Address: "\uBA38\uC9C0\uBCF4\uB4DC \uD648 \uBC84\uD2BC"
+    m_Address: NQ_Btn_Home
     m_ReadOnly: 0
     m_SerializedLabels:
     - Sprite

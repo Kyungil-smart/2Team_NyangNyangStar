@@ -119,6 +119,12 @@ MonoBehaviour:
     m_SerializedLabels:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8a2d371e13144bf47870fa2acd5b7b11
+    m_Address: FM_Target_Moongchi
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 8c5d23fb91619ab4ca4162e69ee50bfa
     m_Address: FM_Btn_Help
     m_ReadOnly: 0
@@ -133,12 +139,6 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 8f6ad64cac7b80046b405869dc36cd43
     m_Address: FM_Panel_Mission
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - Sprite
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 935fd1bc30d68cf43a6b3ceb45cf241c
-    m_Address: FM_Target_Moongchi
     m_ReadOnly: 0
     m_SerializedLabels:
     - Sprite

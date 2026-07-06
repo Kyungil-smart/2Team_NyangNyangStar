@@ -20,9 +20,6 @@ public class PhotoDetailPopupUI : UIPopup
     [Header("사진 데이터")]
     [SerializeField] private NyangNyangSnapPhotoAlbumSO _photoAlbumSO;
 
-    [Header("냥스타그램 게시물 SO")]
-    [SerializeField] private NyangStargramPostSO _postSO;
-
     private NyangNyangSnapRuntimePhotoData _photoData;
     private PhotoDetailPopupSprite _sprite;
     private PhotoCollectionPopupUI _photoCollectionPopup;
@@ -127,13 +124,10 @@ public class PhotoDetailPopupUI : UIPopup
 
         try
         {
-            string photoId = _photoData.PhotoId;
-            _photoAlbumSO.RemovePhoto(photoId);
-            NyangNyangSnapPhotoManager.Instance.RemovePhoto(photoId);
-            _postSO.RemovePost(photoId);
+            _photoAlbumSO.RemovePhoto(_photoData.PhotoId);
+            NyangNyangSnapPhotoManager.Instance.RemovePhoto(_photoData.PhotoId);
 
             await _photoAlbumSO.UpdateDataAsync();
-            await _postSO.UpdateDataAsync();
         }
         catch (Exception e)
         {

@@ -1,9 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Data.ScriptableObjects.MergeBoard;
 using Firebase.Firestore;
-using Services.Enums;
 using UI.NyangQuarium;
 using UnityEngine;
 
@@ -32,9 +30,6 @@ public class NyangQuariumFirestoreSO : BaseFireStore
     [SerializeField] private bool _storyMapQuestInitialized;
     [SerializeField] private int _activeStoryMapQuestId;
     [SerializeField] private List<int> _completedStoryMapQuestIds = new();
-    [SerializeField] private bool _mergeQuestBoardInitialized;
-    [SerializeField] private List<int> _activeMergeQuestBoardQuestIds = new();
-    [SerializeField] private List<RewardQueueDoc> _mergeQuestRewardQueue = new();
 
     private readonly HashSet<int> _unlockedFishIdSet = new();
 
@@ -48,8 +43,6 @@ public class NyangQuariumFirestoreSO : BaseFireStore
     public bool StoryMapQuestInitialized => _storyMapQuestInitialized;
     public int ActiveStoryMapQuestId => _activeStoryMapQuestId;
     public IReadOnlyList<int> CompletedStoryMapQuestIds => _completedStoryMapQuestIds;
-    public bool MergeQuestBoardInitialized => _mergeQuestBoardInitialized;
-    public IReadOnlyList<int> ActiveMergeQuestBoardQuestIds => _activeMergeQuestBoardQuestIds;
 
     public event Action AquariumProgressChanged;
 
@@ -60,7 +53,6 @@ public class NyangQuariumFirestoreSO : BaseFireStore
         NormalizePlacedFishLists();
         NormalizePlacedNatureList();
         NormalizeStoryMapQuestState();
-        NormalizeMergeQuestPersistenceState();
         NotifyAquariumProgressChanged();
     }
 
@@ -125,7 +117,6 @@ public class NyangQuariumFirestoreSO : BaseFireStore
         NormalizePlacedFishLists();
         NormalizePlacedNatureList();
         NormalizeStoryMapQuestState();
-        NormalizeMergeQuestPersistenceState();
 
         if (hasSnapshot)
             NotifyAquariumProgressChanged();
@@ -566,41 +557,11 @@ public class NyangQuariumFirestoreSO : BaseFireStore
 
         if (!TryEnsureDatabaseReady())
         {
+            DebugTool.Warning("[NyangQuariumFirestoreSO] Firestore is not ready. Story map quest state save skipped.", DebugType.Data, this);
             return;
         }
 
         await SetDataAsync(ToFirestoreDictionary());
-    }
-
-    public async Task SaveMergeQuestBoardStateAsync(
-        IEnumerable<int> activeQuestIds,
-        bool initialized)
-    {
-        SetMergeQuestBoardState(activeQuestIds, initialized);
-
-        await SaveCurrentDataIfReadyAsync();
-    }
-
-    public IReadOnlyList<ItemData> GetMergeQuestRewardQueueItems()
-    {
-        NormalizeMergeQuestRewardQueue();
-
-        List<ItemData> result = new();
-        for (int i = 0; i < _mergeQuestRewardQueue.Count; i++)
-        {
-            ItemData itemData = ToItemData(_mergeQuestRewardQueue[i]);
-            if (itemData.HasItem)
-                result.Add(itemData);
-        }
-
-        return result;
-    }
-
-    public async Task SaveMergeQuestRewardQueueAsync(IEnumerable<ItemData> rewardQueue)
-    {
-        SetMergeQuestRewardQueue(rewardQueue);
-
-        await SaveCurrentDataIfReadyAsync();
     }
 
     private void SetStoryMapQuestState(
@@ -627,42 +588,6 @@ public class NyangQuariumFirestoreSO : BaseFireStore
         }
     }
 
-    private void SetMergeQuestBoardState(
-        IEnumerable<int> activeQuestIds,
-        bool initialized)
-    {
-        _mergeQuestBoardInitialized = initialized;
-        _activeMergeQuestBoardQuestIds ??= new List<int>();
-        SetPositiveUniqueIds(_activeMergeQuestBoardQuestIds, activeQuestIds);
-    }
-
-    private void SetMergeQuestRewardQueue(IEnumerable<ItemData> rewardQueue)
-    {
-        _mergeQuestRewardQueue ??= new List<RewardQueueDoc>();
-        _mergeQuestRewardQueue.Clear();
-
-        if (rewardQueue == null)
-            return;
-
-        int order = 1;
-        foreach (ItemData itemData in rewardQueue)
-        {
-            if (itemData == null || !itemData.HasItem)
-                continue;
-
-            _mergeQuestRewardQueue.Add(ToRewardQueueDoc(order, itemData));
-            order++;
-        }
-    }
-
-    private async Task SaveCurrentDataIfReadyAsync()
-    {
-        if (!TryEnsureDatabaseReady())
-            return;
-
-        await SetDataAsync(ToFirestoreDictionary());
-    }
-
     private void ResetToDefault()
     {
         _unlockedFishIds ??= new List<int>();
@@ -681,11 +606,6 @@ public class NyangQuariumFirestoreSO : BaseFireStore
         _completedStoryMapQuestIds.Clear();
         _storyMapQuestInitialized = false;
         _activeStoryMapQuestId = 0;
-        _activeMergeQuestBoardQuestIds ??= new List<int>();
-        _activeMergeQuestBoardQuestIds.Clear();
-        _mergeQuestBoardInitialized = false;
-        _mergeQuestRewardQueue ??= new List<RewardQueueDoc>();
-        _mergeQuestRewardQueue.Clear();
 
         _aquariumLevel = 1;
         _aquariumExp = 0;
@@ -761,95 +681,6 @@ public class NyangQuariumFirestoreSO : BaseFireStore
 
             if (questId <= 0 || !seen.Add(questId))
                 _completedStoryMapQuestIds.RemoveAt(i);
-        }
-    }
-
-    private void NormalizeMergeQuestBoardState()
-    {
-        _activeMergeQuestBoardQuestIds ??= new List<int>();
-        NormalizePositiveUniqueIds(_activeMergeQuestBoardQuestIds);
-    }
-
-    private void NormalizeMergeQuestPersistenceState()
-    {
-        NormalizeMergeQuestBoardState();
-        NormalizeMergeQuestRewardQueue();
-    }
-
-    private void NormalizeMergeQuestRewardQueue()
-    {
-        _mergeQuestRewardQueue ??= new List<RewardQueueDoc>();
-        _mergeQuestRewardQueue.Sort((a, b) => a.Order.CompareTo(b.Order));
-
-        for (int i = _mergeQuestRewardQueue.Count - 1; i >= 0; i--)
-        {
-            RewardQueueDoc doc = _mergeQuestRewardQueue[i];
-            if (!doc.HasItem || doc.ItemID <= 0)
-                _mergeQuestRewardQueue.RemoveAt(i);
-        }
-
-        for (int i = 0; i < _mergeQuestRewardQueue.Count; i++)
-        {
-            RewardQueueDoc doc = _mergeQuestRewardQueue[i];
-            doc.Order = i + 1;
-            _mergeQuestRewardQueue[i] = doc;
-        }
-    }
-
-    private static RewardQueueDoc ToRewardQueueDoc(int order, ItemData itemData)
-    {
-        itemData ??= ItemData.Empty;
-        return new RewardQueueDoc
-        {
-            Order = order,
-            HasItem = itemData.HasItem,
-            ItemID = itemData.ItemID,
-            ItemName = itemData.ItemName,
-            ItemLevel = itemData.ItemLevel,
-            ItemType = itemData.ItemType.ToString(),
-            AddressableKey = itemData.AddressableKey
-        };
-    }
-
-    private static ItemData ToItemData(RewardQueueDoc doc)
-    {
-        if (!doc.HasItem)
-            return ItemData.Empty;
-
-        if (!Enum.TryParse(doc.ItemType, true, out ItemType itemType))
-            itemType = ItemType.Common;
-
-        return new ItemData(doc.ItemID, doc.ItemName, doc.ItemLevel, itemType, doc.AddressableKey);
-    }
-
-    private static void SetPositiveUniqueIds(List<int> targetList, IEnumerable<int> sourceIds)
-    {
-        targetList.Clear();
-
-        if (sourceIds == null)
-            return;
-
-        HashSet<int> seen = new();
-
-        foreach (int id in sourceIds)
-        {
-            if (id <= 0 || !seen.Add(id))
-                continue;
-
-            targetList.Add(id);
-        }
-    }
-
-    private static void NormalizePositiveUniqueIds(List<int> ids)
-    {
-        HashSet<int> seen = new();
-
-        for (int i = ids.Count - 1; i >= 0; i--)
-        {
-            int id = ids[i];
-
-            if (id <= 0 || !seen.Add(id))
-                ids.RemoveAt(i);
         }
     }
 

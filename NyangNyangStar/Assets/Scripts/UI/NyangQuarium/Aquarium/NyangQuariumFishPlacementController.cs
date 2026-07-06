@@ -1,9 +1,7 @@
 using Core.Managers;
-using DG.Tweening;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using TMPro;
 using UI.NyangQuarium;
 using UI.NyangQuarium.MergeBoard;
 using UI.NyangQuarium.Quest;
@@ -82,12 +80,6 @@ public sealed class NyangQuariumFishPlacementController : MonoBehaviour
     [SerializeField]
     private GameObject _naturePlacementAreaBorder;
 
-    [Header("배치 제한 문구")]
-    [SerializeField] private TMP_Text _placementLimitMessageText;
-    [SerializeField] string _placementLimitMessage = "배치 제한 수에 도달했습니다..";
-    [SerializeField] private float _placementLimitVisibleSeconds = 2f;
-    [SerializeField] private float _placementLimitFadeSeconds = 0.5f;
-
     [Header("배치 모드에서 숨길 UI")]
     [SerializeField]
     private GameObject[] _mainUIObjects;
@@ -144,7 +136,6 @@ public sealed class NyangQuariumFishPlacementController : MonoBehaviour
         SetDecisionButtonsActive(false);
         SetInventoryConfirmInteractable(false);
         SetNaturePlacementBorderActive(false);
-        HidePlacementLimitMessageImmediately();
 
         _ = RefreshPlacementLimitDataAsync();
     }
@@ -160,11 +151,6 @@ public sealed class NyangQuariumFishPlacementController : MonoBehaviour
     private void OnDestroy()
     {
         UnbindButtons();
-
-        if (_placementLimitMessageText != null)
-        {
-            _placementLimitMessageText.DOKill();
-        }
     }
 
     private void LateUpdate()
@@ -626,8 +612,6 @@ public sealed class NyangQuariumFishPlacementController : MonoBehaviour
         if (currentCount < maxCount)
             return true;
 
-        ShowPlacementLimitMessage();
-
         DebugTool.Warning("[NyangQuariumFishPlacementController] " +
             $"{categoryName} 최대 배치 수에 도달했습니다. " +
             $"현재:{currentCount}, 최대:{maxCount}",
@@ -636,57 +620,10 @@ public sealed class NyangQuariumFishPlacementController : MonoBehaviour
 
         return false;
     }
-    /// <summary>
-    /// 배치 제한 수에 도달했을 때 안내 문구를 표시합니다.
-    /// 기존 배치 차단 로직은 유지하고, UI 안내만 추가합니다.
-    /// </summary>
-    private void ShowPlacementLimitMessage()
-    {
-        if (_placementLimitMessageText == null)
-        {
-            DebugTool.Warning(
-                "[NyangQuariumFishPlacementController] " +
-                "_placementLimitMessageText가 연결되지 않아 배치 제한 안내 문구를 표시할 수 없습니다.",
-                DebugType.UI,
-                this);
-
-            return;
-        }
-
-        _placementLimitMessageText.DOKill();
-        _placementLimitMessageText.text = _placementLimitMessage;
-        _placementLimitMessageText.alpha = 1f;
-        _placementLimitMessageText.gameObject.SetActive(true);
-
-        _placementLimitMessageText
-            .DOFade(0f, _placementLimitFadeSeconds)
-            .SetDelay(_placementLimitVisibleSeconds)
-            .SetUpdate(true)
-            .OnComplete(() =>
-            {
-                if (_placementLimitMessageText != null)
-                    _placementLimitMessageText.gameObject.SetActive(false);
-            });
-
-        DebugTool.Log(
-            "[NyangQuariumFishPlacementController] 배치 제한 안내 문구 출력",
-            DebugType.UI,
-            this);
-    }
 
     /// <summary>
-    /// 시작 시 안내 문구가 보이지 않도록 즉시 숨깁니다.
+    /// NyangquariumPlacedFishRenderer를 통해 움직이는 물고기를 생성합니다.
     /// </summary>
-    private void HidePlacementLimitMessageImmediately()
-    {
-        if (_placementLimitMessageText == null)
-            return;
-
-        _placementLimitMessageText.DOKill();
-        _placementLimitMessageText.alpha = 0f;
-        _placementLimitMessageText.text = _placementLimitMessage;
-        _placementLimitMessageText.gameObject.SetActive(false);
-    }
     /// <summary>
     /// NyangquariumPlacedFishRenderer를 통해 움직이는 물고기를 생성합니다.
     /// </summary>

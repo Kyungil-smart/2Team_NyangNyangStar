@@ -36,15 +36,8 @@ public class NyangstagramMainUI : UIPopup
     [SerializeField] private RectTransform _postContent;
     [SerializeField] private NyangStargramPostSlotUI _postSlotPrefab;
 
-    [Header("냥스타그램 게시물 SO")]
-    [SerializeField] private NyangStargramPostSO _postSO;
-
     private readonly Dictionary<string, UIPopup> _cachedPopups = new();
-    private readonly Dictionary<string, NyangStargramPostSlotUI> _postSlotDic = new();
-    private readonly List<NyangStargramPostData> _sortedPosts = new();
-    private readonly HashSet<string> _serverPhotoIds = new();
-    private readonly List<string> _removeIds = new();
-    
+    private readonly List<NyangStargramPostSlotUI> _postSlots = new();
     private bool _isInitialized;
 
     private NyangstagramMainUISprite _nyangstagramMainUISprite;
@@ -93,7 +86,7 @@ public class NyangstagramMainUI : UIPopup
         }
 
         SetProfileView();
-        RefreshPostSlots();
+
         ReFreshLikeCountText();
 
         DebugTool.Log("NyangstagramMainUI Init 완료", DebugType.UI, this);
@@ -115,7 +108,6 @@ public class NyangstagramMainUI : UIPopup
     private void OnEnable()
     {
         SetProfileView();
-        RefreshPostSlots();
     }
 
     private void RefreshPostGridCellSize()
@@ -183,73 +175,17 @@ public class NyangstagramMainUI : UIPopup
         );
     }
 
-    private void RefreshPostSlots()
-    {
-        // 정렬
-        _sortedPosts.Clear();
-        _sortedPosts.AddRange(_postSO.Posts);
-        _sortedPosts.Sort((a, b) => b.createdAt.CompareTo(a.createdAt));
-
-        _serverPhotoIds.Clear();
-
-        for (int i = 0; i < _sortedPosts.Count; i++)
-        {
-            NyangStargramPostData post = _sortedPosts[i];
-
-            NyangNyangSnapRuntimePhotoData photoData = NyangNyangSnapPhotoManager.Instance.GetPhoto(post.photoId);
-
-            if (photoData == null) continue;
-
-            _serverPhotoIds.Add(post.photoId);
-
-            if (!_postSlotDic.TryGetValue(post.photoId, out NyangStargramPostSlotUI slot))
-            {
-                slot = CreatePostSlot(post.photoId);
-            }
-
-            slot.SetData(photoData, OpenPostPopup);
-            slot.transform.SetSiblingIndex(i);
-        }
-
-        RemoveDeletedPostSlots(_serverPhotoIds);
-    }
-
     public void AddPost(NyangNyangSnapRuntimePhotoData photoData)
     {
-        NyangStargramPostSlotUI slot = CreatePostSlot(photoData.PhotoId);
+        NyangStargramPostSlotUI slot = Instantiate(_postSlotPrefab, _postContent);
+
+        slot.Init();
         slot.SetData(photoData, OpenPostPopup);
         slot.transform.SetSiblingIndex(0);
-    }
 
-    private NyangStargramPostSlotUI CreatePostSlot(string photoId)
-    {
-        NyangStargramPostSlotUI slot = Instantiate(_postSlotPrefab, _postContent);
-        slot.Init();
+        _postSlots.Add(slot);
 
-        _postSlotDic.Add(photoId, slot);
-
-        DebugTool.Log($"게시물 슬롯 생성 : {photoId}", DebugType.UI, this);
-
-        return slot;
-    }
-
-    private void RemoveDeletedPostSlots(HashSet<string> serverPhotoIds)
-    {
-        _removeIds.Clear();
-
-        foreach (KeyValuePair<string, NyangStargramPostSlotUI> pair in _postSlotDic)
-        {
-            if (!serverPhotoIds.Contains(pair.Key))
-                _removeIds.Add(pair.Key);
-        }
-
-        foreach (string photoId in _removeIds)
-        {
-            if (_postSlotDic[photoId] != null)
-                Destroy(_postSlotDic[photoId].gameObject);
-
-            _postSlotDic.Remove(photoId);
-        }
+        DebugTool.Log($"게시물 추가 : {photoData.PhotoId}", DebugType.UI, this);
     }
 
     private void OpenPostPopup(NyangNyangSnapRuntimePhotoData photoData)

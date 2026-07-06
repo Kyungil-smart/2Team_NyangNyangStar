@@ -5,7 +5,6 @@ using Data.ScriptableObjects.NyangQuariumSO;
 using Services.Enums;
 using System.Collections;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using TMPro;
 using UI.NyangQuarium.Quest;
 using UnityEngine;
@@ -37,7 +36,7 @@ namespace UI.NyangQuarium.MergeBoard
             return questId > 0 && _activeQuestIds.Remove(questId);
         }
 
-        public static async Task EnsureRegisteredAsync(NyangQuariumQuestSO questSO)
+        public static void EnsureRegistered(NyangQuariumQuestSO questSO)
         {
             if (_isRegistered)
                 return;
@@ -50,17 +49,6 @@ namespace UI.NyangQuarium.MergeBoard
 
             if (mergeQuests.Count == 0)
                 return;
-
-            NyangQuariumFirestoreSO store = await NyangQuariumFirestoreSO.WaitForReadyAsync();
-            if (store != null && await store.LoadOrCreateFromServerAsync())
-            {
-                if (store.MergeQuestBoardInitialized)
-                {
-                    RestoreRegisteredQuests(store.ActiveMergeQuestBoardQuestIds, questSO);
-                    _isRegistered = true;
-                    return;
-                }
-            }
 
             List<NyangQuariumQuestData> pool = new(mergeQuests);
             int pickCount = Mathf.Min(ActiveSlotCount, pool.Count);
@@ -80,48 +68,10 @@ namespace UI.NyangQuarium.MergeBoard
             }
 
             _isRegistered = true;
-            await SaveCurrentStateAsync();
 
             DebugTool.Log(
                 $"[NyangQuariumMergeQuestSession] merge 퀘스트 {pickCount}개 등록: {string.Join(", ", _activeQuestIds)}",
                 DebugType.UI);
-        }
-
-        public static async Task SaveCurrentStateAsync()
-        {
-            NyangQuariumFirestoreSO store = await NyangQuariumFirestoreSO.WaitForReadyAsync();
-            if (store == null)
-                return;
-
-            await store.SaveMergeQuestBoardStateAsync(_activeQuestIds, _isRegistered);
-        }
-
-        private static void RestoreRegisteredQuests(
-            IReadOnlyList<int> savedQuestIds,
-            NyangQuariumQuestSO questSO)
-        {
-            _activeQuestIds.Clear();
-
-            if (savedQuestIds == null || questSO == null)
-                return;
-
-            HashSet<int> seen = new();
-
-            for (int i = 0; i < savedQuestIds.Count; i++)
-            {
-                int questId = savedQuestIds[i];
-                if (questId <= 0 || !seen.Add(questId))
-                    continue;
-
-                if (!questSO.TryGetQuest(questId, out NyangQuariumQuestData quest) ||
-                    quest == null ||
-                    quest.QuestType != NyangQuariumQuestType.Merge)
-                {
-                    continue;
-                }
-
-                _activeQuestIds.Add(questId);
-            }
         }
     }
 
@@ -218,16 +168,7 @@ namespace UI.NyangQuarium.MergeBoard
             TryResolveExpItemSO(out _expItemSO);
             _rewardQueue = ResolveRewardQueue();
 
-            Task registerTask = NyangQuariumMergeQuestSession.EnsureRegisteredAsync(questSO);
-            while (registerTask != null && !registerTask.IsCompleted)
-                yield return null;
-
-            if (registerTask != null && registerTask.IsFaulted)
-            {
-
-                _initStarted = false;
-                yield break;
-            }
+            NyangQuariumMergeQuestSession.EnsureRegistered(questSO);
 
             if (!NyangQuariumMergeQuestSession.IsRegistered)
             {
@@ -268,13 +209,6 @@ namespace UI.NyangQuarium.MergeBoard
 
             for (int i = bindCount; i < questBoardSlots.Count; i++)
                 questBoardSlots[i].gameObject.SetActive(false);
-
-            if (activeQuestIds.Count == 0)
-            {
-                _initialized = true;
-                _initStarted = false;
-                yield break;
-            }
 
             if (_expItemSO == null || _expItemSO.DataCount == 0)
                 StartCoroutine(ApplyRewardSpritesWhenReady(questSO));
@@ -587,7 +521,6 @@ namespace UI.NyangQuarium.MergeBoard
 
             binding.IsCompleted = true;
             NyangQuariumMergeQuestSession.RemoveQuest(binding.QuestId);
-            _ = NyangQuariumMergeQuestSession.SaveCurrentStateAsync();
 
             if (binding.CompleteButton != null)
                 binding.CompleteButton.onClick.RemoveAllListeners();

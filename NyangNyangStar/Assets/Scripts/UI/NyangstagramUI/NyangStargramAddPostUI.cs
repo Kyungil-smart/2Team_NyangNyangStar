@@ -1,8 +1,7 @@
 using Core.Managers;
 using DG.Tweening;
-using Firebase.Firestore;
-using System;
 using System.Collections.Generic;
+using System.Linq;
 using TMPro;
 using UI.Base;
 using UnityEngine;
@@ -33,20 +32,13 @@ public class NyangStargramAddPostUI : UIPopup
     [SerializeField] private RectTransform _albumContent;
     [SerializeField] private NyangStargramAlbumSlotUI _albumSlotPrefab;
 
-    [Header("냥스타그램 게시물 SO")]
-    [SerializeField] private NyangStargramPostSO _postSO;
-
     private readonly Dictionary<string, NyangStargramAlbumSlotUI> _albumSlotDic = new();
-    private readonly List<NyangNyangSnapRuntimePhotoData> _sortedPhotos = new();
-    private readonly HashSet<string> _serverPhotoIds = new();
-    private readonly List<string> _removeIds = new();
     private readonly HashSet<string> _uploadedPhotoIds = new();
 
     private NyangstagramMainUI _mainUI;
     private NyangStargramAlbumSlotUI _selectedSlot;
     private NyangNyangSnapRuntimePhotoData _selectedPhotoData;
     private bool _hasSelectedPhoto;
-    private bool _isUploading;
 
     private NyangStargramAddPostUISprite _nyangStargramAddPostUISprite;
 
@@ -100,11 +92,7 @@ public class NyangStargramAddPostUI : UIPopup
     private void OnEnable()
     {
         _selectedSlot = null;
-        _selectedPhotoData = null;
         _hasSelectedPhoto = false;
-        _isUploading = false;
-
-        SyncUploadedPhotoIds();
 
         if (_newPostImage != null)
         {
@@ -119,30 +107,21 @@ public class NyangStargramAddPostUI : UIPopup
         RefreshAlbumSlots();
     }
 
-    private void SyncUploadedPhotoIds()
-    {
-        _uploadedPhotoIds.Clear();
-
-        foreach (NyangStargramPostData post in _postSO.Posts)
-        {
-            _uploadedPhotoIds.Add(post.photoId);
-        }
-    }
-
     private void RefreshAlbumSlots()
     {
         // 정렬
-        _sortedPhotos.Clear();
-        _sortedPhotos.AddRange(NyangNyangSnapPhotoManager.Instance.RuntimePhotos);
-        _sortedPhotos.Sort((a, b) => b.CreatedAt.CompareTo(a.CreatedAt));
+        List<NyangNyangSnapRuntimePhotoData> sortedPhotos = NyangNyangSnapPhotoManager.Instance.RuntimePhotos
+            .OrderByDescending(photo => photo.CreatedAt)
+            .ToList();
 
-        _serverPhotoIds.Clear();
+        // 서버에 저장된 사진 ID
+        HashSet<string> serverPhotoIds = new();
 
-        for (int i = 0; i < _sortedPhotos.Count; i++)
+        for (int i = 0; i < sortedPhotos.Count; i++)
         {
-            NyangNyangSnapRuntimePhotoData photoData = _sortedPhotos[i];
+            NyangNyangSnapRuntimePhotoData photoData = sortedPhotos[i];
 
-            _serverPhotoIds.Add(photoData.PhotoId);
+            serverPhotoIds.Add(photoData.PhotoId);
 
             if (!_albumSlotDic.TryGetValue(photoData.PhotoId, out NyangStargramAlbumSlotUI slot))
             {
@@ -156,7 +135,7 @@ public class NyangStargramAddPostUI : UIPopup
             slot.transform.SetSiblingIndex(i);
         }
 
-        RemoveDeletedAlbumSlots(_serverPhotoIds);
+        RemoveDeletedAlbumSlots(serverPhotoIds);
     }
 
     private NyangStargramAlbumSlotUI CreateAlbumSlot(string photoId)
@@ -171,15 +150,15 @@ public class NyangStargramAddPostUI : UIPopup
 
     private void RemoveDeletedAlbumSlots(HashSet<string> serverPhotoIds)
     {
-        _removeIds.Clear();
+        List<string> removeIds = new();
 
         foreach (KeyValuePair<string, NyangStargramAlbumSlotUI> pair in _albumSlotDic)
         {
             if (!serverPhotoIds.Contains(pair.Key))
-                _removeIds.Add(pair.Key);
+                removeIds.Add(pair.Key);
         }
 
-        foreach (string photoId in _removeIds)
+        foreach (string photoId in removeIds)
         {
             if (_albumSlotDic[photoId] != null)
                 Destroy(_albumSlotDic[photoId].gameObject);
@@ -271,11 +250,10 @@ public class NyangStargramAddPostUI : UIPopup
         button.onClick.AddListener(OnClickUploadButton);
     }
 
-    private async void OnClickUploadButton()
+    private void OnClickUploadButton()
     {
-        if (_isUploading) return;
-
-        if (!_hasSelectedPhoto) return;
+        if (!_hasSelectedPhoto)
+            return;
 
         if (_mainUI == null)
         {
@@ -283,35 +261,9 @@ public class NyangStargramAddPostUI : UIPopup
             return;
         }
 
-        _isUploading = true;
-
-        string photoId = _selectedPhotoData.PhotoId;
-
-        NyangStargramPostData postData = new()
-        {
-            postId = $"NSG_{DateTime.Now:yyMMdd_HH.mm.ss.fff}",
-            photoId = photoId,
-            createdAt = Timestamp.GetCurrentTimestamp()
-        };
-
-        _postSO.AddPost(postData);
-
-        try
-        {
-            await _postSO.UpdateDataAsync();
-        }
-        catch (Exception e)
-        {
-            DebugTool.Warning($"냥스타그램 게시물 저장 실패: {e.Message}", DebugType.Network, this);
-            _postSO.RemovePost(photoId);
-            _isUploading = false;
-
-            return;
-        }
-
         _mainUI.AddPost(_selectedPhotoData);
 
-        _uploadedPhotoIds.Add(photoId);
+        _uploadedPhotoIds.Add(_selectedPhotoData.PhotoId);
 
         if (_selectedSlot != null)
         {
@@ -319,11 +271,9 @@ public class NyangStargramAddPostUI : UIPopup
             _selectedSlot = null;
         }
 
-        DebugTool.Log($"게시물 업로드: {photoId}", DebugType.UI, this);
+        DebugTool.Log($"게시물 업로드: {_selectedPhotoData.PhotoId}", DebugType.UI, this);
 
-        _selectedPhotoData = null;
         _hasSelectedPhoto = false;
-        _isUploading = false;
 
         CloseAddPostPopup();
     }

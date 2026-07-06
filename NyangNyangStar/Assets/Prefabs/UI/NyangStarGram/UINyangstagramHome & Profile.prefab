@@ -8075,7 +8075,6 @@ MonoBehaviour:
   _profileView: {fileID: 2266832050648970069}
   _postContent: {fileID: 3155802041790752831}
   _postSlotPrefab: {fileID: 2195319212082471251, guid: 432177e137dc73f4b9c5a9429db3c355, type: 3}
-  _postSO: {fileID: 11400000, guid: 8d64698eafa63f8458db278b9066f553, type: 2}
 --- !u!114 &5277543094285217028
 MonoBehaviour:
   m_ObjectHideFlags: 0
