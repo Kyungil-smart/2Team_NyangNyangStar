@@ -32,6 +32,7 @@ namespace UI.NyangQuarium.MergeBoard
         private NyangQuariumMergeBoardSlotsSO _boardStore;
         private bool _initialized;
         private bool _isUsingExpItem;
+        private bool _isClearingAllItems;
         private int _boardMutationVersion;
 
         private void Awake()
@@ -43,6 +44,8 @@ namespace UI.NyangQuarium.MergeBoard
         public void Init(NyangQuariumItemInfoPanel infoPanel)
         {
             _infoPanel = infoPanel;
+            if (_infoPanel != null)
+                _infoPanel.Init(SellSelectedItemAsync);
 
             if (_initialized)
                 return;
@@ -273,6 +276,68 @@ namespace UI.NyangQuarium.MergeBoard
 
             SetSlotItem(slotIndex, NyangQuariumBoardItem.Empty, true);
             return true;
+        }
+
+        public Task<bool> SellSelectedItemAsync()
+        {
+            if (_selectedSlot == null || !_selectedSlot.HasItem)
+                return Task.FromResult(false);
+
+            int slotIndex = _slots.IndexOf(_selectedSlot);
+            bool cleared = TryClearSlot(slotIndex);
+
+            if (cleared)
+                NyangQuariumMergeBoardInventoryService.NotifyInventoryChanged();
+
+            return Task.FromResult(cleared);
+        }
+
+        public async Task<bool> ClearAllItemsAsync()
+        {
+            if (_isClearingAllItems)
+                return false;
+
+            if (!await ResolveBoardStoreAsync())
+                return false;
+
+            Dictionary<int, ItemData> backupData = new();
+            for (int i = 0; i < _slots.Count; i++)
+            {
+                NyangQuariumItemSlot slot = _slots[i];
+                backupData[ToSlotNumber(i)] = slot != null && slot.HasItem
+                    ? slot.Item.ItemData?.Clone() ?? ItemData.Empty
+                    : ItemData.Empty;
+            }
+
+            _isClearingAllItems = true;
+
+            try
+            {
+                Dictionary<int, ItemData> emptyBoard = new();
+                for (int i = 0; i < _slots.Count; i++)
+                {
+                    int slotNumber = ToSlotNumber(i);
+                    emptyBoard[slotNumber] = ItemData.Empty;
+                    SetSlotItem(i, NyangQuariumBoardItem.Empty, false);
+                }
+
+                ClearSelection();
+                _boardMutationVersion++;
+                await _boardStore.SaveBoardAsync(emptyBoard);
+                NyangQuariumMergeBoardInventoryService.NotifyInventoryChanged();
+                DebugTool.Log("[NyangQuariumItemBoard] 냥쿠아리움 머지보드 전체 아이템 삭제 완료", DebugType.Board, this);
+                return true;
+            }
+            catch (System.Exception exception)
+            {
+                ApplyBoardData(backupData);
+                Debug.LogError($"[NyangQuariumItemBoard] 냥쿠아리움 머지보드 전체 아이템 삭제 저장 실패: {exception.Message}", this);
+                return false;
+            }
+            finally
+            {
+                _isClearingAllItems = false;
+            }
         }
 
         private static bool TryResolveFishData(int fishId, out NyangQuariumFishData fishData)

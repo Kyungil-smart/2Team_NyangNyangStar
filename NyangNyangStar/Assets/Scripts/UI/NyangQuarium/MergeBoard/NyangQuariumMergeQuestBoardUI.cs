@@ -56,8 +56,16 @@ namespace UI.NyangQuarium.MergeBoard
             {
                 if (store.MergeQuestBoardInitialized)
                 {
+                    int restoredCount;
+
                     RestoreRegisteredQuests(store.ActiveMergeQuestBoardQuestIds, questSO);
+                    restoredCount = _activeQuestIds.Count;
+                    FillOpenSlots(questSO);
                     _isRegistered = true;
+
+                    if (_activeQuestIds.Count != restoredCount)
+                        await SaveCurrentStateAsync();
+
                     return;
                 }
             }
@@ -85,6 +93,56 @@ namespace UI.NyangQuarium.MergeBoard
             DebugTool.Log(
                 $"[NyangQuariumMergeQuestSession] merge 퀘스트 {pickCount}개 등록: {string.Join(", ", _activeQuestIds)}",
                 DebugType.UI);
+        }
+
+        public static bool TryRegisterRandomQuest(
+            NyangQuariumQuestSO questSO,
+            out NyangQuariumQuestData quest,
+            int excludedQuestId = 0)
+        {
+            quest = null;
+
+            if (questSO == null)
+                return false;
+
+            List<NyangQuariumQuestData> mergeQuests =
+                questSO.GetQuestsByType(NyangQuariumQuestType.Merge);
+
+            if (mergeQuests.Count == 0)
+                return false;
+
+            List<NyangQuariumQuestData> candidates = new();
+            NyangQuariumQuestData excludedCandidate = null;
+
+            for (int i = 0; i < mergeQuests.Count; i++)
+            {
+                NyangQuariumQuestData candidate = mergeQuests[i];
+                if (candidate == null || candidate.ID <= 0)
+                    continue;
+
+                if (_activeQuestIds.Contains(candidate.ID))
+                    continue;
+
+                if (candidate.ID == excludedQuestId)
+                {
+                    excludedCandidate = candidate;
+                    continue;
+                }
+
+                candidates.Add(candidate);
+            }
+
+            if (candidates.Count == 0)
+            {
+                if (excludedCandidate == null)
+                    return false;
+
+                candidates.Add(excludedCandidate);
+            }
+
+            quest = candidates[Random.Range(0, candidates.Count)];
+            _activeQuestIds.Add(quest.ID);
+            return true;
         }
 
         public static async Task SaveCurrentStateAsync()
@@ -121,6 +179,14 @@ namespace UI.NyangQuarium.MergeBoard
                 }
 
                 _activeQuestIds.Add(questId);
+            }
+        }
+
+        private static void FillOpenSlots(NyangQuariumQuestSO questSO)
+        {
+            while (_activeQuestIds.Count < ActiveSlotCount &&
+                   TryRegisterRandomQuest(questSO, out _))
+            {
             }
         }
     }
@@ -587,20 +653,43 @@ namespace UI.NyangQuarium.MergeBoard
 
             binding.IsCompleted = true;
             NyangQuariumMergeQuestSession.RemoveQuest(binding.QuestId);
-            _ = NyangQuariumMergeQuestSession.SaveCurrentStateAsync();
 
             if (binding.CompleteButton != null)
                 binding.CompleteButton.onClick.RemoveAllListeners();
 
-            if (binding.SlotTransform != null)
-                binding.SlotTransform.gameObject.SetActive(false);
-
             _slotBindings.Remove(binding);
+            TryBindNextQuestToCompletedSlot(binding.SlotTransform, binding.QuestId);
+            _ = NyangQuariumMergeQuestSession.SaveCurrentStateAsync();
 
             DebugTool.Log(
                 $"[NyangQuariumMergeQuestBoardUI] merge 퀘스트 완료. QuestId:{binding.QuestId}, FishId:{binding.FishId}, Amount:{binding.RequiredAmount}",
                 DebugType.UI,
                 this);
+        }
+
+        private bool TryBindNextQuestToCompletedSlot(Transform slotTransform, int completedQuestId)
+        {
+            if (slotTransform == null)
+                return false;
+
+            if (!TryResolveQuestSO(out NyangQuariumQuestSO questSO) ||
+                !TryResolveFishSO(out NyangQuariumFishSO fishSO) ||
+                !NyangQuariumMergeQuestSession.TryRegisterRandomQuest(
+                    questSO,
+                    out NyangQuariumQuestData nextQuest,
+                    completedQuestId))
+            {
+                slotTransform.gameObject.SetActive(false);
+                return false;
+            }
+
+            if (_expItemSO == null)
+                TryResolveExpItemSO(out _expItemSO);
+
+            slotTransform.gameObject.SetActive(true);
+            BindQuestSlot(slotTransform, nextQuest, fishSO, _expItemSO);
+            RefreshCompleteButtons();
+            return true;
         }
 
         private bool TryCreateQuestRewardItem(

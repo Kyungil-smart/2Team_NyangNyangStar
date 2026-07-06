@@ -21,6 +21,7 @@ namespace UI.NyangQuarium.MergeBoard
         private const string GeneratorName = "Item Generator Button";
         private const string BoardName = "Item Board";
         private const string InfoName = "ItemInfo";
+        private const string ClearAllButtonName = "All Item Sell Button";
         private const string RewardRootName = "Reward Root";
         private const string QuestBoardPanelName = "QuestBoardPanel";
         private static NyangQuariumMergeBoardBinder _instance;
@@ -89,6 +90,18 @@ namespace UI.NyangQuarium.MergeBoard
                 board = boardObject.AddComponent<NyangQuariumItemBoard>();
 
             board.Init(infoPanel);
+
+            GameObject clearAllButtonObject = FindChildGameObject(rootObject.transform, ClearAllButtonName);
+            if (clearAllButtonObject != null)
+            {
+                NyangQuariumClearAllButton clearAllButton =
+                    clearAllButtonObject.GetComponent<NyangQuariumClearAllButton>();
+
+                if (clearAllButton == null)
+                    clearAllButton = clearAllButtonObject.AddComponent<NyangQuariumClearAllButton>();
+
+                clearAllButton.Init(board);
+            }
 
             NyangQuariumRewardQueue rewardQueue = null;
             if (rewardRootObject != null)
