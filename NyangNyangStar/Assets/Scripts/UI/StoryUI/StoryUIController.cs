@@ -1,4 +1,5 @@
 using Core.Managers;
+using DG.Tweening;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
@@ -22,6 +23,12 @@ public class StoryUIController : UIPopup, IPointerClickHandler
     [Header("스토리 데이터")]
     [SerializeField] private List<StoryDataSO> _stories = new List<StoryDataSO>();
     [SerializeField] private TMP_Text _titleText;
+
+    [Header("연출")]
+    [Tooltip("새 카드가 밀려 올라가는 시간(초)")]
+    [SerializeField] private float _pushDuration = 0.25f;
+
+    private Tween _pushTween;
 
     private StoryDataSO _currentStory;
     private int _currentStoryIndex = -1;
@@ -49,11 +56,13 @@ public class StoryUIController : UIPopup, IPointerClickHandler
 
     public override void ClosePopup()
     {
+        _pushTween?.Kill();
         gameObject.SetActive(false);
     }
 
     private void OnDestroy()
     {
+        _pushTween?.Kill();
         if (_instance == this)
             _instance = null;
     }
@@ -109,7 +118,8 @@ public class StoryUIController : UIPopup, IPointerClickHandler
             {
                 _instance = popup;
                 popup.PlayStory(story, combinedOnFinished);
-            });
+            },
+            closeMode: UIPopupCloseMode.Hide);
     }
 
     public void PlayStory(StoryDataSO story) => PlayStory(story, null);
@@ -156,6 +166,7 @@ public class StoryUIController : UIPopup, IPointerClickHandler
 
     private void ClearCards()
     {
+        _pushTween?.Kill();
         if (_content == null) return;
         for (int i = _content.childCount - 1; i >= 0; i--)
             Destroy(_content.GetChild(i).gameObject);
@@ -186,9 +197,12 @@ public class StoryUIController : UIPopup, IPointerClickHandler
             return;
         }
 
+        _pushTween?.Complete();                  
+        float prevHeight = _content.rect.height;
+
         DialogueCard data = _currentStory.cards[_currentIndex];
 
-        // 상대방 대사면 상대방 카드, 아니면 주인공 카드 (없으면 기본 카드로 폴백)
+        
         GameObject prefab = (data.isOpponent && _opponentCardPrefab != null) ? _opponentCardPrefab : _cardPrefab;
         GameObject card = Instantiate(prefab, _content);
 
@@ -206,15 +220,59 @@ public class StoryUIController : UIPopup, IPointerClickHandler
             Debug.Log("[StoryUI] 중단점 도달 — 대사 출력 종료.");
         }
 
-        StartCoroutine(ScrollToBottomNextFrame());
+        StartCoroutine(AnimatePushUp(card.GetComponent<RectTransform>(), prevHeight));
     }
 
-    private IEnumerator ScrollToBottomNextFrame()
+
+    private IEnumerator AnimatePushUp(RectTransform newCard, float prevHeight)
     {
-        yield return null;
+        yield return null;                                     
+        LayoutRebuilder.ForceRebuildLayoutImmediate(_content); 
         Canvas.ForceUpdateCanvases();
+
         if (_scrollRect != null)
-            _scrollRect.verticalNormalizedPosition = 0f;
+            _scrollRect.verticalNormalizedPosition = 0f;     
         Canvas.ForceUpdateCanvases();
+
+        float delta = _content.rect.height - prevHeight;      
+        Vector2 endPos = _content.anchoredPosition;        
+
+        if (_scrollRect != null)
+            _scrollRect.enabled = false;                      
+        _content.anchoredPosition = endPos - new Vector2(0f, delta); 
+
+  
+        CanvasGroup cg = null;
+        if (newCard != null)
+            cg = newCard.GetComponent<CanvasGroup>() ?? newCard.gameObject.AddComponent<CanvasGroup>();
+        if (cg != null)
+            cg.alpha = 0f;
+
+
+        float viewportHeight = 0f;
+        if (_scrollRect != null)
+        {
+            RectTransform vp = _scrollRect.viewport != null
+                ? _scrollRect.viewport
+                : _scrollRect.transform as RectTransform;
+            if (vp != null) viewportHeight = vp.rect.height;
+        }
+        bool scrollable = _content.rect.height > viewportHeight + 1f;
+
+        Sequence seq = DOTween.Sequence();
+        seq.Append(_content.DOAnchorPos(endPos, _pushDuration).SetEase(Ease.OutCubic)); 
+        if (cg != null)
+            seq.Join(cg.DOFade(1f, _pushDuration));             
+        seq.OnComplete(() =>
+        {
+            _content.anchoredPosition = endPos;                 
+            if (_scrollRect != null)
+            {
+                _scrollRect.enabled = scrollable;               
+                if (scrollable)
+                    _scrollRect.verticalNormalizedPosition = 0f; 
+            }
+        });
+        _pushTween = seq;
     }
 }
