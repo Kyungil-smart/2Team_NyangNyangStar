@@ -11,6 +11,7 @@ namespace Core.Managers
 {
     public class AudioManager : ISubManager
     {
+        private GameObject _root;
         private AudioSource[] _audioSources = new AudioSource[(int)AudioType.MaxCount];
 
         private const string AudioSettingPath = "Settings/AudioMixerSettings";
@@ -149,7 +150,8 @@ namespace Core.Managers
             if (!_isBgmLoaded)
                 return;
 
-            Addressables.Release(_bgmHandle);
+            if (_bgmHandle.IsValid())
+                Addressables.Release(_bgmHandle);
 
             _bgmHandle = default;
             _isBgmLoaded = false;
@@ -187,7 +189,7 @@ namespace Core.Managers
                 return;
             }
 
-            if (_currentSfxKey == sfxKey && _isSfxLoaded && _currentSfxClip == null)
+            if (_currentSfxKey == sfxKey && _isSfxLoaded && _currentSfxClip != null)
             {
                 ApplyAudioState();
                 sfxSource.PlayOneShot(_currentSfxClip);
@@ -250,7 +252,7 @@ namespace Core.Managers
                 return;
 
             if (_SfxHandle.IsValid())
-                GameManager.Addressable.Release(_SfxHandle);
+                Addressables.Release(_SfxHandle);
             
             _SfxHandle = default;
             _isSfxLoaded = false;
@@ -278,17 +280,17 @@ namespace Core.Managers
 
         public void CreateAudioRoot()
         {
-            GameObject root = GameObject.Find("@Audio");
-            if (root == null)
+            _root = GameObject.Find("@Audio");
+            if (_root == null)
             {
-                root = new GameObject("@Audio");
-                Object.DontDestroyOnLoad(root);
+                _root = new GameObject("@Audio");
+                Object.DontDestroyOnLoad(_root);
 
                 string[] soundNames = Enum.GetNames(typeof(AudioType));
                 for (int i = 0; i < soundNames.Length - 1; i++)
                 {
                     GameObject go = new(soundNames[i]);
-                    go.transform.parent = root.transform;
+                    go.transform.parent = _root.transform;
                     
                     AudioSource source = go.AddComponent<AudioSource>();
                     source.loop = false;
@@ -304,12 +306,12 @@ namespace Core.Managers
 
                 for (int i = 0; i < soundNames.Length - 1; i++)
                 {
-                    Transform child = root.transform.Find(soundNames[i]);
+                    Transform child = _root.transform.Find(soundNames[i]);
 
                     if (child == null)
                     {
                         GameObject go = new(soundNames[i]);
-                        go.transform.parent = root.transform;
+                        go.transform.parent = _root.transform;
                         _audioSources[i] = go.AddComponent<AudioSource>();
                     }
                     else
@@ -400,8 +402,21 @@ namespace Core.Managers
                 source.clip = null;
             }
 
-            if(_bgmHandle.IsValid())
-                GameManager.Addressable.Release(_bgmHandle);
+            ReleaseCurrentBGM();
+            ReleaseCurrentSfx();
+
+            _requestedBgmKey = null;
+            _requestedSfxKey = null;
+            _loadingBgmKey = null;
+            _loadingSfxKey = null;
+
+            if (_root != null)
+            {
+                Object.Destroy(_root);
+                _root = null;
+            }
+
+            Array.Clear(_audioSources, 0, _audioSources.Length);
 
             DebugTool.Log("오디오 매니저 제거 완료", DebugType.Game);
         }

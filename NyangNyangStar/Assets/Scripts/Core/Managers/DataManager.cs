@@ -81,7 +81,7 @@ namespace Core.Managers
                     if (_isCleared || requestVersion != _sessionVersion)
                     {
                         if (loadPrefab != null)
-                            Object.Destroy(loadPrefab);
+                            ReleaseSheetLoaderPrefab(loadPrefab);
 
                         return;
                     }
@@ -96,7 +96,7 @@ namespace Core.Managers
 
                     if (_root == null)
                     {
-                        Object.Destroy(loadPrefab);
+                        ReleaseSheetLoaderPrefab(loadPrefab);
                         return;
                     }
 
@@ -105,7 +105,7 @@ namespace Core.Managers
                     if (_sheetLoader == null)
                     {
                         DebugTool.Warning($"{loadPrefab.name}에 시트 로더 컴포넌트가 없습니다.", DebugType.Missing);
-                        Object.Destroy(loadPrefab);
+                        ReleaseSheetLoaderPrefab(loadPrefab);
                         return;
                     }
 
@@ -135,6 +135,17 @@ namespace Core.Managers
             OnDataLoadProgressChanged?.Invoke(Mathf.Clamp01(progress), message);
         }
 
+        private static void ReleaseSheetLoaderPrefab(GameObject prefab)
+        {
+            if (prefab == null)
+                return;
+
+            if (GameManager.Addressable != null)
+                GameManager.Addressable.ReleasePrefabOrDestroy(KeyContainer.Prefabs.SheetLoader, prefab);
+            else
+                Object.Destroy(prefab);
+        }
+
         public void Clear()
         {
             _isCleared = true;
@@ -147,7 +158,7 @@ namespace Core.Managers
             {
                 _sheetLoader.OnSheetLoadProgressChanged -= HandleSheetLoadProgress;
                 _sheetLoader.ClearDatas();
-                Object.Destroy(_sheetLoader.gameObject);
+                ReleaseSheetLoaderPrefab(_sheetLoader.gameObject);
                 _sheetLoader = null;
             }
 
