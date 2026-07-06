@@ -21,7 +21,7 @@ MonoBehaviour:
   _currentCycleIndex: 0
   _openedTileIDs: 
   _foundTargetIDs: 
-  _searchChance: 10
+  _searchChance: 2
   _todayBonusSearchChanceCount: 0
   _eventCurrency: 0
   _missionProgresses: []
