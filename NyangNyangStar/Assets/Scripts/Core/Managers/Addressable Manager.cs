@@ -93,6 +93,9 @@ namespace Core.Managers
                     }
 
                     DebugTool.Log($"{key} 로드 실패", DebugType.Missing);
+                    if (handle.IsValid())
+                        Addressables.Release(handle);
+
                     onFailed?.Invoke(key);
                 };
             };
@@ -176,19 +179,54 @@ namespace Core.Managers
         
         public bool TryReleasePrefab(string key, GameObject prefab)
         {
-            if(!KeyContainer.ContainsPrefabsKey(key))
+            if (prefab == null)
                 return false;
-            
-            if (!KeyContainer.IsPrefabActive(key, prefab))
-                return false;
-            
+
+            bool isTracked = IsTrackedPrefab(key, prefab);
             bool result = Addressables.ReleaseInstance(prefab);
 
             if (!result)
                 return false;
-            
-            KeyContainer.RemovePrefab(key, prefab);
+
+            if (isTracked)
+                KeyContainer.RemovePrefab(key, prefab);
+
             return true;
+        }
+
+        public void ReleasePrefabOrDestroy(string key, GameObject prefab)
+        {
+            if (prefab == null)
+                return;
+
+            if (TryReleasePrefab(key, prefab))
+                return;
+
+            Object.Destroy(prefab);
+        }
+
+        public void ReleaseAllPrefabs()
+        {
+            List<KeyValuePair<string, GameObject>> prefabs = new();
+
+            foreach (KeyValuePair<string, List<GameObject>> pair in KeyContainer.PrefabKeyDict)
+            {
+                foreach (GameObject prefab in pair.Value)
+                {
+                    if (prefab != null)
+                        prefabs.Add(new KeyValuePair<string, GameObject>(pair.Key, prefab));
+                }
+            }
+
+            foreach (KeyValuePair<string, GameObject> prefab in prefabs)
+                TryReleasePrefab(prefab.Key, prefab.Value);
+        }
+
+        private static bool IsTrackedPrefab(string key, GameObject prefab)
+        {
+            return !string.IsNullOrEmpty(key) &&
+                   KeyContainer.PrefabKeyDict.TryGetValue(key, out List<GameObject> prefabs) &&
+                   prefabs.Contains(prefab);
         }
 
         public void Release<T>(AsyncOperationHandle<T> _handle) where T : class
@@ -199,10 +237,13 @@ namespace Core.Managers
 
         public void Clear()
         {
-            if (_root == null) return;
-            
-            Object.Destroy(_root);
-            _root = null;
+            ReleaseAllPrefabs();
+
+            if (_root != null)
+            {
+                Object.Destroy(_root);
+                _root = null;
+            }
             
             KeyContainer.ClearKeys();
             DebugTool.Log("어드레서블 매니저 제거 완료", DebugType.Game);

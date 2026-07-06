@@ -17,6 +17,7 @@ namespace Core.Managers
 
         private Stack<UIPopup> _popupStack = new();
         private UIScene _uiScene;
+        private string _uiSceneKey;
         private GameObject _root;
 
         private bool _isCleared;
@@ -126,7 +127,7 @@ namespace Core.Managers
                     if (_isCleared || requestVersion != _sessionVersion)
                     {
                         if (uiPrefab != null)
-                            Object.Destroy(uiPrefab);
+                            ReleaseLoadedPrefab(name, uiPrefab);
 
                         return;
                     }
@@ -142,6 +143,7 @@ namespace Core.Managers
                         uiScene = uiPrefab.AddComponent<T>();
 
                     _uiScene = uiScene;
+                    _uiSceneKey = name;
 
                     uiPrefab.transform.SetParent(_root.transform, false);
 
@@ -164,7 +166,8 @@ namespace Core.Managers
             Action<T> onLoaded = null,
             bool setActive = true,
             bool addCanvas = true,
-            Action<string> onFailed = null) where T : UIPopup
+            Action<string> onFailed = null,
+            UIPopupCloseMode closeMode = UIPopupCloseMode.Auto) where T : UIPopup
         {
             EnsureRoot();
 
@@ -179,7 +182,7 @@ namespace Core.Managers
                     if (_isCleared || requestVersion != _sessionVersion)
                     {
                         if (uiPrefab != null)
-                            Object.Destroy(uiPrefab);
+                            ReleaseLoadedPrefab(name, uiPrefab);
 
                         return;
                     }
@@ -194,7 +197,12 @@ namespace Core.Managers
                     if (popup == null)
                         popup = uiPrefab.AddComponent<T>();
 
-                    _popupStack.Push(popup);
+                    UIPopupCloseMode resolvedCloseMode = ResolveCloseMode(closeMode, setActive);
+                    popup.SetAddressableKey(name);
+                    popup.SetCloseMode(resolvedCloseMode);
+
+                    if (resolvedCloseMode == UIPopupCloseMode.Release)
+                        _popupStack.Push(popup);
 
                     uiPrefab.transform.SetParent(_root.transform, false);
 
@@ -204,7 +212,6 @@ namespace Core.Managers
                         SetSortingOrder(uiPrefab);
 
                     popup.Init();
-                    popup.SetAddressableKey(name);
 
                     popup.gameObject.SetActive(setActive);
 
@@ -221,6 +228,8 @@ namespace Core.Managers
 
         public bool ClosePopupUI()
         {
+            PrunePopupStack();
+
             if (_popupStack.Count == 0)
                 return false;
 
@@ -231,6 +240,8 @@ namespace Core.Managers
         {
             if (string.IsNullOrEmpty(key))
                 return false;
+
+            PrunePopupStack();
 
             if (_popupStack.Count == 0)
                 return false;
@@ -265,6 +276,8 @@ namespace Core.Managers
             if (popup == null)
                 return false;
 
+            PrunePopupStack();
+
             if (_popupStack.Count == 0)
                 return false;
 
@@ -282,11 +295,7 @@ namespace Core.Managers
             string popupName = popup.name;
             GameObject popupObject = popup.gameObject;
 
-            if (!GameManager.Addressable.TryReleasePrefab(key, popupObject))
-            {
-                DebugTool.Warning($"{key} : 해당 UI를 닫을 수 없습니다.", DebugType.UI);
-                return false;
-            }
+            ReleaseLoadedPrefab(key, popupObject);
 
             popups.RemoveAt(index);
             _popupStack.Clear();
@@ -325,13 +334,68 @@ namespace Core.Managers
             _order = PopupStartorder + _popupStack.Count;
         }
 
+        private static UIPopupCloseMode ResolveCloseMode(UIPopupCloseMode closeMode, bool setActive)
+        {
+            if (closeMode != UIPopupCloseMode.Auto)
+                return closeMode;
+
+            return setActive ? UIPopupCloseMode.Release : UIPopupCloseMode.Hide;
+        }
+
+        private void PrunePopupStack()
+        {
+            if (_popupStack.Count == 0)
+                return;
+
+            List<UIPopup> popups = _popupStack.ToList();
+            popups.RemoveAll(popup => popup == null);
+
+            _popupStack.Clear();
+
+            for (int i = popups.Count - 1; i >= 0; i--)
+                _popupStack.Push(popups[i]);
+        }
+
+        private static void ReleaseLoadedPrefab(string key, GameObject prefab)
+        {
+            if (prefab == null)
+                return;
+
+            if (GameManager.Addressable != null)
+                GameManager.Addressable.ReleasePrefabOrDestroy(key, prefab);
+            else
+                Object.Destroy(prefab);
+        }
+
+        private void ReleaseLoadedUiInstances()
+        {
+            if (_root == null)
+                return;
+
+            HashSet<GameObject> releasedObjects = new();
+
+            UIPopup[] popups = _root.GetComponentsInChildren<UIPopup>(true);
+            foreach (UIPopup popup in popups)
+            {
+                if (popup == null || popup.gameObject == null || !releasedObjects.Add(popup.gameObject))
+                    continue;
+
+                ReleaseLoadedPrefab(popup.AddressableKey, popup.gameObject);
+            }
+
+            if (_uiScene != null && _uiScene.gameObject != null && releasedObjects.Add(_uiScene.gameObject))
+                ReleaseLoadedPrefab(_uiSceneKey, _uiScene.gameObject);
+        }
+
         public void Clear()
         {
             _isCleared = true;
             _sessionVersion++;
 
+            ReleaseLoadedUiInstances();
             _popupStack.Clear();
             _uiScene = null;
+            _uiSceneKey = null;
 
             if (_root != null)
             {

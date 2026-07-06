@@ -11,26 +11,26 @@ namespace Core.Managers
         // 게임 씬 이동
         public void ChangeScene(SceneIndex index)
         {
-            SceneManager.LoadScene((int)index);
+            TryLoadScene((int)index);
         }
 
         public void LoadNextScene()
         {
             Time.timeScale = 1f;
-            SceneManager.LoadScene(CurrentSceneIndex() + 1);
+            TryLoadScene(CurrentSceneIndex() + 1);
             DebugTool.Log("다음 씬으로 이동", DebugType.Game);
         }
 
         public void LoadPreviousScene()
         {
             Time.timeScale = 1f;
-            SceneManager.LoadScene(CurrentSceneIndex() - 1);
+            TryLoadScene(CurrentSceneIndex() - 1);
         }
 
         // 씬 재시작
         public void ReloadScene()
         {
-            SceneManager.LoadScene(CurrentSceneIndex());
+            TryLoadScene(CurrentSceneIndex());
         }
 
         public int CurrentSceneIndex()
@@ -41,7 +41,19 @@ namespace Core.Managers
         // 타이틀 씬 이동
         public void LoadTitle()
         {
-            SceneManager.LoadScene((int)SceneIndex.TitleScene);
+            TryLoadScene((int)SceneIndex.TitleScene);
+        }
+
+        private bool TryLoadScene(int buildIndex)
+        {
+            if (buildIndex < 0 || buildIndex >= SceneManager.sceneCountInBuildSettings)
+            {
+                DebugTool.Warning($"Invalid scene build index: {buildIndex}", DebugType.Game);
+                return false;
+            }
+
+            SceneManager.LoadScene(buildIndex);
+            return true;
         }
 
         public void Init()
@@ -62,6 +74,7 @@ namespace Core.Managers
                 return;
         
             Object.Destroy(_root);
+            _root = null;
             
             DebugTool.Log("게임 씬 매니저 제거 완료 ", DebugType.Game);
         }
