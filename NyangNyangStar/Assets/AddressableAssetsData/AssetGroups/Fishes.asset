@@ -16,7 +16,133 @@ MonoBehaviour:
   m_Data:
     m_SerializedData: []
   m_GUID: a092dbe1e60d3574995fb0fb297d2534
-  m_SerializeEntries: []
+  m_SerializeEntries:
+  - m_GUID: 01338004944b0744fa0aa2f8b9f9e15a
+    m_Address: Fish_Fresh_Guppy
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 0d275b40e5e1d1748b75e5d797b7d771
+    m_Address: Fish_Fresh_Angelfish
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 278b1c4333f02b94dba35e3dbfd4fb82
+    m_Address: Fish_Salt_YellowTang
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 27faa9cddf8335c4f812b1c599b9a24e
+    m_Address: Fish_Brackish_FigurePuffer
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2fd6fb188239640459693bd182f78cb8
+    m_Address: Fish_Salt_GreenChromis
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 33067efa47556424caabe50206424ed2
+    m_Address: Fish_Brackish_ArcherFish
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 45683976544919c4e8174a988c5357f3
+    m_Address: Fish_Salt_FireGoby
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5444611bfc633e742b29c0f7831f6b17
+    m_Address: Fish_Fresh_NeonTetra
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5470ebea1fda049458f1f8b2c2360fbf
+    m_Address: Fish_Fresh_ZebraDanio
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 600e93571cb5ff94285e2f369b58aa5f
+    m_Address: Fish_Salt_PerculaClownfish
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6cd6f3d1a94312540b291d3b6ee85035
+    m_Address: Fish_Brackish_Scat
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7d68ab005dbd7dc41a85c99300f4df61
+    m_Address: Fish_Salt_BanggaiCardinalfish
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8f110e878515a114aa83e01382ea628e
+    m_Address: Fish_Brackish_Monodactylus
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a60f666a1cb6d414b8d2cb102bc256f1
+    m_Address: Fish_Fresh_Corydoras
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: cf364f7247e963c40b838c878b20d1ff
+    m_Address: Fish_Brackish_SpottedGreenPuffer
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d94d349a1e83d284a9f224f0da79bf69
+    m_Address: Fish_Salt_RockBlenny
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e234b974991f2254db299db7f62603e6
+    m_Address: Fish_Brackish_BumblebeeGoby
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: eb801c8c61d8110469dd929a954ea883
+    m_Address: Fish_Salt_BlueTang
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ed2a9360ba5004a45949ce4e7d4c6422
+    m_Address: Fish_Fresh_Discus
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ee787e9d037e3e849b2ad898435a2270
+    m_Address: Fish_Fresh_Betta
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f023fded351ece748b204fb0bd85f127
+    m_Address: Fish_Brackish_IndianGlassFish
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: 567802e293b80b747b23153796443c26, type: 2}
   m_SchemaSet:
