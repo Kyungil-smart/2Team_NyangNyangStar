@@ -1,4 +1,5 @@
 using Data.Loader;
+using Data.LibrarySystem;
 using Data.ScriptableObjects.MergeBoard;
 using Services.Enums;
 using System.Collections;
@@ -28,8 +29,10 @@ namespace UI.NyangQuarium.MergeBoard
         private NyangQuariumItemInfoPanel _infoPanel;
         private NyangQuariumItemSlot _selectedSlot;
         private Transform _slotRoot;
+        private NyangQuariumMergeBoardSlotsSO _boardStore;
         private bool _initialized;
         private bool _isUsingExpItem;
+        private int _boardMutationVersion;
 
         private void Awake()
         {
@@ -50,6 +53,7 @@ namespace UI.NyangQuarium.MergeBoard
             GenerateSlots();
             ClearSelection();
             NyangQuariumMergeBoardInventoryService.RegisterBoard(this);
+            _ = LoadBoardFromServerAsync();
             _initialized = true;
         }
 
@@ -267,7 +271,7 @@ namespace UI.NyangQuarium.MergeBoard
             if (_selectedSlot == slot)
                 ClearSelection();
 
-            slot.SetItem(NyangQuariumBoardItem.Empty);
+            SetSlotItem(slotIndex, NyangQuariumBoardItem.Empty, true);
             return true;
         }
 
@@ -310,7 +314,7 @@ namespace UI.NyangQuarium.MergeBoard
                 if (slot == null || slot.HasItem)
                     continue;
 
-                slot.SetItem(item);
+                SetSlotItem(i, item, true);
                 NyangQuariumMergeBoardInventoryService.NotifyInventoryChanged();
                 return true;
             }
@@ -526,6 +530,140 @@ namespace UI.NyangQuarium.MergeBoard
                 slot.Init(this, backgroundImage, itemImage);
                 _slots.Add(slot);
             }
+        }
+
+        private async Task LoadBoardFromServerAsync()
+        {
+            int loadVersion = _boardMutationVersion;
+
+            if (!await ResolveBoardStoreAsync())
+                return;
+
+            Dictionary<int, ItemData> boardData;
+            try
+            {
+                boardData = await _boardStore.LoadBoardAsync();
+            }
+            catch (System.Exception exception)
+            {
+                Debug.LogError($"[NyangQuariumItemBoard] 냥쿠아리움 머지 보드 로드 실패: {exception.Message}", this);
+                return;
+            }
+
+            if (loadVersion != _boardMutationVersion)
+                return;
+
+            ApplyBoardData(boardData);
+
+            DebugTool.Log("[NyangQuariumItemBoard] 냥쿠아리움 머지 보드 로드 완료", DebugType.Board, this);
+        }
+
+        private void ApplyBoardData(Dictionary<int, ItemData> boardData)
+        {
+            for (int i = 0; i < _slots.Count; i++)
+            {
+                int slotNumber = ToSlotNumber(i);
+                ItemData itemData = ItemData.Empty;
+
+                if (boardData != null && boardData.TryGetValue(slotNumber, out ItemData loadedData))
+                    itemData = loadedData ?? ItemData.Empty;
+
+                SetSlotItem(i, new NyangQuariumBoardItem(CreateRuntimeItem(itemData)), false);
+            }
+
+            ClearSelection();
+            NyangQuariumMergeBoardInventoryService.NotifyInventoryChanged();
+        }
+
+        private void SetSlotItem(int slotIndex, NyangQuariumBoardItem item, bool save)
+        {
+            if (slotIndex < 0 || slotIndex >= _slots.Count)
+                return;
+
+            NyangQuariumItemSlot slot = _slots[slotIndex];
+            if (slot == null)
+                return;
+
+            slot.SetItem(item ?? NyangQuariumBoardItem.Empty);
+
+            if (!save)
+                return;
+
+            _boardMutationVersion++;
+            _ = SaveSlotSafeAsync(slotIndex);
+        }
+
+        private async Task<bool> SaveSlotSafeAsync(int slotIndex)
+        {
+            if (slotIndex < 0 || slotIndex >= _slots.Count)
+                return false;
+
+            if (!await ResolveBoardStoreAsync())
+                return false;
+
+            NyangQuariumItemSlot slot = _slots[slotIndex];
+            ItemData itemData = slot != null && slot.HasItem
+                ? slot.Item.ItemData?.Clone() ?? ItemData.Empty
+                : ItemData.Empty;
+
+            try
+            {
+                await _boardStore.SaveSlotAsync(ToSlotNumber(slotIndex), itemData);
+                return true;
+            }
+            catch (System.Exception exception)
+            {
+                Debug.LogError($"[NyangQuariumItemBoard] {ToSlotNumber(slotIndex)}번 슬롯 저장 실패: {exception.Message}", this);
+                return false;
+            }
+        }
+
+        private async Task<bool> ResolveBoardStoreAsync(int timeoutMs = 5000)
+        {
+            if (_boardStore != null && _boardStore.IsReady)
+                return true;
+
+            int elapsedMs = 0;
+            const int intervalMs = 100;
+
+            while (elapsedMs <= timeoutMs)
+            {
+                FireStoreManager manager = FireStoreManager.Instance;
+
+                if (manager != null && manager.HasDatabaseContext)
+                {
+                    if (_boardStore == null)
+                        _boardStore = ScriptableObject.CreateInstance<NyangQuariumMergeBoardSlotsSO>();
+
+                    if (!_boardStore.IsReady)
+                        manager.TryBindStore(_boardStore);
+
+                    if (_boardStore.IsReady)
+                        return true;
+                }
+
+                await Task.Delay(intervalMs);
+                elapsedMs += intervalMs;
+            }
+
+            DebugTool.Warning("[NyangQuariumItemBoard] Firestore가 준비되지 않아 냥쿠아리움 머지 보드 동기화를 생략합니다.", DebugType.Board, this);
+            return false;
+        }
+
+        private static int ToSlotNumber(int slotIndex) => slotIndex + 1;
+
+        private static ItemData CreateRuntimeItem(ItemData itemData)
+        {
+            if (itemData == null || !itemData.HasItem)
+                return ItemData.Empty;
+
+            if (LocalDataAccess.Instance?.Game != null &&
+                LocalDataAccess.Instance.Game.TryCreateMergeBoardRuntimeItem(itemData, out ItemData runtimeData))
+            {
+                return runtimeData;
+            }
+
+            return itemData.Clone();
         }
     }
 }
