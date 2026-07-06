@@ -139,6 +139,8 @@ namespace UI.NyangQuarium.MergeBoard
                 if (!TryClearCachedSlot(slotIndex))
                     continue;
 
+                TryClearRuntimeBoardSlot(slotIndex);
+
                 remaining--;
             }
 
@@ -155,7 +157,7 @@ namespace UI.NyangQuarium.MergeBoard
             if (!TryClearCachedSlot(slotIndex))
                 return false;
 
-            _board?.TryClearSlot(slotIndex);
+            TryClearRuntimeBoardSlot(slotIndex);
 
             NotifyInventoryChanged();
             return true;
@@ -229,6 +231,8 @@ namespace UI.NyangQuarium.MergeBoard
                 if (!TryClearCachedSlot(slotIndex))
                     continue;
 
+                TryClearRuntimeBoardSlot(slotIndex);
+
                 remaining--;
             }
 
@@ -255,7 +259,7 @@ namespace UI.NyangQuarium.MergeBoard
             if (!TryClearCachedSlot(slotIndex))
                 return false;
 
-            _board?.TryConsumeNatureAtSlot(slotIndex);
+            TryClearRuntimeBoardSlot(slotIndex);
 
             NotifyInventoryChanged();
             return true;
@@ -340,6 +344,29 @@ namespace UI.NyangQuarium.MergeBoard
                     itemData.ItemName,
                     itemData.ItemSprite));
             }
+        }
+
+        /// <summary>
+        /// 현재 냥쿠아리움 머지보드 UI가 살아 있으면 같은 슬롯을 즉시 비웁니다.
+        /// Firestore 저장 반영과 별개로, 게임 재시작 전에도 보드 화면을 최신 상태로 맞추기 위한 처리입니다.
+        /// </summary>
+        private static void TryClearRuntimeBoardSlot(int slotIndex)
+        {
+            if (_board == null)
+                return;
+
+            if (_board.TryClearSlot(slotIndex))
+            {
+                DebugTool.Log(
+                    $"[NyangQuariumMergeBoardInventoryService] 런타임 머지보드 슬롯 즉시 제거 완료 SlotIndex:{slotIndex}",
+                    DebugType.Board);
+
+                return;
+            }
+
+            DebugTool.Warning(
+                $"[NyangQuariumMergeBoardInventoryService] 런타임 머지보드 슬롯 즉시 제거 실패 SlotIndex:{slotIndex}",
+                DebugType.Board);
         }
 
         private static bool TryClearCachedSlot(int slotIndex)
