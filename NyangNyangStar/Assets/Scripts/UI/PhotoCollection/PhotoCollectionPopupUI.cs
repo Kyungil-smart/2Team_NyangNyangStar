@@ -1,7 +1,5 @@
 using Core.Managers;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using UI.Base;
 using UnityEngine;
 using UnityEngine.UI;
@@ -35,6 +33,9 @@ public class PhotoCollectionPopupUI : UIPopup
     [SerializeField] private CatPhotoSlotUI _catPhotoSlotPrefab;
 
     private readonly Dictionary<string, CatPhotoSlotUI> _photoDic = new();
+    private readonly List<NyangNyangSnapRuntimePhotoData> _sortedPhotos = new();
+    private readonly HashSet<string> _serverPhotoIds = new();
+    private readonly List<string> _removeIds = new();
     private SelectedCatPopupUI _selectedCatPopup;
     private PhotoCollectionPopupSprite _sprite;
     private PhotoDetailPopupUI _detailPopup;
@@ -119,21 +120,27 @@ public class PhotoCollectionPopupUI : UIPopup
     private void RefreshPhotoSlots()
     {
         // 정렬
-        List<NyangNyangSnapRuntimePhotoData> sortedPhotos = NyangNyangSnapPhotoManager.Instance.RuntimePhotos
-            .OrderByDescending(x => x.StarCount)
-            .ThenByDescending(x => x.CreatedAt)
-            .ToList();
-
-        // 서버에 저장된 사진 ID
-        HashSet<string> serverPhotoIds = new();
-
-        for (int i = 0; i < sortedPhotos.Count; i++)
+        _sortedPhotos.Clear();
+        _sortedPhotos.AddRange(NyangNyangSnapPhotoManager.Instance.RuntimePhotos);
+        _sortedPhotos.Sort((a, b) =>
         {
-            NyangNyangSnapRuntimePhotoData photoData = sortedPhotos[i];
+            int starCompare = b.StarCount.CompareTo(a.StarCount);
+
+            if (starCompare != 0)
+                return starCompare;
+
+            return b.CreatedAt.CompareTo(a.CreatedAt);
+        });
+
+        _serverPhotoIds.Clear();
+
+        for (int i = 0; i < _sortedPhotos.Count; i++)
+        {
+            NyangNyangSnapRuntimePhotoData photoData = _sortedPhotos[i];
 
             if (photoData == null) continue;
 
-            serverPhotoIds.Add(photoData.PhotoId);
+            _serverPhotoIds.Add(photoData.PhotoId);
 
             if (!_photoDic.TryGetValue(photoData.PhotoId, out CatPhotoSlotUI slot))
             {
@@ -147,7 +154,7 @@ public class PhotoCollectionPopupUI : UIPopup
             slot.transform.SetSiblingIndex(i);
         }
 
-        RemoveDeletedSlots(serverPhotoIds);
+        RemoveDeletedSlots(_serverPhotoIds);
         ApplyStarFilter();
 
         DebugTool.Log("사진 목록 새로고침", DebugType.UI, this);
@@ -165,15 +172,15 @@ public class PhotoCollectionPopupUI : UIPopup
 
     private void RemoveDeletedSlots(HashSet<string> serverPhotoIds)
     {
-        List<string> removeIds = new();
+        _removeIds.Clear();
 
         foreach (KeyValuePair<string, CatPhotoSlotUI> pair in _photoDic)
         {
             if (!serverPhotoIds.Contains(pair.Key))
-                removeIds.Add(pair.Key);
+                _removeIds.Add(pair.Key);
         }
 
-        foreach (string photoId in removeIds)
+        foreach (string photoId in _removeIds)
         {
             if (_photoDic[photoId] != null)
                 Destroy(_photoDic[photoId].gameObject);
