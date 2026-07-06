@@ -221,10 +221,22 @@ MonoBehaviour:
     m_SerializedLabels:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: eb9272ed11d0499468812243f9fe1dd7
+    m_Address: Main_Btn_Event_Scratching
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: ed42ed3b5b294d34aac9ad844a46e94c
     m_Address: RoulettePopupUI
     m_ReadOnly: 0
     m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: eda95428e19fdaa4dafc6276cfb7d274
+    m_Address: Main_Btn_Event_FindMoongchi
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
     FlaggedDuringContentUpdateRestriction: 0
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: 567802e293b80b747b23153796443c26, type: 2}
