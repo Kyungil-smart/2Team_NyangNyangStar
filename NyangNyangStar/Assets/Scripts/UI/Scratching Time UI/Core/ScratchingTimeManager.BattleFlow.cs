@@ -66,6 +66,7 @@ public partial class ScratchingTimeManager
         }
 
         _isStarted = true;
+        ResetAttackCooldown();
 
         _scratching.StageStart(_selectedStage, _selectedStageType);
 
@@ -96,6 +97,11 @@ public partial class ScratchingTimeManager
             return;
         }
 
+        if (IsAttackCoolingDown())
+            return;
+
+        StartAttackCooldown();
+
         int damage = 0;
         bool isCritical = false;
 
@@ -120,6 +126,28 @@ public partial class ScratchingTimeManager
 
         if (currentDurability <= 0)
             ShowStageClearResult();
+    }
+
+    private bool IsAttackCoolingDown()
+    {
+        return _attackCooldownSeconds > 0f &&
+               Time.unscaledTime < _nextAttackAllowedTime;
+    }
+
+    private void StartAttackCooldown()
+    {
+        if (_attackCooldownSeconds <= 0f)
+        {
+            _nextAttackAllowedTime = 0f;
+            return;
+        }
+
+        _nextAttackAllowedTime = Time.unscaledTime + _attackCooldownSeconds;
+    }
+
+    private void ResetAttackCooldown()
+    {
+        _nextAttackAllowedTime = 0f;
     }
 
 
