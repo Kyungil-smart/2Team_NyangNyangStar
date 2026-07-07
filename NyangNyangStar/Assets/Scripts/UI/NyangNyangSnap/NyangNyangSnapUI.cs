@@ -1,7 +1,9 @@
 using Core.Managers;
 using Data.LibrarySystem;
 using DG.Tweening;
+using System.Collections;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using TMPro;
 using UI;
 using UI.Base;
@@ -14,6 +16,8 @@ public class NyangNyangSnapUI : UIPopup
 {
     [Tooltip("시작 패널")][SerializeField] private GameObject _startPanel;
     [Tooltip("시작 버튼")][SerializeField] private GameObject _startButton;
+    [Tooltip("시작 패널 뒤로가기버튼")][SerializeField] private Button _startBackButton;
+
 
     [Header("버튼")]
     [Tooltip("뒤로가기 버튼")][SerializeField] private Button _backButton;
@@ -24,6 +28,10 @@ public class NyangNyangSnapUI : UIPopup
 
     private UIPopup _snackPopup;
     private UIPopup _toyPopup;
+
+    private Coroutine _openInventoryPopupCoroutine;
+    private Task<bool> _inventoryPreloadTask;
+    private bool _isOpeningInventoryPopup;
 
     [Header("사진촬영")]
     [SerializeField] private NyangNyangSnapPhotoFrameCapture _photoFrameCapture;
@@ -77,6 +85,8 @@ public class NyangNyangSnapUI : UIPopup
         Bind<Button>(typeof(NyangNyangSnapButtons));
 
         _backButton = Get<Button>((int)NyangNyangSnapButtons.BackButton);
+        _startBackButton = Get<Button>((int)NyangNyangSnapButtons.StartPanelBackButton);
+
         _photoButton = Get<Button>((int)NyangNyangSnapButtons.PhotoButton);
         _settingsButton = Get<Button>((int)NyangNyangSnapButtons.SettingsButton);
         _snackPanelButton = Get<Button>((int)NyangNyangSnapButtons.SnackPanelButton);
@@ -111,6 +121,7 @@ public class NyangNyangSnapUI : UIPopup
     private void InitPopups()
     {
         AddCloseNyangNyangSnapButton(_backButton);
+        AddCloseNyangNyangSnapButton(_startBackButton);
         AddCapturePhotoButton(_photoButton);
 
         InitPopup(KeyContainer.Prefabs.SettingsPopupUI, _settingsButton);
@@ -120,7 +131,7 @@ public class NyangNyangSnapUI : UIPopup
             onLoaded =>
             {
                 _snackPopup = onLoaded;
-                AddPopupButton(_snackPanelButton, onLoaded);
+                AddInventoryPopupButton(_snackPanelButton, onLoaded);
             },
             false
         );
@@ -130,7 +141,7 @@ public class NyangNyangSnapUI : UIPopup
             onLoaded =>
             {
                 _toyPopup = onLoaded;
-                AddPopupButton(_toyPanelButton, onLoaded);
+                AddInventoryPopupButton(_toyPanelButton, onLoaded);
             },
             false
         );
@@ -145,6 +156,15 @@ public class NyangNyangSnapUI : UIPopup
         }
 
         StopPhotoButtonBlink();
+
+        if (_openInventoryPopupCoroutine != null)
+        {
+            StopCoroutine(_openInventoryPopupCoroutine);
+            _openInventoryPopupCoroutine = null;
+        }
+
+        _isOpeningInventoryPopup = false;
+        SetInventoryButtonsInteractable(true);
 
         if (_catController != null)
         {
@@ -206,6 +226,139 @@ public class NyangNyangSnapUI : UIPopup
             popup.gameObject.SetActive(true);
             PlayPopupOpenAnimation(popup);
         });
+    }
+
+    private void AddInventoryPopupButton(Button button, UIPopup popup)
+    {
+        if (button == null)
+            return;
+
+        button.onClick.RemoveAllListeners();
+        button.onClick.AddListener(() =>
+        {
+            if (_isOpeningInventoryPopup)
+                return;
+
+            GameManager.Audio.PlaySfx("Main_SFX_Touch");
+
+            if (_openInventoryPopupCoroutine != null)
+                StopCoroutine(_openInventoryPopupCoroutine);
+
+            _openInventoryPopupCoroutine = StartCoroutine(OpenInventoryPopupWhenReady(popup));
+        });
+    }
+
+    private IEnumerator OpenInventoryPopupWhenReady(UIPopup popup)
+    {
+        _isOpeningInventoryPopup = true;
+        SetInventoryButtonsInteractable(false);
+
+        Task<bool> preloadTask = GetOrStartInventoryPreloadTask();
+
+        if (preloadTask != null)
+        {
+            while (!preloadTask.IsCompleted)
+                yield return null;
+
+            if (preloadTask.IsFaulted)
+            {
+                Debug.LogException(preloadTask.Exception, this);
+            }
+            else if (!preloadTask.Result)
+            {
+                DebugTool.Warning(
+                    "[NyangNyangSnapUI] 머지보드 최신 데이터 로드 실패. 현재 캐시 기준으로 패널을 표시합니다.",
+                    DebugType.UI,
+                    this
+                );
+            }
+        }
+
+        RefreshInventoryPopupFromLoadedData(popup);
+
+        if (popup != null)
+        {
+            popup.gameObject.SetActive(true);
+            PlayPopupOpenAnimation(popup);
+        }
+
+        _openInventoryPopupCoroutine = null;
+        _isOpeningInventoryPopup = false;
+        SetInventoryButtonsInteractable(true);
+    }
+
+    private Task<bool> GetOrStartInventoryPreloadTask()
+    {
+        if (_inventoryPreloadTask != null)
+        {
+            if (!_inventoryPreloadTask.IsCompleted)
+                return _inventoryPreloadTask;
+
+            if (!_inventoryPreloadTask.IsFaulted &&
+                !_inventoryPreloadTask.IsCanceled &&
+                _inventoryPreloadTask.Result)
+            {
+                return _inventoryPreloadTask;
+            }
+        }
+
+        if (MergeBoardItemService.Instance == null)
+        {
+            DebugTool.Warning(
+                "[NyangNyangSnapUI] MergeBoardItemService.Instance가 없어 머지보드 사전 로드를 진행할 수 없습니다.",
+                DebugType.UI,
+                this
+            );
+            return null;
+        }
+
+        _inventoryPreloadTask = MergeBoardItemService.Instance.ReloadInventoryFromServerAsync();
+        return _inventoryPreloadTask;
+    }
+
+    private void BeginInventoryPreload()
+    {
+        if (MergeBoardItemService.Instance == null)
+        {
+            DebugTool.Warning(
+                "[NyangNyangSnapUI] MergeBoardItemService.Instance가 없어 머지보드 사전 로드를 시작하지 못했습니다.",
+                DebugType.UI,
+                this
+            );
+            _inventoryPreloadTask = null;
+            return;
+        }
+
+        _inventoryPreloadTask = MergeBoardItemService.Instance.ReloadInventoryFromServerAsync();
+
+        DebugTool.Log(
+            "[NyangNyangSnapUI] 냥냥스냅 진입 시 머지보드 인벤토리 사전 로드 시작",
+            DebugType.UI,
+            this
+        );
+    }
+
+    private void RefreshInventoryPopupFromLoadedData(UIPopup popup)
+    {
+        if (popup is NyangNyangSnapToyUI toyUI)
+        {
+            toyUI.RefreshFromLoadedInventory();
+            return;
+        }
+
+        if (popup is NyangNyangSnapSnackUI snackUI)
+        {
+            snackUI.RefreshFromLoadedInventory();
+        }
+    }
+
+    private void SetInventoryButtonsInteractable(bool isInteractable)
+    {
+        if (_snackPanelButton != null)
+            _snackPanelButton.interactable = isInteractable;
+
+        if (_toyPanelButton != null)
+            _toyPanelButton.interactable = isInteractable;
     }
 
     private void PlayPopupOpenAnimation(UIPopup popup)
@@ -999,6 +1152,7 @@ public class NyangNyangSnapUI : UIPopup
 
         RegisterPlacementEvent();
         ResolveRuntimeDataSources();
+        BeginInventoryPreload();
 
         _sprite.SetBackground(stage);
         _startPanel.SetActive(true);
@@ -1032,6 +1186,7 @@ public class NyangNyangSnapUI : UIPopup
 
         RegisterPlacementEvent();
         ResolveRuntimeDataSources();
+        BeginInventoryPreload();
 
         _startPanel.SetActive(true);
         _startButton.SetActive(true);
@@ -1155,6 +1310,7 @@ public class NyangNyangSnapUI : UIPopup
 public enum NyangNyangSnapButtons
 {
     BackButton,
+    StartPanelBackButton,
     PhotoButton,
     SettingsButton,
     SnackPanelButton,

@@ -56,6 +56,7 @@ namespace UI.MergeBoard
         private bool _isAddingItem;
         private bool _isConsumingItem;
         private bool _hasServerItemCountCache;
+        private Task<bool> _reloadInventoryTask;
 
         protected virtual void Awake()
         {
@@ -215,7 +216,10 @@ namespace UI.MergeBoard
                     : await ConsumeCommonItemAsync(itemID, safeCount);
 
                 if (result)
+                {
+                    DecreaseServerItemCountCache(itemID, safeCount);
                     DebugTool.Log($"아이템 소비 완료 / ID:{itemID}, Count:{safeCount}", DebugType.Board, this);
+                }
 
                 return result;
             }
@@ -278,6 +282,55 @@ namespace UI.MergeBoard
             await RefreshServerItemCountCacheAsync();
         }
 
+        // 냥냥스냅 진입 시 머지보드 최신 데이터를 미리 읽습니다.
+        // 같은 로드가 동시에 여러 번 호출되면 기존 Task를 재사용해 중복 Firestore 요청을 막습니다.
+        public Task<bool> ReloadInventoryFromServerAsync()
+        {
+            if (_reloadInventoryTask != null && !_reloadInventoryTask.IsCompleted)
+                return _reloadInventoryTask;
+
+            _reloadInventoryTask = ReloadInventoryFromServerInternalAsync();
+            return _reloadInventoryTask;
+        }
+
+        private async Task<bool> ReloadInventoryFromServerInternalAsync()
+        {
+            ResolveReferences();
+
+            try
+            {
+                if (_boardSystem != null)
+                    await _boardSystem.LoadBoardFromServerAsync();
+
+                if (_rewardQueue != null)
+                    await _rewardQueue.LoadQueueFromServerAsync();
+
+                if (_specialItemBoardSystem != null)
+                    await _specialItemBoardSystem.LoadSpecialBoardFromServerAsync();
+
+                await RefreshServerItemCountCacheAsync();
+
+                DebugTool.Log(
+                    "[MergeBoardItemService] 머지보드 인벤토리 최신 데이터 재로드 완료",
+                    DebugType.Board,
+                    this
+                );
+
+                return true;
+            }
+            catch (System.Exception exception)
+            {
+                DebugTool.Warning($"예외 발생: {exception}", DebugType.Board, this);
+                DebugTool.Warning(
+                    $"[MergeBoardItemService] 머지보드 인벤토리 최신 데이터 재로드 실패: {exception.Message}",
+                    DebugType.Board,
+                    this
+                );
+
+                return false;
+            }
+        }
+
         public void ReceiveItemById(int itemID)
         {
             AddItemById(itemID, 1);
@@ -306,7 +359,6 @@ namespace UI.MergeBoard
         public async Task<bool> ReceiveRandomTestItemAsync()
         {
             RuntimeLog("아이템 생성 버튼 클릭됨");
-            DebugTool.Log("아이템 생성 버튼 클릭됨", DebugType.Board, this);
 
             if (!CanUseItemService())
                 return false;
@@ -379,7 +431,7 @@ namespace UI.MergeBoard
                 }
                 catch (System.Exception exception)
                 {
-                    Debug.LogException(exception, this);
+                    DebugTool.Warning($"예외 발생: {exception}", DebugType.Board, this);
                     RuntimeWarning($"아이템 추가 중 예외가 발생해 에너지를 환불합니다. ID:{itemData.ItemID}, Refund:{energyCost}");
                     await RefundGenerateEnergyAsync(energyCost);
                     return false;
@@ -398,7 +450,7 @@ namespace UI.MergeBoard
                 }
                 catch (System.Exception exception)
                 {
-                    Debug.LogException(exception, this);
+                    DebugTool.Warning($"예외 발생: {exception}", DebugType.Board, this);
                     RuntimeWarning("아이템 생성은 완료됐지만 FindMoongchi 에너지 사용 진행도 갱신에 실패했습니다.");
                 }
 
@@ -422,7 +474,7 @@ namespace UI.MergeBoard
             }
             catch (System.Exception exception)
             {
-                Debug.LogException(exception, this);
+                DebugTool.Warning($"예외 발생: {exception}", DebugType.Board, this);
                 return false;
             }
             finally
@@ -1001,12 +1053,12 @@ namespace UI.MergeBoard
             return count;
         }
 
-        
+
         // 아이템 캐시를 새로 만들기
         // 기존 값을 초기화 
         private async Task RefreshServerItemCountCacheAsync()
         {
-            
+
             _serverItemCountCache.Clear();
             _hasServerItemCountCache = false;
 
@@ -1059,6 +1111,22 @@ namespace UI.MergeBoard
             }
         }
 
+        private void DecreaseServerItemCountCache(int itemID, int count)
+        {
+            if (!_hasServerItemCountCache || itemID <= 0 || count <= 0)
+                return;
+
+            if (!_serverItemCountCache.TryGetValue(itemID, out int currentCount))
+                return;
+
+            int nextCount = Mathf.Max(0, currentCount - count);
+
+            if (nextCount <= 0)
+                _serverItemCountCache.Remove(itemID);
+            else
+                _serverItemCountCache[itemID] = nextCount;
+        }
+
         private void AddItemToCountCache(ItemData itemData, int count)
         {
             if (itemData == null || !itemData.HasItem || itemData.ItemID <= 0 || count <= 0)
@@ -1104,7 +1172,7 @@ namespace UI.MergeBoard
             if (!_enableRuntimeDiagnostics)
                 return;
 
-            Debug.Log($"[MergeBoardItemService] {message}", this);
+            DebugTool.Log($"[MergeBoardItemService] {message}", DebugType.Board, this);
         }
 
         private void RuntimeWarning(string message)
@@ -1112,7 +1180,7 @@ namespace UI.MergeBoard
             if (!_enableRuntimeDiagnostics)
                 return;
 
-            Debug.LogWarning($"[MergeBoardItemService] {message}", this);
+            DebugTool.Warning($"[MergeBoardItemService] {message}", DebugType.Board, this);
         }
 
         protected virtual void OnDestroy()
