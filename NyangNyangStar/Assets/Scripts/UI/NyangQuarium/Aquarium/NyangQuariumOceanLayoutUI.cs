@@ -85,6 +85,9 @@ public class NyangQuariumOceanLayoutUI : UIPopup, INyangquariumEntryReceiver
     private NyangQuariumUIVisibilityToggle _uiVisibilityToggle;
     private NyangQuariumOutsideTouchArea _outsideTouchArea;
 
+
+    [SerializeField] private Button _fishTabButton;
+
     public override void Init()
     {
         if (_isInitialized)
@@ -491,6 +494,9 @@ public class NyangQuariumOceanLayoutUI : UIPopup, INyangquariumEntryReceiver
 
         _isInventoryAnimating = true;
         _oceanwaterLayoutPanel.SetActive(true);
+
+        SelectDefaultFishTabButton();
+
         RefreshFishGridCellSize();
 
         _inventoryRect.DOKill();
@@ -505,6 +511,30 @@ public class NyangQuariumOceanLayoutUI : UIPopup, INyangquariumEntryReceiver
                 _isInventoryAnimating = false;
                 DebugTool.Log("[NyangQuariumOceanLayoutUI] 해수 통합 인벤토리 열기 완료", DebugType.UI, this);
             });
+    }
+
+    /// <summary>
+    /// 해수 배치 패널을 열 때 기본 카테고리 탭을 관상어 버튼 선택 상태로 만듭니다.
+    /// Button 컴포넌트의 Selected Color를 그대로 사용합니다.
+    /// </summary>
+    private void SelectDefaultFishTabButton()
+    {
+        if (_fishTabButton == null)
+        {
+            DebugTool.Warning(
+                "[NyangQuariumOceanLayoutUI] FishTabButton이 연결되지 않아 기본 탭 선택 색상을 적용할 수 없습니다.",
+                DebugType.UI,
+                this);
+
+            return;
+        }
+
+        _fishTabButton.Select();
+
+        DebugTool.Log(
+            "[NyangQuariumOceanLayoutUI] 배치 패널 기본 선택 탭: 관상어",
+            DebugType.UI,
+            this);
     }
 
     /// <summary>
