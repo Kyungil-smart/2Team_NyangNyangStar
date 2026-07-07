@@ -373,7 +373,7 @@ namespace UI.NyangQuarium
             RunCoveredTransition(() =>
             {
                 ShowMainViewImmediately();
-            });
+            }, IsAquariumLayoutContentActive());
         }
 
         public void RegisterOwnedContent(UIPopup popup, bool setActiveContent = true)
@@ -500,15 +500,23 @@ namespace UI.NyangQuarium
                 return;
             }
 
-            transition.Cover(TransitionSpriteKey, () =>
+            bool useBubbleTransition = ShouldUseBubbleTransition(content, entryMode);
+            Action onCovered = () =>
             {
                 ShowContent();
                 transition.Reveal(() =>
                 {
-                    transition.RestoreDefaultCoverSprite();
+                    if (!useBubbleTransition)
+                        transition.RestoreDefaultCoverSprite();
+
                     Unlock();
                 });
-            });
+            };
+
+            if (useBubbleTransition)
+                transition.CoverWithBubbles(onCovered);
+            else
+                transition.Cover(TransitionSpriteKey, onCovered);
         }
 
         private void OpenPopupContent(GameObject content, NyangquariumEntryMode entryMode)
@@ -527,7 +535,7 @@ namespace UI.NyangQuarium
             RefreshButtonStates();
         }
 
-        private void RunCoveredTransition(Action coveredAction)
+        private void RunCoveredTransition(Action coveredAction, bool useBubbleTransition = false)
         {
             SetButtonsInteractable(false);
             _isTransitioning = true;
@@ -541,15 +549,22 @@ namespace UI.NyangQuarium
                 return;
             }
 
-            transition.Cover(TransitionSpriteKey, () =>
+            Action onCovered = () =>
             {
                 coveredAction?.Invoke();
                 transition.Reveal(() =>
                 {
-                    transition.RestoreDefaultCoverSprite();
+                    if (!useBubbleTransition)
+                        transition.RestoreDefaultCoverSprite();
+
                     Unlock();
                 });
-            });
+            };
+
+            if (useBubbleTransition)
+                transition.CoverWithBubbles(onCovered);
+            else
+                transition.Cover(TransitionSpriteKey, onCovered);
         }
 
         private void RevealAndUnlock()
@@ -574,6 +589,19 @@ namespace UI.NyangQuarium
 
         private ScreenTransitionManager GetTransition()
             => _useScreenTransition ? ScreenTransitionManager.Instance : null;
+
+        private bool ShouldUseBubbleTransition(GameObject content, NyangquariumEntryMode entryMode)
+            => entryMode == NyangquariumEntryMode.Layout && IsAquariumLayoutContent(content);
+
+        private bool IsAquariumLayoutContentActive()
+            => IsAquariumLayoutContent(_activeContent) ||
+               (_freshAquariumContent != null && _freshAquariumContent.activeSelf) ||
+               (_oceanAquariumContent != null && _oceanAquariumContent.activeSelf);
+
+        private bool IsAquariumLayoutContent(GameObject content)
+            => content != null &&
+               (ReferenceEquals(content, _freshAquariumContent) ||
+                ReferenceEquals(content, _oceanAquariumContent));
 
         private void ShowMainViewImmediately()
         {

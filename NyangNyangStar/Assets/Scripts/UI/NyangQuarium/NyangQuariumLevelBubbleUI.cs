@@ -273,13 +273,6 @@ namespace UI.NyangQuarium
             if (image == null)
                 return;
 
-            RectTransform rectTransform = image.transform as RectTransform;
-            rectTransform.anchorMin = new Vector2(1f, 1f);
-            rectTransform.anchorMax = new Vector2(1f, 1f);
-            rectTransform.pivot = new Vector2(0.5f, 0.5f);
-            rectTransform.anchoredPosition = new Vector2(0f, 8f);
-            rectTransform.sizeDelta = new Vector2(64f, 64f);
-
             image.type = Image.Type.Simple;
             image.preserveAspect = true;
             image.color = Color.white;
