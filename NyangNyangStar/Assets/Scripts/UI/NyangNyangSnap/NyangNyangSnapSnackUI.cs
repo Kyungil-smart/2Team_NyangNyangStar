@@ -4,7 +4,6 @@ using DG.Tweening;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using TMPro;
 using UI;
 using UI.Base;
@@ -38,12 +37,9 @@ public class NyangNyangSnapSnackUI : UIPopup
     [Tooltip("간식/음식 버튼들이 생성될 부모 Content")]
     [SerializeField] private Transform _content;
 
-    [Header("빈 목록 안내")]
-    [Tooltip("보유 간식이 없을 때 표시할 TextMeshPro 텍스트")]
-    [SerializeField] private TMP_Text _emptyMessageText;
-
-    [Tooltip("빈 목록일 때 표시할 문구")]
-    [SerializeField] private string _emptyMessageTextString = "간식이 없습니다.";
+    [Header("스크롤")]
+    [Tooltip("간식/음식 목록을 좌우로 움직이는 ScrollRect")]
+    [SerializeField] private ScrollRect _scrollRect;
 
     [Header("아이템 배치")]
     [SerializeField] private NyangNyangSnapPlacementController _placementController;
@@ -80,6 +76,7 @@ public class NyangNyangSnapSnackUI : UIPopup
     private bool _isInitialized;
     private bool _isPointerPressed;
     private bool _isPlacementDragging;
+    private bool _isScrollDragging;
 
     private NyangNyangSnapSnackUISprite _nyangNyangSnapSnackUISprite;
     public override void Init()
@@ -93,11 +90,15 @@ public class NyangNyangSnapSnackUI : UIPopup
         _nyangNyangSnapSnackUISprite = GetComponent<NyangNyangSnapSnackUISprite>();
         _nyangNyangSnapSnackUISprite.Init();
 
+        AutoAssignScrollRect();
         AutoAssignPlacementController();
         RegisterPlacementEvents();
         InitPopups();
 
         _isInitialized = true;
+
+        RequestLoadSnackButtons();
+
     }
 
     private void OnEnable()
@@ -105,8 +106,10 @@ public class NyangNyangSnapSnackUI : UIPopup
         if (!_isInitialized)
             return;
 
+        AutoAssignScrollRect();
         AutoAssignPlacementController();
         RegisterPlacementEvents();
+        RequestLoadSnackButtons();
     }
 
     private void OnDisable()
@@ -114,13 +117,38 @@ public class NyangNyangSnapSnackUI : UIPopup
         StopLoadButtonsCoroutine();
         CancelHold();
 
+        if (_scrollRect != null)
+            _scrollRect.enabled = true;
+
         _isPointerPressed = false;
         _isPlacementDragging = false;
+        _isScrollDragging = false;
 
         ResetSelectedButton(false);
 
         if (_placementController != null)
             _placementController.OnSnackDragCompleted -= OnSnackDragCompleted;
+    }
+
+    private void AutoAssignScrollRect()
+    {
+        if (_scrollRect != null)
+            return;
+
+        if (_snackButton != null)
+            _scrollRect = _snackButton.GetComponentInParent<ScrollRect>();
+
+        if (_scrollRect == null && _content != null)
+            _scrollRect = _content.GetComponentInParent<ScrollRect>();
+
+        if (_scrollRect == null)
+        {
+            DebugTool.Warning(
+                "[NyangNyangSnapSnackUI] 간식/음식 목록 ScrollRect를 찾지 못했습니다.",
+                DebugType.UI,
+                this
+            );
+        }
     }
 
     private void AutoAssignPlacementController()
@@ -161,6 +189,10 @@ public class NyangNyangSnapSnackUI : UIPopup
     {
         _isPointerPressed = false;
         _isPlacementDragging = false;
+        _isScrollDragging = false;
+
+        if (_scrollRect != null)
+            _scrollRect.enabled = true;
 
         CancelHold();
         ResetSelectedButton(true);
@@ -189,22 +221,6 @@ public class NyangNyangSnapSnackUI : UIPopup
         }
     }
 
-    // 냥냥스냅 메인 UI에서 머지보드 최신 로드가 끝난 뒤 호출합니다.
-    // 비활성 상태에서도 버튼을 미리 만들어 패널이 켜질 때 생성 과정이 보이지 않게 합니다.
-    public bool RefreshFromLoadedInventory()
-    {
-        StopLoadButtonsCoroutine();
-
-        if (!ValidateLoadReferences())
-        {
-            SetEmptyMessageActive(true);
-            return false;
-        }
-
-        LoadSnackButtons();
-        return true;
-    }
-
     private void RequestLoadSnackButtons()
     {
         StopLoadButtonsCoroutine();
@@ -219,44 +235,30 @@ public class NyangNyangSnapSnackUI : UIPopup
     {
         if (!ValidateLoadReferences())
         {
-            SetEmptyMessageActive(true);
             _loadButtonsCoroutine = null;
             yield break;
         }
 
+        const float retryInterval = 0.25f;
+        const float timeout = 5f;
+        float elapsedTime = 0f;
+
         DebugTool.Log(
-            "[NyangNyangSnapSnackUI] 머지보드 최신 데이터 로드 시작",
+            "[NyangNyangSnapSnackUI] 모바일 보유 아이템 조회 대기 시작",
             DebugType.UI,
             this
         );
 
-        Task<bool> reloadTask = MergeBoardItemService.Instance.ReloadInventoryFromServerAsync();
-
-        while (isActiveAndEnabled && !reloadTask.IsCompleted)
-            yield return null;
+        while (isActiveAndEnabled &&
+               !HasOwnedSnackItem() &&
+               elapsedTime < timeout)
+        {
+            yield return new WaitForSecondsRealtime(retryInterval);
+            elapsedTime += retryInterval;
+        }
 
         if (!isActiveAndEnabled)
         {
-            _loadButtonsCoroutine = null;
-            yield break;
-        }
-
-        if (reloadTask.IsFaulted)
-        {
-            Debug.LogException(reloadTask.Exception, this);
-            _loadButtonsCoroutine = null;
-            yield break;
-        }
-
-        if (!reloadTask.Result)
-        {
-            DebugTool.Warning(
-                "[NyangNyangSnapSnackUI] 머지보드 최신 데이터 로드에 실패했습니다.",
-                DebugType.UI,
-                this
-            );
-
-            SetEmptyMessageActive(true);
             _loadButtonsCoroutine = null;
             yield break;
         }
@@ -351,22 +353,11 @@ public class NyangNyangSnapSnackUI : UIPopup
             displayedItemCount++;
         }
 
-        SetEmptyMessageActive(displayedItemCount <= 0);
-
         DebugTool.Log(
             $"[NyangNyangSnapSnackUI] 보유 간식/음식 표시 완료 / 종류:{displayedItemCount}",
             DebugType.UI,
             this
         );
-    }
-
-    private void SetEmptyMessageActive(bool isActive)
-    {
-        if (_emptyMessageText == null)
-            return;
-
-        _emptyMessageText.text = _emptyMessageTextString;
-        _emptyMessageText.gameObject.SetActive(isActive);
     }
 
     private bool ValidateLoadReferences()
@@ -492,8 +483,26 @@ public class NyangNyangSnapSnackUI : UIPopup
 
         AddEventTrigger(
             eventTrigger,
+            EventTriggerType.InitializePotentialDrag,
+            OnSnackInitializePotentialDrag
+        );
+
+        AddEventTrigger(
+            eventTrigger,
+            EventTriggerType.BeginDrag,
+            OnSnackBeginDrag
+        );
+
+        AddEventTrigger(
+            eventTrigger,
             EventTriggerType.Drag,
             OnSnackDrag
+        );
+
+        AddEventTrigger(
+            eventTrigger,
+            EventTriggerType.EndDrag,
+            OnSnackEndDrag
         );
 
         AddEventTrigger(
@@ -532,7 +541,7 @@ public class NyangNyangSnapSnackUI : UIPopup
         if (_placementController == null || selectedButton == null)
             return;
 
-        if (_isPlacementDragging)
+        if (_isPlacementDragging || _isScrollDragging)
             return;
 
         if (_selectedButton == selectedButton && _selectedItemID == item.ItemID)
@@ -613,12 +622,34 @@ public class NyangNyangSnapSnackUI : UIPopup
 
         _isPointerPressed = true;
         _isPlacementDragging = false;
+        _isScrollDragging = false;
 
         _pressedItem = item;
         _pressedButton = button;
         _currentPointerEvent = eventData;
 
         _holdCoroutine = StartCoroutine(BeginPlacementAfterHold());
+    }
+
+    private void OnSnackInitializePotentialDrag(PointerEventData eventData)
+    {
+        if (_scrollRect == null)
+            return;
+
+        _scrollRect.OnInitializePotentialDrag(eventData);
+    }
+
+    private void OnSnackBeginDrag(PointerEventData eventData)
+    {
+        if (_isPlacementDragging)
+            return;
+
+        CancelHoldCoroutineOnly();
+
+        _isScrollDragging = true;
+
+        if (_scrollRect != null)
+            _scrollRect.OnBeginDrag(eventData);
     }
 
     private void OnSnackDrag(PointerEventData eventData)
@@ -630,6 +661,20 @@ public class NyangNyangSnapSnackUI : UIPopup
             _placementController?.UpdateSnackDrag(eventData.position);
             return;
         }
+
+        if (_isScrollDragging && _scrollRect != null)
+            _scrollRect.OnDrag(eventData);
+    }
+
+    private void OnSnackEndDrag(PointerEventData eventData)
+    {
+        if (_isPlacementDragging)
+            return;
+
+        if (_isScrollDragging && _scrollRect != null)
+            _scrollRect.OnEndDrag(eventData);
+
+        _isScrollDragging = false;
     }
 
     private void OnSnackPointerUp(PointerEventData eventData)
@@ -640,6 +685,9 @@ public class NyangNyangSnapSnackUI : UIPopup
         {
             _placementController?.CancelSnackDrag();
             _isPlacementDragging = false;
+
+            if (_scrollRect != null)
+                _scrollRect.enabled = true;
 
             CancelHold();
 
@@ -657,7 +705,7 @@ public class NyangNyangSnapSnackUI : UIPopup
 
     private void OnSnackPointerExit(PointerEventData eventData)
     {
-        if (_isPlacementDragging)
+        if (_isPlacementDragging || _isScrollDragging)
             return;
 
         CancelHoldCoroutineOnly();
@@ -670,6 +718,9 @@ public class NyangNyangSnapSnackUI : UIPopup
         _holdCoroutine = null;
 
         if (!_isPointerPressed)
+            yield break;
+
+        if (_isScrollDragging)
             yield break;
 
         if (_pressedButton == null || _pressedItem == null)
@@ -689,6 +740,9 @@ public class NyangNyangSnapSnackUI : UIPopup
             yield break;
 
         _isPlacementDragging = true;
+
+        if (_scrollRect != null)
+            _scrollRect.enabled = false;
 
         DebugTool.Log(
             $"[NyangNyangSnapSnackUI] 길게 눌러 간식/음식 배치 시작 / ItemID:{_pressedItem.ItemID}",
@@ -744,8 +798,12 @@ public class NyangNyangSnapSnackUI : UIPopup
 
         CancelHold();
 
+        if (_scrollRect != null)
+            _scrollRect.enabled = true;
+
         _isPointerPressed = false;
         _isPlacementDragging = false;
+        _isScrollDragging = false;
 
         ResetSelectedButton(true);
 

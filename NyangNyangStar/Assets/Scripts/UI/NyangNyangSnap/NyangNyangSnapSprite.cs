@@ -69,8 +69,6 @@ public class NyangNyangSnapSprite : UIBase
     private void SetSprites()
     {
         SetSprite(NyangNyangSnapImages.BackButton, "Btn_Back");
-        SetSprite(NyangNyangSnapImages.StartPanelBackButton, "Btn_Back");
-
         SetSprite(NyangNyangSnapImages.SnackPanelButton, "Snap_Btn_Pink");
         SetSprite(NyangNyangSnapImages.ToyPanelButton, "Snap_Btn_White");
         SetSprite(NyangNyangSnapImages.PhotoButton, "Snap_Btn_Red");
@@ -98,7 +96,6 @@ public class NyangNyangSnapSprite : UIBase
     {
         BackPanel,
         BackButton,
-        StartPanelBackButton,
         SnackPanelButton,
         ToyPanelButton,
         PhotoButton,

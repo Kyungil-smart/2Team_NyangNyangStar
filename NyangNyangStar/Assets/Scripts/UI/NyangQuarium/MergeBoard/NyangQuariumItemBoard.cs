@@ -30,8 +30,6 @@ namespace UI.NyangQuarium.MergeBoard
         private Transform _slotRoot;
         private bool _initialized;
         private bool _isUsingExpItem;
-        private bool _isClearingAllItems;
-        private int _boardMutationVersion;
 
         private void Awake()
         {
@@ -42,8 +40,6 @@ namespace UI.NyangQuarium.MergeBoard
         public void Init(NyangQuariumItemInfoPanel infoPanel)
         {
             _infoPanel = infoPanel;
-            if (_infoPanel != null)
-                _infoPanel.Init(SellSelectedItemAsync);
 
             if (_initialized)
                 return;
@@ -273,68 +269,6 @@ namespace UI.NyangQuarium.MergeBoard
 
             slot.SetItem(NyangQuariumBoardItem.Empty);
             return true;
-        }
-
-        public Task<bool> SellSelectedItemAsync()
-        {
-            if (_selectedSlot == null || !_selectedSlot.HasItem)
-                return Task.FromResult(false);
-
-            int slotIndex = _slots.IndexOf(_selectedSlot);
-            bool cleared = TryClearSlot(slotIndex);
-
-            if (cleared)
-                NyangQuariumMergeBoardInventoryService.NotifyInventoryChanged();
-
-            return Task.FromResult(cleared);
-        }
-
-        public async Task<bool> ClearAllItemsAsync()
-        {
-            if (_isClearingAllItems)
-                return false;
-
-            if (!await ResolveBoardStoreAsync())
-                return false;
-
-            Dictionary<int, ItemData> backupData = new();
-            for (int i = 0; i < _slots.Count; i++)
-            {
-                NyangQuariumItemSlot slot = _slots[i];
-                backupData[ToSlotNumber(i)] = slot != null && slot.HasItem
-                    ? slot.Item.ItemData?.Clone() ?? ItemData.Empty
-                    : ItemData.Empty;
-            }
-
-            _isClearingAllItems = true;
-
-            try
-            {
-                Dictionary<int, ItemData> emptyBoard = new();
-                for (int i = 0; i < _slots.Count; i++)
-                {
-                    int slotNumber = ToSlotNumber(i);
-                    emptyBoard[slotNumber] = ItemData.Empty;
-                    SetSlotItem(i, NyangQuariumBoardItem.Empty, false);
-                }
-
-                ClearSelection();
-                _boardMutationVersion++;
-                await _boardStore.SaveBoardAsync(emptyBoard);
-                NyangQuariumMergeBoardInventoryService.NotifyInventoryChanged();
-                DebugTool.Log("[NyangQuariumItemBoard] 냥쿠아리움 머지보드 전체 아이템 삭제 완료", DebugType.Board, this);
-                return true;
-            }
-            catch (System.Exception exception)
-            {
-                ApplyBoardData(backupData);
-                Debug.LogError($"[NyangQuariumItemBoard] 냥쿠아리움 머지보드 전체 아이템 삭제 저장 실패: {exception.Message}", this);
-                return false;
-            }
-            finally
-            {
-                _isClearingAllItems = false;
-            }
         }
 
         private static bool TryResolveFishData(int fishId, out NyangQuariumFishData fishData)
@@ -592,155 +526,6 @@ namespace UI.NyangQuarium.MergeBoard
                 slot.Init(this, backgroundImage, itemImage);
                 _slots.Add(slot);
             }
-        }
-
-        private async Task LoadBoardFromServerAsync()
-        {
-            int loadVersion = _boardMutationVersion;
-
-            if (!await ResolveBoardStoreAsync())
-                return;
-
-            Dictionary<int, ItemData> boardData;
-            try
-            {
-                boardData = await _boardStore.LoadBoardAsync();
-            }
-            catch (System.Exception exception)
-            {
-                Debug.LogError($"[NyangQuariumItemBoard] 냥쿠아리움 머지 보드 로드 실패: {exception.Message}", this);
-                return;
-            }
-
-            if (loadVersion != _boardMutationVersion)
-                return;
-
-            ApplyBoardData(boardData);
-
-            DebugTool.Log("[NyangQuariumItemBoard] 냥쿠아리움 머지 보드 로드 완료", DebugType.Board, this);
-        }
-
-        private void ApplyBoardData(Dictionary<int, ItemData> boardData)
-        {
-            Dictionary<int, ItemData> appliedBoardData = new();
-
-            for (int i = 0; i < _slots.Count; i++)
-            {
-                int slotNumber = ToSlotNumber(i);
-                ItemData itemData = ItemData.Empty;
-
-                if (boardData != null && boardData.TryGetValue(slotNumber, out ItemData loadedData))
-                    itemData = loadedData ?? ItemData.Empty;
-
-                ItemData runtimeData = CreateRuntimeItem(itemData);
-                appliedBoardData[slotNumber] = runtimeData?.Clone() ?? ItemData.Empty;
-                SetSlotItem(i, new NyangQuariumBoardItem(runtimeData), false, false);
-            }
-
-            ClearSelection();
-            NyangQuariumMergeBoardInventoryService.SyncBoardData(appliedBoardData);
-        }
-
-        private void SetSlotItem(
-            int slotIndex,
-            NyangQuariumBoardItem item,
-            bool save,
-            bool syncInventory = true)
-        {
-            if (slotIndex < 0 || slotIndex >= _slots.Count)
-                return;
-
-            NyangQuariumItemSlot slot = _slots[slotIndex];
-            if (slot == null)
-                return;
-
-            slot.SetItem(item ?? NyangQuariumBoardItem.Empty);
-
-            if (syncInventory)
-            {
-                NyangQuariumMergeBoardInventoryService.SyncSlotItem(
-                    slotIndex,
-                    slot.HasItem ? slot.Item.ItemData : ItemData.Empty);
-            }
-
-            if (!save)
-                return;
-
-            _boardMutationVersion++;
-            _ = SaveSlotSafeAsync(slotIndex);
-        }
-
-        private async Task<bool> SaveSlotSafeAsync(int slotIndex)
-        {
-            if (slotIndex < 0 || slotIndex >= _slots.Count)
-                return false;
-
-            if (!await ResolveBoardStoreAsync())
-                return false;
-
-            NyangQuariumItemSlot slot = _slots[slotIndex];
-            ItemData itemData = slot != null && slot.HasItem
-                ? slot.Item.ItemData?.Clone() ?? ItemData.Empty
-                : ItemData.Empty;
-
-            try
-            {
-                await _boardStore.SaveSlotAsync(ToSlotNumber(slotIndex), itemData);
-                return true;
-            }
-            catch (System.Exception exception)
-            {
-                Debug.LogError($"[NyangQuariumItemBoard] {ToSlotNumber(slotIndex)}번 슬롯 저장 실패: {exception.Message}", this);
-                return false;
-            }
-        }
-
-        private async Task<bool> ResolveBoardStoreAsync(int timeoutMs = 5000)
-        {
-            if (_boardStore != null && _boardStore.IsReady)
-                return true;
-
-            int elapsedMs = 0;
-            const int intervalMs = 100;
-
-            while (elapsedMs <= timeoutMs)
-            {
-                FireStoreManager manager = FireStoreManager.Instance;
-
-                if (manager != null && manager.HasDatabaseContext)
-                {
-                    if (_boardStore == null)
-                        _boardStore = ScriptableObject.CreateInstance<NyangQuariumMergeBoardSlotsSO>();
-
-                    if (!_boardStore.IsReady)
-                        manager.TryBindStore(_boardStore);
-
-                    if (_boardStore.IsReady)
-                        return true;
-                }
-
-                await Task.Delay(intervalMs);
-                elapsedMs += intervalMs;
-            }
-
-            DebugTool.Warning("[NyangQuariumItemBoard] Firestore가 준비되지 않아 냥쿠아리움 머지 보드 동기화를 생략합니다.", DebugType.Board, this);
-            return false;
-        }
-
-        private static int ToSlotNumber(int slotIndex) => slotIndex + 1;
-
-        private static ItemData CreateRuntimeItem(ItemData itemData)
-        {
-            if (itemData == null || !itemData.HasItem)
-                return ItemData.Empty;
-
-            if (LocalDataAccess.Instance?.Game != null &&
-                LocalDataAccess.Instance.Game.TryCreateMergeBoardRuntimeItem(itemData, out ItemData runtimeData))
-            {
-                return runtimeData;
-            }
-
-            return itemData.Clone();
         }
     }
 }
