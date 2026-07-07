@@ -3,6 +3,7 @@ using DG.Tweening;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
+using UI;
 using UI.Base;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -19,6 +20,8 @@ public class StoryUIController : UIPopup, IPointerClickHandler
     [Tooltip("상대방 대사용 카드 (포트레잇 좌측)")]
     [SerializeField] private GameObject _opponentCardPrefab;
     [SerializeField] private Button _nextButton;
+    [Tooltip("챕터 배경 (전체화면). 비어 있으면 배경 변경 안 함")]
+    [SerializeField] private Image _backgroundImage;
 
     [Header("스토리 데이터")]
     [SerializeField] private List<StoryDataSO> _stories = new List<StoryDataSO>();
@@ -29,6 +32,7 @@ public class StoryUIController : UIPopup, IPointerClickHandler
     [SerializeField] private float _pushDuration = 0.25f;
 
     private Tween _pushTween;
+    private UISpriteController _backgroundSprite;
 
     private StoryDataSO _currentStory;
     private int _currentStoryIndex = -1;
@@ -45,6 +49,9 @@ public class StoryUIController : UIPopup, IPointerClickHandler
             _nextButton.onClick.RemoveListener(ShowNextCard);
             _nextButton.onClick.AddListener(ShowNextCard);
         }
+
+        if (_backgroundSprite == null && _backgroundImage != null)
+            _backgroundSprite = new UISpriteController(_backgroundImage);
     }
 
 
@@ -63,6 +70,7 @@ public class StoryUIController : UIPopup, IPointerClickHandler
     private void OnDestroy()
     {
         _pushTween?.Kill();
+        _backgroundSprite?.Dispose();
         if (_instance == this)
             _instance = null;
     }
@@ -142,6 +150,9 @@ public class StoryUIController : UIPopup, IPointerClickHandler
 
         if (_titleText != null)
             _titleText.text = story.title;
+
+        if (_backgroundSprite != null && !string.IsNullOrEmpty(story.backgroundKey))
+            _backgroundSprite.ChangeSprite(story.backgroundKey);
 
         ShowNextCard();
     }
