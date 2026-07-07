@@ -4486,7 +4486,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _photoAlbumSO: {fileID: 11400000, guid: 7684103119f56cb468b94264b4781452, type: 2}
-  _runtimePhotoSO: {fileID: 11400000, guid: 3bc242fc7d9eb5f4e8b28801c2d9f037, type: 2}
   _resultCollectionPanel: {fileID: 6117662747030174926}
   _rewardPanel: {fileID: 4262444684742725542}
   _selectPhotosButton: {fileID: 0}
@@ -5157,7 +5156,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 451.5, y: -1020}
+  m_AnchoredPosition: {x: 451.5, y: -1605}
   m_SizeDelta: {x: 100, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &2658060134795698915
