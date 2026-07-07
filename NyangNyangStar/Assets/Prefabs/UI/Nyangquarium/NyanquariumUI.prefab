@@ -224,7 +224,6 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 8866616179136271044}
-  - {fileID: 539813340493167517}
   - {fileID: 7158512907287448969}
   - {fileID: 3959582280455342496}
   - {fileID: 8321876761932860255}
@@ -383,7 +382,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 120, y: 140}
+  m_SizeDelta: {x: 64, y: 81}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &2140898436999906692
 CanvasRenderer:
@@ -413,7 +412,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 0}
+  m_Sprite: {fileID: 21300000, guid: fab53b071016038409ea79941b327f8e, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -707,7 +706,7 @@ GameObject:
   - component: {fileID: 5050919809832084225}
   - component: {fileID: 8649289661056596847}
   m_Layer: 5
-  m_Name: BackButton
+  m_Name: SelectBackButton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -760,8 +759,8 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
-  m_Type: 1
+  m_Sprite: {fileID: 21300000, guid: 0c23613c3b77d4d429cd8fb6f043b81e, type: 3}
+  m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 4
@@ -1163,7 +1162,7 @@ MonoBehaviour:
   _oceanLockMessageText: {fileID: 2021917256594857391}
   _oceanUnlockLevel: 5
   _oceanLockedMessage: "\uC218\uC870 5\uB808\uBCA8 \uB2EC\uC131 \uC2DC \uAC1C\uBC29\uB429\uB2C8\uB2E4."
-  _lockedButtonAlpha: 0.146
+  _lockedButtonColor: {r: 0.45, g: 0.45, b: 0.45, a: 1}
   _backgroundImage: {fileID: 9113930789007958238}
   _backgroundSpriteKey: NQ_BG_SaltWater
   _titleLogoImage: {fileID: 7037887885233667986}
@@ -1174,6 +1173,7 @@ MonoBehaviour:
   _backSpriteKey: NQ_Btn_Back
   _freshAquariumSpriteKey: NQ_Btn_FreshWater
   _oceanAquariumSpriteKey: NQ_Btn_SaltWater
+  _lockIconSpriteKey: NQ_Icon_Lock
   levelBubbleUI: {fileID: 8743894219262138909}
   _tankLevelBubbleSpriteKey: NQ_Icon_TankLevel
   _tankLevelTurtleSpriteKey: 
@@ -1243,7 +1243,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0, b: 0, a: 0.5019608}
+  m_Color: {r: 0, g: 0, b: 0, a: 0.5882353}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -1312,7 +1312,7 @@ MonoBehaviour:
   _spawnCountPerType: 2
   _padding: 80
   _speedRange: {x: 35, y: 90}
-  _scaleRange: {x: 1.5, y: 2}
+  _scaleRange: {x: 1, y: 1}
   _targetReachDistance: 10
   _maxTiltAngle: 30
   _rotationLerpSpeed: 5
@@ -2083,81 +2083,6 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
---- !u!1 &9010140781711635159
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 539813340493167517}
-  - component: {fileID: 3108082327116421073}
-  - component: {fileID: 2994803271353187146}
-  m_Layer: 5
-  m_Name: Frame
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!224 &539813340493167517
-RectTransform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 9010140781711635159}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 9177075379809836817}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 750, y: 500}
-  m_Pivot: {x: 0.5, y: 0.5}
---- !u!222 &3108082327116421073
-CanvasRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 9010140781711635159}
-  m_CullTransparentMesh: 1
---- !u!114 &2994803271353187146
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 9010140781711635159}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
-  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
-  m_Maskable: 1
-  m_OnCullStateChanged:
-    m_PersistentCalls:
-      m_Calls: []
-  m_Sprite: {fileID: 0}
-  m_Type: 0
-  m_PreserveAspect: 0
-  m_FillCenter: 1
-  m_FillMethod: 4
-  m_FillAmount: 1
-  m_FillClockwise: 1
-  m_FillOrigin: 0
-  m_UseSpriteMesh: 0
-  m_PixelsPerUnitMultiplier: 1
 --- !u!1 &9081425704059266594
 GameObject:
   m_ObjectHideFlags: 0
@@ -2226,8 +2151,8 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
-  m_Type: 1
+  m_Sprite: {fileID: 21300000, guid: d0048ae021355b146b499309d99ee8ad, type: 3}
+  m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 4

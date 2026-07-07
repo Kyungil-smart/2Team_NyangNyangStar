@@ -76,7 +76,7 @@ namespace UI.NyangQuarium
         [SerializeField] private TMP_Text _oceanLockMessageText;
         [SerializeField] private int _oceanUnlockLevel = 5;
         [SerializeField] private string _oceanLockedMessage = "수조 레벨 5 이상에서 해수 수조를 열 수 있습니다.";
-        [SerializeField, Range(0f, 1f)] private float _lockedButtonAlpha = 0.5f;
+        [SerializeField] private Color _lockedButtonColor = new Color(0.45f, 0.45f, 0.45f, 1f);
 
         [Header("기본 화면 Addressables 스프라이트")]
         [FormerlySerializedAs("_tankImage")]
@@ -89,6 +89,7 @@ namespace UI.NyangQuarium
         [SerializeField] private string _collectionSpriteKey = CollectionButtonSpriteKey;
         [SerializeField] private string _layoutSpriteKey = "NQ_Btn_Tank";
         [SerializeField] private string _backSpriteKey = "NQ_Btn_Back";
+        [SerializeField] private string _aquariumSelectBackSpriteKey = "Btn_Close";
         [SerializeField] private string _freshAquariumSpriteKey = FreshAquariumButtonSpriteKey;
         [SerializeField] private string _oceanAquariumSpriteKey = OceanAquariumButtonSpriteKey;
         [SerializeField] private string _lockIconSpriteKey = "NQ_Icon_Lock";
@@ -950,7 +951,7 @@ namespace UI.NyangQuarium
             _backSprite = BindSprite(_backButton, _backSpriteKey);
             _freshAquariumSprite = BindSprite(_freshAquariumButton, _freshAquariumSpriteKey);
             _oceanAquariumSprite = BindSprite(_oceanAquariumButton, _oceanAquariumSpriteKey);
-            _aquariumSelectBackSprite = BindSprite(_aquariumSelectBackButton, _backSpriteKey);
+            _aquariumSelectBackSprite = BindSprite(_aquariumSelectBackButton, _aquariumSelectBackSpriteKey, true);
 
             Image lockIconImage = _oceanLockIcon != null
                 ? _oceanLockIcon.GetComponent<Image>()
@@ -1111,6 +1112,7 @@ namespace UI.NyangQuarium
             RegisterSpriteKeyIfMissing(FreshAquariumButtonSpriteKey);
             RegisterSpriteKeyIfMissing(OceanAquariumButtonSpriteKey);
             RegisterSpriteKeyIfMissing(TankLevelBubbleSpriteKey);
+            RegisterSpriteKeyIfMissing(_aquariumSelectBackSpriteKey);
         }
 
         private static void RegisterSpriteKeyIfMissing(string spriteKey)
@@ -1261,8 +1263,7 @@ namespace UI.NyangQuarium
 
             if (oceanButtonImage != null)
             {
-                float alpha = isUnlocked ? 1f : _lockedButtonAlpha;
-                oceanButtonImage.color = new Color(1f, 1f, 1f, alpha);
+                oceanButtonImage.color = isUnlocked ? Color.white : _lockedButtonColor;
             }
         }
 
