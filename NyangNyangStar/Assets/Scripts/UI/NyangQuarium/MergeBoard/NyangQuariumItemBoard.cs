@@ -625,6 +625,8 @@ namespace UI.NyangQuarium.MergeBoard
 
         private void ApplyBoardData(Dictionary<int, ItemData> boardData)
         {
+            Dictionary<int, ItemData> appliedBoardData = new();
+
             for (int i = 0; i < _slots.Count; i++)
             {
                 int slotNumber = ToSlotNumber(i);
@@ -633,14 +635,20 @@ namespace UI.NyangQuarium.MergeBoard
                 if (boardData != null && boardData.TryGetValue(slotNumber, out ItemData loadedData))
                     itemData = loadedData ?? ItemData.Empty;
 
-                SetSlotItem(i, new NyangQuariumBoardItem(CreateRuntimeItem(itemData)), false);
+                ItemData runtimeData = CreateRuntimeItem(itemData);
+                appliedBoardData[slotNumber] = runtimeData?.Clone() ?? ItemData.Empty;
+                SetSlotItem(i, new NyangQuariumBoardItem(runtimeData), false, false);
             }
 
             ClearSelection();
-            NyangQuariumMergeBoardInventoryService.NotifyInventoryChanged();
+            NyangQuariumMergeBoardInventoryService.SyncBoardData(appliedBoardData);
         }
 
-        private void SetSlotItem(int slotIndex, NyangQuariumBoardItem item, bool save)
+        private void SetSlotItem(
+            int slotIndex,
+            NyangQuariumBoardItem item,
+            bool save,
+            bool syncInventory = true)
         {
             if (slotIndex < 0 || slotIndex >= _slots.Count)
                 return;
@@ -650,6 +658,13 @@ namespace UI.NyangQuarium.MergeBoard
                 return;
 
             slot.SetItem(item ?? NyangQuariumBoardItem.Empty);
+
+            if (syncInventory)
+            {
+                NyangQuariumMergeBoardInventoryService.SyncSlotItem(
+                    slotIndex,
+                    slot.HasItem ? slot.Item.ItemData : ItemData.Empty);
+            }
 
             if (!save)
                 return;
