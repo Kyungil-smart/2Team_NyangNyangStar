@@ -50,6 +50,21 @@ namespace UI.NyangQuarium.MergeBoard
         }
 
         // 배치 패널을 열 때 호출할 Firestore 최신화 함수
+        internal static void SyncBoardData(Dictionary<int, ItemData> boardData)
+        {
+            CacheBoardData(boardData);
+            NotifyInventoryChanged();
+        }
+
+        internal static void SyncSlotItem(int slotIndex, ItemData itemData)
+        {
+            if (slotIndex < 0 || slotIndex >= BoardSlotCount)
+                return;
+
+            _cachedBoardData[ToSlotNumber(slotIndex)] = itemData?.Clone() ?? ItemData.Empty;
+            NotifyInventoryChanged();
+        }
+
         public static async Task<bool> RefreshFromFirestoreAsync(int timeoutMs = 5000)
         {
             if (_isRefreshing)
@@ -411,7 +426,7 @@ namespace UI.NyangQuarium.MergeBoard
                 ItemData itemData = ItemData.Empty;
 
                 if (boardData != null && boardData.TryGetValue(slotNumber, out ItemData loadedData))
-                    itemData = loadedData ?? ItemData.Empty;
+                    itemData = loadedData?.Clone() ?? ItemData.Empty;
 
                 _cachedBoardData[slotNumber] = itemData;
             }
