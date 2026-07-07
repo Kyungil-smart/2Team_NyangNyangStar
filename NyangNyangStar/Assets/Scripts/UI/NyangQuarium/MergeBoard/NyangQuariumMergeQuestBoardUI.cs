@@ -224,6 +224,8 @@ namespace UI.NyangQuarium.MergeBoard
 
             if (!_initialized)
                 Init();
+            else
+                RefreshCompleteButtons();
         }
 
         private void OnDisable()
