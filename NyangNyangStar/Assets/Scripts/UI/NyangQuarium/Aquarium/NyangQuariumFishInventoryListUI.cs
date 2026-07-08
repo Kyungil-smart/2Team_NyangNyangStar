@@ -35,6 +35,16 @@ public sealed class NyangQuariumFishInventoryListUI : MonoBehaviour
     [SerializeField]
     private Button _natureTabButton;
 
+    [Header("카테고리 탭 색상")]
+    [Tooltip("현재 선택된 탭 버튼 색상")]
+    [SerializeField]
+    private Color _selectedTabColor =
+        new Color32(120, 120, 120, 255);
+
+    [Tooltip("선택되지 않은 탭 버튼 색상")]
+    [SerializeField]
+    private Color _normalTabColor = Color.white;
+
     [Header("카테고리별 필터 UI")]
     [Tooltip("관상어 탭에서 표시할 필터 관련 오브젝트")]
     [SerializeField]
@@ -112,6 +122,9 @@ public sealed class NyangQuariumFishInventoryListUI : MonoBehaviour
         NyangQuariumMergeBoardInventoryService.InventoryChanged +=
             HandleMergeBoardInventoryChanged;
 
+        // 패널 재오픈 시 현재 목록 카테고리와 탭 표시를 다시 동기화합니다.
+        ApplyCategoryUI();
+
         _ = RefreshFromFirestoreAndRebuildAsync();
     }
 
@@ -139,6 +152,7 @@ public sealed class NyangQuariumFishInventoryListUI : MonoBehaviour
         if (_currentCategory ==
             NyangQuariumPlacementCategory.Fish)
         {
+            RefreshCategoryTabVisual();
             return;
         }
 
@@ -162,6 +176,7 @@ public sealed class NyangQuariumFishInventoryListUI : MonoBehaviour
         if (_currentCategory ==
             NyangQuariumPlacementCategory.Nature)
         {
+            RefreshCategoryTabVisual();
             return;
         }
 
@@ -848,6 +863,47 @@ public sealed class NyangQuariumFishInventoryListUI : MonoBehaviour
         SetFilterObjectsActive(
             _natureFilterObjects,
             !isFishCategory);
+
+        RefreshCategoryTabVisual();
+    }
+
+    /// <summary>
+    /// EventSystem의 현재 포커스와 무관하게 현재 카테고리 탭 색상을 유지합니다.
+    /// </summary>
+    private void RefreshCategoryTabVisual()
+    {
+        bool isFishCategory =
+            _currentCategory ==
+            NyangQuariumPlacementCategory.Fish;
+
+        ApplyTabVisual(
+            _fishTabButton,
+            isFishCategory);
+
+        ApplyTabVisual(
+            _natureTabButton,
+            !isFishCategory);
+    }
+
+    private void ApplyTabVisual(
+        Button button,
+        bool isSelected)
+    {
+        if (button == null)
+            return;
+
+        // Button의 Selected 상태는 외부 클릭 시 해제되므로
+        // 전환 효과와 분리하여 현재 카테고리 색상을 직접 유지합니다.
+        button.transition = Selectable.Transition.None;
+
+        Graphic targetGraphic = button.targetGraphic;
+
+        if (targetGraphic == null)
+            return;
+
+        targetGraphic.color = isSelected
+            ? _selectedTabColor
+            : _normalTabColor;
     }
 
     private static void SetFilterObjectsActive(
