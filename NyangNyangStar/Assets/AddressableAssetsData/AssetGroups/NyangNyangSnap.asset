@@ -57,6 +57,12 @@ MonoBehaviour:
     m_SerializedLabels:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 41d9bfe7e3d22c64a84d80c003d5d947
+    m_Address: Snap_Img_Sample
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 580630516ac419441b7ff4df89aa66e6
     m_Address: Snap_Slot_Unknown
     m_ReadOnly: 0
@@ -123,6 +129,12 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 845b21341fa3ff34cb6859735c5d54fb
     m_Address: Snap_Ani_Run
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 85115ed456365cb4caeafb7adcccc1e1
+    m_Address: Snap_Btn_Unchecked
     m_ReadOnly: 0
     m_SerializedLabels:
     - Sprite
