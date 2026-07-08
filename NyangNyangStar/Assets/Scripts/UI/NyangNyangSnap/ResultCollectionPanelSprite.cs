@@ -39,6 +39,8 @@ public class ResultCollectionPanelSprite : UIBase
     {
         SetSprite(NyangNyangSnapResultCollectionImages.ResultCollectionPanel, "NYS_Background");
         SetSprite(NyangNyangSnapResultCollectionImages.SaveButton, "Snap_Btn_Green");
+        SetSprite(NyangNyangSnapResultCollectionImages.CatImage, "NQ_Portrait_Moongchi");
+        SetSprite(NyangNyangSnapResultCollectionImages.CharacterImage, "NQ_Portrait_Main");
 
         for (int i = 0; i < PhotoCount; i++)
         {
@@ -164,4 +166,6 @@ public enum NyangNyangSnapResultCollectionImages
     CheckMark1, CheckMark2, CheckMark3, CheckMark4, CheckMark5,
     CheckMark6, CheckMark7, CheckMark8, CheckMark9, CheckMark10,
     SaveButton,
+    CatImage,
+    CharacterImage
 }

@@ -18,6 +18,12 @@ public class NyangNyangSnapResultUI : UIPopup
     [SerializeField] private GameObject _resultCollectionPanel;
     [SerializeField] private GameObject _rewardPopup;
 
+    [Header("로딩 패널")]
+    [SerializeField] private GameObject _loadingPanel;
+    [SerializeField] private TMP_Text _savingText;
+    [SerializeField] private Image _catImage;
+    [SerializeField] private Image _characterImage; 
+
     [Header("버튼")]
     [Tooltip("사진 선택 버튼")][SerializeField] private Button _selectPhotosButton;
     [Tooltip("사진 저장 버튼")][SerializeField] private Button _saveButton;
@@ -39,18 +45,22 @@ public class NyangNyangSnapResultUI : UIPopup
     [Header("결과 연출")]
     [Tooltip("사진 페이드 시간")]
     [SerializeField] private float _photoFadeDuration = 0.25f;
-
     [Tooltip("게이지 증가 시간")]
     [SerializeField] private float _gaugeFillDuration = 0.45f;
-
     [Tooltip("총점 카운트업 시간")]
     [SerializeField] private float _scoreCountDuration = 0.8f;
-
     [Tooltip("각 연출 사이 간격")]
     [SerializeField] private float _sequenceInterval = 0.15f;
-
     [Tooltip("별 하나가 차오르는 시간")]
     [SerializeField] private float _starFillDuration = 0.15f;
+
+    [Header("저장 중 연출")]
+    [Tooltip("저장 중 텍스트 표시 간격")]
+    [SerializeField] private float _savingTextInterval = 0.5f;
+    [Tooltip("저장 중 이미지 회전 각도")]
+    [SerializeField] private float _savingImageRotateAngle = 15f;
+    [Tooltip("저장 중 이미지 회전 시간")]
+    [SerializeField] private float _savingImageRotateDuration = 0.5f;
 
     private NyangNyangSnapResultUISprite _resultSprite;
     private ResultCollectionPanelSprite _collectionSprite;
@@ -58,6 +68,9 @@ public class NyangNyangSnapResultUI : UIPopup
     private NyangNyangSnapCaptureRecord _currentRecord;
     private IReadOnlyList<NyangNyangSnapCaptureRecord> _records;
     private Sequence _resultSequence;
+    private Sequence _savingSequence;
+    private Tween _catImageTween;
+    private Tween _characterImageTween;
     private NyangNyangSnapUI _snapUI;
     private RewardedAdsButton _rewardedAdsButton;
     private bool _isSaving;
@@ -87,6 +100,7 @@ public class NyangNyangSnapResultUI : UIPopup
         if (_rewardSprite != null) _rewardSprite.Init();
 
         InitPopups();
+        _loadingPanel.SetActive(false);
     }
 
     private void InitPopups()
@@ -143,6 +157,8 @@ public class NyangNyangSnapResultUI : UIPopup
 
         if (_saveButton != null)
             _saveButton.interactable = false;
+
+        ShowSavingPanel();
 
         try
         {
@@ -268,9 +284,52 @@ public class NyangNyangSnapResultUI : UIPopup
         {
             _isSaving = false;
 
+            HideSavingPanel();
+
             if (_saveButton != null)
                 _saveButton.interactable = true;
         }
+    }
+
+    private void ShowSavingPanel()
+    {
+        KillSavingSequence();
+
+        _loadingPanel.SetActive(true);
+
+        _savingText.text = "저장 중.";
+        _catImage.rectTransform.localRotation = Quaternion.Euler(0f, 0f, -_savingImageRotateAngle);
+        _characterImage.rectTransform.localRotation = Quaternion.Euler(0f, 0f, _savingImageRotateAngle);
+
+        _savingSequence = DOTween.Sequence();
+
+        // 저장 텍스트
+        _savingSequence.AppendCallback(() => _savingText.text = "저장 중.");
+        _savingSequence.AppendInterval(_savingTextInterval);
+        _savingSequence.AppendCallback(() => _savingText.text = "저장 중..");
+        _savingSequence.AppendInterval(_savingTextInterval);
+        _savingSequence.AppendCallback(() => _savingText.text = "저장 중...");
+        _savingSequence.AppendInterval(_savingTextInterval);
+        _savingSequence.SetLoops(-1);
+
+        // 고양이 이미지(왼쪽)
+        _catImageTween = _catImage.rectTransform
+                .DORotate(new Vector3(0f, 0f, _savingImageRotateAngle), _savingImageRotateDuration)
+                .SetEase(Ease.InOutSine)
+                .SetLoops(-1, LoopType.Yoyo);
+
+        // 사람 이미지(오른쪽)
+        _characterImageTween = _characterImage.rectTransform
+                .DORotate(new Vector3(0f, 0f, -_savingImageRotateAngle), _savingImageRotateDuration)
+                .SetEase(Ease.InOutSine)
+                .SetLoops(-1, LoopType.Yoyo);
+    }
+
+    private void HideSavingPanel()
+    {
+        KillSavingSequence();
+
+        _loadingPanel.SetActive(false);
     }
 
     private Sprite CopySprite(Sprite sourceSprite, string photoId)
@@ -538,6 +597,14 @@ public class NyangNyangSnapResultUI : UIPopup
 
         _resultSequence.Kill();
         _resultSequence = null;
+    }
+
+    private void KillSavingSequence()
+    {
+        if (_savingSequence == null) return;
+
+        _savingSequence.Kill();
+        _savingSequence = null;
     }
 
     public void SetSnapUI(NyangNyangSnapUI snapUI)
