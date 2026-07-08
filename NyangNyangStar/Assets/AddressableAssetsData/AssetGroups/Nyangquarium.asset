@@ -249,12 +249,6 @@ MonoBehaviour:
     m_SerializedLabels:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 94a4d54d7335d194d9834c3fc1b7f6ad
-    m_Address: "\uD018\uC2A4\uD2B8\uBCF4\uB4DC"
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - Sprite
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 94b11497845ab654384791b1e2fdf5b5
     m_Address: NQ_Object_Tank_01
     m_ReadOnly: 0
