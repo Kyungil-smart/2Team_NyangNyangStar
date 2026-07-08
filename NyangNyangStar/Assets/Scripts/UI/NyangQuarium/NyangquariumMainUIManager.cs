@@ -221,6 +221,9 @@ namespace UI.NyangQuarium
 
         public void OpenStory() => OpenChildContent(_storyContent, NyangquariumEntryMode.Story);
 
+        public void OpenOwnedContentWithTransition(UIPopup popup, NyangquariumEntryMode entryMode, bool playClickSfx = true)
+            => OpenChildContent(popup != null ? popup.gameObject : null, entryMode, playClickSfx);
+
         public void SetTankLevelProgress(int level, float expRatio)
         {
             ApplyTankLevelProgress(level, expRatio);
@@ -373,7 +376,7 @@ namespace UI.NyangQuarium
             RunCoveredTransition(() =>
             {
                 ShowMainViewImmediately();
-            }, IsAquariumLayoutContentActive());
+            });
         }
 
         public void RegisterOwnedContent(UIPopup popup, bool setActiveContent = true)
@@ -469,12 +472,14 @@ namespace UI.NyangQuarium
             OpenChildContent(_oceanAquariumContent, _pendingAquariumEntryMode);
         }
 
-        private void OpenChildContent(GameObject content, NyangquariumEntryMode entryMode)
+        private void OpenChildContent(GameObject content, NyangquariumEntryMode entryMode, bool playClickSfx = true)
         {
             if (_isTransitioning || content == null)
                 return;
 
-            PlayClickSfx();
+            if (playClickSfx)
+                PlayClickSfx();
+
             SetButtonsInteractable(false);
             _isTransitioning = true;
             ScreenTransitionManager transition = GetTransition();
@@ -500,23 +505,15 @@ namespace UI.NyangQuarium
                 return;
             }
 
-            bool useBubbleTransition = ShouldUseBubbleTransition(content, entryMode);
-            Action onCovered = () =>
+            transition.Cover(TransitionSpriteKey, () =>
             {
                 ShowContent();
                 transition.Reveal(() =>
                 {
-                    if (!useBubbleTransition)
-                        transition.RestoreDefaultCoverSprite();
-
+                    transition.RestoreDefaultCoverSprite();
                     Unlock();
                 });
-            };
-
-            if (useBubbleTransition)
-                transition.CoverWithBubbles(onCovered);
-            else
-                transition.Cover(TransitionSpriteKey, onCovered);
+            });
         }
 
         private void OpenPopupContent(GameObject content, NyangquariumEntryMode entryMode)
@@ -535,7 +532,7 @@ namespace UI.NyangQuarium
             RefreshButtonStates();
         }
 
-        private void RunCoveredTransition(Action coveredAction, bool useBubbleTransition = false)
+        private void RunCoveredTransition(Action coveredAction)
         {
             SetButtonsInteractable(false);
             _isTransitioning = true;
@@ -549,22 +546,15 @@ namespace UI.NyangQuarium
                 return;
             }
 
-            Action onCovered = () =>
+            transition.Cover(TransitionSpriteKey, () =>
             {
                 coveredAction?.Invoke();
                 transition.Reveal(() =>
                 {
-                    if (!useBubbleTransition)
-                        transition.RestoreDefaultCoverSprite();
-
+                    transition.RestoreDefaultCoverSprite();
                     Unlock();
                 });
-            };
-
-            if (useBubbleTransition)
-                transition.CoverWithBubbles(onCovered);
-            else
-                transition.Cover(TransitionSpriteKey, onCovered);
+            });
         }
 
         private void RevealAndUnlock()
@@ -589,19 +579,6 @@ namespace UI.NyangQuarium
 
         private ScreenTransitionManager GetTransition()
             => _useScreenTransition ? ScreenTransitionManager.Instance : null;
-
-        private bool ShouldUseBubbleTransition(GameObject content, NyangquariumEntryMode entryMode)
-            => entryMode == NyangquariumEntryMode.Layout && IsAquariumLayoutContent(content);
-
-        private bool IsAquariumLayoutContentActive()
-            => IsAquariumLayoutContent(_activeContent) ||
-               (_freshAquariumContent != null && _freshAquariumContent.activeSelf) ||
-               (_oceanAquariumContent != null && _oceanAquariumContent.activeSelf);
-
-        private bool IsAquariumLayoutContent(GameObject content)
-            => content != null &&
-               (ReferenceEquals(content, _freshAquariumContent) ||
-                ReferenceEquals(content, _oceanAquariumContent));
 
         private void ShowMainViewImmediately()
         {
