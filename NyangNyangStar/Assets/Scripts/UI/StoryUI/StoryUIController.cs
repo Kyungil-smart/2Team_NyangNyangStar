@@ -33,6 +33,8 @@ public class StoryUIController : UIPopup, IPointerClickHandler
 
     private Tween _pushTween;
     private UISpriteController _backgroundSprite;
+    private VerticalLayoutGroup _contentLayout;
+    private int _baseTopPadding;
 
     private StoryDataSO _currentStory;
     private int _currentStoryIndex = -1;
@@ -52,6 +54,13 @@ public class StoryUIController : UIPopup, IPointerClickHandler
 
         if (_backgroundSprite == null && _backgroundImage != null)
             _backgroundSprite = new UISpriteController(_backgroundImage);
+
+        if (_contentLayout == null && _content != null)
+        {
+            _contentLayout = _content.GetComponent<VerticalLayoutGroup>();
+            if (_contentLayout != null)
+                _baseTopPadding = _contentLayout.padding.top;
+        }
     }
 
 
@@ -173,7 +182,7 @@ public class StoryUIController : UIPopup, IPointerClickHandler
         PlayStory(_currentStoryIndex + 1);
     }
 
-    // 챕터 배경 적용: 키 있으면 로드 성공 시 알파 1, 없으면 알파 0(투명). Dim은 별도 오브젝트라 영향 없음.
+
     private void ApplyBackground(StoryDataSO story)
     {
         if (_backgroundImage == null)
@@ -181,22 +190,22 @@ public class StoryUIController : UIPopup, IPointerClickHandler
 
         if (string.IsNullOrEmpty(story.backgroundKey))
         {
-            SetBackgroundAlpha(0f);            // 이미지 없음 → 투명
-            _backgroundSprite?.ClearSprite();  // 이전 스프라이트/핸들 해제
+            SetBackgroundAlpha(0f);            
+            _backgroundSprite?.ClearSprite();  
             return;
         }
 
-        SetBackgroundAlpha(0f);                // 로드 끝나기 전엔 투명(깜빡임 방지)
+        SetBackgroundAlpha(0f);              
         _backgroundSprite?.ChangeSprite(
             story.backgroundKey,
             onLoaded: () =>
             {
                 if (_backgroundImage != null && _backgroundImage.sprite != null)
-                    SetBackgroundAlpha(1f);    // 로드 성공 시에만 보이게
+                    SetBackgroundAlpha(1f);   
             });
     }
 
-    // _backgroundImage(ChapterBackground)의 알파만 조절. Dim은 건드리지 않음.
+
     private void SetBackgroundAlpha(float alpha)
     {
         if (_backgroundImage == null)
@@ -210,6 +219,8 @@ public class StoryUIController : UIPopup, IPointerClickHandler
     private void ClearCards()
     {
         _pushTween?.Kill();
+        if (_contentLayout != null)
+            _contentLayout.padding.top = _baseTopPadding;
         if (_content == null) return;
         for (int i = _content.childCount - 1; i >= 0; i--)
             Destroy(_content.GetChild(i).gameObject);
@@ -240,12 +251,11 @@ public class StoryUIController : UIPopup, IPointerClickHandler
             return;
         }
 
-        _pushTween?.Complete();                  // 진행 중 트윈이 있으면 즉시 마감 (연타 대비)
-        float prevHeight = _content.rect.height; // 카드 추가 전 Content 높이 기억
+        _pushTween?.Complete();             
 
         DialogueCard data = _currentStory.cards[_currentIndex];
 
-        // 상대방 대사면 상대방 카드, 아니면 주인공 카드 (없으면 기본 카드로 폴백)
+
         GameObject prefab = (data.isOpponent && _opponentCardPrefab != null) ? _opponentCardPrefab : _cardPrefab;
         GameObject card = Instantiate(prefab, _content);
 
@@ -263,61 +273,62 @@ public class StoryUIController : UIPopup, IPointerClickHandler
             Debug.Log("[StoryUI] 중단점 도달 — 대사 출력 종료.");
         }
 
-        StartCoroutine(AnimatePushUp(card.GetComponent<RectTransform>(), prevHeight));
+        StartCoroutine(AnimatePushUp(card.GetComponent<RectTransform>()));
     }
 
-    // 새 카드는 바닥에 나타나고, 기존 카드들이 부드럽게 위로 밀려 올라가는 연출.
-    private IEnumerator AnimatePushUp(RectTransform newCard, float prevHeight)
+
+    private IEnumerator AnimatePushUp(RectTransform newCard)
     {
-        yield return null;                                     // Instantiate 반영 대기
-        LayoutRebuilder.ForceRebuildLayoutImmediate(_content); // 레이아웃 확정(높이 갱신)
+        yield return null;                                  
+
+
+        if (_contentLayout != null)
+            _contentLayout.padding.top = _baseTopPadding;
+        LayoutRebuilder.ForceRebuildLayoutImmediate(_content);
         Canvas.ForceUpdateCanvases();
+        float naturalHeight = _content.rect.height;
 
-        if (_scrollRect != null)
-            _scrollRect.verticalNormalizedPosition = 0f;       // 바닥 고정 → 최종 위치 확정
-        Canvas.ForceUpdateCanvases();
 
-        float delta = _content.rect.height - prevHeight;       // 늘어난 높이 = 밀어 올릴 거리(간격 포함)
-        Vector2 endPos = _content.anchoredPosition;            // 트윈이 끝날 최종 위치
-
-        if (_scrollRect != null)
-            _scrollRect.enabled = false;                       // 트윈 중 스크롤 간섭 차단
-        _content.anchoredPosition = endPos - new Vector2(0f, delta); // delta만큼 내렸다가
-
-        // 새 카드 페이드용 CanvasGroup (없으면 런타임에 추가)
-        CanvasGroup cg = null;
-        if (newCard != null)
-            cg = newCard.GetComponent<CanvasGroup>() ?? newCard.gameObject.AddComponent<CanvasGroup>();
-        if (cg != null)
-            cg.alpha = 0f;
-
-        // 콘텐츠가 뷰포트보다 클 때만 스크롤이 의미 있음.
-        // 짧을 땐 스크롤을 꺼서, ScrollRect가 짧은 콘텐츠를 상단으로 끌어올리는
-        // 기본 동작을 막고 바닥 정렬을 유지한다.
-        float viewportHeight = 0f;
-        if (_scrollRect != null)
+        float viewportHeight = GetViewportHeight();
+        if (_contentLayout != null)
         {
-            RectTransform vp = _scrollRect.viewport != null
-                ? _scrollRect.viewport
-                : _scrollRect.transform as RectTransform;
-            if (vp != null) viewportHeight = vp.rect.height;
+            int targetTop = Mathf.Max(_baseTopPadding, Mathf.CeilToInt(viewportHeight - naturalHeight));
+            _contentLayout.padding.top = targetTop;
+            LayoutRebuilder.ForceRebuildLayoutImmediate(_content);
+            Canvas.ForceUpdateCanvases();
         }
-        bool scrollable = _content.rect.height > viewportHeight + 1f;
+
+ 
+        if (_scrollRect != null)
+            _scrollRect.verticalNormalizedPosition = 0f;
+        Canvas.ForceUpdateCanvases();
+
+ 
+        if (newCard == null)
+            yield break;
+
+        CanvasGroup cg = newCard.GetComponent<CanvasGroup>();
+        if (cg == null)
+            cg = newCard.gameObject.AddComponent<CanvasGroup>();
+        Vector2 slot = newCard.anchoredPosition;              
+        float slide = newCard.rect.height * 0.5f + 40f;      
+        newCard.anchoredPosition = slot - new Vector2(0f, slide);
+        cg.alpha = 0f;
 
         Sequence seq = DOTween.Sequence();
-        seq.Append(_content.DOAnchorPos(endPos, _pushDuration).SetEase(Ease.OutCubic)); // 위로 스르륵
-        if (cg != null)
-            seq.Join(cg.DOFade(1f, _pushDuration));             // 새 카드 페이드 인
-        seq.OnComplete(() =>
-        {
-            _content.anchoredPosition = endPos;                 // 최종 위치 확정
-            if (_scrollRect != null)
-            {
-                _scrollRect.enabled = scrollable;               // 넘칠 때만 스크롤 허용
-                if (scrollable)
-                    _scrollRect.verticalNormalizedPosition = 0f; // 최신 카드(바닥) 고정
-            }
-        });
+        seq.Append(newCard.DOAnchorPos(slot, _pushDuration).SetEase(Ease.OutCubic));
+        seq.Join(cg.DOFade(1f, _pushDuration));
         _pushTween = seq;
+    }
+
+    private float GetViewportHeight()
+    {
+        if (_scrollRect == null)
+            return 0f;
+
+        RectTransform vp = _scrollRect.viewport != null
+            ? _scrollRect.viewport
+            : _scrollRect.transform as RectTransform;
+        return vp != null ? vp.rect.height : 0f;
     }
 }
