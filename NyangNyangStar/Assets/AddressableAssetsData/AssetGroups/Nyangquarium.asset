@@ -291,6 +291,12 @@ MonoBehaviour:
     m_SerializedLabels:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ad8d85de1a1bceb4086ad053885d341a
+    m_Address: NQ_Panel_QuestBoard_Normal
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: b0538463d33c75241aefa4558461c86f
     m_Address: NQ_BG_Mergeboard
     m_ReadOnly: 0
@@ -305,6 +311,12 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: b8c4f163f809e2741bbbe040da09e646
     m_Address: NQ_Object_Tank_02
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: bfd0551a0a5f535489f986f6ea7fe144
+    m_Address: NQ_Panel_QuestBoard_Completed
     m_ReadOnly: 0
     m_SerializedLabels:
     - Sprite
