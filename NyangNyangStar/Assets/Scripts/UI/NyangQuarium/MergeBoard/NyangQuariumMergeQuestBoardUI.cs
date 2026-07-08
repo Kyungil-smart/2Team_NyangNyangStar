@@ -2,11 +2,11 @@ using Core.Managers;
 using Data.Loader;
 using Data.ScriptableObjects.MergeBoard;
 using Data.ScriptableObjects.NyangQuariumSO;
+using DG.Tweening;
 using Services.Enums;
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using TMPro;
 using UI.NyangQuarium.Quest;
 using UnityEngine;
 using UnityEngine.UI;
@@ -197,8 +197,9 @@ namespace UI.NyangQuarium.MergeBoard
         private const string QuestBoardNamePrefix = "QuestBoard";
         private const string MergeTargetItemName = "MergeTargetItem";
         private const string RewardImageName = "RewardImage";
-        private const string MergeTargetAmountTextName = "Text (TMP)";
         private const string CompleteButtonName = "Button";
+
+        [SerializeField] private Sprite _completedQuestBoardSprite;
 
         private readonly List<MergeQuestSlotBinding> _slotBindings = new();
         private readonly List<UI.UISpriteController> _spriteControllers = new();
@@ -207,6 +208,7 @@ namespace UI.NyangQuarium.MergeBoard
         private NyangQuariumRewardQueue _rewardQueue;
         private bool _initialized;
         private bool _initStarted;
+        private Sequence _questBoardMoveSequence;
 
         private sealed class MergeQuestSlotBinding
         {
@@ -214,7 +216,10 @@ namespace UI.NyangQuarium.MergeBoard
             public int FishId;
             public int RequiredAmount;
             public Transform SlotTransform;
+            public Image BoardImage;
+            public Sprite DefaultBoardSprite;
             public Button CompleteButton;
+            public bool IsReadyToComplete;
             public bool IsCompleted;
         }
 
@@ -231,6 +236,8 @@ namespace UI.NyangQuarium.MergeBoard
         private void OnDisable()
         {
             NyangQuariumMergeBoardInventoryService.InventoryChanged -= RefreshCompleteButtons;
+            _questBoardMoveSequence?.Complete();
+            _questBoardMoveSequence = null;
         }
 
         private void OnDestroy()
@@ -247,6 +254,8 @@ namespace UI.NyangQuarium.MergeBoard
             for (int i = 0; i < _spriteControllers.Count; i++)
                 _spriteControllers[i]?.Dispose();
 
+            _questBoardMoveSequence?.Kill();
+            _questBoardMoveSequence = null;
             _spriteControllers.Clear();
             _slotBindings.Clear();
         }
@@ -424,7 +433,6 @@ namespace UI.NyangQuarium.MergeBoard
             }
 
             Image targetImage = mergeTargetTransform.GetComponent<Image>();
-            TMP_Text amountText = ResolveMergeTargetAmountText(mergeTargetTransform);
 
             if (!int.TryParse(quest.QuestCondition1, out int fishId) || fishId <= 0)
             {
@@ -453,7 +461,6 @@ namespace UI.NyangQuarium.MergeBoard
                 return;
             }
 
-            ApplyMergeTargetAmountText(amountText, quest);
             ApplyFishSprite(fishData.FishKey, targetImage);
             ApplyRewardSprite(slotTransform, quest, expItemSO);
             SetupCompleteButton(slotTransform, quest, fishId);
@@ -613,12 +620,16 @@ namespace UI.NyangQuarium.MergeBoard
                 FishId = fishId,
                 RequiredAmount = quest.ConditionAmount1 > 0 ? quest.ConditionAmount1 : 1,
                 SlotTransform = slotTransform,
+                BoardImage = slotTransform.GetComponent<Image>(),
                 CompleteButton = completeButton
             };
+
+            binding.DefaultBoardSprite = binding.BoardImage != null ? binding.BoardImage.sprite : null;
 
             completeButton.onClick.RemoveAllListeners();
             completeButton.onClick.AddListener(() => OnCompleteButtonClicked(binding));
             completeButton.interactable = false;
+            completeButton.gameObject.SetActive(false);
 
             _slotBindings.Add(binding);
             RefreshCompleteButton(binding);
@@ -660,6 +671,16 @@ namespace UI.NyangQuarium.MergeBoard
                 binding.CompleteButton.onClick.RemoveAllListeners();
 
             _slotBindings.Remove(binding);
+            if (binding.SlotTransform != null)
+            {
+                ApplyBoardSprite(binding, completed: false);
+                // 새 퀘스트는 뒤로 이동 연출
+                AnimateQuestBoardOrderChange(
+                    binding.SlotTransform,
+                    () => binding.SlotTransform.SetAsLastSibling(),
+                    punchMovedBoard: false);
+            }
+
             TryBindNextQuestToCompletedSlot(binding.SlotTransform, binding.QuestId);
             _ = NyangQuariumMergeQuestSession.SaveCurrentStateAsync();
 
@@ -802,35 +823,90 @@ namespace UI.NyangQuarium.MergeBoard
             return ownedCount >= binding.RequiredAmount;
         }
 
-        private static void RefreshCompleteButton(MergeQuestSlotBinding binding)
+        private void RefreshCompleteButton(MergeQuestSlotBinding binding)
         {
             if (binding?.CompleteButton == null)
                 return;
 
-            binding.CompleteButton.interactable = CanCompleteQuest(binding);
+            bool canComplete = CanCompleteQuest(binding);
+
+            if (canComplete)
+            {
+                MarkReadyToComplete(binding);
+                return;
+            }
+
+            binding.IsReadyToComplete = false;
+            binding.CompleteButton.interactable = false;
+            binding.CompleteButton.gameObject.SetActive(false);
+            ApplyBoardSprite(binding, completed: false);
         }
 
-        private static TMP_Text ResolveMergeTargetAmountText(Transform mergeTargetTransform)
+        private void MarkReadyToComplete(MergeQuestSlotBinding binding)
         {
-            if (mergeTargetTransform == null)
-                return null;
-
-            Transform amountTextTransform =
-                FindDirectChildByName(mergeTargetTransform, MergeTargetAmountTextName);
-
-            if (amountTextTransform != null)
-                return amountTextTransform.GetComponent<TMP_Text>();
-
-            return mergeTargetTransform.GetComponentInChildren<TMP_Text>(true);
-        }
-
-        private static void ApplyMergeTargetAmountText(TMP_Text amountText, NyangQuariumQuestData quest)
-        {
-            if (amountText == null || quest == null)
+            if (binding == null)
                 return;
 
-            int amount = quest.ConditionAmount1 > 0 ? quest.ConditionAmount1 : 1;
-            amountText.text = $"x{amount}";
+            bool wasReady = binding.IsReadyToComplete;
+            binding.IsReadyToComplete = true;
+
+            ApplyBoardSprite(binding, completed: true);
+
+            if (binding.CompleteButton != null)
+            {
+                binding.CompleteButton.gameObject.SetActive(true);
+                binding.CompleteButton.interactable = true;
+            }
+
+            if (wasReady || binding.SlotTransform == null)
+                return;
+
+            // 완료 퀘스트는 앞으로 이동 연출
+            AnimateQuestBoardOrderChange(
+                binding.SlotTransform,
+                () => binding.SlotTransform.SetAsFirstSibling(),
+                punchMovedBoard: true);
+        }
+
+        private void AnimateQuestBoardOrderChange(
+            Transform movedTransform,
+            System.Action applyOrderChange,
+            bool punchMovedBoard)
+        {
+            _questBoardMoveSequence =
+                NyangQuariumQuestBoardTween.PlayOrderChange(
+                    _questBoardMoveSequence,
+                    movedTransform,
+                    applyOrderChange,
+                    punchMovedBoard,
+                    () => _questBoardMoveSequence = null);
+        }
+
+        private void ApplyBoardSprite(MergeQuestSlotBinding binding, bool completed)
+        {
+            if (binding?.BoardImage == null)
+                return;
+
+            Sprite sprite = completed && ResolveCompletedQuestBoardSprite() != null
+                ? _completedQuestBoardSprite
+                : binding.DefaultBoardSprite;
+
+            if (sprite != null)
+                binding.BoardImage.sprite = sprite;
+        }
+
+        private Sprite ResolveCompletedQuestBoardSprite()
+        {
+            if (_completedQuestBoardSprite != null)
+                return _completedQuestBoardSprite;
+
+#if UNITY_EDITOR
+            _completedQuestBoardSprite =
+                UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>(
+                    "Assets/Test/Image/Q_board_success.png");
+#endif
+
+            return _completedQuestBoardSprite;
         }
 
         private static Transform FindDirectChildByName(Transform root, string objectName)
