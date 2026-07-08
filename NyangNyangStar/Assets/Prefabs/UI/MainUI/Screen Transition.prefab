@@ -244,15 +244,3 @@ MonoBehaviour:
   _revealDuration: 0.2
   _revealDelay: 0.15
   _sortingOrder: 9999
-  _useBubbleTransition: 1
-  _bubbleSpritesAddress: Bubbles
-  _bubbleSpriteNamePrefix: Bubbles_
-  _bubbleSpriteFallbackCount: 20
-  _bubbleSfxAddress: bubble_sfx
-  _bubbleCoverDuration: 0.65
-  _bubbleRevealDuration: 0.55
-  _bubbleFloatDistance: 220
-  _bubbleVisualScale: 1
-  _bubbleCurtainColumns: 8
-  _bubbleCurtainOverlap: 1.45
-  _bubbleSfxVolume: 0.8

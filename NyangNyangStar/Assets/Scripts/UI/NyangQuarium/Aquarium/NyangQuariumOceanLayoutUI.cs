@@ -323,16 +323,29 @@ public class NyangQuariumOceanLayoutUI : UIPopup, INyangquariumEntryReceiver
             return;
         }
 
-        _isChangingLayout = true;
-
         GameManager.Audio.PlaySfx("Main_SFX_Touch");
 
-        PrepareLinkedLayout(_freshLayoutUI);
+        if (NyangquariumMainUIManager.Active != null)
+        {
+            bool transitionStarted =
+                NyangquariumMainUIManager.Active.OpenOwnedContentWithTransition(
+                _freshLayoutUI,
+                _entryMode,
+                playClickSfx: false);
 
-        _freshLayoutUI.gameObject.SetActive(true);
-        _freshLayoutUI.PlayOpenAnimation();
+            if (!transitionStarted)
+                return;
 
-        gameObject.SetActive(false);
+            _isChangingLayout = true;
+        }
+        else
+        {
+            _isChangingLayout = true;
+            PrepareLinkedLayout(_freshLayoutUI);
+            _freshLayoutUI.gameObject.SetActive(true);
+            _freshLayoutUI.PlayOpenAnimation();
+            gameObject.SetActive(false);
+        }
 
         DebugTool.Log(
             "[NyangQuariumOceanLayoutUI] 담수 레이아웃 UI로 변경",
