@@ -2,12 +2,15 @@ using System;
 using System.Collections.Generic;
 using UI;
 using UI.Base;
+using UnityEngine;
 using UnityEngine.UI;
 
 public class ResultCollectionPanelSprite : UIBase
 {
     private const int PhotoCount = 10;
     private UISpriteController[] _spriteController;
+
+    [SerializeField] private Color _circleColor;
 
     private Image[] _photoImages = new Image[PhotoCount];
     private Image[] _checkMarks = new Image[PhotoCount];
@@ -36,16 +39,26 @@ public class ResultCollectionPanelSprite : UIBase
     {
         SetSprite(NyangNyangSnapResultCollectionImages.ResultCollectionPanel, "NYS_Background");
         SetSprite(NyangNyangSnapResultCollectionImages.SaveButton, "Snap_Btn_Green");
+        SetSprite(NyangNyangSnapResultCollectionImages.CatImage, "NQ_Portrait_Moongchi");
+        SetSprite(NyangNyangSnapResultCollectionImages.CharacterImage, "NQ_Portrait_Main");
 
         for (int i = 0; i < PhotoCount; i++)
         {
-            SetSprite(NyangNyangSnapResultCollectionImages.CheckMark1 + i, "NYS_Btn_Feed");
+            SetSprite(NyangNyangSnapResultCollectionImages.Circle1 + i, "Shape_Circle", _circleColor);
+            SetSprite(NyangNyangSnapResultCollectionImages.Frame1 + i, "Shape_Rectangle_Outline");// TODO : 키 수정 필요
+            SetSprite(NyangNyangSnapResultCollectionImages.CheckMark1 + i, "Icon_Check");
             SetCheckMark(i, false);
         }
     }
 
     private void SetSprite(NyangNyangSnapResultCollectionImages image, string key)
     {
+        _spriteController[(int)image].ChangeSprite(key);
+    }
+
+    private void SetSprite(NyangNyangSnapResultCollectionImages image, string key, Color color)
+    {
+        _spriteController[(int)image].ChangeColor(color);
         _spriteController[(int)image].ChangeSprite(key);
     }
 
@@ -146,7 +159,13 @@ public enum NyangNyangSnapResultCollectionImages
     ResultCollectionPanel,
     Image1, Image2, Image3, Image4, Image5,
     Image6, Image7, Image8, Image9, Image10,
+    Circle1, Circle2, Circle3, Circle4, Circle5,
+    Circle6, Circle7, Circle8, Circle9, Circle10,
+    Frame1, Frame2, Frame3, Frame4, Frame5,
+    Frame6, Frame7, Frame8, Frame9, Frame10,
     CheckMark1, CheckMark2, CheckMark3, CheckMark4, CheckMark5,
     CheckMark6, CheckMark7, CheckMark8, CheckMark9, CheckMark10,
     SaveButton,
+    CatImage,
+    CharacterImage
 }

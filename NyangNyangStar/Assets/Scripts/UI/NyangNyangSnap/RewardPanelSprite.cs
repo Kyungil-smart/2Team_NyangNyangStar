@@ -1,11 +1,16 @@
 using System;
 using UI;
 using UI.Base;
+using UnityEngine;
 using UnityEngine.UI;
 
 public class RewardPanelSprite : UIBase
 {
     private UISpriteController[] _spriteController;
+
+    [SerializeField] private Color _rewardPanelColor;
+    [SerializeField] private Color _retryColor;
+    [SerializeField] private Color _mainColor;
 
     public override void Init()
     {
@@ -23,15 +28,21 @@ public class RewardPanelSprite : UIBase
 
     private void SetSprites()
     {
-        SetSprite(RewardPanelImages.RewardPanel, "Snap_Btn_Gray");
+        SetSprite(RewardPanelImages.RewardPanel, "Shape_Rectangle", _rewardPanelColor);
         SetSprite(RewardPanelImages.GemIcon, "Main_Icon_Jewel");
         SetSprite(RewardPanelImages.ADIcon, "Btn_AD");
-        SetSprite(RewardPanelImages.RetryButton, "Snap_Btn_Green");
-        SetSprite(RewardPanelImages.MainButton, "Snap_Btn_Blue");
+        SetSprite(RewardPanelImages.RetryButton, "Shape_Rectangle", _retryColor);
+        SetSprite(RewardPanelImages.MainButton, "Shape_Rectangle", _mainColor);
     }
 
     private void SetSprite(RewardPanelImages image, string key)
     {
+        _spriteController[(int)image].ChangeSprite(key);
+    }
+
+    private void SetSprite(RewardPanelImages image, string key, Color color)
+    {
+        _spriteController[(int)image].ChangeColor(color);
         _spriteController[(int)image].ChangeSprite(key);
     }
 
