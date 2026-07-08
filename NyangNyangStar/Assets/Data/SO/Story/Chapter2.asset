@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   storyId: 2
   title: 
+  backgroundKey: NQ_BG_Aquarium
   cards:
   - ID: S3_001
     char_name: "\uC6B0\uB9AC"
