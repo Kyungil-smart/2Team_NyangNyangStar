@@ -7,6 +7,8 @@ using UnityEngine.UI;
 
 public class NyangNyangSnapSprite : UIBase
 {
+    [SerializeField] private Color _panelColor = new Color32(255, 255, 255, 255);
+
     [SerializeField] private NyangNyangSnapBackgroundSO _backgroundSO;
     private UISpriteController[] _spriteController;
 
@@ -71,16 +73,26 @@ public class NyangNyangSnapSprite : UIBase
         SetSprite(NyangNyangSnapImages.BackButton, "Btn_Back");
         SetSprite(NyangNyangSnapImages.StartPanelBackButton, "Btn_Back");
 
-        SetSprite(NyangNyangSnapImages.SnackPanelButton, "Snap_Btn_Pink");
-        SetSprite(NyangNyangSnapImages.ToyPanelButton, "Snap_Btn_White");
-        SetSprite(NyangNyangSnapImages.PhotoButton, "Snap_Btn_Red");
+        SetSprite(NyangNyangSnapImages.SnackPanelButton, "Shape_Rectangle", _panelColor);
+        SetSprite(NyangNyangSnapImages.ToyPanelButton, "Shape_Rectangle", _panelColor);
+        SetSprite(NyangNyangSnapImages.PhotoButton, "Snap_Icon_RangeCircle");
+        SetSprite(NyangNyangSnapImages.PhotoButtonImage, "Shape_Circle");
+
         SetSprite(NyangNyangSnapImages.RemainingAttempts, "Snap_Btn_Gray");
         SetSprite(NyangNyangSnapImages.StartButton, "Snap_Btn_Gray");
         SetSprite(NyangNyangSnapImages.SettingsButton, "Main_Btn_Settings");
+        SetSprite(NyangNyangSnapImages.ToyIocn, "Item_Toy_YarnBall");
+        SetSprite(NyangNyangSnapImages.SnackIcon, "Item_Treat_Slice");
+
     }
 
     private void SetSprite(NyangNyangSnapImages image, string key)
     {
+        _spriteController[(int)image].ChangeSprite(key);
+    }
+    private void SetSprite(NyangNyangSnapImages image, string key, Color color)
+    {
+        _spriteController[(int)image].ChangeColor(color);
         _spriteController[(int)image].ChangeSprite(key);
     }
 
@@ -102,9 +114,12 @@ public class NyangNyangSnapSprite : UIBase
         SnackPanelButton,
         ToyPanelButton,
         PhotoButton,
+        PhotoButtonImage,
         RemainingAttempts,
         StartButton,
         SettingsButton,
+        ToyIocn,
+        SnackIcon,
     }
 }
 
