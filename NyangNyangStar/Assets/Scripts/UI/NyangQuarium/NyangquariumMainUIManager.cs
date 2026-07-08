@@ -221,7 +221,7 @@ namespace UI.NyangQuarium
 
         public void OpenStory() => OpenChildContent(_storyContent, NyangquariumEntryMode.Story);
 
-        public void OpenOwnedContentWithTransition(UIPopup popup, NyangquariumEntryMode entryMode, bool playClickSfx = true)
+        public bool OpenOwnedContentWithTransition(UIPopup popup, NyangquariumEntryMode entryMode, bool playClickSfx = true)
             => OpenChildContent(popup != null ? popup.gameObject : null, entryMode, playClickSfx);
 
         public void SetTankLevelProgress(int level, float expRatio)
@@ -472,10 +472,10 @@ namespace UI.NyangQuarium
             OpenChildContent(_oceanAquariumContent, _pendingAquariumEntryMode);
         }
 
-        private void OpenChildContent(GameObject content, NyangquariumEntryMode entryMode, bool playClickSfx = true)
+        private bool OpenChildContent(GameObject content, NyangquariumEntryMode entryMode, bool playClickSfx = true)
         {
             if (_isTransitioning || content == null)
-                return;
+                return false;
 
             if (playClickSfx)
                 PlayClickSfx();
@@ -502,7 +502,7 @@ namespace UI.NyangQuarium
             {
                 ShowContent();
                 Unlock();
-                return;
+                return true;
             }
 
             transition.Cover(TransitionSpriteKey, () =>
@@ -514,6 +514,8 @@ namespace UI.NyangQuarium
                     Unlock();
                 });
             });
+
+            return true;
         }
 
         private void OpenPopupContent(GameObject content, NyangquariumEntryMode entryMode)

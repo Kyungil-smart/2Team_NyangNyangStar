@@ -323,19 +323,24 @@ public class NyangQuariumOceanLayoutUI : UIPopup, INyangquariumEntryReceiver
             return;
         }
 
-        _isChangingLayout = true;
-
         GameManager.Audio.PlaySfx("Main_SFX_Touch");
 
         if (NyangquariumMainUIManager.Active != null)
         {
-            NyangquariumMainUIManager.Active.OpenOwnedContentWithTransition(
+            bool transitionStarted =
+                NyangquariumMainUIManager.Active.OpenOwnedContentWithTransition(
                 _freshLayoutUI,
                 _entryMode,
                 playClickSfx: false);
+
+            if (!transitionStarted)
+                return;
+
+            _isChangingLayout = true;
         }
         else
         {
+            _isChangingLayout = true;
             PrepareLinkedLayout(_freshLayoutUI);
             _freshLayoutUI.gameObject.SetActive(true);
             _freshLayoutUI.PlayOpenAnimation();
