@@ -28,8 +28,8 @@ public class NyangNyangSnapSnackUISprite : UIBase
     private void SetSprites()
     {
         SetSprite(NyangNyangSnapSnackUIImage.ScrollView, "Snap_Panel_ToolList");
-        SetSprite(NyangNyangSnapSnackUIImage.CloseButton, "Btn_Close", new Color32(0,0,0,255));
-        SetSprite(NyangNyangSnapSnackUIImage.SnackButton, "Shape_Rectangle");
+        SetSprite(NyangNyangSnapSnackUIImage.CloseButton, "Btn_Close");
+        SetSprite(NyangNyangSnapSnackUIImage.SnackButton, "Snap_Panel_Tool");
 
     }
 

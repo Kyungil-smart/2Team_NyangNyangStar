@@ -1724,7 +1724,7 @@ MonoBehaviour:
   _invalidNatureColor: {r: 1, g: 0, b: 0, a: 1}
   _naturePlacementAreaBorder: {fileID: 0}
   _placementLimitMessageText: {fileID: 1546692857568153618}
-  _placementLimitMessage: "\uBC30\uCE58 \uC81C\uD55C \uC218\uC5D0 \uB3C4\uB2EC\uD588\uC2B5\uB2C8\uB2E4.."
+  _placementLimitMessage: "\uBC30\uCE58 \uC81C\uD55C \uC218\uC5D0 \uB3C4\uB2EC\uD588\uC2B5\uB2C8\uB2E4."
   _placementLimitVisibleSeconds: 2
   _placementLimitFadeSeconds: 0.5
   _mainUIObjects:
