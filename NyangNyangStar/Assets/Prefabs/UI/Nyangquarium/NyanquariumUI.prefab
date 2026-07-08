@@ -475,7 +475,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _bubbleSpriteKey: NQ_Icon_TankLevel
-  _turtleSpriteKey: 
+  _turtleSpriteKey: NQ_Icon_Turtle
   _bubbleImage: {fileID: 1915821791818642141}
   _fillImage: {fileID: 3067276213159777716}
   _levelText: {fileID: 7820796727162622260}
@@ -633,7 +633,7 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
+    rgba: 4291619578
   m_fontColor: {r: 1, g: 1, b: 1, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
@@ -1171,12 +1171,13 @@ MonoBehaviour:
   _collectionSpriteKey: NQ_Btn_Collection
   _layoutSpriteKey: NQ_Btn_Tank
   _backSpriteKey: NQ_Btn_Back
+  _aquariumSelectBackSpriteKey: Btn_Close
   _freshAquariumSpriteKey: NQ_Btn_FreshWater
   _oceanAquariumSpriteKey: NQ_Btn_SaltWater
   _lockIconSpriteKey: NQ_Icon_Lock
   levelBubbleUI: {fileID: 8743894219262138909}
   _tankLevelBubbleSpriteKey: NQ_Icon_TankLevel
-  _tankLevelTurtleSpriteKey: 
+  _tankLevelTurtleSpriteKey: NQ_Icon_Turtle
   _tankLevel: 1
   _tankLevelExpRatio: 0
   _canvasGroup: {fileID: 8814279653102468137}
@@ -1612,7 +1613,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &7318593235655862835
 RectTransform:
   m_ObjectHideFlags: 0
@@ -1627,11 +1628,11 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 3628171855090641284}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 1, y: 1}
-  m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 8}
-  m_SizeDelta: {x: 64, y: 64}
-  m_Pivot: {x: 0.5, y: 0.5}
+  m_AnchorMin: {x: 1, y: 0}
+  m_AnchorMax: {x: 1, y: 0}
+  m_AnchoredPosition: {x: 17.5, y: -20}
+  m_SizeDelta: {x: 75, y: 75}
+  m_Pivot: {x: 1, y: 0}
 --- !u!222 &4468894313926066031
 CanvasRenderer:
   m_ObjectHideFlags: 0
