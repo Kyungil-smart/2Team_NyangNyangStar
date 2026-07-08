@@ -93,7 +93,7 @@ public class NyangstagramMainUI : UIPopup
         }
 
         SetProfileView();
-        RefreshPostSlots();
+        LoadPostsAsync();
         ReFreshLikeCountText();
 
         DebugTool.Log("NyangstagramMainUI Init 완료", DebugType.UI, this);
@@ -181,6 +181,13 @@ public class NyangstagramMainUI : UIPopup
             },
             false
         );
+    }
+
+    private async void LoadPostsAsync()
+    {
+        await _postSO.UpdateFromServerAsync(false);
+
+        RefreshPostSlots();
     }
 
     private void RefreshPostSlots()
