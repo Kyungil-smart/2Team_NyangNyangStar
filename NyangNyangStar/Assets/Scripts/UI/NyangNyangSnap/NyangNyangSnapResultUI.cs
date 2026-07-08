@@ -16,7 +16,7 @@ public class NyangNyangSnapResultUI : UIPopup
 
     [Header("결과/보상 패널")]
     [SerializeField] private GameObject _resultCollectionPanel;
-    [SerializeField] private GameObject _rewardPanel;
+    [SerializeField] private GameObject _rewardPopup;
 
     [Header("버튼")]
     [Tooltip("사진 선택 버튼")][SerializeField] private Button _selectPhotosButton;
@@ -257,7 +257,7 @@ public class NyangNyangSnapResultUI : UIPopup
             }
 
             _resultCollectionPanel.SetActive(false);
-            _rewardPanel.SetActive(true);
+            _rewardPopup.SetActive(true);
 
             DebugTool.Log(
                 "[NyangNyangSnapResultUI] 사진 저장 및 Jewel 보상 지급 완료",
@@ -345,9 +345,9 @@ public class NyangNyangSnapResultUI : UIPopup
 
     private void SetRewardJewelText(int rewardJewelCount)
     {
-        if (_rewardJewelText == null && _rewardPanel != null)
+        if (_rewardJewelText == null && _rewardPopup != null)
         {
-            TMP_Text[] texts = _rewardPanel.GetComponentsInChildren<TMP_Text>(true);
+            TMP_Text[] texts = _rewardPopup.GetComponentsInChildren<TMP_Text>(true);
             _rewardJewelText = Array.Find(texts, text => text.name == "RewardJewelText");
         }
 
@@ -448,7 +448,7 @@ public class NyangNyangSnapResultUI : UIPopup
         KillResultSequence();
 
         _resultCollectionPanel.SetActive(false);
-        _rewardPanel.SetActive(false);
+        _rewardPopup.SetActive(false);
         _selectPhotosButton.gameObject.SetActive(true);
         _isSaving = false;
         _isRewardGranted = false;
