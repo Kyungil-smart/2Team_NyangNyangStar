@@ -35,6 +35,12 @@ MonoBehaviour:
     m_SerializedLabels:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1242ce3fa5cdbf34abdcbbf90e9625dd
+    m_Address: Item_Exp_Small
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 12b6f26c62c75d74f8458da965bfd9fe
     m_Address: NQ_BG_Main
     m_ReadOnly: 0
@@ -43,6 +49,12 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 19fb0cdea18c05747a74d25b66c009a6
     m_Address: NQ_Btn_Skip
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1ab49ddd06d2a2f479d604831378ed52
+    m_Address: Item_Exp_Medium
     m_ReadOnly: 0
     m_SerializedLabels:
     - Sprite
@@ -305,6 +317,12 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: bfd0551a0a5f535489f986f6ea7fe144
     m_Address: NQ_Panel_QuestBoard_Completed
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c0b98f31aefe60a44a863977e019ca67
+    m_Address: Item_Exp_Large
     m_ReadOnly: 0
     m_SerializedLabels:
     - Sprite
