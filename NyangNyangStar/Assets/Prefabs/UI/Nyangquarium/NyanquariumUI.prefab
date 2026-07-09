@@ -633,7 +633,7 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4291619578
+    rgba: 4294967295
   m_fontColor: {r: 1, g: 1, b: 1, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
@@ -1313,10 +1313,20 @@ MonoBehaviour:
   _spawnCountPerType: 2
   _padding: 80
   _speedRange: {x: 35, y: 90}
-  _scaleRange: {x: 1, y: 1}
+  _scaleRange: {x: 1.5, y: 1.5}
   _targetReachDistance: 10
   _maxTiltAngle: 30
   _rotationLerpSpeed: 5
+  _movementBlockedAreas: []
+  _autoCollectMainUiBlockedAreas: 1
+  _autoBlockedAreaNames:
+  - LogoImage
+  - BackButton
+  - BoardButton
+  - CollectionButton
+  - LayoutButton
+  - AquariumLevel
+  _blockedAreaPadding: 40
   _freshFishKeys:
   - Fish_Fresh_Guppy
   - Fish_Fresh_Angelfish
