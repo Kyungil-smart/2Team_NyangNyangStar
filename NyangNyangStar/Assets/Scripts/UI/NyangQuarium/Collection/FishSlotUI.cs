@@ -6,7 +6,7 @@ using UnityEngine.UI;
 
 public class FishSlotUI : UIBase
 {
-    [SerializeField] private Button _fishSlot;
+    [SerializeField] private Button _fishSlotBackground;
     [SerializeField] private GameObject _lockedOverlay;
     [SerializeField] private TMP_Text _fishNameText;
 
@@ -19,11 +19,12 @@ public class FishSlotUI : UIBase
 
     public override void Init()
     {
+        Bind<Button>(typeof(FishSlotButtons));
         Bind<GameObject>(typeof(FishSlotObjects));
         Bind<TMP_Text>(typeof(FishSlotTexts));
 
-        _fishSlot = GetComponent<Button>();
-        _fishSlot.onClick.AddListener(OpenInfoPopup);
+        _fishSlotBackground = GetButton((int)FishSlotButtons.FishSlotBackground);
+        _fishSlotBackground.onClick.AddListener(OpenInfoPopup);
 
         _lockedOverlay = GetObject((int)FishSlotObjects.LockedOverlay);
 
@@ -65,9 +66,14 @@ public class FishSlotUI : UIBase
 
     private void OnDestroy()
     {
-        if (_fishSlot != null)
-            _fishSlot.onClick.RemoveAllListeners();
+        if (_fishSlotBackground != null)
+            _fishSlotBackground.onClick.RemoveAllListeners();
     }
+}
+
+public enum FishSlotButtons
+{
+    FishSlotBackground
 }
 
 public enum FishSlotObjects

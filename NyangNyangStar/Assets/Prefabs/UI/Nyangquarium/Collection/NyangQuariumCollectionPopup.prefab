@@ -737,7 +737,7 @@ MonoBehaviour:
   _nyangquariumSo: {fileID: 11400000, guid: 0fc986c90daa4280a89b9952a7258efb, type: 2}
   _progressText: {fileID: 0}
   _content: {fileID: 1335824349634436417}
-  _fishSlotPrefab: {fileID: 8054924155996669399, guid: 808d7067c5c55e34a969391b6c7540c2, type: 3}
+  _fishSlotPrefab: {fileID: 6387677660566773411, guid: 808d7067c5c55e34a969391b6c7540c2, type: 3}
   _infoPopup: {fileID: 0}
 --- !u!114 &6802708899170159644
 MonoBehaviour:
