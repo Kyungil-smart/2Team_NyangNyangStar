@@ -38,6 +38,10 @@ public class NyangNyangSnapSnackUI : UIPopup
     [Tooltip("간식/음식 버튼들이 생성될 부모 Content")]
     [SerializeField] private Transform _content;
 
+    [Header("스크롤")]
+    [Tooltip("아이템 목록 ScrollRect. 비어 있으면 Content 부모에서 자동 탐색")]
+    [SerializeField] private ScrollRect _scrollRect;
+
     [Header("빈 목록 안내")]
     [Tooltip("보유 간식이 없을 때 표시할 TextMeshPro 텍스트")]
     [SerializeField] private TMP_Text _emptyMessageText;
@@ -72,6 +76,7 @@ public class NyangNyangSnapSnackUI : UIPopup
 
     private Coroutine _holdCoroutine;
     private Coroutine _loadButtonsCoroutine;
+    private Coroutine _releaseClickBlockCoroutine;
 
     private NyangNyangSnapInventoryItem _pressedItem;
     private Button _pressedButton;
@@ -80,6 +85,8 @@ public class NyangNyangSnapSnackUI : UIPopup
     private bool _isInitialized;
     private bool _isPointerPressed;
     private bool _isPlacementDragging;
+    private bool _isScrollDragging;
+    private bool _blockClick;
 
     private NyangNyangSnapSnackUISprite _nyangNyangSnapSnackUISprite;
     public override void Init()
@@ -94,6 +101,7 @@ public class NyangNyangSnapSnackUI : UIPopup
         _nyangNyangSnapSnackUISprite.Init();
 
         AutoAssignPlacementController();
+        AutoAssignScrollRect();
         RegisterPlacementEvents();
         InitPopups();
 
@@ -106,6 +114,7 @@ public class NyangNyangSnapSnackUI : UIPopup
             return;
 
         AutoAssignPlacementController();
+        AutoAssignScrollRect();
         RegisterPlacementEvents();
     }
 
@@ -114,13 +123,38 @@ public class NyangNyangSnapSnackUI : UIPopup
         StopLoadButtonsCoroutine();
         CancelHold();
 
+        StopReleaseClickBlockCoroutine();
+
         _isPointerPressed = false;
         _isPlacementDragging = false;
+        _isScrollDragging = false;
+        _blockClick = false;
 
         ResetSelectedButton(false);
 
         if (_placementController != null)
             _placementController.OnSnackDragCompleted -= OnSnackDragCompleted;
+    }
+
+    private void AutoAssignScrollRect()
+    {
+        if (_scrollRect != null)
+            return;
+
+        if (_content != null)
+            _scrollRect = _content.GetComponentInParent<ScrollRect>();
+
+        if (_scrollRect == null && _snackButton != null)
+            _scrollRect = _snackButton.GetComponentInParent<ScrollRect>();
+
+        if (_scrollRect == null)
+        {
+            DebugTool.Warning(
+                "[NyangNyangSnapSnackUI] 아이템 목록 ScrollRect를 찾지 못했습니다.",
+                DebugType.UI,
+                this
+            );
+        }
     }
 
     private void AutoAssignPlacementController()
@@ -528,8 +562,25 @@ public class NyangNyangSnapSnackUI : UIPopup
 
         AddEventTrigger(
             eventTrigger,
+            EventTriggerType.InitializePotentialDrag,
+            OnSnackInitializePotentialDrag
+        );
+
+        AddEventTrigger(
+            eventTrigger,
+            EventTriggerType.BeginDrag,
+            OnSnackBeginDrag
+        );
+
+        AddEventTrigger(
+            eventTrigger,
             EventTriggerType.Drag,
             OnSnackDrag
+        );
+        AddEventTrigger(
+            eventTrigger,
+            EventTriggerType.EndDrag,
+            OnSnackEndDrag
         );
 
         AddEventTrigger(
@@ -568,7 +619,7 @@ public class NyangNyangSnapSnackUI : UIPopup
         if (_placementController == null || selectedButton == null)
             return;
 
-        if (_isPlacementDragging)
+        if (_blockClick || _isPlacementDragging || _isScrollDragging)
             return;
 
         if (_selectedButton == selectedButton && _selectedItemID == item.ItemID)
@@ -647,8 +698,12 @@ public class NyangNyangSnapSnackUI : UIPopup
     {
         CancelHold();
 
+        StopReleaseClickBlockCoroutine();
+
         _isPointerPressed = true;
         _isPlacementDragging = false;
+        _isScrollDragging = false;
+        _blockClick = false;
 
         _pressedItem = item;
         _pressedButton = button;
@@ -657,15 +712,52 @@ public class NyangNyangSnapSnackUI : UIPopup
         _holdCoroutine = StartCoroutine(BeginPlacementAfterHold());
     }
 
+    private void OnSnackInitializePotentialDrag(PointerEventData eventData)
+    {
+        AutoAssignScrollRect();
+        _scrollRect?.OnInitializePotentialDrag(eventData);
+    }
+
+    private void OnSnackBeginDrag(PointerEventData eventData)
+    {
+        if (_isPlacementDragging)
+            return;
+
+        CancelHoldCoroutineOnly();
+
+        _blockClick = true;
+        _isScrollDragging = true;
+
+        AutoAssignScrollRect();
+        _scrollRect?.OnBeginDrag(eventData);
+    }
+
     private void OnSnackDrag(PointerEventData eventData)
     {
         _currentPointerEvent = eventData;
+
+        if (_isScrollDragging)
+        {
+            _scrollRect?.OnDrag(eventData);
+            return;
+        }
 
         if (_isPlacementDragging)
         {
             _placementController?.UpdateSnackDrag(eventData.position);
             return;
         }
+    }
+
+    private void OnSnackEndDrag(PointerEventData eventData)
+    {
+        if (!_isScrollDragging)
+            return;
+
+        _scrollRect?.OnEndDrag(eventData);
+        _isScrollDragging = false;
+
+        StartReleaseClickBlockNextFrame();
     }
 
     private void OnSnackPointerUp(PointerEventData eventData)
@@ -689,6 +781,9 @@ public class NyangNyangSnapSnackUI : UIPopup
         }
 
         CancelHold();
+
+        if (_blockClick && _releaseClickBlockCoroutine == null)
+            StartReleaseClickBlockNextFrame();
     }
 
     private void OnSnackPointerExit(PointerEventData eventData)
@@ -705,7 +800,7 @@ public class NyangNyangSnapSnackUI : UIPopup
 
         _holdCoroutine = null;
 
-        if (!_isPointerPressed)
+        if (!_isPointerPressed || _isScrollDragging || _blockClick)
             yield break;
 
         if (_pressedButton == null || _pressedItem == null)
@@ -731,6 +826,29 @@ public class NyangNyangSnapSnackUI : UIPopup
             DebugType.UI,
             this
         );
+    }
+
+    private void StartReleaseClickBlockNextFrame()
+    {
+        StopReleaseClickBlockCoroutine();
+        _releaseClickBlockCoroutine = StartCoroutine(ReleaseClickBlockNextFrame());
+    }
+
+    private IEnumerator ReleaseClickBlockNextFrame()
+    {
+        yield return null;
+
+        _blockClick = false;
+        _releaseClickBlockCoroutine = null;
+    }
+
+    private void StopReleaseClickBlockCoroutine()
+    {
+        if (_releaseClickBlockCoroutine == null)
+            return;
+
+        StopCoroutine(_releaseClickBlockCoroutine);
+        _releaseClickBlockCoroutine = null;
     }
 
     private void CancelHoldCoroutineOnly()
@@ -780,8 +898,12 @@ public class NyangNyangSnapSnackUI : UIPopup
 
         CancelHold();
 
+        StopReleaseClickBlockCoroutine();
+
         _isPointerPressed = false;
         _isPlacementDragging = false;
+        _isScrollDragging = false;
+        _blockClick = false;
 
         ResetSelectedButton(true);
 
