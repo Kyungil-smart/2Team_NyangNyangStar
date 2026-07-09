@@ -14,183 +14,6 @@ using Util;
 
 namespace UI.NyangQuarium.MergeBoard
 {
-    // merge 퀘스트 풀에서 3개를 한 번만 랜덤 등록하고, 머지보드 재진입 시에도 유지합니다.
-    public static class NyangQuariumMergeQuestSession
-    {
-        private const int ActiveSlotCount = 3;
-
-        private static readonly List<int> _activeQuestIds = new();
-        private static bool _isRegistered;
-
-        public static IReadOnlyList<int> ActiveQuestIds => _activeQuestIds;
-        public static bool IsRegistered => _isRegistered;
-
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        private static void ResetSessionState()
-        {
-            _activeQuestIds.Clear();
-            _isRegistered = false;
-        }
-
-        public static bool RemoveQuest(int questId)
-        {
-            return questId > 0 && _activeQuestIds.Remove(questId);
-        }
-
-        public static async Task EnsureRegisteredAsync(NyangQuariumQuestSO questSO)
-        {
-            if (_isRegistered)
-                return;
-
-            if (questSO == null)
-                return;
-
-            List<NyangQuariumQuestData> mergeQuests =
-                questSO.GetQuestsByType(NyangQuariumQuestType.Merge);
-
-            if (mergeQuests.Count == 0)
-                return;
-
-            NyangQuariumFirestoreSO store = await NyangQuariumFirestoreSO.WaitForReadyAsync();
-            if (store != null && await store.LoadOrCreateFromServerAsync())
-            {
-                if (store.MergeQuestBoardInitialized)
-                {
-                    int restoredCount;
-
-                    RestoreRegisteredQuests(store.ActiveMergeQuestBoardQuestIds, questSO);
-                    restoredCount = _activeQuestIds.Count;
-                    FillOpenSlots(questSO);
-                    _isRegistered = true;
-
-                    if (_activeQuestIds.Count != restoredCount)
-                        await SaveCurrentStateAsync();
-
-                    return;
-                }
-            }
-
-            List<NyangQuariumQuestData> pool = new(mergeQuests);
-            int pickCount = Mathf.Min(ActiveSlotCount, pool.Count);
-
-            for (int i = 0; i < pickCount; i++)
-            {
-                int randomIndex = Random.Range(i, pool.Count);
-
-                if (randomIndex != i)
-                {
-                    NyangQuariumQuestData swap = pool[i];
-                    pool[i] = pool[randomIndex];
-                    pool[randomIndex] = swap;
-                }
-
-                _activeQuestIds.Add(pool[i].ID);
-            }
-
-            _isRegistered = true;
-            await SaveCurrentStateAsync();
-
-            DebugTool.Log(
-                $"[NyangQuariumMergeQuestSession] merge 퀘스트 {pickCount}개 등록: {string.Join(", ", _activeQuestIds)}",
-                DebugType.UI);
-        }
-
-        public static bool TryRegisterRandomQuest(
-            NyangQuariumQuestSO questSO,
-            out NyangQuariumQuestData quest,
-            int excludedQuestId = 0)
-        {
-            quest = null;
-
-            if (questSO == null)
-                return false;
-
-            List<NyangQuariumQuestData> mergeQuests =
-                questSO.GetQuestsByType(NyangQuariumQuestType.Merge);
-
-            if (mergeQuests.Count == 0)
-                return false;
-
-            List<NyangQuariumQuestData> candidates = new();
-            NyangQuariumQuestData excludedCandidate = null;
-
-            for (int i = 0; i < mergeQuests.Count; i++)
-            {
-                NyangQuariumQuestData candidate = mergeQuests[i];
-                if (candidate == null || candidate.ID <= 0)
-                    continue;
-
-                if (_activeQuestIds.Contains(candidate.ID))
-                    continue;
-
-                if (candidate.ID == excludedQuestId)
-                {
-                    excludedCandidate = candidate;
-                    continue;
-                }
-
-                candidates.Add(candidate);
-            }
-
-            if (candidates.Count == 0)
-            {
-                if (excludedCandidate == null)
-                    return false;
-
-                candidates.Add(excludedCandidate);
-            }
-
-            quest = candidates[Random.Range(0, candidates.Count)];
-            _activeQuestIds.Add(quest.ID);
-            return true;
-        }
-
-        public static async Task SaveCurrentStateAsync()
-        {
-            NyangQuariumFirestoreSO store = await NyangQuariumFirestoreSO.WaitForReadyAsync();
-            if (store == null)
-                return;
-
-            await store.SaveMergeQuestBoardStateAsync(_activeQuestIds, _isRegistered);
-        }
-
-        private static void RestoreRegisteredQuests(
-            IReadOnlyList<int> savedQuestIds,
-            NyangQuariumQuestSO questSO)
-        {
-            _activeQuestIds.Clear();
-
-            if (savedQuestIds == null || questSO == null)
-                return;
-
-            HashSet<int> seen = new();
-
-            for (int i = 0; i < savedQuestIds.Count; i++)
-            {
-                int questId = savedQuestIds[i];
-                if (questId <= 0 || !seen.Add(questId))
-                    continue;
-
-                if (!questSO.TryGetQuest(questId, out NyangQuariumQuestData quest) ||
-                    quest == null ||
-                    quest.QuestType != NyangQuariumQuestType.Merge)
-                {
-                    continue;
-                }
-
-                _activeQuestIds.Add(questId);
-            }
-        }
-
-        private static void FillOpenSlots(NyangQuariumQuestSO questSO)
-        {
-            while (_activeQuestIds.Count < ActiveSlotCount &&
-                   TryRegisterRandomQuest(questSO, out _))
-            {
-            }
-        }
-    }
-
     // QuestBoardPanel 아래 3개 슬롯에 등록된 merge 퀘스트를 바인딩합니다.
     public sealed class NyangQuariumMergeQuestBoardUI : MonoBehaviour
     {
@@ -198,8 +21,8 @@ namespace UI.NyangQuarium.MergeBoard
         private const string MergeTargetItemName = "MergeTargetItem";
         private const string RewardImageName = "RewardImage";
         private const string CompleteButtonName = "Button";
-
-        [SerializeField] private Sprite _completedQuestBoardSprite;
+        private const string NormalQuestBoardSpriteKey = "NQ_Panel_QuestBoard_Normal";
+        private const string CompletedQuestBoardSpriteKey = "NQ_Panel_QuestBoard_Completed";
 
         private readonly List<MergeQuestSlotBinding> _slotBindings = new();
         private readonly List<UI.UISpriteController> _spriteControllers = new();
@@ -217,7 +40,7 @@ namespace UI.NyangQuarium.MergeBoard
             public int RequiredAmount;
             public Transform SlotTransform;
             public Image BoardImage;
-            public Sprite DefaultBoardSprite;
+            public UI.UISpriteController BoardSpriteController;
             public Button CompleteButton;
             public bool IsReadyToComplete;
             public bool IsCompleted;
@@ -624,7 +447,11 @@ namespace UI.NyangQuarium.MergeBoard
                 CompleteButton = completeButton
             };
 
-            binding.DefaultBoardSprite = binding.BoardImage != null ? binding.BoardImage.sprite : null;
+            if (binding.BoardImage != null)
+            {
+                binding.BoardSpriteController = new UI.UISpriteController(binding.BoardImage);
+                _spriteControllers.Add(binding.BoardSpriteController);
+            }
 
             completeButton.onClick.RemoveAllListeners();
             completeButton.onClick.AddListener(() => OnCompleteButtonClicked(binding));
@@ -681,6 +508,7 @@ namespace UI.NyangQuarium.MergeBoard
                     punchMovedBoard: false);
             }
 
+            DisposeBoardSpriteController(binding);
             TryBindNextQuestToCompletedSlot(binding.SlotTransform, binding.QuestId);
             _ = NyangQuariumMergeQuestSession.SaveCurrentStateAsync();
 
@@ -887,26 +715,22 @@ namespace UI.NyangQuarium.MergeBoard
             if (binding?.BoardImage == null)
                 return;
 
-            Sprite sprite = completed && ResolveCompletedQuestBoardSprite() != null
-                ? _completedQuestBoardSprite
-                : binding.DefaultBoardSprite;
+            binding.BoardSpriteController ??= new UI.UISpriteController(binding.BoardImage);
+            string spriteKey = completed
+                ? CompletedQuestBoardSpriteKey
+                : NormalQuestBoardSpriteKey;
 
-            if (sprite != null)
-                binding.BoardImage.sprite = sprite;
+            binding.BoardSpriteController.ChangeSprite(spriteKey);
         }
 
-        private Sprite ResolveCompletedQuestBoardSprite()
+        private void DisposeBoardSpriteController(MergeQuestSlotBinding binding)
         {
-            if (_completedQuestBoardSprite != null)
-                return _completedQuestBoardSprite;
+            if (binding?.BoardSpriteController == null)
+                return;
 
-#if UNITY_EDITOR
-            _completedQuestBoardSprite =
-                UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>(
-                    "Assets/Test/Image/Q_board_success.png");
-#endif
-
-            return _completedQuestBoardSprite;
+            _spriteControllers.Remove(binding.BoardSpriteController);
+            binding.BoardSpriteController.Dispose();
+            binding.BoardSpriteController = null;
         }
 
         private static Transform FindDirectChildByName(Transform root, string objectName)
