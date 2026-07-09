@@ -908,7 +908,7 @@ public sealed class NyangQuariumCollectionEntry
     public int FishId => FishData?.FishId ?? 0;
     public FishType FishType => FishData?.FishType ?? FishType.None;
     public int Level => FishData?.Level ?? 0;
-    public string Category => FishData?.Category ?? string.Empty;
+    public PlaceableType PlaceableType => FishData?.PlaceableType ?? PlaceableType.None;
     public string FishName => FishData?.FishName ?? string.Empty;
     public string FishDescription => FishData?.FishDescription ?? string.Empty;
     public string FishKey => FishData?.FishKey ?? string.Empty;
