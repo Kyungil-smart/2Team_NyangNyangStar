@@ -14,6 +14,11 @@ using UnityEngine.UI;
 // 단계 선택 버튼과 일일/주간 START 버튼 입력을 매니저에 전달
 public class ScratchingTimeController : UIBase
 {
+    private static readonly Vector2 CloseButtonAnchor = new Vector2(0f, 1f);
+    private static readonly Vector2 CloseButtonPivot = new Vector2(0f, 1f);
+    private static readonly Vector2 CloseButtonPosition = new Vector2(10f, -100f);
+    private static readonly Vector2 CloseButtonSize = new Vector2(100f, 100f);
+
     [Header("Close Button")]
     [SerializeField] public Button _closeButton;
 
@@ -448,6 +453,7 @@ public class ScratchingTimeController : UIBase
         Bind<TMP_Text>(typeof(StageTexts));
 
         GetButtons();
+        ApplyCloseButtonLayout();
         GetTexts();
         EnsureCloseTweenTargets();
 
@@ -459,6 +465,22 @@ public class ScratchingTimeController : UIBase
     {
         _closeRoot ??= transform;
         _closeCanvasGroup ??= UIPanelCloseTween.GetOrAddCanvasGroup(gameObject);
+    }
+
+    private void ApplyCloseButtonLayout()
+    {
+        RectTransform closeButtonRect = _closeButton != null
+            ? _closeButton.transform as RectTransform
+            : null;
+
+        if (closeButtonRect == null)
+            return;
+
+        closeButtonRect.anchorMin = CloseButtonAnchor;
+        closeButtonRect.anchorMax = CloseButtonAnchor;
+        closeButtonRect.pivot = CloseButtonPivot;
+        closeButtonRect.anchoredPosition = CloseButtonPosition;
+        closeButtonRect.sizeDelta = CloseButtonSize;
     }
 
     private void SetCloseInputBlocked(bool blocked)
