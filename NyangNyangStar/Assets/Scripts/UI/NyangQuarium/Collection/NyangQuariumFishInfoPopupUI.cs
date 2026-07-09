@@ -69,7 +69,7 @@ public class NyangQuariumFishInfoPopupUI : UIPopup
         _sprite.SetFishImage(fishData.FishKey, isUnlocked);
 
         _fishTypeText.text = $"[ {GetFishTypeText(fishData.FishType)} ]";
-        _fishLevelText.text = isUnlocked ? $"[ Lv {fishData.Level} ]" : "[ Lv ??? ]";
+        _fishLevelText.text = $"[ Lv {fishData.Level} ]";
         _fishNameText.text = isUnlocked ? $"이름 : {fishData.FishName}" : "이름 : ???";
         _fishDescriptionText.text = isUnlocked ? $"설명 : {fishData.FishDescription}" : "설명 : ???";
     }
