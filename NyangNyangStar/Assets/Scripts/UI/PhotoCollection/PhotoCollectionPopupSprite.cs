@@ -33,6 +33,7 @@ public class PhotoCollectionPopupSprite : UIBase
         SetSprite(PhotoCollectionPopupImages.DecorationImage, "Snap_Img_Sample");
         SetSprite(PhotoCollectionPopupImages.FilterButton, "Btn_Filter");
         SetSprite(PhotoCollectionPopupImages.FilterPanel, "Shape_Square", _filterPanelColor);
+        //SetSprite(PhotoCollectionPopupImages.ResetFilterButton, "");
         SetSpriteRange(PhotoCollectionPopupImages.Background1, PhotoCollectionPopupImages.Background5, "Shape_Circle", _backgroundColor);
         SetSpriteRange(PhotoCollectionPopupImages.Checkmark1, PhotoCollectionPopupImages.Checkmark5, "Icon_Check");
         SetSpriteRange(PhotoCollectionPopupImages.Star1_1, PhotoCollectionPopupImages.Star4_4, "Snap_Icon_Star");
@@ -86,6 +87,7 @@ public enum PhotoCollectionPopupImages
     DecorationImage,
     FilterButton,
     FilterPanel,
+    // ResetFilterButton, // TODO : 이미지 적용 예정
     Background1, Background2, Background3, Background4, Background5,
     Checkmark1, Checkmark2, Checkmark3, Checkmark4, Checkmark5,
     Star1_1,

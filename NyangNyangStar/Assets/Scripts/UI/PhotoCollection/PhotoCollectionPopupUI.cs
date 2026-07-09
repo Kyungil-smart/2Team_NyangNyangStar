@@ -26,6 +26,7 @@ public class PhotoCollectionPopupUI : UIPopup
     [SerializeField] private Toggle _star3Toggle;
     [SerializeField] private Toggle _star4Toggle;
     [SerializeField] private Toggle _star5Toggle;
+    [SerializeField] private Button _resetFilterButton;
 
     [Header("사진 슬롯")]
     [SerializeField] private RectTransform _content;
@@ -39,6 +40,7 @@ public class PhotoCollectionPopupUI : UIPopup
     private PhotoCollectionPopupSprite _sprite;
     private PhotoDetailPopupUI _detailPopup;
     private Toggle[] _starToggles;
+    private readonly List<int> _selectedStars = new();
 
     public override void Init()
     {
@@ -49,6 +51,7 @@ public class PhotoCollectionPopupUI : UIPopup
         _background = GetButton((int)PhotoCollectionPopupButtons.Background);
         _backButton = GetButton((int)PhotoCollectionPopupButtons.BackButton);
         _filterButton = GetButton((int)PhotoCollectionPopupButtons.FilterButton);
+        _resetFilterButton = GetButton((int)PhotoCollectionPopupButtons.ResetFilterButton);
 
         _filterPanel = GetObject((int)PhotoCollectionPopupObjects.FilterPanel);
 
@@ -193,6 +196,7 @@ public class PhotoCollectionPopupUI : UIPopup
         if (_background != null) _background.onClick.AddListener(CloseAllPopups);
         if (_backButton != null) _backButton.onClick.AddListener(ClosePhotoCollectionPopup);
         if (_filterButton != null) _filterButton.onClick.AddListener(ToggleFilterPanel);
+        if (_resetFilterButton != null) _resetFilterButton.onClick.AddListener(ResetFilter);
     }
 
     private void OnDestroy()
@@ -201,6 +205,7 @@ public class PhotoCollectionPopupUI : UIPopup
         RemovePopupButton(_background);
         RemovePopupButton(_backButton);
         RemovePopupButton(_filterButton);
+        RemovePopupButton(_resetFilterButton);
     }
 
     private void RemovePopupButton(Button button)
@@ -223,6 +228,7 @@ public class PhotoCollectionPopupUI : UIPopup
     {
         foreach (Toggle toggle in _starToggles)
         {
+            toggle.isOn = false;
             toggle.onValueChanged.AddListener(isOn =>
             {
                 DebugTool.Log($"{toggle.name} : {isOn}", DebugType.UI, this);
@@ -236,18 +242,31 @@ public class PhotoCollectionPopupUI : UIPopup
     {
         if (_starToggles == null) return;
 
-        List<int> selectedStars = new();
+        _selectedStars.Clear();
 
         for (int i = 0; i < _starToggles.Length; i++)
         {
             if (_starToggles[i].isOn)
-                selectedStars.Add(i + 1);
+                _selectedStars.Add(i + 1);
         }
+
+        bool hasFilter = _selectedStars.Count > 0;
 
         foreach (CatPhotoSlotUI slot in _photoDic.Values)
         {
-            slot.gameObject.SetActive(selectedStars.Contains(slot.StarCount));
+            slot.gameObject.SetActive(!hasFilter || _selectedStars.Contains(slot.StarCount));
         }
+    }
+
+    private void ResetFilter()
+    {
+        foreach (Toggle toggle in _starToggles)
+        {
+            toggle.SetIsOnWithoutNotify(false);
+        }
+
+        ApplyStarFilter();
+        GameManager.Audio.PlaySfx("Main_SFX_Touch");
     }
 
     private void ClosePhotoCollectionPopup()
@@ -276,7 +295,8 @@ public enum PhotoCollectionPopupButtons
     CloseButton,
     Background,
     BackButton,
-    FilterButton
+    FilterButton,
+    ResetFilterButton
 }
 
 public enum PhotoCollectionPopupObjects
