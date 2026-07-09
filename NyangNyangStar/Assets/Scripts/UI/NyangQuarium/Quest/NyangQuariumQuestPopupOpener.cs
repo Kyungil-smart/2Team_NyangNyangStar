@@ -86,7 +86,6 @@ namespace UI.NyangQuarium.Quest
                     readyAction?.Invoke();
                 },
                 setActive: false,
-                addCanvas: true,
                 onFailed: failedKey =>
                 {
                     _isLoading = false;

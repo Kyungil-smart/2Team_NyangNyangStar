@@ -30,7 +30,7 @@ public class PhotoCollectionPopupSprite : UIBase
         SetSprite(PhotoCollectionPopupImages.Panel, "Snap_Panel_Note");
         SetSprite(PhotoCollectionPopupImages.BackButton, "Btn_Back");
         SetSprite(PhotoCollectionPopupImages.CloseButton, "Btn_Close");
-        SetSprite(PhotoCollectionPopupImages.DecorationImage, "NYS_FeedImage_Player_01");
+        SetSprite(PhotoCollectionPopupImages.DecorationImage, "Snap_Img_Sample");
         SetSprite(PhotoCollectionPopupImages.FilterButton, "Btn_Filter");
         SetSprite(PhotoCollectionPopupImages.FilterPanel, "Shape_Square", _filterPanelColor);
         SetSprite(PhotoCollectionPopupImages.FilterCloseButton, "Btn_Close");

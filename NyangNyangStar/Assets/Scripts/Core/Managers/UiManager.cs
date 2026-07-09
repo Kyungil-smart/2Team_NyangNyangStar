@@ -44,41 +44,25 @@ namespace Core.Managers
 
         public void SetCanvas(GameObject go, bool sort = true)
         {
-            Canvas canvas = go.GetComponent<Canvas>();
-            if (canvas == null)
-                canvas = go.AddComponent<Canvas>();
-
-            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            canvas.overrideSorting = sort;
-
-            if (canvas.GetComponent<CanvasScaler>() == null)
-                go.AddComponent<CanvasScaler>();
-
-            ConfigureCanvasScalers(go);
-
-            if (sort)
-            {
-                canvas.sortingOrder = _order;
-                _order++;
-            }
-            else
-            {
-                canvas.sortingOrder = 0;
-            }
-        }
-
-        private void SetSortingOrder(GameObject go)
-        {
             Canvas[] canvases = go.GetComponentsInChildren<Canvas>(true);
-            ConfigureCanvasScalers(go);
+
+            if (canvases.Length == 0)
+            {
+                Canvas canvas = go.AddComponent<Canvas>();
+                canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+                canvases = new[] { canvas };
+            }
 
             foreach (Canvas canvas in canvases)
             {
-                canvas.overrideSorting = true;
-                canvas.sortingOrder = _order;
+                if (canvas.renderMode != RenderMode.ScreenSpaceCamera)
+                    canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+
+                canvas.overrideSorting = sort;
+                canvas.sortingOrder = sort ? _order++ : 0;
             }
 
-            _order++;
+            ConfigureCanvasScalers(go);
         }
 
         private static void ConfigureCanvasScalers(GameObject go)
@@ -165,7 +149,6 @@ namespace Core.Managers
             string name = null,
             Action<T> onLoaded = null,
             bool setActive = true,
-            bool addCanvas = true,
             Action<string> onFailed = null,
             UIPopupCloseMode closeMode = UIPopupCloseMode.Auto) where T : UIPopup
         {
@@ -206,10 +189,7 @@ namespace Core.Managers
 
                     uiPrefab.transform.SetParent(_root.transform, false);
 
-                    if (addCanvas)
-                        SetCanvas(uiPrefab);
-                    else
-                        SetSortingOrder(uiPrefab);
+                    SetCanvas(uiPrefab);
 
                     popup.Init();
 
