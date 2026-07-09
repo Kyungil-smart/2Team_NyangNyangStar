@@ -3618,7 +3618,7 @@ GameObject:
   - component: {fileID: 491148673358238478}
   - component: {fileID: 7604817520056680300}
   m_Layer: 5
-  m_Name: Image
+  m_Name: SnackIcon
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
