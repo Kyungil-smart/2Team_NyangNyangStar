@@ -19,7 +19,6 @@ public class PhotoCollectionPopupUI : UIPopup
 
     [Header("사진 필터")]
     [Tooltip("필터 패널")][SerializeField] private GameObject _filterPanel;
-    [Tooltip("필터 닫기 버튼")][SerializeField] private Button _filterCloseButton;
 
     [Header("별 필터 버튼(Toggle)")]
     [SerializeField] private Toggle _star1Toggle;
@@ -50,7 +49,6 @@ public class PhotoCollectionPopupUI : UIPopup
         _background = GetButton((int)PhotoCollectionPopupButtons.Background);
         _backButton = GetButton((int)PhotoCollectionPopupButtons.BackButton);
         _filterButton = GetButton((int)PhotoCollectionPopupButtons.FilterButton);
-        _filterCloseButton = GetButton((int)PhotoCollectionPopupButtons.FilterCloseButton);
 
         _filterPanel = GetObject((int)PhotoCollectionPopupObjects.FilterPanel);
 
@@ -195,7 +193,6 @@ public class PhotoCollectionPopupUI : UIPopup
         if (_background != null) _background.onClick.AddListener(CloseAllPopups);
         if (_backButton != null) _backButton.onClick.AddListener(ClosePhotoCollectionPopup);
         if (_filterButton != null) _filterButton.onClick.AddListener(ToggleFilterPanel);
-        if (_filterCloseButton != null) _filterCloseButton.onClick.AddListener(ToggleFilterPanel);
     }
 
     private void OnDestroy()
@@ -204,7 +201,6 @@ public class PhotoCollectionPopupUI : UIPopup
         RemovePopupButton(_background);
         RemovePopupButton(_backButton);
         RemovePopupButton(_filterButton);
-        RemovePopupButton(_filterCloseButton);
     }
 
     private void RemovePopupButton(Button button)
@@ -280,8 +276,7 @@ public enum PhotoCollectionPopupButtons
     CloseButton,
     Background,
     BackButton,
-    FilterButton,
-    FilterCloseButton
+    FilterButton
 }
 
 public enum PhotoCollectionPopupObjects
