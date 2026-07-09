@@ -204,6 +204,12 @@ MonoBehaviour:
     m_SerializedLabels:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e56108ccc00b02647b51a5175053643b
+    m_Address: Main_BG
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: e86839ae30eff014d99d119c85c147bb
     m_Address: SettingsPopupUI
     m_ReadOnly: 0
