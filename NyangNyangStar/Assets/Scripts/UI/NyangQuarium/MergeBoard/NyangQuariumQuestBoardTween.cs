@@ -45,6 +45,7 @@ namespace UI.NyangQuarium.MergeBoard
             Canvas.ForceUpdateCanvases();
 
             Dictionary<RectTransform, Vector2> targetPositions = CaptureAnchoredPositions(rects);
+            int finalSiblingIndex = movedTransform.GetSiblingIndex();
 
             // 시작 위치로 복귀 후 Tween 시작
             for (int i = 0; i < rects.Count; i++)
@@ -56,6 +57,8 @@ namespace UI.NyangQuarium.MergeBoard
 
             if (layoutGroup != null)
                 layoutGroup.enabled = false;
+
+            movedTransform.SetAsLastSibling();
 
             // 보드 이동 Tween 생성
             Sequence sequence = DOTween.Sequence();
@@ -85,6 +88,8 @@ namespace UI.NyangQuarium.MergeBoard
             sequence.OnComplete(() =>
             {
                 // 레이아웃 복구 완료
+                movedTransform.SetSiblingIndex(finalSiblingIndex);
+
                 if (layoutGroup != null)
                     layoutGroup.enabled = true;
 
