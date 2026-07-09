@@ -9,7 +9,6 @@ public class NyangQuariumFishInfoPopupUI : UIPopup
 {
     [Header("닫기 버튼")]
     [Tooltip("배경")][SerializeField] private Button _background;
-    [Tooltip("뒤로가기 버튼")][SerializeField] private Button _backButton;
     [Tooltip("닫기 버튼")][SerializeField] private Button _closeButton;
 
     [Header("화살표 버튼")]
@@ -34,7 +33,6 @@ public class NyangQuariumFishInfoPopupUI : UIPopup
         Bind<TMP_Text>(typeof(NyangQuariumFishInfoPopupTexts));
 
         _background = GetButton((int)NyangQuariumFishInfoPopupButtons.Background);
-        _backButton = GetButton((int)NyangQuariumFishInfoPopupButtons.BackButton);
         _closeButton = GetButton((int)NyangQuariumFishInfoPopupButtons.CloseButton);
         _previousButton = GetButton((int)NyangQuariumFishInfoPopupButtons.PreviousButton);
         _nextButton = GetButton((int)NyangQuariumFishInfoPopupButtons.NextButton);
@@ -118,8 +116,7 @@ public class NyangQuariumFishInfoPopupUI : UIPopup
     private void BindButtons()
     {
         if (_background != null) _background.onClick.AddListener(CloseNyangQuariumFishInfoPopup);
-        if (_backButton != null) _backButton.onClick.AddListener(CloseNyangQuariumFishInfoPopup);
-        if (_closeButton != null) _closeButton.onClick.AddListener(CloseAllPopup);
+        if (_closeButton != null) _closeButton.onClick.AddListener(CloseNyangQuariumFishInfoPopup);
         if (_previousButton != null) _previousButton.onClick.AddListener(ShowPreviousFish);
         if (_nextButton != null) _nextButton.onClick.AddListener(ShowNextFish);
     }
@@ -127,7 +124,6 @@ public class NyangQuariumFishInfoPopupUI : UIPopup
     private void OnDestroy()
     {
         RemovePopupButton(_background);
-        RemovePopupButton(_backButton);
         RemovePopupButton(_closeButton);
         RemovePopupButton(_previousButton);
         RemovePopupButton(_nextButton);
@@ -143,26 +139,14 @@ public class NyangQuariumFishInfoPopupUI : UIPopup
 
     private void CloseNyangQuariumFishInfoPopup()
     {
-        gameObject.SetActive(false);
-
         GameManager.Audio.PlaySfx("Main_SFX_Touch");
-    }
-
-    private void CloseAllPopup()
-    {
         gameObject.SetActive(false);
-
-        if (_collectionPopup != null)
-            _collectionPopup.gameObject.SetActive(false);
-
-        GameManager.Audio.PlaySfx("Main_SFX_Touch");
     }
 }
 
 public enum NyangQuariumFishInfoPopupButtons
 {
     Background,
-    BackButton,
     CloseButton,
     PreviousButton,
     NextButton,

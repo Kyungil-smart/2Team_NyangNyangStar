@@ -11,7 +11,7 @@ public class NyangQuariumFishData
     [Header("레벨")]
     [SerializeField] private int _level;
     [Header("종류")]
-    [SerializeField] private string _category;
+    [SerializeField] private PlaceableType _placeableType;
     [Header("물고기 이름")]
     [SerializeField] private string _fishName;
     [Header("물고기 설명")]
@@ -22,7 +22,7 @@ public class NyangQuariumFishData
     public int FishId => _fishId;
     public FishType FishType => _fishType;
     public int Level => _level;
-    public string Category => _category;
+    public PlaceableType PlaceableType => _placeableType;
     public string FishName => _fishName;
     public string FishDescription => _fishDescription;
     public string FishKey => _fishKey;
@@ -31,7 +31,7 @@ public class NyangQuariumFishData
         int fishId,
         FishType fishType,
         int level,
-        string category,
+        PlaceableType placeableType,
         string fishName,
         string fishDescription,
         string fishKey)
@@ -39,7 +39,7 @@ public class NyangQuariumFishData
         _fishId = fishId;
         _fishType = fishType;
         _level = level;
-        _category = category;
+        _placeableType = placeableType;
         _fishName = fishName;
         _fishDescription = fishDescription;
         _fishKey = fishKey;
@@ -53,4 +53,15 @@ public class NyangQuariumFishData
     Saltwater,
     BrackishWater,
     Environments
+}
+
+public enum PlaceableType
+{
+    None,
+    Fish,
+    Stone,
+    Plant,
+    Marine,
+    Coral,
+    Shelter
 }
