@@ -447,11 +447,7 @@ namespace UI.NyangQuarium.MergeBoard
                 CompleteButton = completeButton
             };
 
-            if (binding.BoardImage != null)
-            {
-                binding.BoardSpriteController = new UI.UISpriteController(binding.BoardImage);
-                _spriteControllers.Add(binding.BoardSpriteController);
-            }
+            EnsureBoardSpriteController(binding);
 
             completeButton.onClick.RemoveAllListeners();
             completeButton.onClick.AddListener(() => OnCompleteButtonClicked(binding));
@@ -500,16 +496,27 @@ namespace UI.NyangQuarium.MergeBoard
             _slotBindings.Remove(binding);
             if (binding.SlotTransform != null)
             {
-                ApplyBoardSprite(binding, completed: false);
+                Transform slotTransform = binding.SlotTransform;
+                int completedQuestId = binding.QuestId;
+
+                DisposeBoardSpriteController(binding);
                 // 새 퀘스트는 뒤로 이동 연출
-                AnimateQuestBoardOrderChange(
-                    binding.SlotTransform,
-                    () => binding.SlotTransform.SetAsLastSibling(),
-                    punchMovedBoard: false);
+                AnimateQuestBoardRefreshFromRight(
+                    slotTransform,
+                    () =>
+                    {
+                        slotTransform.SetAsLastSibling();
+                        TryBindNextQuestToCompletedSlot(
+                            slotTransform,
+                            completedQuestId,
+                            refreshCompleteButtons: false);
+                    });
+            }
+            else
+            {
+                DisposeBoardSpriteController(binding);
             }
 
-            DisposeBoardSpriteController(binding);
-            TryBindNextQuestToCompletedSlot(binding.SlotTransform, binding.QuestId);
             _ = NyangQuariumMergeQuestSession.SaveCurrentStateAsync();
 
             DebugTool.Log(
@@ -518,7 +525,10 @@ namespace UI.NyangQuarium.MergeBoard
                 this);
         }
 
-        private bool TryBindNextQuestToCompletedSlot(Transform slotTransform, int completedQuestId)
+        private bool TryBindNextQuestToCompletedSlot(
+            Transform slotTransform,
+            int completedQuestId,
+            bool refreshCompleteButtons = true)
         {
             if (slotTransform == null)
                 return false;
@@ -539,7 +549,10 @@ namespace UI.NyangQuarium.MergeBoard
 
             slotTransform.gameObject.SetActive(true);
             BindQuestSlot(slotTransform, nextQuest, fishSO, _expItemSO);
-            RefreshCompleteButtons();
+
+            if (refreshCompleteButtons)
+                RefreshCompleteButtons();
+
             return true;
         }
 
@@ -692,8 +705,29 @@ namespace UI.NyangQuarium.MergeBoard
             // 완료 퀘스트는 앞으로 이동 연출
             AnimateQuestBoardOrderChange(
                 binding.SlotTransform,
-                () => binding.SlotTransform.SetAsFirstSibling(),
+                () => binding.SlotTransform.SetSiblingIndex(GetReadyQuestInsertIndex(binding)),
                 punchMovedBoard: true);
+        }
+
+        private int GetReadyQuestInsertIndex(MergeQuestSlotBinding targetBinding)
+        {
+            int readyCount = 0;
+
+            for (int i = 0; i < _slotBindings.Count; i++)
+            {
+                MergeQuestSlotBinding binding = _slotBindings[i];
+                if (binding == null ||
+                    binding == targetBinding ||
+                    !binding.IsReadyToComplete ||
+                    binding.SlotTransform == null)
+                {
+                    continue;
+                }
+
+                readyCount++;
+            }
+
+            return readyCount;
         }
 
         private void AnimateQuestBoardOrderChange(
@@ -710,17 +744,42 @@ namespace UI.NyangQuarium.MergeBoard
                     () => _questBoardMoveSequence = null);
         }
 
+        private void AnimateQuestBoardRefreshFromRight(
+            Transform renewedTransform,
+            System.Action applyRefresh)
+        {
+            _questBoardMoveSequence =
+                NyangQuariumQuestBoardTween.PlayRefreshFromRight(
+                    _questBoardMoveSequence,
+                    renewedTransform,
+                    applyRefresh,
+                    () =>
+                    {
+                        _questBoardMoveSequence = null;
+                        RefreshCompleteButtons();
+                    });
+        }
+
         private void ApplyBoardSprite(MergeQuestSlotBinding binding, bool completed)
         {
             if (binding?.BoardImage == null)
                 return;
 
-            binding.BoardSpriteController ??= new UI.UISpriteController(binding.BoardImage);
+            EnsureBoardSpriteController(binding);
             string spriteKey = completed
                 ? CompletedQuestBoardSpriteKey
                 : NormalQuestBoardSpriteKey;
 
             binding.BoardSpriteController.ChangeSprite(spriteKey);
+        }
+
+        private void EnsureBoardSpriteController(MergeQuestSlotBinding binding)
+        {
+            if (binding?.BoardImage == null || binding.BoardSpriteController != null)
+                return;
+
+            binding.BoardSpriteController = new UI.UISpriteController(binding.BoardImage);
+            _spriteControllers.Add(binding.BoardSpriteController);
         }
 
         private void DisposeBoardSpriteController(MergeQuestSlotBinding binding)
