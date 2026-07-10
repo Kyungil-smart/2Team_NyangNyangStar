@@ -15,11 +15,6 @@ using UnityEngine.UI;
 
 public class ScratchingBattleController : UIBase
 {
-    private static readonly Vector2 CloseButtonAnchor = new Vector2(0f, 1f);
-    private static readonly Vector2 CloseButtonPivot = new Vector2(0f, 1f);
-    private static readonly Vector2 CloseButtonPosition = new Vector2(50f, -449.94f);
-    private static readonly Vector2 CloseButtonSize = new Vector2(100f, 100f);
-
     [Header("닫기 버튼")]
     [SerializeField] private Button _closeButton;
 
@@ -228,7 +223,6 @@ public class ScratchingBattleController : UIBase
         _interestAmountImage ??= FindFillImage("InterestSlider");
         _scratchEffectPool ??= GetComponentInChildren<ScratchEffectPool>(true);
         _interestController ??= GetComponentInChildren<ScratchingInterestController>(true);
-        ApplyCloseButtonLayout();
         ScratchingGaugeFillSetup.Apply(_durabilitySlider);
         ScratchingGaugeFillSetup.Apply(_interestSlider);
         EnsureCloseTweenTargets();
@@ -238,22 +232,6 @@ public class ScratchingBattleController : UIBase
     {
         _closeRoot ??= transform;
         _closeCanvasGroup ??= UIPanelCloseTween.GetOrAddCanvasGroup(gameObject);
-    }
-
-    private void ApplyCloseButtonLayout()
-    {
-        RectTransform closeButtonRect = _closeButton != null
-            ? _closeButton.transform as RectTransform
-            : null;
-
-        if (closeButtonRect == null)
-            return;
-
-        closeButtonRect.anchorMin = CloseButtonAnchor;
-        closeButtonRect.anchorMax = CloseButtonAnchor;
-        closeButtonRect.pivot = CloseButtonPivot;
-        closeButtonRect.anchoredPosition = CloseButtonPosition;
-        closeButtonRect.sizeDelta = CloseButtonSize;
     }
 
     private void SetCloseInputBlocked(bool blocked)
