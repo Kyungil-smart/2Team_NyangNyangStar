@@ -40,11 +40,15 @@ public class NyangstagramMainUI : UIPopup
     [SerializeField] private GameObject _profileView;
 
     [Header("게시물")]
+    [SerializeField] private ScrollRect _scrollRect;
     [SerializeField] private RectTransform _postContent;
     [SerializeField] private NyangStargramPostSlotUI _postSlotPrefab;
 
     [Header("냥스타그램 게시물 SO")]
     [SerializeField] private NyangStargramPostSO _postSO;
+
+    private GridLayoutGroup _postGrid;
+    private LayoutElement _postGridLayoutElement;
 
     private readonly Dictionary<string, UIPopup> _cachedPopups = new();
     private readonly Dictionary<string, NyangStargramPostSlotUI> _postSlotDic = new();
@@ -84,7 +88,11 @@ public class NyangstagramMainUI : UIPopup
         _likeCountText = UIBase.FindChild<TMP_Text>(gameObject, "Like Count", true);
         _comingSoonText ??= UIBase.FindChild<TMP_Text>(gameObject, "ComingSoonText", true);
 
+        _postGrid = _postContent.GetComponent<GridLayoutGroup>();
+        _postGridLayoutElement = _postContent.GetComponent<LayoutElement>();
+
         RefreshPostGridCellSize();
+        RefreshPostGridHeight();
 
         BindViewButtons();
         BindCloseButton();
@@ -117,27 +125,50 @@ public class NyangstagramMainUI : UIPopup
         InitPopup(KeyContainer.Prefabs.NyangStargramAddPostPopUpUI, _addPostButton);
         // 알림/DM은 아직 미구현이므로 팝업을 미리 생성하지 않는다.
     }
+
     private void OnEnable()
     {
         SetProfileView();
         RefreshPostSlots();
+
+        StartCoroutine(ResetScrollPosition());
+    }
+
+    private IEnumerator ResetScrollPosition()
+    {
+        yield return null;
+        _scrollRect.verticalNormalizedPosition = 1f;
     }
 
     private void RefreshPostGridCellSize()
     {
-        GridLayoutGroup grid = _postContent.GetComponent<GridLayoutGroup>();
-
-        if (grid == null) return;
+        if (_postGrid == null) return;
 
         float contentWidth = _postContent.rect.width;
-        float padding = grid.padding.left + grid.padding.right;
-        float spacing = grid.spacing.x * (PostColumnCount - 1);
+        float padding = _postGrid.padding.left + _postGrid.padding.right;
+        float spacing = _postGrid.spacing.x * (PostColumnCount - 1);
 
         float cellSize = (contentWidth - padding - spacing) / PostColumnCount;
 
-        grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
-        grid.constraintCount = PostColumnCount;
-        grid.cellSize = new Vector2(cellSize, cellSize);
+        _postGrid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+        _postGrid.constraintCount = PostColumnCount;
+        _postGrid.cellSize = new Vector2(cellSize, cellSize);
+    }
+
+    private void RefreshPostGridHeight()
+    {
+        if (_postGrid == null || _postGridLayoutElement == null) return;
+
+        int postCount = _postSlotDic.Count;
+        int rowCount = Mathf.CeilToInt(postCount / (float)PostColumnCount);
+
+        float height =
+            _postGrid.padding.top +
+            _postGrid.padding.bottom +
+            rowCount * _postGrid.cellSize.y +
+            Mathf.Max(0, rowCount - 1) * _postGrid.spacing.y;
+
+        _postGridLayoutElement.preferredHeight = height;
     }
 
     private void InitPopup(string key, Button openButton)
@@ -224,6 +255,7 @@ public class NyangstagramMainUI : UIPopup
         }
 
         RemoveDeletedPostSlots(_serverPhotoIds);
+        RefreshPostGridHeight();
     }
 
     public void AddPost(NyangNyangSnapRuntimePhotoData photoData)
@@ -231,6 +263,8 @@ public class NyangstagramMainUI : UIPopup
         NyangStargramPostSlotUI slot = CreatePostSlot(photoData.PhotoId);
         slot.SetData(photoData, OpenPostPopup);
         slot.transform.SetSiblingIndex(0);
+
+        RefreshPostGridHeight();
     }
 
     private NyangStargramPostSlotUI CreatePostSlot(string photoId)
