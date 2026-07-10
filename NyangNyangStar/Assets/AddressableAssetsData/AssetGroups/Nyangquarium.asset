@@ -327,12 +327,6 @@ MonoBehaviour:
     m_SerializedLabels:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: c46718669072de546bafdecf22903615
-    m_Address: NQ_Panel_Dialog
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - Sprite
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: cab404ee06c2384449c1699f49210fd5
     m_Address: NQ_Btn_MergeBack
     m_ReadOnly: 0
