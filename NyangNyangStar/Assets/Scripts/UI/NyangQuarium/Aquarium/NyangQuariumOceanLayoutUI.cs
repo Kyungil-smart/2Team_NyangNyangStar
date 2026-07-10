@@ -510,6 +510,8 @@ public class NyangQuariumOceanLayoutUI : UIPopup, INyangquariumEntryReceiver
 
         SelectDefaultFishTabButton();
 
+        CloseFilterTabs();
+
         RefreshFishGridCellSize();
 
         _inventoryRect.DOKill();

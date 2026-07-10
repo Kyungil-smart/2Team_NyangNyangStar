@@ -30,14 +30,18 @@ public class NyangNyangSnapUI : UIPopup
     [Tooltip("사진 버튼")]
     [SerializeField] private Button _photoButton;
 
-    [Tooltip("세팅 버튼")]
-    [SerializeField] private Button _settingsButton;
-
     [Tooltip("간식 패널 버튼")]
     [SerializeField] private Button _snackPanelButton;
 
     [Tooltip("장난감 패널 버튼")]
     [SerializeField] private Button _toyPanelButton;
+
+    [Header("촬영 플래시 효과")]
+    [Tooltip("사진 촬영 시 화면 전체를 덮는 검은색 이미지")]
+    [SerializeField] private Image _captureFlashImage;
+
+    [Tooltip("CaptureFlashImage에 연결된 DOTween Animation")]
+    [SerializeField] private DOTweenAnimation _captureFlashAnimation;
 
     private UIPopup _snackPopup;
     private UIPopup _toyPopup;
@@ -101,7 +105,6 @@ public class NyangNyangSnapUI : UIPopup
         _startBackButton = Get<Button>((int)NyangNyangSnapButtons.StartPanelBackButton);
 
         _photoButton = Get<Button>((int)NyangNyangSnapButtons.PhotoButton);
-        _settingsButton = Get<Button>((int)NyangNyangSnapButtons.SettingsButton);
         _snackPanelButton = Get<Button>((int)NyangNyangSnapButtons.SnackPanelButton);
         _toyPanelButton = Get<Button>((int)NyangNyangSnapButtons.ToyPanelButton);
 
@@ -121,6 +124,7 @@ public class NyangNyangSnapUI : UIPopup
         // 냥냥스냅 진입 직후에는 고양이 이미지를 보여주지 않음
         SetSnapCatActive(false);
         UpdateCaptureCountText();
+        InitializeCaptureFlash();
     }
 
     private void OnEnable()
@@ -137,8 +141,6 @@ public class NyangNyangSnapUI : UIPopup
         AddCloseNyangNyangSnapButton(_backButton);
         AddCloseNyangNyangSnapButton(_startBackButton);
         AddCapturePhotoButton(_photoButton);
-
-        InitPopup(KeyContainer.Prefabs.SettingsPopupUI, _settingsButton);
 
         GameManager.UI.ShowPopupUI<UIPopup>(
             KeyContainer.Prefabs.NyangNyangSnapSnackPopupUI,
@@ -170,6 +172,7 @@ public class NyangNyangSnapUI : UIPopup
         }
 
         StopPhotoButtonBlink();
+        StopCaptureFlash();
 
         if (_openInventoryPopupCoroutine != null)
         {
@@ -230,6 +233,68 @@ public class NyangNyangSnapUI : UIPopup
 
         _photoButtonBlinkAnimation.DOPause();
         _photoButtonBlinkAnimation.DORewind();
+    }
+
+    /// <summary>
+    /// 촬영 플래시를 투명한 초기 상태로 설정합니다.
+    /// </summary>
+    private void InitializeCaptureFlash()
+    {
+        if (_captureFlashImage != null)
+        {
+            Color color = _captureFlashImage.color;
+            color.a = 0f;
+            _captureFlashImage.color = color;
+            _captureFlashImage.raycastTarget = false;
+        }
+
+        if (_captureFlashAnimation == null)
+            return;
+
+        _captureFlashAnimation.DOPause();
+        _captureFlashAnimation.DORewind();
+    }
+
+    /// <summary>
+    /// 사진 촬영 시 검은 화면 플래시 효과를 재생합니다.
+    /// </summary>
+    private void PlayCaptureFlash()
+    {
+        if (_captureFlashImage == null ||
+            _captureFlashAnimation == null)
+        {
+            DebugTool.Warning(
+                "[NyangNyangSnapUI] 촬영 플래시 Image 또는 DOTween Animation이 연결되지 않았습니다.",
+                DebugType.UI,
+                this
+            );
+            return;
+        }
+
+        Color color = _captureFlashImage.color;
+        color.a = 1f;
+        _captureFlashImage.color = color;
+
+        _captureFlashAnimation.DORestart();
+    }
+
+    /// <summary>
+    /// 실행 중인 촬영 플래시를 중지하고 투명 상태로 되돌립니다.
+    /// </summary>
+    private void StopCaptureFlash()
+    {
+        if (_captureFlashAnimation != null)
+        {
+            _captureFlashAnimation.DOPause();
+            _captureFlashAnimation.DORewind();
+        }
+
+        if (_captureFlashImage == null)
+            return;
+
+        Color color = _captureFlashImage.color;
+        color.a = 0f;
+        _captureFlashImage.color = color;
     }
 
     private void InitPopup(string key, Button button)
@@ -519,6 +584,8 @@ public class NyangNyangSnapUI : UIPopup
 
         _photoFrameCapture.CapturePhoto(capturedSprite =>
         {
+            PlayCaptureFlash();
+
             _compositionCalculator.SetTargetImageVisible(true);
 
             if (_placementController != null)
@@ -1272,6 +1339,7 @@ public class NyangNyangSnapUI : UIPopup
         _sprite.SetBackground(stage);
         _startPanel.SetActive(true);
         _startButton.SetActive(true);
+        _startBackButton.gameObject.SetActive(true);
 
         SetSnapCatActive(false);
 
@@ -1300,6 +1368,7 @@ public class NyangNyangSnapUI : UIPopup
 
         _startPanel.SetActive(true);
         _startButton.SetActive(true);
+        _startBackButton.gameObject.SetActive(true);
 
         SetSnapCatActive(false);
 
@@ -1335,6 +1404,7 @@ public class NyangNyangSnapUI : UIPopup
 
     public void StartSnapCat()
     {
+        _startBackButton.gameObject.SetActive(false);
         RegisterPlacementEvent();
         ResolveRuntimeDataSources();
 
