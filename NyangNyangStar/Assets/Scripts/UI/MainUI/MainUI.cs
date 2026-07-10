@@ -381,7 +381,7 @@ public class MainUI : UIScene
         if (string.IsNullOrEmpty(userId) && _usersSO != null)
             userId = _usersSO.GetUserId();
 
-        _uidText.text = string.IsNullOrEmpty(userId) ? "-" : userId;
+        _uidText.text = string.IsNullOrEmpty(userId) ? "-" : "UID : " + userId;
     }
 
     private void LogOutButton()

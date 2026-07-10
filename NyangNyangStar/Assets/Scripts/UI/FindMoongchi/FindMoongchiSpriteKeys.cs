@@ -25,6 +25,7 @@ namespace UI.FindMoongchi
         public const string PanelSub = "FM_Panel_Sub";
         public const string PanelItemList = "FM_Panel_ItemList";
         public const string ButtonShop = "FM_Btn_Shop";
+        public const string ShopLogo = "FM_Shop_Logo";
         public const string EventCoinIcon = "FM_Icon_Coin";
 
         // Common

@@ -113,6 +113,8 @@ namespace UI.MergeBoard
             _canvasGroup.blocksRaycasts = false;
             _itemRect.SetParent(_canvas.transform, true);
             _itemRect.SetAsLastSibling();
+
+            _boardSystem?.BeginSlotDrag(this);
         }
 
         public void OnDrag(PointerEventData eventData)
@@ -128,6 +130,8 @@ namespace UI.MergeBoard
             {
                 _itemRect.anchoredPosition = localPoint;
             }
+
+            _boardSystem?.UpdateSlotDragTarget(this, eventData);
         }
 
         public void OnEndDrag(PointerEventData eventData)
@@ -141,8 +145,8 @@ namespace UI.MergeBoard
             _itemRect.SetParent(transform, false);
             _itemRect.anchoredPosition = Vector2.zero;
 
-            if (_boardSystem != null)
-                _boardSystem.HandleDragEnd(this, eventData);
+            _boardSystem?.EndSlotDrag(this);
+            _boardSystem?.HandleDragEnd(this, eventData);
 
             ResetIgnoreClickNextFrame();
         }
@@ -197,6 +201,9 @@ namespace UI.MergeBoard
 
         private void OnDisable()
         {
+            if (_isDragging)
+                _boardSystem?.EndSlotDrag(this);
+
             _isDragging = false;
             _ignoreClickOnce = false;
 

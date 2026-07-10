@@ -17,8 +17,12 @@ namespace UI.MergeBoard
         [SerializeField] private GameObject _slotPrefab;
         [SerializeField] private GridLayoutGroup _grid;
         [SerializeField] private List<ItemSlot> _itemSlots = new();
-        [SerializeField] Color _selectedSlotColor = new (1f, 0.9f, 0.6f, 1);
-        private Color _baseColor = new (1f, 1f, 1f, 1);
+
+        [Header("Slot Visual")]
+        [SerializeField] private Color _defaultSlotColor = new Color(1f, 0.985f, 0.94f, 1f);
+        [SerializeField] private Color _selectedSlotColor = new Color(1f, 0.82f, 0.42f, 1f);
+        [SerializeField] private Color _dropCandidateSlotColor = new Color(0.84f, 0.95f, 0.92f, 1f);
+        [SerializeField] private Color _dropTargetSlotColor = new Color(1f, 0.9f, 0.45f, 1f);
 
         [Header("Firestore")]
         [SerializeField] private MergeBoardSlotsSO _mergeBoardFirestore;
@@ -42,6 +46,8 @@ namespace UI.MergeBoard
 
         private readonly Dictionary<int, ItemData> _slotItemDict = new();
         private ItemSlot _selectedSlot;
+        private ItemSlot _dragSourceSlot;
+        private ItemSlot _dragTargetSlot;
         private bool _isMovingItem;
         private bool _isClearingAllItems;
 
@@ -162,6 +168,7 @@ namespace UI.MergeBoard
 
                 _itemSlots.Add(itemSlot);
                 itemSlot.Init(this, slotNumber, ItemData.Empty, itemSize);
+                ApplySlotVisual(itemSlot);
             }
 
             DebugTool.Log($"보드 슬롯 생성 완료 / 총 {_itemSlots.Count}개", DebugType.Board, this);
@@ -256,6 +263,46 @@ namespace UI.MergeBoard
             }
 
             return -1;
+        }
+
+        public void BeginSlotDrag(ItemSlot sourceSlot)
+        {
+            if (sourceSlot == null || !sourceSlot.HasItem)
+                return;
+
+            _dragSourceSlot = sourceSlot;
+            _dragTargetSlot = null;
+            RefreshSlotVisuals();
+        }
+
+        public void UpdateSlotDragTarget(ItemSlot sourceSlot, PointerEventData eventData)
+        {
+            if (_dragSourceSlot == null || sourceSlot != _dragSourceSlot || eventData == null)
+                return;
+
+            ItemSlot nextTarget = null;
+
+            if (TryFindNearestSlot(eventData.position, eventData.pressEventCamera, out ItemSlot foundSlot) &&
+                foundSlot != _dragSourceSlot)
+            {
+                nextTarget = foundSlot;
+            }
+
+            if (_dragTargetSlot == nextTarget)
+                return;
+
+            _dragTargetSlot = nextTarget;
+            RefreshSlotVisuals();
+        }
+
+        public void EndSlotDrag(ItemSlot sourceSlot)
+        {
+            if (_dragSourceSlot == null || sourceSlot != _dragSourceSlot)
+                return;
+
+            _dragSourceSlot = null;
+            _dragTargetSlot = null;
+            RefreshSlotVisuals();
         }
 
         public void HandleDragEnd(ItemSlot fromSlot, PointerEventData eventData)
@@ -509,12 +556,12 @@ namespace UI.MergeBoard
                 return;
             }
 
-            if(_selectedSlot != null)
-                _selectedSlot.ChangeBackgroundColor(_baseColor);
+            ItemSlot previousSlot = _selectedSlot;
 
             _selectedSlot = itemSlot;
-            
-            _selectedSlot.ChangeBackgroundColor(_selectedSlotColor);
+
+            ApplySlotVisual(previousSlot);
+            ApplySlotVisual(_selectedSlot);
 
             if (_itemInfoPanel == null)
                 _itemInfoPanel = FindFirstObjectByType<BoardItemInfoPanel>();
@@ -525,13 +572,38 @@ namespace UI.MergeBoard
 
         public void ClearSelectedSlot()
         {
+            ItemSlot previousSlot = _selectedSlot;
             if (_selectedSlot != null)
-                _selectedSlot.ChangeBackgroundColor(_baseColor);
+                _selectedSlot = null;
 
-            _selectedSlot = null;
+            ApplySlotVisual(previousSlot);
 
             if (_itemInfoPanel != null)
                 _itemInfoPanel.Hide();
+        }
+
+        private void RefreshSlotVisuals()
+        {
+            for (int i = 0; i < _itemSlots.Count; i++)
+                ApplySlotVisual(_itemSlots[i]);
+        }
+
+        private void ApplySlotVisual(ItemSlot itemSlot)
+        {
+            if (itemSlot == null)
+                return;
+
+            if (_dragSourceSlot != null && itemSlot != _dragSourceSlot)
+            {
+                itemSlot.ChangeBackgroundColor(itemSlot == _dragTargetSlot
+                    ? _dropTargetSlotColor
+                    : _dropCandidateSlotColor);
+                return;
+            }
+
+            itemSlot.ChangeBackgroundColor(itemSlot == _selectedSlot
+                ? _selectedSlotColor
+                : _defaultSlotColor);
         }
 
         public async Task<bool> SellSelectedItemAsync()
@@ -727,6 +799,7 @@ namespace UI.MergeBoard
                     : ItemData.Empty;
 
                 itemSlot.SetItemData(itemData);
+                ApplySlotVisual(itemSlot);
             }
         }
 
