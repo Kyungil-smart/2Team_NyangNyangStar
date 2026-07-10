@@ -145,6 +145,8 @@ public class NyangstagramMainUI : UIPopup
         if (_postGrid == null) return;
 
         float contentWidth = _postContent.rect.width;
+        _postGrid.padding.left = 10;
+        _postGrid.padding.right = 10;
         float padding = _postGrid.padding.left + _postGrid.padding.right;
         float spacing = _postGrid.spacing.x * (PostColumnCount - 1);
 
