@@ -27,13 +27,22 @@ public class NyangNyangSnapStagePopupSprite : UIBase
     private void SetSprites()
     {
         SetSprite(NyangNyangSnapStagePopupImages.Background, "Shape_Square", _backgroundColor);
-        SetSprite(NyangNyangSnapStagePopupImages.Pattern1, "BG_Tile_Cats");
-        SetSprite(NyangNyangSnapStagePopupImages.Pattern2, "BG_Tile_Cats");
-        SetSprite(NyangNyangSnapStagePopupImages.Pattern3, "BG_Tile_Cats");
-        SetSprite(NyangNyangSnapStagePopupImages.Pattern4, "BG_Tile_Cats");
-        SetSprite(NyangNyangSnapStagePopupImages.Stage1Button, "Snap_Btn_Gray");
-        SetSprite(NyangNyangSnapStagePopupImages.Stage2Button, "Snap_Btn_Gray");
-        SetSprite(NyangNyangSnapStagePopupImages.BackButton, "Btn_Back");
+        SetSprite(NyangNyangSnapStagePopupImages.Pattern1, "Snap_BG_Tile");
+        SetSprite(NyangNyangSnapStagePopupImages.Pattern2, "Snap_BG_Tile");
+        SetSprite(NyangNyangSnapStagePopupImages.Pattern3, "Snap_BG_Tile");
+        SetSprite(NyangNyangSnapStagePopupImages.Pattern4, "Snap_BG_Tile");
+        SetSprite(NyangNyangSnapStagePopupImages.TitleImage, "Snap_Logo");
+        SetSprite(NyangNyangSnapStagePopupImages.Stage1Image, "Snap_Img_Stage_1");
+        SetSprite(NyangNyangSnapStagePopupImages.Stage2Image, "Snap_Img_Stage_2");
+        SetSprite(NyangNyangSnapStagePopupImages.Stage1Title, "Shape_Rectangle", new Color32(255, 213, 233, 255));
+        SetSprite(NyangNyangSnapStagePopupImages.Stage2Title, "Shape_Rectangle", new Color32(245, 249, 121, 255));
+
+
+        SetSprite(NyangNyangSnapStagePopupImages.Stage1Button, "Snap_Btn_White", new Color32(155, 255, 130, 255));
+        SetSprite(NyangNyangSnapStagePopupImages.Stage2Button, "Snap_Btn_White", new Color32(155, 255, 130, 255));
+        SetSprite(NyangNyangSnapStagePopupImages.BackButton, "Main_Btn_Home");
+        SetSprite(NyangNyangSnapStagePopupImages.HowToPlay, "FM_Btn_Help");
+
     }
 
     private void SetSprite(NyangNyangSnapStagePopupImages image, string key)
@@ -64,8 +73,14 @@ public class NyangNyangSnapStagePopupSprite : UIBase
         Pattern2,
         Pattern3,
         Pattern4,
+        TitleImage,
         Stage1Button,
         Stage2Button,
         BackButton,
+        HowToPlay,
+        Stage1Image,
+        Stage2Image,
+        Stage1Title,
+        Stage2Title
     }
 }

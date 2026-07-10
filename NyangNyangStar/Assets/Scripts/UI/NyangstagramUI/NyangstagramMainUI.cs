@@ -26,7 +26,12 @@ public class NyangstagramMainUI : UIPopup
     [Tooltip("좋아요 text")][SerializeField] private TMP_Text _likeCountText;
 
     [Header("기능 준비 중 안내")]
+    [Tooltip("ComingSoon 배경 이미지")]
+    [SerializeField] private Image _comingSoonImage;
+
+    [Tooltip("기능 준비 중 안내 텍스트")]
     [SerializeField] private TMP_Text _comingSoonText;
+
     [SerializeField] private string _comingSoonMessage = "기능 준비 중!";
     [SerializeField, Min(0f)] private float _comingSoonDisplayDuration = 1.5f;
     [SerializeField, Min(0.01f)] private float _comingSoonFadeDuration = 0.5f;
@@ -58,6 +63,7 @@ public class NyangstagramMainUI : UIPopup
 
     private bool _isInitialized;
     private Coroutine _comingSoonCoroutine;
+    private float _comingSoonImageVisibleAlpha = 1f;
 
     private NyangstagramMainUISprite _nyangstagramMainUISprite;
     private NyangstagramTab _currentMainTab = NyangstagramTab.Profile;
@@ -86,7 +92,11 @@ public class NyangstagramMainUI : UIPopup
         _accountButton = Get<Button>((int)NyangstagramButton.AccountNameTextButton);
         _likeButton = Get<Button>((int)NyangstagramButton.LikeButton);
         _likeCountText = UIBase.FindChild<TMP_Text>(gameObject, "Like Count", true);
+        _comingSoonImage ??= UIBase.FindChild<Image>(gameObject, "ComingSoon", true);
         _comingSoonText ??= UIBase.FindChild<TMP_Text>(gameObject, "ComingSoonText", true);
+
+        if (_comingSoonImage != null)
+            _comingSoonImageVisibleAlpha = _comingSoonImage.color.a;
 
         _postGrid = _postContent.GetComponent<GridLayoutGroup>();
         _postGridLayoutElement = _postContent.GetComponent<LayoutElement>();
@@ -121,9 +131,11 @@ public class NyangstagramMainUI : UIPopup
         // 자기 자신(NyangStargramHomeProfile)은 여기서 다시 로드하면 안 된다.
         // 이 스크립트가 붙은 메인 UI는 이미 열려있는 1개로 취급한다.
         InitPopup(KeyContainer.Prefabs.NyangStargramPostPopUpUI, null);
-        InitPopup(KeyContainer.Prefabs.NyangStargramNPCProfilePopUpUI, _accountButton);
         InitPopup(KeyContainer.Prefabs.NyangStargramAddPostPopUpUI, _addPostButton);
-        // 알림/DM은 아직 미구현이므로 팝업을 미리 생성하지 않는다.
+
+        // 계정명 버튼은 현재 기능 준비 중 안내만 표시하므로
+        // NPC 프로필 팝업과 연결하지 않는다.
+        // 알림/DM도 아직 미구현이므로 팝업을 미리 생성하지 않는다.
     }
 
     private void OnEnable()
@@ -314,22 +326,15 @@ public class NyangstagramMainUI : UIPopup
 
     private void BindButtons()
     {
-        //if (_storyButton != null)
-        //    _storyButton.onClick.AddListener(() => GameManager.UI.ShowPopupUI<UIPopup>(KeyContainer.Prefabs.ShopPopupUI));
-
         AddLikeButton(_likeButton);
+
         AddComingSoonButton(_tagButton);
         AddComingSoonButton(_notificationButton);
         AddComingSoonButton(_dmButton);
         AddComingSoonButton(_dmHomeButton);
+        AddComingSoonButton(_accountButton);
 
         HideComingSoonImmediately();
-
-
-        //if (_tagButton != null)
-        //    _tagButton.onClick.AddListener(() => GameManager.UI.ShowPopupUI<UIPopup>(KeyContainer.Prefabs.ShopPopupUI));
-
-
     }
 
 
@@ -343,9 +348,12 @@ public class NyangstagramMainUI : UIPopup
 
     private void ShowComingSoonMessage()
     {
-        if (_comingSoonText == null)
+        if (_comingSoonImage == null || _comingSoonText == null)
         {
-            DebugTool.Warning("ComingSoonText가 연결되지 않았습니다.", DebugType.UI, this);
+            DebugTool.Warning(
+                "ComingSoon 이미지 또는 Text가 연결되지 않았습니다.",
+                DebugType.UI,
+                this);
             return;
         }
 
@@ -357,21 +365,43 @@ public class NyangstagramMainUI : UIPopup
 
     private IEnumerator ComingSoonRoutine()
     {
+        _comingSoonImage.gameObject.SetActive(true);
         _comingSoonText.gameObject.SetActive(true);
         _comingSoonText.text = _comingSoonMessage;
 
-        Color color = _comingSoonText.color;
-        color.a = 1f;
-        _comingSoonText.color = color;
+        Color imageColor = _comingSoonImage.color;
+        imageColor.a = _comingSoonImageVisibleAlpha;
+        _comingSoonImage.color = imageColor;
 
-        yield return new WaitForSecondsRealtime(_comingSoonDisplayDuration);
+        Color textColor = _comingSoonText.color;
+        textColor.a = 1f;
+        _comingSoonText.color = textColor;
+
+        yield return new WaitForSecondsRealtime(
+            _comingSoonDisplayDuration);
 
         float elapsed = 0f;
+
         while (elapsed < _comingSoonFadeDuration)
         {
             elapsed += Time.unscaledDeltaTime;
-            color.a = Mathf.Lerp(1f, 0f, elapsed / _comingSoonFadeDuration);
-            _comingSoonText.color = color;
+
+            float progress = Mathf.Clamp01(
+                elapsed / _comingSoonFadeDuration);
+
+            imageColor.a = Mathf.Lerp(
+                _comingSoonImageVisibleAlpha,
+                0f,
+                progress);
+
+            textColor.a = Mathf.Lerp(
+                1f,
+                0f,
+                progress);
+
+            _comingSoonImage.color = imageColor;
+            _comingSoonText.color = textColor;
+
             yield return null;
         }
 
@@ -381,12 +411,21 @@ public class NyangstagramMainUI : UIPopup
 
     private void HideComingSoonImmediately()
     {
-        if (_comingSoonText == null) return;
+        if (_comingSoonImage != null)
+        {
+            Color imageColor = _comingSoonImage.color;
+            imageColor.a = 0f;
+            _comingSoonImage.color = imageColor;
+            _comingSoonImage.gameObject.SetActive(false);
+        }
 
-        Color color = _comingSoonText.color;
-        color.a = 0f;
-        _comingSoonText.color = color;
-        _comingSoonText.gameObject.SetActive(false);
+        if (_comingSoonText != null)
+        {
+            Color textColor = _comingSoonText.color;
+            textColor.a = 0f;
+            _comingSoonText.color = textColor;
+            _comingSoonText.gameObject.SetActive(false);
+        }
     }
 
     private void AddPopupButton(Button button, UIPopup popup)

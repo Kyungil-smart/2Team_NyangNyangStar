@@ -858,11 +858,11 @@ public sealed class NyangQuariumFishInventoryListUI : MonoBehaviour
 
         SetFilterObjectsActive(
             _fishFilterObjects,
-            isFishCategory);
+            false);
 
         SetFilterObjectsActive(
             _natureFilterObjects,
-            !isFishCategory);
+            false);
 
         RefreshCategoryTabVisual();
     }

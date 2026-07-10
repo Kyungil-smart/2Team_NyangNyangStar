@@ -8,6 +8,9 @@ using UnityEngine.UI;
 public class NyangNyangSnapSprite : UIBase
 {
     [SerializeField] private Color _panelColor = new Color32(255, 255, 255, 255);
+    [SerializeField] private Color _startButton;
+    [SerializeField] private Color _startBackButton;
+
 
     [SerializeField] private NyangNyangSnapBackgroundSO _backgroundSO;
     private UISpriteController[] _spriteController;
@@ -70,16 +73,15 @@ public class NyangNyangSnapSprite : UIBase
 
     private void SetSprites()
     {
-        SetSprite(NyangNyangSnapImages.BackButton, "Btn_Back");
-        SetSprite(NyangNyangSnapImages.StartPanelBackButton, "Btn_Back");
+        SetSprite(NyangNyangSnapImages.BackButton, "Btn_Close");
+        SetSprite(NyangNyangSnapImages.StartPanelBackButton, "Shape_Rectangle", _startBackButton);
 
         SetSprite(NyangNyangSnapImages.SnackPanelButton, "Shape_Rectangle", _panelColor);
         SetSprite(NyangNyangSnapImages.ToyPanelButton, "Shape_Rectangle", _panelColor);
         SetSprite(NyangNyangSnapImages.PhotoButton, "Snap_Icon_RangeCircle");
         SetSprite(NyangNyangSnapImages.PhotoButtonImage, "Shape_Circle");
 
-        SetSprite(NyangNyangSnapImages.StartButton, "Snap_Btn_Gray");
-        SetSprite(NyangNyangSnapImages.SettingsButton, "Main_Btn_Settings");
+        SetSprite(NyangNyangSnapImages.StartButton, "Shape_Rectangle", _startButton);
         SetSprite(NyangNyangSnapImages.ToyIocn, "Item_Toy_YarnBall");
         SetSprite(NyangNyangSnapImages.SnackIcon, "Item_Treat_Slice");
 
