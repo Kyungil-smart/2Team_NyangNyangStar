@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Chapter2
   m_EditorClassIdentifier: 
   storyId: 2
-  title: 
+  title: "\uC544\uCFE0\uC544\uB9AC\uC6C0"
   backgroundKey: NQ_BG_Aquarium
   cards:
   - ID: S3_001

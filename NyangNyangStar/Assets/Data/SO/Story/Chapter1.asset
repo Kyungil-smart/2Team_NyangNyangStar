@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Chapter1
   m_EditorClassIdentifier: 
   storyId: 1
-  title: 
+  title: "\uC544\uCFE0\uC544\uB9AC\uC6C0"
   backgroundKey: 
   cards:
   - ID: S2_001
