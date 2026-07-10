@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Core.Managers;
+using Util;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -100,6 +101,8 @@ namespace UI.FindMoongchi
                 DebugTool.Warning("[FindMoongchiStaticImageBinder] Sprite Key가 비어있습니다.", DebugType.FindMoongchi, image);
                 return;
             }
+
+            KeyContainer.Sprites.Add(key);
 
             UISpriteController controller = new UISpriteController(image);
             _controllers.Add(controller);
