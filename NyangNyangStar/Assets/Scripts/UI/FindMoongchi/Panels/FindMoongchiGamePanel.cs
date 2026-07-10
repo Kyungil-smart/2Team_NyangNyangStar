@@ -9,7 +9,7 @@ using UnityEngine.UI;
 
 namespace UI.FindMoongchi
 {
-    public sealed class FindMoongchiGamePanel : MonoBehaviour, IPointerDownHandler
+    public sealed class FindMoongchiGamePanel : MonoBehaviour
     {
         [Header("Header")]
         [SerializeField] private Button _backButton;
@@ -49,9 +49,9 @@ namespace UI.FindMoongchi
         [SerializeField] private GameObject _firstTouchGuideRoot;
         [SerializeField] private CanvasGroup _firstTouchGuideCanvasGroup;
         [SerializeField] private bool _useFirstTouchGuide = true;
-        [SerializeField] private float _firstTouchGuideMinAlpha = 0.25f;
-        [SerializeField] private float _firstTouchGuideMaxAlpha = 1f;
-        [SerializeField] private float _firstTouchGuideFadeDuration = 0.6f;
+        [SerializeField] private float _firstTouchGuideMinAlpha = 0f;
+        [SerializeField] private float _firstTouchGuideMaxAlpha = 0.8f;
+        [SerializeField] private float _firstTouchGuideFadeDuration = 0.45f;
 
         private readonly List<FindMoongchiTileView> _tileViews = new();
         private readonly List<Image> _highlightImages = new();
@@ -65,7 +65,10 @@ namespace UI.FindMoongchi
         private int _currentBoardWidth = FindMoongchiConstants.BoardWidth;
         private int _currentBoardHeight = FindMoongchiConstants.BoardHeight;
         private Tween _firstTouchGuideTween;
-        private bool _isFirstTouchGuideConsumed;
+        private int _currentFirstTouchGuideBoardKey = int.MinValue;
+        private bool _isFirstTouchGuideCompletedForBoard;
+        private bool _isFirstTouchGuideDragInProgress;
+        private bool _hasFirstTouchGuideUsableTool;
 
         private int CurrentTileCount => Mathf.Max(0, _currentBoardWidth * _currentBoardHeight);
 
@@ -106,6 +109,7 @@ namespace UI.FindMoongchi
 
         private void OnDisable()
         {
+            _isFirstTouchGuideDragInProgress = false;
             StopFirstTouchGuideTween();
         }
 
@@ -158,6 +162,7 @@ namespace UI.FindMoongchi
 
             int boardWidth = data.BoardWidth > 0 ? data.BoardWidth : _defaultBoardWidth;
             int boardHeight = data.BoardHeight > 0 ? data.BoardHeight : _defaultBoardHeight;
+            RefreshFirstTouchGuideBoardState(data, boardWidth, boardHeight);
 
             EnsureTiles(boardWidth, boardHeight);
             Canvas.ForceUpdateCanvases();
@@ -641,11 +646,29 @@ namespace UI.FindMoongchi
 
         private void RefreshTools(IReadOnlyList<FindMoongchiToolViewData> tools)
         {
+            _hasFirstTouchGuideUsableTool = HasUsableTool(tools);
+
             for (int i = 0; i < _toolSlots.Count; i++)
             {
                 FindMoongchiToolViewData data = tools != null && i < tools.Count ? tools[i] : null;
                 _toolSlots[i]?.SetData(data);
             }
+        }
+
+        private static bool HasUsableTool(IReadOnlyList<FindMoongchiToolViewData> tools)
+        {
+            if (tools == null)
+                return false;
+
+            for (int i = 0; i < tools.Count; i++)
+            {
+                FindMoongchiToolViewData tool = tools[i];
+
+                if (tool != null && tool.Count > 0 && tool.IsUsable)
+                    return true;
+            }
+
+            return false;
         }
 
         private void RefreshTargetHints(IReadOnlyList<FindMoongchiTargetHintViewData> hints)
@@ -663,15 +686,24 @@ namespace UI.FindMoongchi
             OnBackButtonClicked?.Invoke();
         }
 
-        public void OnPointerDown(PointerEventData eventData)
+        public void NotifyFirstTouchGuideToolUseSucceeded()
         {
-            ConsumeFirstTouchGuide();
+            _isFirstTouchGuideCompletedForBoard = true;
+            _isFirstTouchGuideDragInProgress = false;
+            HideFirstTouchGuideImmediate();
+        }
+
+        public void NotifyFirstTouchGuideToolUseCanceled()
+        {
+            _isFirstTouchGuideDragInProgress = false;
+            TryStartFirstTouchGuide();
         }
 
         private void HandleBeginDragTool(FindMoongchiToolSlotView slot, PointerEventData eventData)
         {
             DebugTool.Log($"[FindMoongchiGamePanel] 도구 드래그 시작: ToolId={slot?.ToolItemId}, Count={slot?.Count}", DebugType.FindMoongchi, this);
-            ConsumeFirstTouchGuide();
+            _isFirstTouchGuideDragInProgress = true;
+            HideFirstTouchGuideImmediate();
             _currentToolSlot = slot;
             _currentPreviewTileIndex = -1;
         }
@@ -701,11 +733,15 @@ namespace UI.FindMoongchi
             _currentToolSlot = null;
 
             if (slot == null || eventData == null)
+            {
+                NotifyFirstTouchGuideToolUseCanceled();
                 return;
+            }
 
             if (!TryGetTileIndex(eventData, out int tileIndex))
             {
                 DebugTool.Log($"[FindMoongchiGamePanel] 보드 밖 드롭 취소: ToolId={slot.ToolItemId}", DebugType.FindMoongchi, this);
+                NotifyFirstTouchGuideToolUseCanceled();
                 return;
             }
 
@@ -831,7 +867,10 @@ namespace UI.FindMoongchi
 
             ResolveFirstTouchGuideReferences();
 
-            if (!_useFirstTouchGuide || _isFirstTouchGuideConsumed)
+            if (!_useFirstTouchGuide ||
+                _isFirstTouchGuideCompletedForBoard ||
+                _isFirstTouchGuideDragInProgress ||
+                !_hasFirstTouchGuideUsableTool)
             {
                 HideFirstTouchGuideImmediate();
                 return;
@@ -863,15 +902,6 @@ namespace UI.FindMoongchi
                 .SetEase(Ease.InOutSine)
                 .SetLoops(-1, LoopType.Yoyo)
                 .SetUpdate(true);
-        }
-
-        private void ConsumeFirstTouchGuide()
-        {
-            if (_isFirstTouchGuideConsumed)
-                return;
-
-            _isFirstTouchGuideConsumed = true;
-            HideFirstTouchGuideImmediate();
         }
 
         private void HideFirstTouchGuideImmediate()
@@ -912,16 +942,46 @@ namespace UI.FindMoongchi
                 return null;
 
             Transform[] children = GetComponentsInChildren<Transform>(true);
+            Transform fallback = null;
 
             for (int i = 0; i < children.Length; i++)
             {
                 Transform child = children[i];
 
-                if (child != null && child.name == childName)
+                if (child == null || child.name != childName)
+                    continue;
+
+                if (child.GetComponent<CanvasGroup>() != null)
                     return child;
+
+                fallback ??= child;
             }
 
-            return null;
+            return fallback;
+        }
+
+        private void RefreshFirstTouchGuideBoardState(FindMoongchiGameViewData data, int boardWidth, int boardHeight)
+        {
+            int boardKey = GetFirstTouchGuideBoardKey(data, boardWidth, boardHeight);
+
+            if (_currentFirstTouchGuideBoardKey == boardKey)
+                return;
+
+            _currentFirstTouchGuideBoardKey = boardKey;
+            _isFirstTouchGuideCompletedForBoard = false;
+            _isFirstTouchGuideDragInProgress = false;
+        }
+
+        private static int GetFirstTouchGuideBoardKey(FindMoongchiGameViewData data, int boardWidth, int boardHeight)
+        {
+            unchecked
+            {
+                int key = data != null && data.StageId > 0 ? data.StageId : 17;
+                key = key * 31 + boardWidth;
+                key = key * 31 + boardHeight;
+                key = key * 31 + (data?.CurrentWeek ?? 0);
+                return key;
+            }
         }
 
         private static void SetText(TMP_Text text, string value)

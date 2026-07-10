@@ -759,7 +759,7 @@ CanvasGroup:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1050968654744431746}
   m_Enabled: 1
-  m_Alpha: 0.25
+  m_Alpha: 0
   m_Interactable: 0
   m_BlocksRaycasts: 0
   m_IgnoreParentGroups: 0
@@ -1642,9 +1642,9 @@ MonoBehaviour:
   _firstTouchGuideRoot: {fileID: 1050968654744431746}
   _firstTouchGuideCanvasGroup: {fileID: 4204277359794156281}
   _useFirstTouchGuide: 1
-  _firstTouchGuideMinAlpha: 0.25
-  _firstTouchGuideMaxAlpha: 1
-  _firstTouchGuideFadeDuration: 0.6
+  _firstTouchGuideMinAlpha: 0
+  _firstTouchGuideMaxAlpha: 0.8
+  _firstTouchGuideFadeDuration: 0.45
 --- !u!1 &2006708026640064580
 GameObject:
   m_ObjectHideFlags: 0

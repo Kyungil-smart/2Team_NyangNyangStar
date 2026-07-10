@@ -623,6 +623,7 @@ namespace UI.FindMoongchi
             if (_gameLogic.IsStageCleared)
             {
                 DebugTool.Log("[FindMoongchiPopup] 이미 클리어된 스테이지라 도구 사용을 막고 클리어 알림을 복원합니다.", DebugType.FindMoongchi, this);
+                _gamePanel?.NotifyFirstTouchGuideToolUseSucceeded();
                 RestoreStageClearNoticeIfNeeded();
                 return;
             }
@@ -630,6 +631,7 @@ namespace UI.FindMoongchi
             if (_isStageClearWaitingForRestart)
             {
                 DebugTool.Log("[FindMoongchiPopup] 클리어 완료 후 다시하기 대기 중이라 도구 사용을 막습니다.", DebugType.FindMoongchi, this);
+                _gamePanel?.NotifyFirstTouchGuideToolUseSucceeded();
                 OpenStageClearNotice();
                 return;
             }
@@ -637,6 +639,7 @@ namespace UI.FindMoongchi
             if (!_debugInfiniteToolUse &&
                 !await EnsureProgressReadyOrOpenErrorAsync("진행 데이터를 불러오지 못해 탐색 도구를 사용할 수 없습니다."))
             {
+                _gamePanel?.NotifyFirstTouchGuideToolUseCanceled();
                 RefreshGamePanel();
                 return;
             }
@@ -646,6 +649,8 @@ namespace UI.FindMoongchi
             if (!_debugInfiniteToolUse && currentSearchChance <= 0)
             {
                 DebugTool.Warning("[FindMoongchiPopup] 탐색 기회 부족", DebugType.FindMoongchi, this);
+                _gamePanel?.NotifyFirstTouchGuideToolUseCanceled();
+                RefreshGamePanel(false);
                 OpenNotice("탐색 기회가 없습니다.");
                 return;
             }
@@ -657,6 +662,8 @@ namespace UI.FindMoongchi
                 if (boardItemCount <= 0)
                 {
                     DebugTool.Warning($"[FindMoongchiPopup] 보드에 탐색 도구 없음: ToolId={toolItemId}", DebugType.FindMoongchi, this);
+                    _gamePanel?.NotifyFirstTouchGuideToolUseCanceled();
+                    RefreshGamePanel(false);
                     OpenNotice("보유한 탐색 도구가 없습니다.");
                     return;
                 }
@@ -664,6 +671,8 @@ namespace UI.FindMoongchi
                 if (!_progressController.TryConsumeSearchChance(1))
                 {
                     DebugTool.Warning("[FindMoongchiPopup] 진행 데이터 탐색 기회 차감 실패", DebugType.FindMoongchi, this);
+                    _gamePanel?.NotifyFirstTouchGuideToolUseCanceled();
+                    RefreshGamePanel(false);
                     OpenNotice("탐색 기회가 없습니다.");
                     return;
                 }
@@ -689,6 +698,7 @@ namespace UI.FindMoongchi
                             _searchChance += 1;
 
                         DebugTool.Warning($"[FindMoongchiPopup] 탐색 도구 소비 실패: ToolId={toolItemId}", DebugType.FindMoongchi, this);
+                        _gamePanel?.NotifyFirstTouchGuideToolUseCanceled();
                         OpenError("탐색 도구 소비에 실패했습니다.", 1001);
                         RefreshGamePanel();
                         return;
@@ -713,6 +723,7 @@ namespace UI.FindMoongchi
                         _progressController.RestoreSearchChance(1);
                         _gameLogic.RestoreBoardProgress(openedTileSnapshot, foundTargetSnapshot);
                         SyncFromProgressController();
+                        _gamePanel?.NotifyFirstTouchGuideToolUseCanceled();
                         OpenError("진행 데이터 저장에 실패했습니다.", 1002);
                         RefreshGamePanel(false);
                         return;
@@ -732,6 +743,7 @@ namespace UI.FindMoongchi
                 foreach (FindMoongchiTargetRuntimeData foundTarget in result.NewlyFoundTargets)
                     DebugTool.Log($"[FindMoongchiPopup] 목표물 발견: {foundTarget.TargetName}({foundTarget.TargetId})", DebugType.FindMoongchi, this);
 
+                _gamePanel?.NotifyFirstTouchGuideToolUseSucceeded();
                 RefreshGamePanel(true);
 
                 if (result.IsStageCleared)
