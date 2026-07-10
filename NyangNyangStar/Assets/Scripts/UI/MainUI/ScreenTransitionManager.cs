@@ -26,10 +26,21 @@ namespace UI.Transition
         [SerializeField] private float _revealDelay = 0.15f;
         [SerializeField] private int _sortingOrder = 9999;
 
+        [Header("Startup Announcement")]
+        [SerializeField] private GameObject _startupAnnouncementRoot;
+        [SerializeField] private bool _playStartupAnnouncementOnAwake = true;
+        [SerializeField] private float _startupAnnouncementHoldDuration = 0.8f;
+        [SerializeField] private Color _startupAnnouncementBackgroundColor = Color.white;
+
         private Tween _tween;
         private bool _isCovered;
         private bool _isTransitioning;
+        private bool _isStartupAnnouncementVisible;
+        private bool _isUsingStartupAnnouncementCover;
         private Sprite _defaultCoverSprite;
+        private Color _defaultCoverColor = Color.white;
+        private Image.Type _defaultCoverType = Image.Type.Simple;
+        private bool _defaultCoverPreserveAspect;
         private AsyncOperationHandle<Sprite> _coverSpriteHandle;
         private int _coverSpriteRequestId;
         private bool _hasDefaultCoverSprite;
@@ -68,6 +79,9 @@ namespace UI.Transition
             if (_coverImage != null)
             {
                 _defaultCoverSprite = _coverImage.sprite;
+                _defaultCoverColor = _coverImage.color;
+                _defaultCoverType = _coverImage.type;
+                _defaultCoverPreserveAspect = _coverImage.preserveAspect;
                 _hasDefaultCoverSprite = true;
             }
 
@@ -77,7 +91,12 @@ namespace UI.Transition
                 _canvas.sortingOrder = _sortingOrder;
             }
 
-            HideImmediately();
+            ResolveStartupAnnouncementRoot();
+
+            if (_playStartupAnnouncementOnAwake)
+                ShowStartupAnnouncementImmediately();
+            else
+                HideImmediately();
         }
 
         public void Cover(string coverSpriteKey, Action onComplete = null)
@@ -96,6 +115,7 @@ namespace UI.Transition
 
             _tween?.Kill();
 
+            SetStartupAnnouncementVisible(false);
             SetBlock(true);
             _isTransitioning = true;
             _isCovered = false;
@@ -118,9 +138,15 @@ namespace UI.Transition
         {
             _coverSpriteRequestId++;
             ReleaseCoverSprite();
+            _isUsingStartupAnnouncementCover = false;
 
             if (_coverImage != null && _hasDefaultCoverSprite)
+            {
                 _coverImage.sprite = _defaultCoverSprite;
+                _coverImage.color = _defaultCoverColor;
+                _coverImage.type = _defaultCoverType;
+                _coverImage.preserveAspect = _defaultCoverPreserveAspect;
+            }
         }
 
         public void Reveal(Action onComplete = null)
@@ -145,10 +171,14 @@ namespace UI.Transition
             _isTransitioning = true;
             _coverRect.anchoredPosition = Vector2.zero;
 
+            float revealDelay = _isStartupAnnouncementVisible
+                ? Mathf.Max(0f, _startupAnnouncementHoldDuration)
+                : _revealDelay;
+
             _tween = _coverRect
                 .DOAnchorPos(new Vector2(0f, _screenHeight), _revealDuration)
                 .SetEase(Ease.OutSine)
-                .SetDelay(_revealDelay)
+                .SetDelay(revealDelay)
                 .SetUpdate(true)
                 .OnComplete(() =>
                 {
@@ -160,6 +190,8 @@ namespace UI.Transition
         public void ShowImmediately()
         {
             _tween?.Kill();
+            SetStartupAnnouncementVisible(false);
+            RestoreStartupAnnouncementCoverIfNeeded();
 
             if (_coverRect != null)
                 _coverRect.anchoredPosition = Vector2.zero;
@@ -172,6 +204,8 @@ namespace UI.Transition
         public void HideImmediately()
         {
             _tween?.Kill();
+            SetStartupAnnouncementVisible(false);
+            RestoreStartupAnnouncementCoverIfNeeded();
 
             if (_coverRect != null)
                 _coverRect.anchoredPosition = new Vector2(0f, _screenHeight);
@@ -179,6 +213,58 @@ namespace UI.Transition
             _isCovered = false;
             _isTransitioning = false;
             SetBlock(false);
+        }
+
+        private void ShowStartupAnnouncementImmediately()
+        {
+            _tween?.Kill();
+            ApplyStartupAnnouncementCover();
+
+            if (_coverRect != null)
+                _coverRect.anchoredPosition = Vector2.zero;
+
+            SetStartupAnnouncementVisible(true);
+            _isCovered = true;
+            _isTransitioning = false;
+            SetBlock(true);
+        }
+
+        private void ApplyStartupAnnouncementCover()
+        {
+            if (_coverImage == null)
+                return;
+
+            _coverImage.sprite = null;
+            _coverImage.color = _startupAnnouncementBackgroundColor;
+            _coverImage.type = Image.Type.Simple;
+            _coverImage.preserveAspect = false;
+            _isUsingStartupAnnouncementCover = true;
+        }
+
+        private void RestoreStartupAnnouncementCoverIfNeeded()
+        {
+            if (!_isUsingStartupAnnouncementCover)
+                return;
+
+            RestoreDefaultCoverSprite();
+        }
+
+        private void ResolveStartupAnnouncementRoot()
+        {
+            if (_startupAnnouncementRoot != null || _coverRect == null)
+                return;
+
+            Transform announcement = _coverRect.Find("AIGenerationAnounce");
+            if (announcement != null)
+                _startupAnnouncementRoot = announcement.gameObject;
+        }
+
+        private void SetStartupAnnouncementVisible(bool isVisible)
+        {
+            _isStartupAnnouncementVisible = isVisible && _startupAnnouncementRoot != null;
+
+            if (_startupAnnouncementRoot != null)
+                _startupAnnouncementRoot.SetActive(isVisible);
         }
 
         private void SetBlock(bool isActive)
@@ -220,6 +306,7 @@ namespace UI.Transition
                     _coverImage.type = Image.Type.Simple;
                     _coverImage.preserveAspect = false;
                     _coverImage.sprite = sprite;
+                    _isUsingStartupAnnouncementCover = false;
                     onResolved?.Invoke();
                 },
                 failedKey =>
