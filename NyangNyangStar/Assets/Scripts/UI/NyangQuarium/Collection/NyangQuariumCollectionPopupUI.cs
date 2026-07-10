@@ -23,9 +23,6 @@ public class NyangQuariumCollectionPopupUI : UIPopup
     [Header("물고기 데이터")]
     [SerializeField] private NyangQuariumFishSO _fishSO;
 
-    [Header("도감 해금 데이터")]
-    [SerializeField] private NyangQuariumFirestoreSO _nyangquariumSo;
-
     [Header("수집 진척도")]
     [SerializeField] private TMP_Text _progressText;
 
@@ -36,6 +33,7 @@ public class NyangQuariumCollectionPopupUI : UIPopup
     [Header("물고기 정보 팝업")]
     [SerializeField] private NyangQuariumFishInfoPopupUI _infoPopup;
 
+    private NyangQuariumFirestoreSO _nyangquariumSo;
     private NyangQuariumCollectionPopupSprite _sprite;
     private readonly List<FishSlotUI> _fishSlots = new();
     private readonly Dictionary<FishType, List<NyangQuariumFishData>> _fishTypeDic = new();
@@ -69,18 +67,26 @@ public class NyangQuariumCollectionPopupUI : UIPopup
         _sprite.Init();
 
         InitInfoPopup();
-
         InitFishTypeDictionary();
-
-        CreateFishSlots();
-        _isInitialized = true;
-        ShowFishType(_currentFishType);
+        InitAsync();
     }
 
     private void InitInfoPopup()
     {
         _infoPopup.SetCollectionPopup(this);
         _infoPopup.gameObject.SetActive(false);
+    }
+
+    private async void InitAsync()
+    {
+        _nyangquariumSo = await NyangQuariumFirestoreSO.WaitForReadyAsync();
+
+        bool loaded = await _nyangquariumSo.LoadOrCreateFromServerAsync();
+        if (!loaded) return;
+
+        CreateFishSlots();
+        _isInitialized = true;
+        ShowFishType(_currentFishType);
     }
 
     private void OnEnable()
