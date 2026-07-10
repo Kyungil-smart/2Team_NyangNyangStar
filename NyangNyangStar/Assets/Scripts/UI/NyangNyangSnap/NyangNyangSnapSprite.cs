@@ -78,7 +78,6 @@ public class NyangNyangSnapSprite : UIBase
         SetSprite(NyangNyangSnapImages.PhotoButton, "Snap_Icon_RangeCircle");
         SetSprite(NyangNyangSnapImages.PhotoButtonImage, "Shape_Circle");
 
-        SetSprite(NyangNyangSnapImages.RemainingAttempts, "Snap_Btn_Gray");
         SetSprite(NyangNyangSnapImages.StartButton, "Snap_Btn_Gray");
         SetSprite(NyangNyangSnapImages.SettingsButton, "Main_Btn_Settings");
         SetSprite(NyangNyangSnapImages.ToyIocn, "Item_Toy_YarnBall");
@@ -115,7 +114,6 @@ public class NyangNyangSnapSprite : UIBase
         ToyPanelButton,
         PhotoButton,
         PhotoButtonImage,
-        RemainingAttempts,
         StartButton,
         SettingsButton,
         ToyIocn,

@@ -1,4 +1,5 @@
 using Core.Managers;
+using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UI.Base;
@@ -24,6 +25,12 @@ public class NyangstagramMainUI : UIPopup
     [Tooltip("좋아요 버튼")][SerializeField] private Button _likeButton;
     [Tooltip("좋아요 text")][SerializeField] private TMP_Text _likeCountText;
 
+    [Header("기능 준비 중 안내")]
+    [SerializeField] private TMP_Text _comingSoonText;
+    [SerializeField] private string _comingSoonMessage = "기능 준비 중!";
+    [SerializeField, Min(0f)] private float _comingSoonDisplayDuration = 1.5f;
+    [SerializeField, Min(0.01f)] private float _comingSoonFadeDuration = 0.5f;
+
     [SerializeField] private int _likeCount = 26667;
     private bool _isLiked;
 
@@ -33,19 +40,24 @@ public class NyangstagramMainUI : UIPopup
     [SerializeField] private GameObject _profileView;
 
     [Header("게시물")]
+    [SerializeField] private ScrollRect _scrollRect;
     [SerializeField] private RectTransform _postContent;
     [SerializeField] private NyangStargramPostSlotUI _postSlotPrefab;
 
     [Header("냥스타그램 게시물 SO")]
     [SerializeField] private NyangStargramPostSO _postSO;
 
+    private GridLayoutGroup _postGrid;
+    private LayoutElement _postGridLayoutElement;
+
     private readonly Dictionary<string, UIPopup> _cachedPopups = new();
     private readonly Dictionary<string, NyangStargramPostSlotUI> _postSlotDic = new();
     private readonly List<NyangStargramPostData> _sortedPosts = new();
     private readonly HashSet<string> _serverPhotoIds = new();
     private readonly List<string> _removeIds = new();
-    
+
     private bool _isInitialized;
+    private Coroutine _comingSoonCoroutine;
 
     private NyangstagramMainUISprite _nyangstagramMainUISprite;
     private NyangstagramTab _currentMainTab = NyangstagramTab.Profile;
@@ -74,8 +86,13 @@ public class NyangstagramMainUI : UIPopup
         _accountButton = Get<Button>((int)NyangstagramButton.AccountNameTextButton);
         _likeButton = Get<Button>((int)NyangstagramButton.LikeButton);
         _likeCountText = UIBase.FindChild<TMP_Text>(gameObject, "Like Count", true);
+        _comingSoonText ??= UIBase.FindChild<TMP_Text>(gameObject, "ComingSoonText", true);
+
+        _postGrid = _postContent.GetComponent<GridLayoutGroup>();
+        _postGridLayoutElement = _postContent.GetComponent<LayoutElement>();
 
         RefreshPostGridCellSize();
+        RefreshPostGridHeight();
 
         BindViewButtons();
         BindCloseButton();
@@ -106,33 +123,54 @@ public class NyangstagramMainUI : UIPopup
         InitPopup(KeyContainer.Prefabs.NyangStargramPostPopUpUI, null);
         InitPopup(KeyContainer.Prefabs.NyangStargramNPCProfilePopUpUI, _accountButton);
         InitPopup(KeyContainer.Prefabs.NyangStargramAddPostPopUpUI, _addPostButton);
-        InitPopup(KeyContainer.Prefabs.NyangStargramNoticePopUpUI, _notificationButton);
-        InitPopup(KeyContainer.Prefabs.NyangStargramDMListPopUpUI, _dmButton);
-        InitPopup(KeyContainer.Prefabs.NyangStargramDMListPopUpUI, _dmHomeButton);
-
-        InitPopup(KeyContainer.Prefabs.NyangStargramDMchatPopUpUI, null);
+        // 알림/DM은 아직 미구현이므로 팝업을 미리 생성하지 않는다.
     }
+
     private void OnEnable()
     {
         SetProfileView();
         RefreshPostSlots();
+
+        StartCoroutine(ResetScrollPosition());
+    }
+
+    private IEnumerator ResetScrollPosition()
+    {
+        yield return null;
+        _scrollRect.verticalNormalizedPosition = 1f;
     }
 
     private void RefreshPostGridCellSize()
     {
-        GridLayoutGroup grid = _postContent.GetComponent<GridLayoutGroup>();
-
-        if (grid == null) return;
+        if (_postGrid == null) return;
 
         float contentWidth = _postContent.rect.width;
-        float padding = grid.padding.left + grid.padding.right;
-        float spacing = grid.spacing.x * (PostColumnCount - 1);
+        _postGrid.padding.left = 10;
+        _postGrid.padding.right = 10;
+        float padding = _postGrid.padding.left + _postGrid.padding.right;
+        float spacing = _postGrid.spacing.x * (PostColumnCount - 1);
 
         float cellSize = (contentWidth - padding - spacing) / PostColumnCount;
 
-        grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
-        grid.constraintCount = PostColumnCount;
-        grid.cellSize = new Vector2(cellSize, cellSize);
+        _postGrid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+        _postGrid.constraintCount = PostColumnCount;
+        _postGrid.cellSize = new Vector2(cellSize, cellSize);
+    }
+
+    private void RefreshPostGridHeight()
+    {
+        if (_postGrid == null || _postGridLayoutElement == null) return;
+
+        int postCount = _postSlotDic.Count;
+        int rowCount = Mathf.CeilToInt(postCount / (float)PostColumnCount);
+
+        float height =
+            _postGrid.padding.top +
+            _postGrid.padding.bottom +
+            rowCount * _postGrid.cellSize.y +
+            Mathf.Max(0, rowCount - 1) * _postGrid.spacing.y;
+
+        _postGridLayoutElement.preferredHeight = height;
     }
 
     private void InitPopup(string key, Button openButton)
@@ -219,6 +257,7 @@ public class NyangstagramMainUI : UIPopup
         }
 
         RemoveDeletedPostSlots(_serverPhotoIds);
+        RefreshPostGridHeight();
     }
 
     public void AddPost(NyangNyangSnapRuntimePhotoData photoData)
@@ -226,6 +265,8 @@ public class NyangstagramMainUI : UIPopup
         NyangStargramPostSlotUI slot = CreatePostSlot(photoData.PhotoId);
         slot.SetData(photoData, OpenPostPopup);
         slot.transform.SetSiblingIndex(0);
+
+        RefreshPostGridHeight();
     }
 
     private NyangStargramPostSlotUI CreatePostSlot(string photoId)
@@ -277,12 +318,75 @@ public class NyangstagramMainUI : UIPopup
         //    _storyButton.onClick.AddListener(() => GameManager.UI.ShowPopupUI<UIPopup>(KeyContainer.Prefabs.ShopPopupUI));
 
         AddLikeButton(_likeButton);
+        AddComingSoonButton(_tagButton);
+        AddComingSoonButton(_notificationButton);
+        AddComingSoonButton(_dmButton);
+        AddComingSoonButton(_dmHomeButton);
+
+        HideComingSoonImmediately();
 
 
         //if (_tagButton != null)
         //    _tagButton.onClick.AddListener(() => GameManager.UI.ShowPopupUI<UIPopup>(KeyContainer.Prefabs.ShopPopupUI));
 
 
+    }
+
+
+    private void AddComingSoonButton(Button button)
+    {
+        if (button == null) return;
+
+        button.onClick.RemoveAllListeners();
+        button.onClick.AddListener(ShowComingSoonMessage);
+    }
+
+    private void ShowComingSoonMessage()
+    {
+        if (_comingSoonText == null)
+        {
+            DebugTool.Warning("ComingSoonText가 연결되지 않았습니다.", DebugType.UI, this);
+            return;
+        }
+
+        if (_comingSoonCoroutine != null)
+            StopCoroutine(_comingSoonCoroutine);
+
+        _comingSoonCoroutine = StartCoroutine(ComingSoonRoutine());
+    }
+
+    private IEnumerator ComingSoonRoutine()
+    {
+        _comingSoonText.gameObject.SetActive(true);
+        _comingSoonText.text = _comingSoonMessage;
+
+        Color color = _comingSoonText.color;
+        color.a = 1f;
+        _comingSoonText.color = color;
+
+        yield return new WaitForSecondsRealtime(_comingSoonDisplayDuration);
+
+        float elapsed = 0f;
+        while (elapsed < _comingSoonFadeDuration)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            color.a = Mathf.Lerp(1f, 0f, elapsed / _comingSoonFadeDuration);
+            _comingSoonText.color = color;
+            yield return null;
+        }
+
+        HideComingSoonImmediately();
+        _comingSoonCoroutine = null;
+    }
+
+    private void HideComingSoonImmediately()
+    {
+        if (_comingSoonText == null) return;
+
+        Color color = _comingSoonText.color;
+        color.a = 0f;
+        _comingSoonText.color = color;
+        _comingSoonText.gameObject.SetActive(false);
     }
 
     private void AddPopupButton(Button button, UIPopup popup)

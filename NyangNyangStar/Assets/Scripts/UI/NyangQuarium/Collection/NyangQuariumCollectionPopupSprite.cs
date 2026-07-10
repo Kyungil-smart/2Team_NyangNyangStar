@@ -8,7 +8,7 @@ public class NyangQuariumCollectionPopupSprite : UIBase
 {
     private const string RectangleKey = "Shape_Rectangle";
     private const string DefaultTabButtonKey = "Snap_Btn_White";
-    private const string SquareKey = "Shape_Square";
+    private const string BarKey = "Bar_Progress";
 
     [Tooltip("메인 배경1")][SerializeField] private Color _popupColor;
     [Tooltip("메인 배경2")][SerializeField] private Color _mainBackgroundColor;
@@ -49,8 +49,8 @@ public class NyangQuariumCollectionPopupSprite : UIBase
         SetSprite(NyangQuariumCollectionPopupImages.BrackishWaterFishButton, DefaultTabButtonKey, _tabButtonColor);
         SetSprite(NyangQuariumCollectionPopupImages.EnvironmentsButton, DefaultTabButtonKey, _tabButtonColor);
         SetSprite(NyangQuariumCollectionPopupImages.TabPanel, RectangleKey, _tabPanelColor);
-        SetSprite(NyangQuariumCollectionPopupImages.ProgressBackground, SquareKey, _progressBackgroundColor);
-        SetSprite(NyangQuariumCollectionPopupImages.ProgressFill, SquareKey, _progressFillColor);
+        SetSprite(NyangQuariumCollectionPopupImages.ProgressBackground, BarKey, _progressBackgroundColor);
+        SetSprite(NyangQuariumCollectionPopupImages.ProgressFill, BarKey, _progressFillColor);
     }
 
     private void SetSprite(NyangQuariumCollectionPopupImages image, string key)

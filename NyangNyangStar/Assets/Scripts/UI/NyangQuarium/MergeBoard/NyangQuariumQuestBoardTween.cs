@@ -11,6 +11,7 @@ namespace UI.NyangQuarium.MergeBoard
         private const float QuestBoardMoveDuration = 0.3f;
         private const float QuestBoardPunchDuration = 0.2f;
         private const float QuestBoardPunchScale = 0.08f;
+        private const float QuestBoardRenewEnterPadding = 40f;
 
         public static Sequence PlayOrderChange(
             Sequence currentSequence,
@@ -44,6 +45,7 @@ namespace UI.NyangQuarium.MergeBoard
             Canvas.ForceUpdateCanvases();
 
             Dictionary<RectTransform, Vector2> targetPositions = CaptureAnchoredPositions(rects);
+            int finalSiblingIndex = movedTransform.GetSiblingIndex();
 
             // 시작 위치로 복귀 후 Tween 시작
             for (int i = 0; i < rects.Count; i++)
@@ -55,6 +57,8 @@ namespace UI.NyangQuarium.MergeBoard
 
             if (layoutGroup != null)
                 layoutGroup.enabled = false;
+
+            movedTransform.SetAsLastSibling();
 
             // 보드 이동 Tween 생성
             Sequence sequence = DOTween.Sequence();
@@ -84,6 +88,85 @@ namespace UI.NyangQuarium.MergeBoard
             sequence.OnComplete(() =>
             {
                 // 레이아웃 복구 완료
+                movedTransform.SetSiblingIndex(finalSiblingIndex);
+
+                if (layoutGroup != null)
+                    layoutGroup.enabled = true;
+
+                LayoutRebuilder.ForceRebuildLayoutImmediate(parentRect);
+                onComplete?.Invoke();
+            });
+
+            return sequence;
+        }
+
+        public static Sequence PlayRefreshFromRight(
+            Sequence currentSequence,
+            Transform renewedTransform,
+            Action applyRefresh,
+            Action onComplete)
+        {
+            if (renewedTransform == null || applyRefresh == null)
+                return currentSequence;
+
+            RectTransform renewedRect = renewedTransform as RectTransform;
+            RectTransform parentRect = renewedTransform.parent as RectTransform;
+
+            if (renewedRect == null || parentRect == null)
+            {
+                applyRefresh.Invoke();
+                return currentSequence;
+            }
+
+            currentSequence?.Complete();
+            currentSequence?.Kill();
+
+            List<RectTransform> rects = CollectDirectQuestBoardRects(parentRect);
+            Dictionary<RectTransform, Vector2> startPositions = CaptureAnchoredPositions(rects);
+            LayoutGroup layoutGroup = parentRect.GetComponent<LayoutGroup>();
+
+            applyRefresh.Invoke();
+            LayoutRebuilder.ForceRebuildLayoutImmediate(parentRect);
+            Canvas.ForceUpdateCanvases();
+
+            rects = CollectDirectQuestBoardRects(parentRect);
+            Dictionary<RectTransform, Vector2> targetPositions = CaptureAnchoredPositions(rects);
+
+            for (int i = 0; i < rects.Count; i++)
+            {
+                RectTransform rect = rects[i];
+                if (rect == null)
+                    continue;
+
+                if (rect == renewedRect &&
+                    targetPositions.TryGetValue(rect, out Vector2 targetPosition))
+                {
+                    rect.anchoredPosition = GetRightEnterPosition(renewedRect, targetPosition);
+                    continue;
+                }
+
+                if (startPositions.TryGetValue(rect, out Vector2 startPosition))
+                    rect.anchoredPosition = startPosition;
+            }
+
+            if (layoutGroup != null)
+                layoutGroup.enabled = false;
+
+            Sequence sequence = DOTween.Sequence();
+
+            for (int i = 0; i < rects.Count; i++)
+            {
+                RectTransform rect = rects[i];
+                if (rect == null || !targetPositions.TryGetValue(rect, out Vector2 targetPosition))
+                    continue;
+
+                sequence.Join(
+                    rect.DOAnchorPos(targetPosition, QuestBoardMoveDuration)
+                        .SetEase(Ease.OutCubic));
+            }
+
+            sequence.OnComplete(() =>
+            {
                 if (layoutGroup != null)
                     layoutGroup.enabled = true;
 
@@ -127,6 +210,12 @@ namespace UI.NyangQuarium.MergeBoard
             }
 
             return positions;
+        }
+
+        private static Vector2 GetRightEnterPosition(RectTransform rect, Vector2 targetPosition)
+        {
+            float width = rect != null ? rect.rect.width : 0f;
+            return targetPosition + Vector2.right * (width + QuestBoardRenewEnterPadding);
         }
     }
 }

@@ -45,7 +45,7 @@ public class ResultCollectionPanelSprite : UIBase
         for (int i = 0; i < PhotoCount; i++)
         {
             SetSprite(NyangNyangSnapResultCollectionImages.Circle1 + i, "Shape_Circle", _circleColor);
-            SetSprite(NyangNyangSnapResultCollectionImages.Frame1 + i, "Shape_Rectangle_Outline");// TODO : 키 수정 필요
+            SetSprite(NyangNyangSnapResultCollectionImages.Frame1 + i, "Snap_Btn_Unchecked");
             SetSprite(NyangNyangSnapResultCollectionImages.CheckMark1 + i, "Icon_Check");
             SetCheckMark(i, false);
         }

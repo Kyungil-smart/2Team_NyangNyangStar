@@ -28,7 +28,6 @@ public class NyangQuariumFishInfoPopupSprite : UIBase
     private void SetSprites()
     {
         SetSprite(NyangQuariumFishInfoPopupImages.Popup, "Shape_Rectangle", _popupColor);
-        SetSprite(NyangQuariumFishInfoPopupImages.BackButton, "Btn_Back");
         SetSprite(NyangQuariumFishInfoPopupImages.CloseButton, "Btn_Close");
         SetSprite(NyangQuariumFishInfoPopupImages.FishBackground, "NQ_BG_Info");
         SetSprite(NyangQuariumFishInfoPopupImages.InfoBackground, "Shape_Square", _infoBackgroundColor);
@@ -66,7 +65,6 @@ public class NyangQuariumFishInfoPopupSprite : UIBase
 public enum NyangQuariumFishInfoPopupImages
 {
     Popup,
-    BackButton,
     CloseButton,
     FishBackground,
     FishImage,

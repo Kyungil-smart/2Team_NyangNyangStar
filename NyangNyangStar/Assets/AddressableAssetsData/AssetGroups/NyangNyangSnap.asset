@@ -57,6 +57,12 @@ MonoBehaviour:
     m_SerializedLabels:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 41d9bfe7e3d22c64a84d80c003d5d947
+    m_Address: Snap_Img_Sample
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 580630516ac419441b7ff4df89aa66e6
     m_Address: Snap_Slot_Unknown
     m_ReadOnly: 0
@@ -92,6 +98,12 @@ MonoBehaviour:
     m_SerializedLabels:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6bbf8b3db28c223459eb890fa547238e
+    m_Address: Snap_Img_Stage_1
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 71fa0d60508c596419fd655b6c125035
     m_Address: Snap_Ani_Catch
     m_ReadOnly: 0
@@ -123,6 +135,24 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 845b21341fa3ff34cb6859735c5d54fb
     m_Address: Snap_Ani_Run
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 85115ed456365cb4caeafb7adcccc1e1
+    m_Address: Snap_Btn_Unchecked
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 87d5cedfc5fe42b4e94f2947510979f6
+    m_Address: Snap_Btn_AllChecked
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8e00fbc7d3e8c834d957b171620fade5
+    m_Address: Snap_Logo
     m_ReadOnly: 0
     m_SerializedLabels:
     - Sprite
@@ -169,6 +199,12 @@ MonoBehaviour:
     m_SerializedLabels:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c3e4e7a086e6b6048a0000eebbf369de
+    m_Address: Snap_Img_Stage_2
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: c77b8a5a9ce7b6e41bff7d0bebc7b3bd
     m_Address: Snap_Icon_RangeCircle
     m_ReadOnly: 0
@@ -188,6 +224,12 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: ec42f1cc09848294fa1a47acf0e29924
     m_Address: Snap_Panel_ToolList
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f62afe2c23a0b2741bf6538f676b96c9
+    m_Address: Snap_BG_Tile
     m_ReadOnly: 0
     m_SerializedLabels:
     - Sprite

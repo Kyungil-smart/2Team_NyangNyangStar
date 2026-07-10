@@ -36,11 +36,6 @@ public class NyangNyangSnapResultUI : UIPopup
 
     [Header("점수 텍스트")]
     [SerializeField] private TMP_Text _poseNameText;
-    [SerializeField] private TMP_Text _poseScoreText;
-    [SerializeField] private TMP_Text _compositionScoreText;
-    [SerializeField] private TMP_Text _backGroundScoreText;
-    [SerializeField] private TMP_Text _reactionScoreText;
-    [SerializeField] private TMP_Text _totalScoreText;
 
     [Header("결과 연출")]
     [Tooltip("사진 페이드 시간")]
@@ -520,11 +515,6 @@ public class NyangNyangSnapResultUI : UIPopup
         if (_resultSprite != null)
             _resultSprite.ResetRuntimeImages();
 
-        if (_totalScoreText != null) _totalScoreText.text = "0";
-        if (_poseScoreText != null) _poseScoreText.text = "0";
-        if (_compositionScoreText != null) _compositionScoreText.text = "0";
-        if (_backGroundScoreText != null) _backGroundScoreText.text = "0";
-        if (_reactionScoreText != null) _reactionScoreText.text = "0";
         if (_poseNameText != null) _poseNameText.text = string.Empty;
     }
 
@@ -549,26 +539,21 @@ public class NyangNyangSnapResultUI : UIPopup
         _resultSequence.AppendInterval(_sequenceInterval);
 
         _resultSequence.Append(_resultSprite.CreatePoseGaugeTween(scoreResult.PoseGaugeValue, _gaugeFillDuration));
-        _resultSequence.Join(CreateIntTextTween(_poseScoreText, 0, scoreResult.PoseScore, _gaugeFillDuration));
 
         _resultSequence.AppendInterval(_sequenceInterval);
 
         _resultSequence.Append(_resultSprite.CreateCompositionGaugeTween(scoreResult.CompositionGaugeValue, _gaugeFillDuration));
-        _resultSequence.Join(CreateIntTextTween(_compositionScoreText, 0, scoreResult.CompositionScore, _gaugeFillDuration));
-
-        _resultSequence.AppendInterval(_sequenceInterval);
-
-        _resultSequence.Append(_resultSprite.CreateBackGroundGaugeTween(scoreResult.BackgroundGaugeValue, _gaugeFillDuration));
-        _resultSequence.Join(CreateIntTextTween(_backGroundScoreText, 0, scoreResult.BackgroundScore, _gaugeFillDuration));
 
         _resultSequence.AppendInterval(_sequenceInterval);
 
         _resultSequence.Append(_resultSprite.CreateReactionGaugeTween(scoreResult.TimingGaugeValue, _gaugeFillDuration));
-        _resultSequence.Join(CreateIntTextTween(_reactionScoreText, 0, scoreResult.TimingScore, _gaugeFillDuration));
 
         _resultSequence.AppendInterval(_sequenceInterval);
 
-        _resultSequence.Append(CreateIntTextTween(_totalScoreText, 0, scoreResult.TotalScore, _scoreCountDuration));
+        _resultSequence.Append(_resultSprite.CreateBackGroundGaugeTween(scoreResult.BackgroundGaugeValue, _gaugeFillDuration));
+
+        _resultSequence.AppendInterval(_sequenceInterval);
+
 
         _resultSequence.OnComplete(() =>
         {

@@ -26,7 +26,7 @@ public class NyangQuariumFishSO : SoBase, ISheetParsable
             int.Parse(cols[0].Trim()),
             ParseFishType(cols[1].Trim()),
             int.Parse(cols[2].Trim()),
-            cols[3].Trim(),
+            ParsePlaceableType(cols[3].Trim()),
             cols[4].Trim(),
             cols[5].Trim(),
             cols[6].Trim());
@@ -51,9 +51,44 @@ public class NyangQuariumFishSO : SoBase, ISheetParsable
         }
     }
 
+    private PlaceableType ParsePlaceableType(string type)
+    {
+        switch (type)
+        {
+            case "물고기":
+                return PlaceableType.Fish;
+            case "돌":
+                return PlaceableType.Stone;
+            case "풀":
+                return PlaceableType.Plant;
+            case "바다":
+                return PlaceableType.Marine;
+            case "산호":
+                return PlaceableType.Coral;
+            case "은신처":
+                return PlaceableType.Shelter;
+            default:
+                return PlaceableType.None;
+        }
+    }
+
     public void SortData()
     {
-        _fishData.Sort((a, b) => a.Level.CompareTo(b.Level));
+        _fishData.Sort((a, b) =>
+        {
+            int fishTypeCompare = a.FishType.CompareTo(b.FishType);
+            if (fishTypeCompare != 0)
+                return fishTypeCompare;
+
+            if (a.FishType == FishType.Environments)
+            {
+                int placeableCompare = a.PlaceableType.CompareTo(b.PlaceableType);
+                if (placeableCompare != 0)
+                    return placeableCompare;
+            }
+
+            return a.Level.CompareTo(b.Level);
+        });
     }
 
     public void PrintData()
@@ -66,7 +101,7 @@ public class NyangQuariumFishSO : SoBase, ISheetParsable
             log.AppendLine($"물고기 ID: {fishData.FishId}, " +
                            $"타입: {fishData.FishType}, " +
                            $"레벨: {fishData.Level}, " +
-                           $"종류: {fishData.Category}, " +
+                           $"종류: {fishData.PlaceableType}, " +
                            $"이름: {fishData.FishName}, " +
                            $"설명: {fishData.FishDescription}, " +
                            $"물고기 Key: {fishData.FishKey}");
