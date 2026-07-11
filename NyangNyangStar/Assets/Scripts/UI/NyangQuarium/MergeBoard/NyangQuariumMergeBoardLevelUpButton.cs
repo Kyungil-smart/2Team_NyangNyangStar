@@ -6,10 +6,8 @@ namespace UI.NyangQuarium.MergeBoard
 {
     public sealed class NyangQuariumMergeBoardLevelUpButton : MonoBehaviour
     {
-        [SerializeField] private int _testExpAmount = 50;
-
         private Button _button;
-        private bool _isAddingExp;
+        private bool _isLevelingUp;
 
         public void Init()
         {
@@ -34,10 +32,10 @@ namespace UI.NyangQuarium.MergeBoard
 
         private async void OnClicked()
         {
-            if (_isAddingExp)
+            if (_isLevelingUp)
                 return;
 
-            _isAddingExp = true;
+            _isLevelingUp = true;
 
             try
             {
@@ -56,21 +54,19 @@ namespace UI.NyangQuarium.MergeBoard
                 NyangQuariumAquariumLevelSO aquariumLevelSO =
                     NyangQuariumQuestSOLocator.ResolveAquariumLevelSO();
 
-                bool saved = await firestoreSO.AddAquariumExpAsync(
-                    _testExpAmount,
-                    aquariumLevelSO);
+                bool saved = await firestoreSO.AddAquariumLevelAsync(aquariumLevelSO);
 
                 if (!saved)
                 {
                     DebugTool.Warning(
-                        "[NyangQuariumMergeBoardLevelUpButton] 테스트 수조 경험치 추가에 실패했습니다",
+                        "[NyangQuariumMergeBoardLevelUpButton] 수조 레벨업에 실패했습니다",
                         DebugType.Data,
                         this);
                 }
             }
             finally
             {
-                _isAddingExp = false;
+                _isLevelingUp = false;
             }
         }
 
