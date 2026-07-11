@@ -53,6 +53,23 @@ namespace UI.FindMoongchi
         [SerializeField] private float _firstTouchGuideMaxAlpha = 0.8f;
         [SerializeField] private float _firstTouchGuideFadeDuration = 0.45f;
 
+        [Header("Responsive Layout")]
+        [SerializeField] private bool _useResponsiveLayout = true;
+        [SerializeField] private RectTransform _layoutRoot;
+        [SerializeField] private RectTransform _headerRoot;
+        [SerializeField] private RectTransform _toolBarRoot;
+        [SerializeField] private Vector2 _referencePanelSize = new(1000f, 1650f);
+        [SerializeField] private Vector2 _boardMinSize = new(560f, 720f);
+        [SerializeField] private Vector2 _boardMaxSize = new(770f, 990f);
+        [SerializeField] private float _horizontalPadding = 60f;
+        [SerializeField] private float _topPadding = 0f;
+        [SerializeField] private float _bottomPadding = 50f;
+        [SerializeField] private float _headerHeight = 300f;
+        [SerializeField] private float _toolBarHeight = 250f;
+        [SerializeField] private float _contentSpacing = 30f;
+        [SerializeField] private float _minTileSize = 64f;
+        [SerializeField] private float _maxTileSize = 110f;
+
         private readonly List<FindMoongchiTileView> _tileViews = new();
         private readonly List<Image> _highlightImages = new();
         private readonly List<TargetVisualEntry> _targetVisualEntries = new();
@@ -69,6 +86,7 @@ namespace UI.FindMoongchi
         private bool _isFirstTouchGuideCompletedForBoard;
         private bool _isFirstTouchGuideDragInProgress;
         private bool _hasFirstTouchGuideUsableTool;
+        private bool _isApplyingResponsiveLayout;
 
         private int CurrentTileCount => Mathf.Max(0, _currentBoardWidth * _currentBoardHeight);
 
@@ -94,6 +112,7 @@ namespace UI.FindMoongchi
             if (_generateTilesOnInit)
                 EnsureTiles(_defaultBoardWidth, _defaultBoardHeight);
 
+            ApplyResponsiveLayout();
             TryStartFirstTouchGuide();
 
             DebugTool.Log(
@@ -104,6 +123,7 @@ namespace UI.FindMoongchi
 
         private void OnEnable()
         {
+            ApplyResponsiveLayout();
             TryStartFirstTouchGuide();
         }
 
@@ -111,6 +131,14 @@ namespace UI.FindMoongchi
         {
             _isFirstTouchGuideDragInProgress = false;
             StopFirstTouchGuideTween();
+        }
+
+        private void OnRectTransformDimensionsChange()
+        {
+            if (!isActiveAndEnabled)
+                return;
+
+            ApplyResponsiveLayout();
         }
 
         private void EnsureToolItemIdsInitialized()
@@ -165,6 +193,7 @@ namespace UI.FindMoongchi
             RefreshFirstTouchGuideBoardState(data, boardWidth, boardHeight);
 
             EnsureTiles(boardWidth, boardHeight);
+            ApplyResponsiveLayout();
             Canvas.ForceUpdateCanvases();
 
             DebugTool.Log(
@@ -291,6 +320,7 @@ namespace UI.FindMoongchi
                     DebugType.FindMoongchi,
                     this);
             }
+            ApplyResponsiveGridCells();
         }
 
         private void CacheExistingTiles(int boardWidth, int boardHeight)
@@ -334,6 +364,184 @@ namespace UI.FindMoongchi
 
             gridLayoutGroup.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
             gridLayoutGroup.constraintCount = boardWidth;
+            ApplyResponsiveGridCells();
+        }
+
+        private void ApplyResponsiveLayout()
+        {
+            if (_isApplyingResponsiveLayout)
+                return;
+
+            ResolveResponsiveLayoutReferences();
+
+            if (!_useResponsiveLayout)
+            {
+                ApplyResponsiveGridCells();
+                return;
+            }
+
+            if (_layoutRoot == null || _boardArea == null)
+                return;
+
+            Rect rootRect = _layoutRoot.rect;
+
+            if (rootRect.width <= 0f || rootRect.height <= 0f)
+                return;
+
+            _isApplyingResponsiveLayout = true;
+
+            try
+            {
+                float scale = CalculateResponsiveScale(rootRect.size);
+                float horizontalPadding = Mathf.Max(0f, _horizontalPadding * scale);
+                float topPadding = Mathf.Max(0f, _topPadding * scale);
+                float bottomPadding = Mathf.Max(0f, _bottomPadding * scale);
+                float headerHeight = Mathf.Max(0f, _headerHeight * scale);
+                float toolBarHeight = Mathf.Max(0f, _toolBarHeight * scale);
+                float contentSpacing = Mathf.Max(0f, _contentSpacing * scale);
+
+                float contentWidth = Mathf.Max(1f, rootRect.width - horizontalPadding * 2f);
+                float headerWidth = Mathf.Min(rootRect.width, Mathf.Max(contentWidth, _referencePanelSize.x * scale));
+                float toolBarWidth = Mathf.Min(contentWidth, 850f * scale);
+
+                ApplyTopRect(_headerRoot, headerWidth, headerHeight, topPadding);
+                ApplyBottomRect(_toolBarRoot, toolBarWidth, toolBarHeight, bottomPadding);
+
+                float contentTop = rootRect.yMax - topPadding - headerHeight;
+                float contentBottom = rootRect.yMin + bottomPadding + toolBarHeight;
+                float availableBoardHeight = Mathf.Max(1f, contentTop - contentBottom - contentSpacing * 2f);
+                Vector2 boardSize = CalculateResponsiveBoardSize(contentWidth, availableBoardHeight, scale);
+
+                _boardArea.anchorMin = new Vector2(0.5f, 0.5f);
+                _boardArea.anchorMax = new Vector2(0.5f, 0.5f);
+                _boardArea.pivot = new Vector2(0.5f, 0.5f);
+                _boardArea.sizeDelta = boardSize;
+                _boardArea.anchoredPosition = new Vector2(0f, (contentTop + contentBottom) * 0.5f);
+
+                ApplyResponsiveGridCells(scale);
+            }
+            finally
+            {
+                _isApplyingResponsiveLayout = false;
+            }
+        }
+
+        private Vector2 CalculateResponsiveBoardSize(float contentWidth, float availableBoardHeight, float scale)
+        {
+            float aspect = _currentBoardWidth > 0 && _currentBoardHeight > 0
+                ? (float)_currentBoardWidth / _currentBoardHeight
+                : (float)_defaultBoardWidth / Mathf.Max(1, _defaultBoardHeight);
+
+            float maxWidth = Mathf.Min(contentWidth, Mathf.Max(1f, _boardMaxSize.x * scale));
+            float maxHeight = Mathf.Min(availableBoardHeight, Mathf.Max(1f, _boardMaxSize.y * scale));
+            float width = Mathf.Min(maxWidth, maxHeight * aspect);
+            float height = width / aspect;
+
+            if (height > maxHeight)
+            {
+                height = maxHeight;
+                width = height * aspect;
+            }
+
+            float minWidth = Mathf.Min(maxWidth, Mathf.Max(1f, _boardMinSize.x * scale));
+            float minHeight = Mathf.Min(maxHeight, Mathf.Max(1f, _boardMinSize.y * scale));
+
+            if (width < minWidth && minWidth / aspect <= maxHeight)
+            {
+                width = minWidth;
+                height = width / aspect;
+            }
+
+            if (height < minHeight && minHeight * aspect <= maxWidth)
+            {
+                height = minHeight;
+                width = height * aspect;
+            }
+
+            return new Vector2(Mathf.Max(1f, width), Mathf.Max(1f, height));
+        }
+
+        private void ApplyResponsiveGridCells(float scale = -1f)
+        {
+            if (_tileRoot == null || _currentBoardWidth <= 0 || _currentBoardHeight <= 0)
+                return;
+
+            RectTransform tileRootRect = _tileRoot as RectTransform;
+            GridLayoutGroup gridLayoutGroup = _tileRoot.GetComponent<GridLayoutGroup>();
+
+            if (tileRootRect == null || gridLayoutGroup == null)
+                return;
+
+            if (tileRootRect.rect.width <= 0f || tileRootRect.rect.height <= 0f)
+                return;
+
+            if (scale < 0f)
+                scale = _layoutRoot != null ? CalculateResponsiveScale(_layoutRoot.rect.size) : 1f;
+
+            float availableWidth = tileRootRect.rect.width - gridLayoutGroup.padding.horizontal - gridLayoutGroup.spacing.x * Mathf.Max(0, _currentBoardWidth - 1);
+            float availableHeight = tileRootRect.rect.height - gridLayoutGroup.padding.vertical - gridLayoutGroup.spacing.y * Mathf.Max(0, _currentBoardHeight - 1);
+            float cellSize = Mathf.Min(availableWidth / _currentBoardWidth, availableHeight / _currentBoardHeight);
+
+            if (float.IsNaN(cellSize) || float.IsInfinity(cellSize) || cellSize <= 0f)
+                return;
+
+            float minTileSize = Mathf.Max(1f, _minTileSize * scale);
+            float maxTileSize = Mathf.Max(minTileSize, _maxTileSize * scale);
+            cellSize = Mathf.Clamp(cellSize, minTileSize, maxTileSize);
+
+            gridLayoutGroup.cellSize = new Vector2(cellSize, cellSize);
+            gridLayoutGroup.childAlignment = TextAnchor.MiddleCenter;
+            LayoutRebuilder.MarkLayoutForRebuild(tileRootRect);
+        }
+
+        private void ApplyTopRect(RectTransform rectTransform, float width, float height, float topPadding)
+        {
+            if (rectTransform == null)
+                return;
+
+            rectTransform.anchorMin = new Vector2(0.5f, 1f);
+            rectTransform.anchorMax = new Vector2(0.5f, 1f);
+            rectTransform.pivot = new Vector2(0.5f, 1f);
+            rectTransform.anchoredPosition = new Vector2(0f, -topPadding);
+            rectTransform.sizeDelta = new Vector2(Mathf.Max(1f, width), Mathf.Max(1f, height));
+        }
+
+        private void ApplyBottomRect(RectTransform rectTransform, float width, float height, float bottomPadding)
+        {
+            if (rectTransform == null)
+                return;
+
+            rectTransform.anchorMin = new Vector2(0.5f, 0f);
+            rectTransform.anchorMax = new Vector2(0.5f, 0f);
+            rectTransform.pivot = new Vector2(0.5f, 0f);
+            rectTransform.anchoredPosition = new Vector2(0f, bottomPadding);
+            rectTransform.sizeDelta = new Vector2(Mathf.Max(1f, width), Mathf.Max(1f, height));
+        }
+
+        private float CalculateResponsiveScale(Vector2 currentSize)
+        {
+            float referenceWidth = Mathf.Max(1f, _referencePanelSize.x);
+            float referenceHeight = Mathf.Max(1f, _referencePanelSize.y);
+            float widthScale = currentSize.x > 0f ? currentSize.x / referenceWidth : 1f;
+            float heightScale = currentSize.y > 0f ? currentSize.y / referenceHeight : 1f;
+            return Mathf.Clamp(Mathf.Min(widthScale, heightScale), 0.01f, 1f);
+        }
+
+        private void ResolveResponsiveLayoutReferences()
+        {
+            _layoutRoot ??= transform as RectTransform;
+
+            if (_headerRoot == null)
+            {
+                Transform header = transform.Find("Header");
+                _headerRoot = header as RectTransform;
+            }
+
+            if (_toolBarRoot == null)
+            {
+                Transform toolBar = transform.Find("ToolBar");
+                _toolBarRoot = toolBar as RectTransform;
+            }
         }
 
         private void ResolveEnergyProgressFillImage()
