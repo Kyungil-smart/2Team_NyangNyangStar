@@ -11,6 +11,11 @@ namespace UI.FindMoongchi
 {
     public sealed class FindMoongchiGamePanel : MonoBehaviour
     {
+        private const float SearchChanceHelpPanelWidth = 560f;
+        private const float SearchChanceHelpPanelHeight = 86f;
+        private const float SearchChanceHelpPanelMargin = 16f;
+        private const float SearchChanceHelpPanelYOffset = 12f;
+
         [Header("Header")]
         [SerializeField] private Button _backButton;
         [SerializeField] private TMP_Text _weekText;
@@ -19,6 +24,10 @@ namespace UI.FindMoongchi
         [SerializeField] private TMP_Text _energyProgressText;
         [SerializeField] private Image _energyProgressFillImage;
         [SerializeField] private bool _forceEnergyProgressFillType = true;
+        [SerializeField] private Button _searchChanceHelpButton;
+        [SerializeField] private GameObject _searchChanceHelpPanel;
+        [SerializeField] private RectTransform _searchChanceHelpBubbleRect;
+        [SerializeField] private Button _searchChanceHelpCloseAreaButton;
 
         [Header("Board")]
         [SerializeField] private RectTransform _boardArea;
@@ -87,6 +96,7 @@ namespace UI.FindMoongchi
         private bool _isFirstTouchGuideDragInProgress;
         private bool _hasFirstTouchGuideUsableTool;
         private bool _isApplyingResponsiveLayout;
+        private readonly Vector3[] _searchChanceHelpButtonCorners = new Vector3[4];
 
         private int CurrentTileCount => Mathf.Max(0, _currentBoardWidth * _currentBoardHeight);
 
@@ -104,6 +114,10 @@ namespace UI.FindMoongchi
                 _backButton.onClick.RemoveListener(HandleBackButtonClicked);
                 _backButton.onClick.AddListener(HandleBackButtonClicked);
             }
+
+            BindButton(_searchChanceHelpButton, HandleSearchChanceHelpButtonClicked);
+            BindButton(_searchChanceHelpCloseAreaButton, HideSearchChanceHelpPanel);
+            HideSearchChanceHelpPanel();
 
             ResolveEnergyProgressFillImage();
             ResolveToolSlots();
@@ -130,6 +144,7 @@ namespace UI.FindMoongchi
         private void OnDisable()
         {
             _isFirstTouchGuideDragInProgress = false;
+            HideSearchChanceHelpPanel();
             StopFirstTouchGuideTween();
         }
 
@@ -377,16 +392,23 @@ namespace UI.FindMoongchi
             if (!_useResponsiveLayout)
             {
                 ApplyResponsiveGridCells();
+                RefreshSearchChanceHelpPanelLayout();
                 return;
             }
 
             if (_layoutRoot == null || _boardArea == null)
+            {
+                RefreshSearchChanceHelpPanelLayout();
                 return;
+            }
 
             Rect rootRect = _layoutRoot.rect;
 
             if (rootRect.width <= 0f || rootRect.height <= 0f)
+            {
+                RefreshSearchChanceHelpPanelLayout();
                 return;
+            }
 
             _isApplyingResponsiveLayout = true;
 
@@ -419,6 +441,7 @@ namespace UI.FindMoongchi
                 _boardArea.anchoredPosition = new Vector2(0f, (contentTop + contentBottom) * 0.5f);
 
                 ApplyResponsiveGridCells(scale);
+                RefreshSearchChanceHelpPanelLayout();
             }
             finally
             {
@@ -891,7 +914,110 @@ namespace UI.FindMoongchi
         private void HandleBackButtonClicked()
         {
             DebugTool.Log("[FindMoongchiGamePanel] 뒤로가기 버튼 클릭", DebugType.FindMoongchi, this);
+            HideSearchChanceHelpPanel();
             OnBackButtonClicked?.Invoke();
+        }
+
+        private void HandleSearchChanceHelpButtonClicked()
+        {
+            bool nextVisible = _searchChanceHelpPanel != null && !_searchChanceHelpPanel.activeSelf;
+            SetSearchChanceHelpPanelVisible(nextVisible);
+        }
+
+        private void HideSearchChanceHelpPanel()
+        {
+            SetSearchChanceHelpPanelVisible(false);
+        }
+
+        private void SetSearchChanceHelpPanelVisible(bool visible)
+        {
+            if (_searchChanceHelpPanel != null && _searchChanceHelpPanel.activeSelf != visible)
+                _searchChanceHelpPanel.SetActive(visible);
+
+            if (visible)
+                RefreshSearchChanceHelpPanelLayout();
+        }
+
+        private void RefreshSearchChanceHelpPanelLayout()
+        {
+            RectTransform layerRect = _searchChanceHelpPanel != null
+                ? _searchChanceHelpPanel.transform as RectTransform
+                : null;
+            RectTransform panelRect = _searchChanceHelpBubbleRect;
+            RectTransform buttonRect = _searchChanceHelpButton != null
+                ? _searchChanceHelpButton.transform as RectTransform
+                : null;
+
+            if (panelRect == null && layerRect != null && layerRect.childCount > 0)
+                panelRect = layerRect.GetChild(0) as RectTransform;
+
+            if (panelRect == null || layerRect == null || buttonRect == null)
+                return;
+
+            layerRect.SetAsLastSibling();
+            panelRect.SetAsLastSibling();
+            layerRect.anchorMin = Vector2.zero;
+            layerRect.anchorMax = Vector2.one;
+            layerRect.offsetMin = Vector2.zero;
+            layerRect.offsetMax = Vector2.zero;
+            layerRect.pivot = new Vector2(0.5f, 0.5f);
+            layerRect.localScale = Vector3.one;
+
+            Rect layerBounds = ResolveSearchChanceHelpLayerBounds(layerRect);
+
+            if (layerBounds.width <= 0f || layerBounds.height <= 0f)
+                return;
+
+            float maxScaleByWidth = (layerBounds.width - SearchChanceHelpPanelMargin * 2f) / SearchChanceHelpPanelWidth;
+            float maxScaleByHeight = (layerBounds.height - SearchChanceHelpPanelMargin * 2f) / SearchChanceHelpPanelHeight;
+            float fitScale = Mathf.Max(0.1f, Mathf.Min(maxScaleByWidth, maxScaleByHeight));
+            float visualScale = Mathf.Min(1f, fitScale);
+            panelRect.anchorMin = new Vector2(0.5f, 0.5f);
+            panelRect.anchorMax = new Vector2(0.5f, 0.5f);
+            panelRect.pivot = new Vector2(1f, 1f);
+            panelRect.sizeDelta = new Vector2(SearchChanceHelpPanelWidth, SearchChanceHelpPanelHeight);
+            panelRect.localScale = new Vector3(visualScale, visualScale, 1f);
+
+            Canvas canvas = GetComponentInParent<Canvas>();
+            Camera eventCamera = canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay
+                ? canvas.worldCamera
+                : null;
+
+            buttonRect.GetWorldCorners(_searchChanceHelpButtonCorners);
+            Vector2 screenPoint = RectTransformUtility.WorldToScreenPoint(eventCamera, _searchChanceHelpButtonCorners[3]);
+
+            if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(layerRect, screenPoint, eventCamera, out Vector2 buttonBottomRight))
+                return;
+
+            float scaledWidth = SearchChanceHelpPanelWidth * visualScale;
+            float scaledHeight = SearchChanceHelpPanelHeight * visualScale;
+            float margin = SearchChanceHelpPanelMargin * visualScale;
+            float x = buttonBottomRight.x;
+            float y = buttonBottomRight.y - SearchChanceHelpPanelYOffset * visualScale;
+
+            x = Mathf.Clamp(x, layerBounds.xMin + scaledWidth + margin, layerBounds.xMax - margin);
+            y = Mathf.Clamp(y, layerBounds.yMin + scaledHeight + margin, layerBounds.yMax - margin);
+            panelRect.anchoredPosition = new Vector2(x, y);
+        }
+
+        private static Rect ResolveSearchChanceHelpLayerBounds(RectTransform layerRect)
+        {
+            Rect layerBounds = layerRect.rect;
+
+            if (layerBounds.width > 0f && layerBounds.height > 0f)
+                return layerBounds;
+
+            RectTransform parentRect = layerRect.parent as RectTransform;
+
+            if (parentRect == null)
+                return layerBounds;
+
+            Rect parentBounds = parentRect.rect;
+            return new Rect(
+                -parentBounds.width * layerRect.pivot.x,
+                -parentBounds.height * layerRect.pivot.y,
+                parentBounds.width,
+                parentBounds.height);
         }
 
         public void NotifyFirstTouchGuideToolUseSucceeded()
@@ -1198,12 +1324,32 @@ namespace UI.FindMoongchi
                 text.text = value;
         }
 
+        private static void BindButton(Button button, UnityEngine.Events.UnityAction action)
+        {
+            if (button == null)
+                return;
+
+            button.onClick.RemoveListener(action);
+            button.onClick.AddListener(action);
+        }
+
+        private static void UnbindButton(Button button, UnityEngine.Events.UnityAction action)
+        {
+            if (button == null)
+                return;
+
+            button.onClick.RemoveListener(action);
+        }
+
         private void OnDestroy()
         {
             StopFirstTouchGuideTween();
 
             if (_backButton != null)
                 _backButton.onClick.RemoveListener(HandleBackButtonClicked);
+
+            UnbindButton(_searchChanceHelpButton, HandleSearchChanceHelpButtonClicked);
+            UnbindButton(_searchChanceHelpCloseAreaButton, HideSearchChanceHelpPanel);
 
             foreach (FindMoongchiToolSlotView slot in _toolSlots)
             {
