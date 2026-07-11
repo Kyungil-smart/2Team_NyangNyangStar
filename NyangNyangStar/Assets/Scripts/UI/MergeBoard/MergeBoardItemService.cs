@@ -36,6 +36,9 @@ namespace UI.MergeBoard
         [Header("테스트 아이템 생성")]
         [SerializeField] private TMP_InputField _itemIdInputField;
         [SerializeField] private Button _testReceiveButton;
+        [SerializeField] private Button _toyItemGenerateButton;
+        [SerializeField] private Button _foodItemGenerateButton;
+        [SerializeField] private Button _findMoongchiItemGenerateButton;
 
         [Header("Resource Cost")]
         [Min(0)]
@@ -49,6 +52,12 @@ namespace UI.MergeBoard
         [SerializeField] private bool _enableRuntimeDiagnostics = true;
 
         private const int GeneralBoardSlotCount = 63;
+        private const int ToyItemMinId = 10003;
+        private const int ToyItemMaxId = 10013;
+        private const int FoodItemMinId = 10014;
+        private const int FoodItemMaxId = 10028;
+
+        private static readonly int[] FindMoongchiItemIds = { 10004, 10019, 10030 };
 
         private readonly SemaphoreSlim _addItemSemaphore = new(1, 1);
         private readonly Dictionary<int, int> _serverItemCountCache = new();
@@ -106,12 +115,39 @@ namespace UI.MergeBoard
                     RuntimeWarning("테스트 아이템 생성 버튼이 연결되지 않았습니다. 인스펙터의 Test Receive Button 연결을 확인하세요.");
                 }
             }
+
+            BindDebugGenerateButton(_toyItemGenerateButton, ReceiveRandomToyItem, "Toy item generate", logMissing);
+            BindDebugGenerateButton(_foodItemGenerateButton, ReceiveRandomFoodItem, "Food item generate", logMissing);
+            BindDebugGenerateButton(_findMoongchiItemGenerateButton, ReceiveRandomFindMoongchiItem, "FindMoongchi item generate", logMissing);
         }
 
         private void UnbindTestReceiveButton()
         {
             if (_testReceiveButton != null)
                 _testReceiveButton.onClick.RemoveListener(ReceiveRandomTestItem);
+
+            if (_toyItemGenerateButton != null)
+                _toyItemGenerateButton.onClick.RemoveListener(ReceiveRandomToyItem);
+
+            if (_foodItemGenerateButton != null)
+                _foodItemGenerateButton.onClick.RemoveListener(ReceiveRandomFoodItem);
+
+            if (_findMoongchiItemGenerateButton != null)
+                _findMoongchiItemGenerateButton.onClick.RemoveListener(ReceiveRandomFindMoongchiItem);
+        }
+
+        private void BindDebugGenerateButton(Button button, UnityEngine.Events.UnityAction action, string label, bool logMissing)
+        {
+            if (button == null)
+            {
+                if (logMissing)
+                    RuntimeWarning($"{label} button is not connected.");
+
+                return;
+            }
+
+            button.onClick.RemoveListener(action);
+            button.onClick.AddListener(action);
         }
 
         public void RegisterBoardSystem(BoardSystem boardSystem)
@@ -356,6 +392,21 @@ namespace UI.MergeBoard
             _ = ReceiveRandomTestItemAsync();
         }
 
+        public void ReceiveRandomToyItem()
+        {
+            _ = ReceiveRandomDebugItemAsync(ToyItemMinId, ToyItemMaxId, "Toy");
+        }
+
+        public void ReceiveRandomFoodItem()
+        {
+            _ = ReceiveRandomDebugItemAsync(FoodItemMinId, FoodItemMaxId, "Food");
+        }
+
+        public void ReceiveRandomFindMoongchiItem()
+        {
+            _ = ReceiveRandomDebugItemAsync(FindMoongchiItemIds, "FindMoongchi");
+        }
+
         public async Task<bool> ReceiveRandomTestItemAsync()
         {
             RuntimeLog("아이템 생성 버튼 클릭됨");
@@ -382,6 +433,40 @@ namespace UI.MergeBoard
             {
                 DebugTool.Warning("생성 가능한 Common 아이템 데이터가 없습니다.", DebugType.Board, this);
                 RuntimeWarning("생성 가능한 Common 아이템 데이터가 없습니다.");
+                return false;
+            }
+
+            return await GenerateItemByEnergyAsync(itemData);
+        }
+
+        private async Task<bool> ReceiveRandomDebugItemAsync(int minItemId, int maxItemId, string categoryName)
+        {
+            RuntimeLog($"{categoryName} item generate button clicked.");
+
+            if (!CanUseItemService())
+                return false;
+
+            if (!TryGetRandomItemDataFromRange(minItemId, maxItemId, out ItemData itemData))
+            {
+                DebugTool.Warning($"{categoryName} category has no valid item data. Range: {minItemId}~{maxItemId}", DebugType.Board, this);
+                RuntimeWarning($"{categoryName} category has no valid item data. Range: {minItemId}~{maxItemId}");
+                return false;
+            }
+
+            return await GenerateItemByEnergyAsync(itemData);
+        }
+
+        private async Task<bool> ReceiveRandomDebugItemAsync(IReadOnlyList<int> itemIds, string categoryName)
+        {
+            RuntimeLog($"{categoryName} item generate button clicked.");
+
+            if (!CanUseItemService())
+                return false;
+
+            if (!TryGetRandomItemDataFromList(itemIds, out ItemData itemData))
+            {
+                DebugTool.Warning($"{categoryName} category has no valid item data.", DebugType.Board, this);
+                RuntimeWarning($"{categoryName} category has no valid item data.");
                 return false;
             }
 
@@ -975,6 +1060,53 @@ namespace UI.MergeBoard
             }
 
             return false;
+        }
+
+        private bool TryGetRandomItemDataFromRange(int minItemId, int maxItemId, out ItemData itemData)
+        {
+            itemData = null;
+
+            if (minItemId > maxItemId)
+                return false;
+
+            List<ItemData> candidates = new();
+
+            for (int itemId = minItemId; itemId <= maxItemId; itemId++)
+                AddValidItemCandidate(candidates, itemId);
+
+            return TryPickRandomCandidate(candidates, out itemData);
+        }
+
+        private bool TryGetRandomItemDataFromList(IReadOnlyList<int> itemIds, out ItemData itemData)
+        {
+            itemData = null;
+
+            if (itemIds == null || itemIds.Count == 0)
+                return false;
+
+            List<ItemData> candidates = new();
+
+            for (int i = 0; i < itemIds.Count; i++)
+                AddValidItemCandidate(candidates, itemIds[i]);
+
+            return TryPickRandomCandidate(candidates, out itemData);
+        }
+
+        private void AddValidItemCandidate(List<ItemData> candidates, int itemId)
+        {
+            if (TryGetItemDataById(itemId, out ItemData itemData) && itemData != null && itemData.HasItem)
+                candidates.Add(itemData);
+        }
+
+        private bool TryPickRandomCandidate(List<ItemData> candidates, out ItemData itemData)
+        {
+            itemData = null;
+
+            if (candidates == null || candidates.Count == 0)
+                return false;
+
+            itemData = candidates[Random.Range(0, candidates.Count)];
+            return true;
         }
 
         private bool TryGetItemDataById(int itemID, out ItemData itemData)
