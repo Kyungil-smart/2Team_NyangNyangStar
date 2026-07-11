@@ -9,7 +9,7 @@ namespace UI.NyangQuarium
         private static readonly string[] DefaultAutoBlockedAreaNames =
         {
             "LogoImage",
-            "BackButton",
+            "HomeButton",
             "BoardButton",
             "CollectionButton",
             "LayoutButton",

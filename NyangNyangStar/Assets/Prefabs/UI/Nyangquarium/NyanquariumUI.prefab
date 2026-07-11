@@ -108,11 +108,11 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 9173144351921536152}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 1, y: 0}
-  m_AnchorMax: {x: 1, y: 0}
-  m_AnchoredPosition: {x: -15, y: 75}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 15, y: 180}
   m_SizeDelta: {x: 200, y: 200}
-  m_Pivot: {x: 1, y: 0}
+  m_Pivot: {x: 0, y: 0}
 --- !u!222 &6257262816550187047
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -457,11 +457,11 @@ RectTransform:
   - {fileID: 7318593235655862835}
   m_Father: {fileID: 6627190258747934343}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 1, y: 0.5}
-  m_AnchorMax: {x: 1, y: 0.5}
-  m_AnchoredPosition: {x: -25, y: -450}
+  m_AnchorMin: {x: 1, y: 0}
+  m_AnchorMax: {x: 1, y: 0}
+  m_AnchoredPosition: {x: -25, y: 650}
   m_SizeDelta: {x: 150, y: 150}
-  m_Pivot: {x: 1, y: 0.5}
+  m_Pivot: {x: 1, y: 0}
 --- !u!114 &8743894219262138909
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -826,7 +826,7 @@ GameObject:
   - component: {fileID: 1461157526579446403}
   - component: {fileID: 2180275872855576634}
   m_Layer: 5
-  m_Name: BackButton
+  m_Name: HomeButton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -846,11 +846,11 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 9173144351921536152}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0.5}
-  m_AnchorMax: {x: 0, y: 0.5}
-  m_AnchoredPosition: {x: 1, y: 600}
-  m_SizeDelta: {x: 150, y: 150}
-  m_Pivot: {x: 0, y: 0.5}
+  m_AnchorMin: {x: 1, y: 0}
+  m_AnchorMax: {x: 1, y: 0}
+  m_AnchoredPosition: {x: -15, y: 180}
+  m_SizeDelta: {x: 200, y: 200}
+  m_Pivot: {x: 1, y: 0}
 --- !u!222 &7805538824983681401
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -1147,7 +1147,7 @@ MonoBehaviour:
   _boardButton: {fileID: 2978890558140221615}
   _collectionButton: {fileID: 8681231561340950190}
   _layoutButton: {fileID: 7179255880726227380}
-  _backButton: {fileID: 2180275872855576634}
+  _homeButton: {fileID: 2180275872855576634}
   _mainMenuRoot: {fileID: 7189133982804549885}
   _storyContent: {fileID: 0}
   _boardContent: {fileID: 8075738990349486493}
@@ -1170,7 +1170,7 @@ MonoBehaviour:
   _boardSpriteKey: NQ_Btn_Mergeboard
   _collectionSpriteKey: NQ_Btn_Collection
   _layoutSpriteKey: NQ_Btn_Tank
-  _backSpriteKey: NQ_Btn_Back
+  _homeSpriteKey: "\uBA38\uC9C0\uBCF4\uB4DC \uD648 \uBC84\uD2BC"
   _aquariumSelectBackSpriteKey: Btn_Close
   _freshAquariumSpriteKey: NQ_Btn_FreshWater
   _oceanAquariumSpriteKey: NQ_Btn_SaltWater
@@ -1321,7 +1321,7 @@ MonoBehaviour:
   _autoCollectMainUiBlockedAreas: 1
   _autoBlockedAreaNames:
   - LogoImage
-  - BackButton
+  - HomeButton
   - BoardButton
   - CollectionButton
   - LayoutButton
@@ -1716,7 +1716,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 0}
   m_AnchorMax: {x: 1, y: 0}
-  m_AnchoredPosition: {x: -15, y: 350}
+  m_AnchoredPosition: {x: -15, y: 430}
   m_SizeDelta: {x: 200, y: 200}
   m_Pivot: {x: 1, y: 0}
 --- !u!222 &7650385971463589581
@@ -1836,7 +1836,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 15, y: 350}
+  m_AnchoredPosition: {x: 15, y: 430}
   m_SizeDelta: {x: 200, y: 200}
   m_Pivot: {x: 0, y: 0}
 --- !u!222 &4036273112176535498
