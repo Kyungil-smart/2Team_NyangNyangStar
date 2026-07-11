@@ -168,6 +168,35 @@ public class NyangQuariumFirestoreSO : BaseFireStore
         return true;
     }
 
+    public async Task<bool> AddAquariumLevelAsync(
+        NyangQuariumAquariumLevelSO aquariumLevelSO)
+    {
+        if (aquariumLevelSO == null)
+            return false;
+
+        if (!TryEnsureDatabaseReady())
+        {
+            DebugTool.Warning("[NyangQuariumFirestoreSO] Firestore가 준비되지 않아 수조 레벨 저장을 생략했습니다.", DebugType.Data, this);
+            return false;
+        }
+
+        NormalizeAquariumLevel();
+
+        if (aquariumLevelSO.IsMaxLevel(_aquariumLevel))
+            return false;
+
+        int nextLevel = _aquariumLevel + 1;
+        if (!aquariumLevelSO.TryGetByLevel(nextLevel, out _))
+            return false;
+
+        _aquariumLevel = nextLevel;
+        _aquariumExp = 0;
+        NotifyAquariumProgressChanged();
+
+        await SetDataAsync(ToFirestoreDictionary());
+        return true;
+    }
+
     public bool TryGetCurrentAquariumLevelData(
         NyangQuariumAquariumLevelSO aquariumLevelSO,
         out NyangQuariumAquariumLevelData levelData)
