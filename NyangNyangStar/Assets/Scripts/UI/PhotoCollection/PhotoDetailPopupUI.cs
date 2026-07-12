@@ -20,7 +20,10 @@ public class PhotoDetailPopupUI : UIPopup
     [Header("사진 데이터")]
     [SerializeField] private NyangNyangSnapPhotoAlbumSO _photoAlbumSO;
 
-    private NyangNyangSnapSavedPhotoData _photoData;
+    [Header("냥스타그램 게시물 SO")]
+    [SerializeField] private NyangStargramPostSO _postSO;
+
+    private NyangNyangSnapRuntimePhotoData _photoData;
     private PhotoDetailPopupSprite _sprite;
     private PhotoCollectionPopupUI _photoCollectionPopup;
 
@@ -42,12 +45,12 @@ public class PhotoDetailPopupUI : UIPopup
         _sprite.Init();
     }
 
-    public void SetData(NyangNyangSnapSavedPhotoData photoData)
+    public void SetData(NyangNyangSnapRuntimePhotoData photoData)
     {
         _photoData = photoData;
 
-        _sprite.SetPhoto(photoData.storagePath);
-        _sprite.SetStar(photoData.starCount);
+        _sprite.SetPhoto(photoData.Sprite);
+        _sprite.SetStar(photoData.StarCount);
     }
 
     public void SetPhotoCollectionPopup(PhotoCollectionPopupUI popup)
@@ -61,13 +64,14 @@ public class PhotoDetailPopupUI : UIPopup
         if (_background != null) _background.onClick.AddListener(CloseAllPopups);
         if (_backButton != null) _backButton.onClick.AddListener(ClosePhotoDetailPopup);
         if (_uploadButton != null) _uploadButton.onClick.AddListener(OpenNyangstagram);
-        if (_deleteButton != null) _deleteButton.onClick.AddListener(() => DeletePhoto());
+        if (_deleteButton != null) _deleteButton.onClick.AddListener(DeletePhoto);
     }
 
     private void OnDestroy()
     {
         RemovePopupButton(_closeButton);
         RemovePopupButton(_background);
+        RemovePopupButton(_backButton);
         RemovePopupButton(_uploadButton);
         RemovePopupButton(_deleteButton);
     }
@@ -111,20 +115,25 @@ public class PhotoDetailPopupUI : UIPopup
         if (!EnsurePhotoAlbumReady())
             return;
 
-        if (!string.IsNullOrEmpty(_photoData.storagePath))
+        if (!string.IsNullOrEmpty(_photoData.StoragePath))
         {
-            bool deleted = await FirebaseStorageHelper.DeleteUserImageAsync(_photoData.storagePath);
+            bool deleted = await FirebaseStorageHelper.DeleteUserImageAsync(_photoData.StoragePath);
 
             DebugTool.Log(
-                $"[PhotoDetailPopupUI] 사진 삭제 {(deleted ? "성공" : "실패")}: {_photoData.storagePath}",
+                $"[PhotoDetailPopupUI] 사진 삭제 {(deleted ? "성공" : "실패")}: {_photoData.StoragePath}",
                 DebugType.Network,
                 this);
         }
 
         try
         {
-            _photoAlbumSO.RemovePhoto(_photoData.photoId);
+            string photoId = _photoData.PhotoId;
+            _photoAlbumSO.RemovePhoto(photoId);
+            NyangNyangSnapPhotoManager.Instance.RemovePhoto(photoId);
+            _postSO.RemovePost(photoId);
+
             await _photoAlbumSO.UpdateDataAsync();
+            await _postSO.UpdateDataAsync();
         }
         catch (Exception e)
         {

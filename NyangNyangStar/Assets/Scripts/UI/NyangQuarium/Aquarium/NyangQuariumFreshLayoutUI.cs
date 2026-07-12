@@ -1,10 +1,13 @@
 using Core.Managers;
 using DG.Tweening;
+using TMPro;
 using UI.Base;
 using UI.NyangQuarium;
 using UnityEngine;
 using UnityEngine.UI;
 using Util;
+using UI.NyangQuarium.Quest;
+using System.Threading.Tasks;
 
 public class NyangQuariumFreshLayoutUI : UIPopup, INyangquariumEntryReceiver
 {
@@ -16,6 +19,24 @@ public class NyangQuariumFreshLayoutUI : UIPopup, INyangquariumEntryReceiver
 
     [Tooltip("해수 수조로 변경하는 버튼")]
     [SerializeField] private Button _changeButton;
+
+    [Header("해수 수조 잠금")]
+    [Tooltip("레벨 5 미만일 때 해수 전환 버튼 위에 표시할 자물쇠 아이콘")]
+    [SerializeField] private GameObject _oceanLockIcon;
+
+    [Tooltip("잠금 상태에서 해수 전환 버튼에 적용할 색상")]
+    [SerializeField] private Color _oceanLockedColor = new Color(0.45f, 0.45f, 0.45f, 1f);
+
+    [Tooltip("잠긴 해수 전환 버튼을 눌렀을 때 표시할 안내 텍스트")]
+    [SerializeField] private TMP_Text _oceanLockMessageText;
+
+    [Tooltip("안내 문구가 유지되는 시간")]
+    [Min(0f)]
+    [SerializeField] private float _oceanLockMessageDuration = 2f;
+
+    [Tooltip("안내 문구가 사라지는 시간")]
+    [Min(0f)]
+    [SerializeField] private float _oceanLockMessageFadeDuration = 0.25f;
 
     [Header("담수 버튼")]
     [Tooltip("담수 통합 인벤토리 버튼")]
@@ -37,6 +58,12 @@ public class NyangQuariumFreshLayoutUI : UIPopup, INyangquariumEntryReceiver
 
     [Tooltip("필터 목록이 들어 있는 패널")]
     [SerializeField] private GameObject _filterTab;
+
+    [Tooltip("자연 요소 필터 목록이 들어 있는 패널")]
+    [SerializeField] private GameObject _natureFilterTab;
+
+    [Tooltip("현재 인벤토리 카테고리를 확인할 목록 UI")]
+    [SerializeField] private NyangQuariumFishInventoryListUI _inventoryListUI;
 
     [Tooltip("비워두면 패널의 RectTransform을 자동으로 사용합니다.")]
     [SerializeField] private RectTransform _inventoryRect;
@@ -67,6 +94,8 @@ public class NyangQuariumFreshLayoutUI : UIPopup, INyangquariumEntryReceiver
     [SerializeField] private GameObject[] _layoutModeOnlyObjects;
     [SerializeField] private GameObject[] _waterGazeModeOnlyObjects;
 
+    [SerializeField] private Button _fishTabButton;
+
     private bool _isInventoryOpened;
     private bool _isInventoryAnimating;
     private Vector2 _inventoryOpenedPosition;
@@ -76,8 +105,14 @@ public class NyangQuariumFreshLayoutUI : UIPopup, INyangquariumEntryReceiver
     public bool IsLayoutMode => _entryMode == NyangquariumEntryMode.Layout;
     public bool IsWaterGazeMode => _entryMode == NyangquariumEntryMode.WaterGaze;
 
+    private const int OceanUnlockLevel = 5;
+    [SerializeField] private const string OceanLockMessage = "수조 레벨이 5가 되어야 활성화됩니다.";
+
     private bool _isInitialized;
     private bool _isChangingLayout;
+    private bool _isOceanUnlocked;
+
+    private Tween _oceanLockMessageTween;
 
     private NyangQuariumFreshLayoutUISprite _nyangQuariumFreshLayoutUISprite;
 
@@ -109,6 +144,10 @@ public class NyangQuariumFreshLayoutUI : UIPopup, INyangquariumEntryReceiver
         RefreshFishGridCellSize();
         AddButtonListeners();
         InitializeUI();
+
+        // Firestore의 현재 수조 레벨로 해수 버튼 잠금 상태를 갱신합니다.
+        _ = RefreshOceanLockStateAsync();
+
         ApplyEntryMode();
         ResolveOceanLayoutUI();
 
@@ -124,10 +163,121 @@ public class NyangQuariumFreshLayoutUI : UIPopup, INyangquariumEntryReceiver
         _closeButton = Get<Button>((int)NyangQuariumFreshLayoutUIButton.CloseButton);
     }
 
+    /// <summary>
+    /// Firestore에서 현재 수조 레벨을 가져와 해수 수조 잠금 상태를 갱신합니다.
+    /// </summary>
+    private async Task RefreshOceanLockStateAsync()
+    {
+        // 레벨을 확인하기 전에는 잠금 상태로 표시합니다.
+        ApplyOceanLockState(false);
+
+        NyangQuariumFirestoreSO firestoreSO =
+            await NyangQuariumFirestoreSO.WaitForReadyAsync();
+
+        if (firestoreSO == null)
+        {
+            DebugTool.Warning(
+                "[NyangQuariumFreshLayoutUI] 수조 레벨 정보를 가져오지 못해 해수 전환 버튼을 잠금 처리합니다.",
+                DebugType.UI,
+                this);
+
+            return;
+        }
+
+        int aquariumLevel = firestoreSO.AquariumLevel;
+        bool isUnlocked = aquariumLevel >= OceanUnlockLevel;
+
+        ApplyOceanLockState(isUnlocked);
+
+        DebugTool.Log(
+            $"[NyangQuariumFreshLayoutUI] 현재 수조 레벨: {aquariumLevel}, " +
+            $"해수 수조 해금 여부: {isUnlocked}",
+            DebugType.UI,
+            this);
+    }
+
+    /// <summary>
+    /// 해수 전환 버튼의 잠금 이미지와 색상을 적용합니다.
+    /// 버튼은 클릭 안내 처리를 위해 비활성화하지 않습니다.
+    /// </summary>
+    private void ApplyOceanLockState(bool isUnlocked)
+    {
+        _isOceanUnlocked = isUnlocked;
+
+        if (_oceanLockIcon != null)
+            _oceanLockIcon.SetActive(!isUnlocked);
+
+        if (_changeButton != null && _changeButton.image != null)
+        {
+            _changeButton.image.color =
+                isUnlocked
+                    ? Color.white
+                    : _oceanLockedColor;
+        }
+    }
+    /// <summary>
+    /// 잠긴 해수 전환 버튼의 안내 문구를 표시합니다.
+    /// 버튼을 다시 누르면 표시 시간이 처음부터 다시 시작됩니다.
+    /// </summary>
+    private void ShowOceanLockMessage()
+    {
+        if (_oceanLockMessageText == null)
+        {
+            DebugTool.Warning(
+                "[NyangQuariumFreshLayoutUI] 해수 잠금 안내 텍스트가 연결되지 않았습니다.",
+                DebugType.UI,
+                this);
+
+            return;
+        }
+
+        _oceanLockMessageTween?.Kill();
+        _oceanLockMessageText.DOKill();
+
+        _oceanLockMessageText.text = OceanLockMessage;
+        _oceanLockMessageText.alpha = 1f;
+        _oceanLockMessageText.gameObject.SetActive(true);
+
+        _oceanLockMessageTween = _oceanLockMessageText
+            .DOFade(0f, _oceanLockMessageFadeDuration)
+            .SetDelay(_oceanLockMessageDuration)
+            .SetUpdate(true)
+            .OnComplete(() =>
+            {
+                if (_oceanLockMessageText != null)
+                    _oceanLockMessageText.gameObject.SetActive(false);
+
+                _oceanLockMessageTween = null;
+            });
+    }
+
+    /// <summary>
+    /// 잠금 안내 문구를 즉시 숨깁니다.
+    /// </summary>
+    private void HideOceanLockMessageImmediately()
+    {
+        _oceanLockMessageTween?.Kill();
+        _oceanLockMessageTween = null;
+
+        if (_oceanLockMessageText == null)
+            return;
+
+        _oceanLockMessageText.DOKill();
+        _oceanLockMessageText.alpha = 0f;
+        _oceanLockMessageText.gameObject.SetActive(false);
+    }
+
     private void ResolveInventoryRect()
     {
         if (_inventoryRect == null && _freshwaterLayoutPanel != null)
             _inventoryRect = _freshwaterLayoutPanel.GetComponent<RectTransform>();
+
+        if (_inventoryListUI == null && _freshwaterLayoutPanel != null)
+        {
+            _inventoryListUI =
+                _freshwaterLayoutPanel.GetComponentInChildren<
+                    NyangQuariumFishInventoryListUI>(true);
+        }
 
         if (_inventoryRect != null)
             _inventoryOpenedPosition = _inventoryRect.anchoredPosition;
@@ -192,9 +342,13 @@ public class NyangQuariumFreshLayoutUI : UIPopup, INyangquariumEntryReceiver
         if (_filterTab != null)
             _filterTab.SetActive(false);
 
+        if (_natureFilterTab != null)
+            _natureFilterTab.SetActive(false);
+
         if (_freshwaterLayoutPanel != null)
             _freshwaterLayoutPanel.SetActive(false);
 
+        HideOceanLockMessageImmediately();
         SetMainUIActive(true);
     }
 
@@ -315,6 +469,21 @@ public class NyangQuariumFreshLayoutUI : UIPopup, INyangquariumEntryReceiver
         if (_isChangingLayout)
             return;
 
+        // 잠금 상태에서도 버튼 터치 반응음은 출력합니다.
+        GameManager.Audio.PlaySfx("Main_SFX_Touch");
+
+        if (!_isOceanUnlocked)
+        {
+            ShowOceanLockMessage();
+
+            DebugTool.Log(
+                "[NyangQuariumFreshLayoutUI] 해수 수조는 수조 레벨 5부터 이용할 수 있습니다.",
+                DebugType.UI,
+                this);
+
+            return;
+        }
+
         if (_oceanLayoutUI == null)
             ResolveOceanLayoutUI();
 
@@ -324,19 +493,31 @@ public class NyangQuariumFreshLayoutUI : UIPopup, INyangquariumEntryReceiver
                 "[NyangQuariumFreshLayoutUI] 해수 레이아웃 UI가 준비되지 않았습니다.",
                 DebugType.UI,
                 this);
+
             return;
         }
 
-        _isChangingLayout = true;
+        if (NyangquariumMainUIManager.Active != null)
+        {
+            bool transitionStarted =
+                NyangquariumMainUIManager.Active.OpenOwnedContentWithTransition(
+                _oceanLayoutUI,
+                _entryMode,
+                playClickSfx: false);
 
-        GameManager.Audio.PlaySfx("Main_SFX_Touch");
+            if (!transitionStarted)
+                return;
 
-        PrepareLinkedLayout(_oceanLayoutUI);
-
-        _oceanLayoutUI.gameObject.SetActive(true);
-        _oceanLayoutUI.PlayOpenAnimation();
-
-        gameObject.SetActive(false);
+            _isChangingLayout = true;
+        }
+        else
+        {
+            _isChangingLayout = true;
+            PrepareLinkedLayout(_oceanLayoutUI);
+            _oceanLayoutUI.gameObject.SetActive(true);
+            _oceanLayoutUI.PlayOpenAnimation();
+            gameObject.SetActive(false);
+        }
 
         DebugTool.Log(
             "[NyangQuariumFreshLayoutUI] 해수 레이아웃 UI로 변경",
@@ -429,18 +610,57 @@ public class NyangQuariumFreshLayoutUI : UIPopup, INyangquariumEntryReceiver
 
     private void OnClickFilterButton()
     {
-        if (_filterButton == null)
+        GameObject currentFilterTab = GetCurrentFilterTab();
+
+        if (currentFilterTab == null)
+        {
+            DebugTool.Warning(
+                "[NyangQuariumFreshLayoutUI] 현재 카테고리의 FilterTab이 연결되지 않았습니다.",
+                DebugType.UI,
+                this);
             return;
+        }
 
         GameManager.Audio.PlaySfx("Main_SFX_Touch");
 
-        bool isOpen = !_filterTab.activeSelf;
-        _filterTab.SetActive(isOpen);
+        if (_filterTab != null && _filterTab != currentFilterTab)
+            _filterTab.SetActive(false);
 
-        DebugTool.Log(
-            $"[NyangQuariumFreshLayoutUI] 필터 탭 {(isOpen ? "열기" : "닫기")}",
-            DebugType.UI,
-            this);
+        if (_natureFilterTab != null &&
+            _natureFilterTab != currentFilterTab)
+        {
+            _natureFilterTab.SetActive(false);
+        }
+
+        currentFilterTab.SetActive(
+            !currentFilterTab.activeSelf);
+    }
+
+    private GameObject GetCurrentFilterTab()
+    {
+        if (_inventoryListUI == null && _freshwaterLayoutPanel != null)
+        {
+            _inventoryListUI =
+                _freshwaterLayoutPanel.GetComponentInChildren<
+                    NyangQuariumFishInventoryListUI>(true);
+        }
+
+        if (_inventoryListUI == null)
+            return _filterTab;
+
+        return _inventoryListUI.CurrentCategory ==
+               NyangQuariumPlacementCategory.Nature
+            ? _natureFilterTab
+            : _filterTab;
+    }
+
+    private void CloseFilterTabs()
+    {
+        if (_filterTab != null)
+            _filterTab.SetActive(false);
+
+        if (_natureFilterTab != null)
+            _natureFilterTab.SetActive(false);
     }
 
     private void OnClickCloseButton()
@@ -459,6 +679,11 @@ public class NyangQuariumFreshLayoutUI : UIPopup, INyangquariumEntryReceiver
 
         _isInventoryAnimating = true;
         _freshwaterLayoutPanel.SetActive(true);
+
+        SelectDefaultFishTabButton();
+
+        CloseFilterTabs();
+
         RefreshFishGridCellSize();
 
         _inventoryRect.DOKill();
@@ -473,6 +698,29 @@ public class NyangQuariumFreshLayoutUI : UIPopup, INyangquariumEntryReceiver
                 _isInventoryAnimating = false;
                 DebugTool.Log("[NyangQuariumFreshLayoutUI] 담수 통합 인벤토리 열기 완료", DebugType.UI, this);
             });
+    }
+    /// <summary>
+    /// 배치 패널을 열 때 기본 카테고리 탭을 관상어 버튼 선택 상태로 만듭니다.
+    /// Button 컴포넌트의 Selected Color를 그대로 사용합니다.
+    /// </summary>
+    private void SelectDefaultFishTabButton()
+    {
+        if (_fishTabButton == null)
+        {
+            DebugTool.Warning(
+                "[NyangQuariumFreshLayoutUI] FishTabButton이 연결되지 않아 기본 탭 선택 색상을 적용할 수 없습니다.",
+                DebugType.UI,
+                this);
+
+            return;
+        }
+
+        _fishTabButton.Select();
+
+        DebugTool.Log(
+            "[NyangQuariumFreshLayoutUI] 배치 패널 기본 선택 탭: 관상어",
+            DebugType.UI,
+            this);
     }
 
     /// <summary>
@@ -537,8 +785,7 @@ public class NyangQuariumFreshLayoutUI : UIPopup, INyangquariumEntryReceiver
         _isInventoryOpened = false;
         _isInventoryAnimating = true;
 
-        if (_filterTab != null)
-            _filterTab.SetActive(false);
+        CloseFilterTabs();
 
         _inventoryRect.DOKill();
         _inventoryRect
@@ -582,8 +829,20 @@ public class NyangQuariumFreshLayoutUI : UIPopup, INyangquariumEntryReceiver
         RefreshFishGridCellSize();
     }
 
+    private void OnEnable()
+    {
+        if (!_isInitialized)
+            return;
+
+        // 화면에 다시 들어올 때 최신 수조 레벨을 반영합니다.
+        _ = RefreshOceanLockStateAsync();
+
+    }
+
     private void OnDisable()
     {
+        HideOceanLockMessageImmediately();
+
         _isChangingLayout = false;
         _isInventoryOpened = false;
         _isInventoryAnimating = false;
@@ -594,8 +853,7 @@ public class NyangQuariumFreshLayoutUI : UIPopup, INyangquariumEntryReceiver
             _inventoryRect.anchoredPosition = GetInventoryClosedPosition();
         }
 
-        if (_filterTab != null)
-            _filterTab.SetActive(false);
+        CloseFilterTabs();
 
         if (_freshwaterLayoutPanel != null)
             _freshwaterLayoutPanel.SetActive(false);
@@ -605,9 +863,14 @@ public class NyangQuariumFreshLayoutUI : UIPopup, INyangquariumEntryReceiver
 
     private void OnDestroy()
     {
+        _oceanLockMessageTween?.Kill();
+        _oceanLockMessageTween = null;
+
+        if (_oceanLockMessageText != null)
+            _oceanLockMessageText.DOKill();
+
         if (_outsideTouchArea != null)
             _outsideTouchArea.Clicked -= HandleOutsideTouch;
-
 
         if (ActiveInstance == this)
             ActiveInstance = null;

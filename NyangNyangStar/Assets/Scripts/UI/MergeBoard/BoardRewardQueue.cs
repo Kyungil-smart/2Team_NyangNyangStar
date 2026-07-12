@@ -23,8 +23,6 @@ namespace UI.MergeBoard
 
         private Coroutine _alertCoroutine;
         private bool _isProcessing;
-        private bool _isSavingQueue;
-        private bool _queueSaveRequested;
 
         private readonly Queue<ItemData> _rewardQueue = new();
 
@@ -84,7 +82,7 @@ namespace UI.MergeBoard
             }
 
             int safeCount = Mathf.Max(1, count);
-
+            Queue<ItemData> backupQueue = CreateQueueSnapshot();
             ItemData runtimeItem = CreateRuntimeItem(itemData);
 
             if (runtimeItem == null || !runtimeItem.HasItem)
@@ -98,8 +96,12 @@ namespace UI.MergeBoard
 
             RefreshView();
 
-            if (ResolveMergeBoardFirestore())
-                await _mergeBoardFirestore.SaveRewardQueueAsync(_rewardQueue);
+            if (!await SaveQueueSnapshotSafeAsync())
+            {
+                RestoreQueue(backupQueue);
+                DebugTool.Warning($"보상 큐 저장 실패로 아이템 추가를 취소했습니다. ID:{itemData.ItemID}, Count:{safeCount}", DebugType.Board, this);
+                return false;
+            }
 
             return true;
         }
@@ -125,14 +127,18 @@ namespace UI.MergeBoard
             try
             {
                 bool moved = false;
+                bool movedToSpecialBoard = false;
+                ItemSlot addedCommonSlot = null;
 
                 if (itemData.ItemType == ItemType.Special)
                 {
                     moved = await TryMoveTopSpecialItemAsync(itemData);
+                    movedToSpecialBoard = moved;
                 }
                 else if (itemData.ItemType == ItemType.Common)
                 {
-                    moved = await TryMoveTopCommonItemAsync(itemData);
+                    addedCommonSlot = await TryMoveTopCommonItemAsync(itemData);
+                    moved = addedCommonSlot != null;
                 }
                 else
                 {
@@ -143,10 +149,22 @@ namespace UI.MergeBoard
                 if (!moved)
                     return;
 
-                _rewardQueue.Dequeue();
+                ItemData movedItem = _rewardQueue.Dequeue();
 
                 RefreshView();
-                RequestSaveQueue();
+
+                if (!await SaveQueueSnapshotSafeAsync())
+                {
+                    RestoreItemToFront(movedItem);
+                    RefreshView();
+
+                    bool rolledBack = await RollbackMovedItemAsync(movedItem, addedCommonSlot, movedToSpecialBoard);
+                    if (!rolledBack)
+                        DebugTool.Warning($"보상 큐 저장 실패 후 보드 롤백도 실패했습니다. ID:{movedItem.ItemID}", DebugType.Board, this);
+
+                    ShowAlert("저장 실패로 이동을 취소했습니다.");
+                    return;
+                }
 
                 DebugTool.Log($"보상 큐 Pop 완료 / ID:{itemData.ItemID}, Type:{itemData.ItemType}, 남은 개수: {_rewardQueue.Count}", DebugType.Board, this);
             }
@@ -156,7 +174,7 @@ namespace UI.MergeBoard
             }
         }
 
-        private async Task<bool> TryMoveTopCommonItemAsync(ItemData itemData)
+        private async Task<ItemSlot> TryMoveTopCommonItemAsync(ItemData itemData)
         {
             if (_boardSystem == null)
                 _boardSystem = FindFirstObjectByType<BoardSystem>();
@@ -165,7 +183,7 @@ namespace UI.MergeBoard
             {
                 DebugTool.Warning("BoardSystem이 연결되지 않았습니다.", DebugType.Board, this);
                 ShowAlert("보드가 준비되지 않았습니다.");
-                return false;
+                return null;
             }
 
             ItemSlot addedSlot = await _boardSystem.TryAddItemFromQueueAndSelectAsync(itemData);
@@ -173,10 +191,10 @@ namespace UI.MergeBoard
             if (addedSlot == null)
             {
                 ShowAlert("보드판 공간이 부족합니다.");
-                return false;
+                return null;
             }
 
-            return true;
+            return addedSlot;
         }
 
         private async Task<bool> TryMoveTopSpecialItemAsync(ItemData itemData)
@@ -300,41 +318,82 @@ namespace UI.MergeBoard
             return itemData.Clone();
         }
 
-        private void RequestSaveQueue()
+        private async Task<bool> SaveQueueSnapshotSafeAsync()
         {
-            _queueSaveRequested = true;
-
-            if (_isSavingQueue)
-                return;
-
-            _ = SaveQueueLoopAsync();
-        }
-
-        private async Task SaveQueueLoopAsync()
-        {
-            _isSavingQueue = true;
-
             try
             {
-                while (_queueSaveRequested)
-                {
-                    _queueSaveRequested = false;
+                if (!ResolveMergeBoardFirestore())
+                    return false;
 
-                    if (!ResolveMergeBoardFirestore())
-                        continue;
-
-                    List<ItemData> snapshot = new List<ItemData>(_rewardQueue);
-                    await _mergeBoardFirestore.SaveRewardQueueAsync(snapshot);
-                }
+                List<ItemData> snapshot = new List<ItemData>(_rewardQueue);
+                await _mergeBoardFirestore.SaveRewardQueueAsync(snapshot);
+                return true;
             }
             catch (System.Exception exception)
             {
                 Debug.LogError($"보상 큐 저장 실패 : {exception.Message}", this);
+                return false;
             }
-            finally
+        }
+
+        private Queue<ItemData> CreateQueueSnapshot()
+        {
+            Queue<ItemData> snapshot = new Queue<ItemData>();
+
+            foreach (ItemData itemData in _rewardQueue)
+                snapshot.Enqueue(itemData?.Clone() ?? ItemData.Empty);
+
+            return snapshot;
+        }
+
+        private void RestoreQueue(Queue<ItemData> snapshot)
+        {
+            _rewardQueue.Clear();
+
+            if (snapshot != null)
             {
-                _isSavingQueue = false;
+                while (snapshot.Count > 0)
+                    _rewardQueue.Enqueue(snapshot.Dequeue());
             }
+
+            RefreshView();
+        }
+
+        private void RestoreItemToFront(ItemData itemData)
+        {
+            Queue<ItemData> restoredQueue = new Queue<ItemData>();
+
+            if (itemData != null && itemData.HasItem)
+                restoredQueue.Enqueue(itemData.Clone());
+
+            while (_rewardQueue.Count > 0)
+                restoredQueue.Enqueue(_rewardQueue.Dequeue());
+
+            while (restoredQueue.Count > 0)
+                _rewardQueue.Enqueue(restoredQueue.Dequeue());
+        }
+
+        private async Task<bool> RollbackMovedItemAsync(ItemData itemData, ItemSlot addedCommonSlot, bool movedToSpecialBoard)
+        {
+            if (itemData == null || !itemData.HasItem)
+                return false;
+
+            if (itemData.ItemType == ItemType.Common && _boardSystem != null && addedCommonSlot != null)
+                return await _boardSystem.ClearSlotIfContainsAsync(addedCommonSlot.SlotNumber, itemData.ItemID);
+
+            if (itemData.ItemType == ItemType.Special && movedToSpecialBoard)
+            {
+                if (_specialItemBoardSystem == null)
+                    _specialItemBoardSystem = FindFirstObjectByType<SpecialItemBoardSystem>();
+
+                if (_specialItemBoardSystem == null)
+                    return false;
+
+                int consumedCount = await _specialItemBoardSystem.ConsumeItemsByIdAsync(itemData.ItemID, 1);
+                return consumedCount == 1;
+            }
+
+            return false;
         }
 
 
@@ -374,6 +433,7 @@ namespace UI.MergeBoard
                 return 0;
             }
 
+            Queue<ItemData> backupQueue = CreateQueueSnapshot();
             Queue<ItemData> newQueue = new Queue<ItemData>();
             int consumedCount = 0;
 
@@ -395,10 +455,10 @@ namespace UI.MergeBoard
 
             RefreshView();
 
-            if (ResolveMergeBoardFirestore())
+            if (!await SaveQueueSnapshotSafeAsync())
             {
-                List<ItemData> snapshot = new List<ItemData>(_rewardQueue);
-                await _mergeBoardFirestore.SaveRewardQueueAsync(snapshot);
+                RestoreQueue(backupQueue);
+                return 0;
             }
 
             DebugTool.Log($"보상 큐 아이템 소비 완료 / ID:{itemID}, Count:{consumedCount}", DebugType.Board, this);

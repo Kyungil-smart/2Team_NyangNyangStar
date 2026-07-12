@@ -58,7 +58,7 @@ namespace UI.MergeBoard
             _canvasRect = _canvas.transform as RectTransform;
 
             _itemRect = _item.rectTransform;
-            _itemRect.sizeDelta = new Vector2(itemSize, itemSize);
+            SetItemSize(itemSize);
 
             _canvasGroup = _item.GetComponent<CanvasGroup>();
             if (_canvasGroup == null)
@@ -113,6 +113,8 @@ namespace UI.MergeBoard
             _canvasGroup.blocksRaycasts = false;
             _itemRect.SetParent(_canvas.transform, true);
             _itemRect.SetAsLastSibling();
+
+            _boardSystem?.BeginSlotDrag(this);
         }
 
         public void OnDrag(PointerEventData eventData)
@@ -128,6 +130,8 @@ namespace UI.MergeBoard
             {
                 _itemRect.anchoredPosition = localPoint;
             }
+
+            _boardSystem?.UpdateSlotDragTarget(this, eventData);
         }
 
         public void OnEndDrag(PointerEventData eventData)
@@ -141,8 +145,8 @@ namespace UI.MergeBoard
             _itemRect.SetParent(transform, false);
             _itemRect.anchoredPosition = Vector2.zero;
 
-            if (_boardSystem != null)
-                _boardSystem.HandleDragEnd(this, eventData);
+            _boardSystem?.EndSlotDrag(this);
+            _boardSystem?.HandleDragEnd(this, eventData);
 
             ResetIgnoreClickNextFrame();
         }
@@ -197,6 +201,9 @@ namespace UI.MergeBoard
 
         private void OnDisable()
         {
+            if (_isDragging)
+                _boardSystem?.EndSlotDrag(this);
+
             _isDragging = false;
             _ignoreClickOnce = false;
 
@@ -213,6 +220,18 @@ namespace UI.MergeBoard
                 return;
 
             _backGroundImage.color = color;
+        }
+
+        public void SetItemSize(int itemSize)
+        {
+            if (_itemRect == null && _item != null)
+                _itemRect = _item.rectTransform;
+
+            if (_itemRect == null)
+                return;
+
+            int safeItemSize = Mathf.Max(1, itemSize);
+            _itemRect.sizeDelta = new Vector2(safeItemSize, safeItemSize);
         }
     }
 }

@@ -21,8 +21,10 @@ namespace UI.NyangQuarium.MergeBoard
         private const string GeneratorName = "Item Generator Button";
         private const string BoardName = "Item Board";
         private const string InfoName = "ItemInfo";
+        private const string ClearAllButtonName = "All Item Sell Button";
         private const string RewardRootName = "Reward Root";
         private const string QuestBoardPanelName = "QuestBoardPanel";
+        private const string LevelUpButtonName = "LevelUp Button";
         private static NyangQuariumMergeBoardBinder _instance;
 
         // 게임 시작, 씬 로드 시 부트스트랩 러너 등록
@@ -90,6 +92,18 @@ namespace UI.NyangQuarium.MergeBoard
 
             board.Init(infoPanel);
 
+            GameObject clearAllButtonObject = FindChildGameObject(rootObject.transform, ClearAllButtonName);
+            if (clearAllButtonObject != null)
+            {
+                NyangQuariumClearAllButton clearAllButton =
+                    clearAllButtonObject.GetComponent<NyangQuariumClearAllButton>();
+
+                if (clearAllButton == null)
+                    clearAllButton = clearAllButtonObject.AddComponent<NyangQuariumClearAllButton>();
+
+                clearAllButton.Init(board);
+            }
+
             NyangQuariumRewardQueue rewardQueue = null;
             if (rewardRootObject != null)
             {
@@ -111,6 +125,18 @@ namespace UI.NyangQuarium.MergeBoard
                 navigation = rootObject.AddComponent<NyangQuariumMergeBoardNavigation>();
 
             navigation.Init();
+
+            GameObject levelUpButtonObject = FindChildGameObject(rootObject.transform, LevelUpButtonName);
+            if (levelUpButtonObject != null)
+            {
+                NyangQuariumMergeBoardLevelUpButton levelUpButton =
+                    levelUpButtonObject.GetComponent<NyangQuariumMergeBoardLevelUpButton>();
+
+                if (levelUpButton == null)
+                    levelUpButton = levelUpButtonObject.AddComponent<NyangQuariumMergeBoardLevelUpButton>();
+
+                levelUpButton.Init();
+            }
 
             GameObject questBoardPanelObject = FindChildGameObject(rootObject.transform, QuestBoardPanelName);
             if (questBoardPanelObject != null)

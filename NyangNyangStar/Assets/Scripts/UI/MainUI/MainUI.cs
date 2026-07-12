@@ -9,6 +9,7 @@ using UI.Base;
 using UI.Common;
 using UI.MergeBoard;
 using UI.NyangQuarium;
+using UI.NyangQuarium.Quest;
 using UI.Transition;
 using UnityEngine;
 using UnityEngine.UI;
@@ -39,6 +40,7 @@ public class MainUI : UIScene
     
     [Tooltip("뭉치를 찾아라")] [SerializeField] private Button _findMoongchiButton;
     [Tooltip("냥쿠아 리움")] [SerializeField] private Button _nyangquariumButton;
+    [Tooltip("뭉치 (냥쿠아리움 스토리 진행)")] [SerializeField] private Button _moongchiButton;
 
     private MainUISprite _mainUISprite;
     private MergeBoardController _mergeBoardController;
@@ -49,6 +51,9 @@ public class MainUI : UIScene
     private bool _isMergeBoardTransitioning;
     private bool _isMergeBoardVisible;
     private bool _isNyangquariumTransitioning;
+    private bool _isNyangquariumUnlocked;
+    private Coroutine _nyangquariumUnlockCoroutine;
+    private NyangQuariumFirestoreSO _nyangquariumProgressStore;
 
     [SerializeField] private UsersSO _usersSO;
     [SerializeField] private TMP_Text _uidText;
@@ -65,6 +70,7 @@ public class MainUI : UIScene
     private void OnEnable()
     {
         SubscribeUserIdChanged();
+        RestartNyangquariumWatchersIfReady();
         UpdateUidText();
     }
 
@@ -91,6 +97,7 @@ public class MainUI : UIScene
         _logOutButton = Get<Button>((int)MainUIButtons.LogOutButton);
         _findMoongchiButton = Get<Button>((int)MainUIButtons.FindMoongchiButton);
         _nyangquariumButton = Get<Button>((int)MainUIButtons.NyangquariumButton);
+        _moongchiButton = Get<Button>((int)MainUIButtons.MoongchiButton);
 
         if (_mainUICanvas != null)
         {
@@ -103,6 +110,8 @@ public class MainUI : UIScene
         EnsureResourceDisplay();
 
         InitPopups();
+        StartNyangquariumUnlockWatcher();
+        BindNyangquariumProgressStoreAsync();
         SubscribeUserIdChanged();
         UpdateUidText();
         SetPhotoAlert(false);
@@ -127,6 +136,9 @@ public class MainUI : UIScene
         if (_logOutButton != null)
             _logOutButton.onClick.AddListener(LogOutButton);
 
+        if (_moongchiButton != null)
+            _moongchiButton.onClick.AddListener(OnMoongchiButtonClicked);
+
         LoadMergeBoard();
         LoadScratchingTime();
     }
@@ -148,6 +160,7 @@ public class MainUI : UIScene
         RemovePopupButton(_meowMeowStarButton);
         RemovePopupButton(_findMoongchiButton);
         RemovePopupButton(_nyangquariumButton);
+        RemovePopupButton(_moongchiButton);
 
         if (_mainMergeBoardButton != null)
             _mainMergeBoardButton.onClick.RemoveAllListeners();
@@ -161,6 +174,8 @@ public class MainUI : UIScene
         if (_logOutButton != null)
             _logOutButton.onClick.RemoveAllListeners();
 
+        StopNyangquariumUnlockWatcher();
+        UnbindNyangquariumProgressStore();
         _isNyangquariumTransitioning = false;
     }
 
@@ -183,7 +198,8 @@ public class MainUI : UIScene
                     return;
                 }
 
-                _mergeBoardController.OpenBoard();
+                _isMergeBoardVisible = false;
+                _mergeBoardController.SetVisible(false);
             },
             onFailed =>
             {
@@ -210,6 +226,15 @@ public class MainUI : UIScene
     }
 
     public event Action MergeBoardVisibilityChanged;
+
+    // 뭉치 버튼 클릭 알림 (StoryInit이 구독해 스토리-퀘스트 게이트를 실행)
+    public event Action MoongchiButtonClicked;
+
+    private void OnMoongchiButtonClicked()
+    {
+        GameManager.Audio.PlaySfx("Main_SFX_Touch");
+        MoongchiButtonClicked?.Invoke();
+    }
 
     public void OpenMergeBoardFromQuest()
     {
@@ -294,7 +319,10 @@ public class MainUI : UIScene
     {
         bool wasVisible = _isMergeBoardVisible;
         _isMergeBoardVisible = isOpen;
-        _mergeBoardController.SetVisible(isOpen);
+        if (isOpen)
+            _mergeBoardController.OpenBoard();
+        else
+            _mergeBoardController.SetVisible(false);
 
         if (_mainUICanvas != null)
             _mainUICanvas.sortingOrder = isOpen ? 0 : 2;
@@ -372,7 +400,7 @@ public class MainUI : UIScene
         if (string.IsNullOrEmpty(userId) && _usersSO != null)
             userId = _usersSO.GetUserId();
 
-        _uidText.text = string.IsNullOrEmpty(userId) ? "-" : userId;
+        _uidText.text = string.IsNullOrEmpty(userId) ? "-" : "UID : " + userId;
     }
 
     private void LogOutButton()
@@ -463,7 +491,7 @@ public class MainUI : UIScene
 
     private void OpenNyangquariumPopup(UIPopup popup)
     {
-        if (popup == null || _isNyangquariumTransitioning)
+        if (popup == null || _isNyangquariumTransitioning || !_isNyangquariumUnlocked)
             return;
 
         ScreenTransitionManager transition = ScreenTransitionManager.Instance;
@@ -521,6 +549,176 @@ public class MainUI : UIScene
             _nyangquariumButton.interactable = true;
     }
 
+    private void StartNyangquariumUnlockWatcher()
+    {
+        SetNyangquariumUnlocked(IsThirdStoryMapQuestCompleted());
+        RefreshMoongchiButtonSprite();
+        RefreshMoongchiAlert();
+
+        if (_nyangquariumUnlockCoroutine != null)
+            StopCoroutine(_nyangquariumUnlockCoroutine);
+
+        _nyangquariumUnlockCoroutine = StartCoroutine(WaitForNyangquariumQuestManager());
+    }
+
+    private void StopNyangquariumUnlockWatcher()
+    {
+        if (_nyangquariumUnlockCoroutine != null)
+        {
+            StopCoroutine(_nyangquariumUnlockCoroutine);
+            _nyangquariumUnlockCoroutine = null;
+        }
+
+        if (NyangQuariumQuestManager.Instance != null)
+            NyangQuariumQuestManager.Instance.StoryQuestProgressChanged -= HandleNyangquariumQuestProgressChanged;
+    }
+
+    private IEnumerator WaitForNyangquariumQuestManager()
+    {
+        while (NyangQuariumQuestManager.Instance == null)
+        {
+            SetNyangquariumUnlocked(false);
+            yield return null;
+        }
+
+        NyangQuariumQuestManager.Instance.StoryQuestProgressChanged -= HandleNyangquariumQuestProgressChanged;
+        NyangQuariumQuestManager.Instance.StoryQuestProgressChanged += HandleNyangquariumQuestProgressChanged;
+        HandleNyangquariumQuestProgressChanged();
+        _nyangquariumUnlockCoroutine = null;
+    }
+
+    private void HandleNyangquariumQuestProgressChanged()
+    {
+        SetNyangquariumUnlocked(IsThirdStoryMapQuestCompleted());
+        RefreshMoongchiButtonSprite();
+        RefreshMoongchiAlert();
+    }
+
+    // 초입 퀘스트 완주 여부에 따라 뭉치 버튼 일러 교체 (지친 뭉치 ↔ 기본 뭉치)
+    private void RefreshMoongchiButtonSprite()
+    {
+        _mainUISprite?.SetMoongchiCleared(IsThirdStoryMapQuestCompleted());
+    }
+
+    // 뭉치 클릭 대기 구간(첫 진입~1번 퀘스트 수락 전)에만 뭉치 버튼 알림 표시.
+    // 수락되면 알림이 꺼지고 기존 스토리 퀘스트 맵 마커가 이어받는다.
+    private void RefreshMoongchiAlert()
+    {
+        _mainUISprite?.SetMoongchiAlert(IsMoongchiGatePending());
+    }
+
+    private static bool IsMoongchiGatePending()
+    {
+        NyangQuariumQuestManager questManager = NyangQuariumQuestManager.Instance;
+
+        if (questManager == null || !questManager.IsStoryQuestStateRestored)
+            return false;
+
+        if (questManager.HasActiveQuest)
+            return false;
+
+        int[] questIds = NyangQuariumStoryQuestMapUI.GetStoryMapQuestIds();
+        return questIds.Length > 0 && !questManager.IsQuestCompleted(questIds[0]);
+    }
+
+    private void SetNyangquariumUnlocked(bool unlocked)
+    {
+        _isNyangquariumUnlocked = unlocked;
+
+        if (_nyangquariumButton != null)
+        {
+            _nyangquariumButton.gameObject.SetActive(unlocked);
+            _nyangquariumButton.interactable = !_isNyangquariumTransitioning;
+        }
+    }
+
+    private static bool IsThirdStoryMapQuestCompleted()
+    {
+        if (NyangQuariumQuestManager.Instance == null)
+            return false;
+
+        int[] questIds = NyangQuariumStoryQuestMapUI.GetStoryMapQuestIds();
+        return questIds.Length > 2 &&
+               NyangQuariumQuestManager.Instance.IsQuestCompleted(questIds[2]);
+    }
+
+    private void RestartNyangquariumWatchersIfReady()
+    {
+        if (_nyangquariumButton == null || _mainUISprite == null)
+            return;
+
+        StartNyangquariumUnlockWatcher();
+        BindNyangquariumProgressStoreAsync();
+    }
+
+    private async void BindNyangquariumProgressStoreAsync()
+    {
+        RefreshNyangquariumButtonTankSprite();
+
+        if (TryBindLoadedNyangquariumProgressStore())
+            return;
+
+        NyangQuariumFirestoreSO store = await NyangQuariumFirestoreSO.WaitForReadyAsync();
+
+        if (this == null || !isActiveAndEnabled || store == null)
+            return;
+
+        BindNyangquariumProgressStore(store);
+    }
+
+    private bool TryBindLoadedNyangquariumProgressStore()
+    {
+        FireStoreManager manager = FireStoreManager.Instance;
+
+        if (manager == null ||
+            !manager.IsInitialized ||
+            !manager.TryGetStore(out NyangQuariumFirestoreSO store) ||
+            store == null)
+        {
+            return false;
+        }
+
+        BindNyangquariumProgressStore(store);
+        return true;
+    }
+
+    private void BindNyangquariumProgressStore(NyangQuariumFirestoreSO store)
+    {
+        if (_nyangquariumProgressStore == store)
+        {
+            RefreshNyangquariumButtonTankSprite();
+            return;
+        }
+
+        UnbindNyangquariumProgressStore();
+        _nyangquariumProgressStore = store;
+        _nyangquariumProgressStore.AquariumProgressChanged += HandleNyangquariumAquariumProgressChanged;
+        RefreshNyangquariumButtonTankSprite();
+    }
+
+    private void UnbindNyangquariumProgressStore()
+    {
+        if (_nyangquariumProgressStore == null)
+            return;
+
+        _nyangquariumProgressStore.AquariumProgressChanged -= HandleNyangquariumAquariumProgressChanged;
+        _nyangquariumProgressStore = null;
+    }
+
+    private void HandleNyangquariumAquariumProgressChanged()
+    {
+        RefreshNyangquariumButtonTankSprite();
+    }
+
+    private void RefreshNyangquariumButtonTankSprite()
+    {
+        int aquariumLevel = _nyangquariumProgressStore != null
+            ? _nyangquariumProgressStore.AquariumLevel
+            : 1;
+
+        _mainUISprite?.SetNyangquariumTankLevel(aquariumLevel);
+    }
+
     private static void RegisterSpriteKeyIfMissing(string spriteKey)
     {
         if (!string.IsNullOrWhiteSpace(spriteKey))
@@ -575,5 +773,6 @@ public enum MainUIButtons
     MainMergeBoardButton,
     LogOutButton,
     FindMoongchiButton,
-    NyangquariumButton
+    NyangquariumButton,
+    MoongchiButton
 }

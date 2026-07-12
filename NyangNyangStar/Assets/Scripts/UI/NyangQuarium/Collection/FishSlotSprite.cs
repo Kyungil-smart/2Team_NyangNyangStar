@@ -33,7 +33,7 @@ public class FishSlotSprite : UIBase
 
     private void SetSprites()
     {
-        SetSprite(FishSlotImages.FishSlot, RectangleKey, _fishSlotColor);
+        SetSprite(FishSlotImages.FishSlotBackground, RectangleKey, _fishSlotColor);
         SetSprite(FishSlotImages.FishBackground, RectangleKey, _fishBackgroundColor);
         SetSprite(FishSlotImages.LockedOverlay, RectangleKey, _lockedOverlayColor);
     }
@@ -71,8 +71,8 @@ public class FishSlotSprite : UIBase
 }
 
 public enum FishSlotImages
-{ 
-    FishSlot,
+{
+    FishSlotBackground,
     FishBackground,
     FishImage,
     LockedOverlay

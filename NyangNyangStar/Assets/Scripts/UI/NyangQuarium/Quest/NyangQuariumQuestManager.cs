@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Core.Managers;
@@ -25,6 +26,8 @@ namespace UI.NyangQuarium.Quest
         private int _activeQuestId;
         private readonly HashSet<int> _completedQuestIds = new();
         private bool _storyQuestInitialized;
+        private Task _restoreStoryQuestStateTask;
+        private bool _storyQuestStateRestored;
 
         // 활성 퀘스트 변경 시 알람 UI, 상세 팝업 갱신용
         public event Action<NyangQuariumQuestData> ActiveQuestChanged;
@@ -36,6 +39,9 @@ namespace UI.NyangQuarium.Quest
         public event Action<int> StoryMapQuestCompleted;
 
         public bool HasActiveQuest => _activeQuestId > 0;
+
+        // Firestore에서 Story 맵 퀘스트 상태 복원이 끝났는지 (StoryInit의 게이트 판단용)
+        public bool IsStoryQuestStateRestored => _storyQuestStateRestored;
 
         private void Awake()
         {
@@ -50,11 +56,95 @@ namespace UI.NyangQuarium.Quest
 
         private void Start()
         {
-            EnsureStoryQuestInitialized();
+            _restoreStoryQuestStateTask = RestoreStoryQuestStateAsync();
         }
 
         public bool IsQuestCompleted(int questId)
             => questId > 0 && _completedQuestIds.Contains(questId);
+
+        private async Task RestoreStoryQuestStateAsync()
+        {
+            NyangQuariumFirestoreSO store = await NyangQuariumFirestoreSO.WaitForReadyAsync();
+
+            if (store == null)
+            {
+                EnsureStoryQuestInitialized();
+                _storyQuestStateRestored = true;
+                StoryQuestProgressChanged?.Invoke();
+                return;
+            }
+
+            if (!store.StoryMapQuestInitialized)
+            {
+                EnsureStoryQuestInitialized();
+                _storyQuestStateRestored = true;
+                StoryQuestProgressChanged?.Invoke();
+                return;
+            }
+
+            _completedQuestIds.Clear();
+
+            IReadOnlyList<int> completedQuestIds = store.CompletedStoryMapQuestIds;
+
+            if (completedQuestIds != null)
+            {
+                for (int i = 0; i < completedQuestIds.Count; i++)
+                {
+                    int questId = completedQuestIds[i];
+
+                    if (IsStoryMapQuestId(questId))
+                        _completedQuestIds.Add(questId);
+                }
+            }
+
+            _activeQuestId = ResolveRestoredActiveStoryMapQuestId(store.ActiveStoryMapQuestId);
+            _storyQuestInitialized = true;
+            _storyQuestStateRestored = true;
+
+            if (_activeQuestId > 0 && TryGetQuest(_activeQuestId, out NyangQuariumQuestData activeQuest))
+                ActiveQuestChanged?.Invoke(activeQuest);
+            else
+                ActiveQuestChanged?.Invoke(null);
+
+            StoryQuestProgressChanged?.Invoke();
+        }
+
+        private async Task WaitForStoryQuestStateRestoredAsync()
+        {
+            if (_storyQuestStateRestored)
+                return;
+
+            _restoreStoryQuestStateTask ??= RestoreStoryQuestStateAsync();
+            await _restoreStoryQuestStateTask;
+        }
+
+        private int ResolveRestoredActiveStoryMapQuestId(int activeQuestId)
+        {
+            if (activeQuestId <= 0 ||
+                _completedQuestIds.Contains(activeQuestId) ||
+                !IsStoryMapQuestId(activeQuestId))
+            {
+                return 0;
+            }
+
+            return activeQuestId;
+        }
+
+        private bool HasStoryMapProgress()
+        {
+            if (_activeQuestId > 0)
+                return true;
+
+            int[] mapQuestIds = NyangQuariumStoryQuestMapUI.GetStoryMapQuestIds();
+
+            for (int i = 0; i < mapQuestIds.Length; i++)
+            {
+                if (_completedQuestIds.Contains(mapQuestIds[i]))
+                    return true;
+            }
+
+            return false;
+        }
 
         public bool TryGetQuest(int questId, out NyangQuariumQuestData quest)
         {
@@ -144,8 +234,13 @@ namespace UI.NyangQuarium.Quest
         }
 
         // 첫 스토리(Chapter1) 종료 시 StoryInit에서 호출
-        public void OnIntroStoryFinished()
+        public async void OnIntroStoryFinished()
         {
+            await WaitForStoryQuestStateRestoredAsync();
+
+            if (HasStoryMapProgress())
+                return;
+
             int questId = ResolveFirstStoryMapQuestId();
 
             DebugTool.Log(
@@ -215,6 +310,7 @@ namespace UI.NyangQuarium.Quest
             _activeQuestId = quest.ID;
             ActiveQuestChanged?.Invoke(quest);
             StoryQuestProgressChanged?.Invoke();
+            SaveStoryMapQuestStateIfNeeded(quest.ID);
 
             DebugTool.Log(
                 $"[NyangQuariumQuestManager] 퀘스트 활성화. ID:{quest.ID}, NameKey:{quest.QuestNameKey}, " +
@@ -400,6 +496,8 @@ namespace UI.NyangQuarium.Quest
                 return false;
             }
 
+            await GrantAquariumExpRewardAsync(quest);
+
             _completedQuestIds.Add(quest.ID);
 
             if (IsStoryMapQuestId(quest.ID))
@@ -436,7 +534,42 @@ namespace UI.NyangQuarium.Quest
             }
 
             StoryQuestProgressChanged?.Invoke();
+
+            if (IsStoryMapQuestId(quest.ID))
+                await SaveStoryMapQuestStateAsync();
+
             return true;
+        }
+
+        private static async Task GrantAquariumExpRewardAsync(NyangQuariumQuestData quest)
+        {
+            if (quest == null || quest.QuestRewardId <= 0)
+                return;
+
+            NyangQuariumQuestRewardSO rewardSO = NyangQuariumQuestSOLocator.ResolveQuestRewardSO();
+
+            if (rewardSO == null ||
+                !rewardSO.TryGetReward(quest.QuestRewardId, out NyangQuariumQuestRewardData rewardData) ||
+                !rewardData.HasExpReward)
+            {
+                return;
+            }
+
+            NyangQuariumFirestoreSO firestoreSO =
+                await NyangQuariumFirestoreSO.WaitForReadyAsync();
+
+            if (firestoreSO == null)
+            {
+                DebugTool.Warning(
+                    $"[NyangQuariumQuestManager] NyangQuariumFirestoreSO not ready. Aquarium EXP reward skipped. QuestId:{quest.ID}, Exp:{rewardData.ExpAmount}",
+                    DebugType.Data);
+                return;
+            }
+
+            NyangQuariumAquariumLevelSO aquariumLevelSO =
+                NyangQuariumQuestSOLocator.ResolveAquariumLevelSO();
+
+            await firestoreSO.AddAquariumExpAsync(rewardData.ExpAmount, aquariumLevelSO);
         }
 
         private static bool IsStoryMapQuestId(int questId)
@@ -479,6 +612,30 @@ namespace UI.NyangQuarium.Quest
             }
 
             return false;
+        }
+
+        private async void SaveStoryMapQuestStateIfNeeded(int questId)
+        {
+            if (!IsStoryMapQuestId(questId))
+                return;
+
+            await SaveStoryMapQuestStateAsync();
+        }
+
+        private async Task SaveStoryMapQuestStateAsync()
+        {
+            NyangQuariumFirestoreSO store = await NyangQuariumFirestoreSO.WaitForReadyAsync();
+
+            if (store == null)
+            {
+                DebugTool.Warning("[NyangQuariumQuestManager] NyangQuariumFirestoreSO not ready. Story map quest state save skipped.", DebugType.Data, this);
+                return;
+            }
+
+            await store.SaveStoryMapQuestStateAsync(
+                _activeQuestId,
+                _completedQuestIds,
+                _storyQuestInitialized || HasStoryMapProgress());
         }
 
         private async Task<bool> ConsumeQuestConditionsAsync(NyangQuariumQuestData quest)

@@ -27,9 +27,11 @@ public class NyangQuariumFreshLayoutUISprite : UIBase
         // 담수 냥쿠아리움 배경
         SetSprite(NyangQuariumFreshLayoutUIImage.NyangQuariumLayoutPanel, "NQ_BG_FreshWater");
 
-        SetSprite(NyangQuariumFreshLayoutUIImage.BackButton, "NQ_Btn_Back");
+        SetSprite(NyangQuariumFreshLayoutUIImage.BackButton, "머지보드 홈 버튼");
         SetSprite(NyangQuariumFreshLayoutUIImage.FreshWaterFishButton, "NQ_Btn_Inventory");
         SetSprite(NyangQuariumFreshLayoutUIImage.ChangeButton, "NQ_Btn_SaltWater");
+        SetSprite(NyangQuariumFreshLayoutUIImage.LockIcon, "NQ_Icon_Lock");
+
 
         SetSprite(NyangQuariumFreshLayoutUIImage.Window, "NQ_Img_AquaTunnel");
         SetSprite(NyangQuariumFreshLayoutUIImage.CatImage, "NQ_Char_Moongchi");
@@ -57,6 +59,11 @@ public class NyangQuariumFreshLayoutUISprite : UIBase
         SetSprite(NyangQuariumFreshLayoutUIImage.FishTabButton, "Snap_Btn_White");
         SetSprite(NyangQuariumFreshLayoutUIImage.NatureTextButton, "Snap_Btn_White");
         SetSprite(NyangQuariumFreshLayoutUIImage.FilterButton, "FilterButton");
+        
+        SetSprite(NyangQuariumFreshLayoutUIImage.FishFilterTab, "Shape_Rectangle");
+        SetSprite(NyangQuariumFreshLayoutUIImage.NatureFilterTab, "Shape_Rectangle");
+
+        SetSprite(NyangQuariumFreshLayoutUIImage.FishTextImage, "Snap_Btn_White");
 
     }
 
@@ -80,6 +87,7 @@ public enum NyangQuariumFreshLayoutUIImage
     BackButton,
     FreshWaterFishButton,
     ChangeButton,
+    LockIcon,
     Confirm,
     Cancle,
     DeleteButton,
@@ -96,5 +104,8 @@ public enum NyangQuariumFreshLayoutUIImage
     FishTabButton,
     NatureTextButton,
     FilterButton,
-    FreshwaterFishView
+    FreshwaterFishView,
+    FishTextImage,
+    FishFilterTab,
+    NatureFilterTab
 }

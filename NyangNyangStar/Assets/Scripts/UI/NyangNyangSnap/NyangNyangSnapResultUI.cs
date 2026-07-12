@@ -16,7 +16,13 @@ public class NyangNyangSnapResultUI : UIPopup
 
     [Header("결과/보상 패널")]
     [SerializeField] private GameObject _resultCollectionPanel;
-    [SerializeField] private GameObject _rewardPanel;
+    [SerializeField] private GameObject _rewardPopup;
+
+    [Header("로딩 패널")]
+    [SerializeField] private GameObject _loadingPanel;
+    [SerializeField] private TMP_Text _savingText;
+    [SerializeField] private Image _catImage;
+    [SerializeField] private Image _characterImage; 
 
     [Header("버튼")]
     [Tooltip("사진 선택 버튼")][SerializeField] private Button _selectPhotosButton;
@@ -30,27 +36,26 @@ public class NyangNyangSnapResultUI : UIPopup
 
     [Header("점수 텍스트")]
     [SerializeField] private TMP_Text _poseNameText;
-    [SerializeField] private TMP_Text _poseScoreText;
-    [SerializeField] private TMP_Text _compositionScoreText;
-    [SerializeField] private TMP_Text _backGroundScoreText;
-    [SerializeField] private TMP_Text _reactionScoreText;
-    [SerializeField] private TMP_Text _totalScoreText;
 
     [Header("결과 연출")]
     [Tooltip("사진 페이드 시간")]
     [SerializeField] private float _photoFadeDuration = 0.25f;
-
     [Tooltip("게이지 증가 시간")]
     [SerializeField] private float _gaugeFillDuration = 0.45f;
-
     [Tooltip("총점 카운트업 시간")]
     [SerializeField] private float _scoreCountDuration = 0.8f;
-
     [Tooltip("각 연출 사이 간격")]
     [SerializeField] private float _sequenceInterval = 0.15f;
-
     [Tooltip("별 하나가 차오르는 시간")]
     [SerializeField] private float _starFillDuration = 0.15f;
+
+    [Header("저장 중 연출")]
+    [Tooltip("저장 중 텍스트 표시 간격")]
+    [SerializeField] private float _savingTextInterval = 0.5f;
+    [Tooltip("저장 중 이미지 회전 각도")]
+    [SerializeField] private float _savingImageRotateAngle = 15f;
+    [Tooltip("저장 중 이미지 회전 시간")]
+    [SerializeField] private float _savingImageRotateDuration = 0.5f;
 
     private NyangNyangSnapResultUISprite _resultSprite;
     private ResultCollectionPanelSprite _collectionSprite;
@@ -58,6 +63,9 @@ public class NyangNyangSnapResultUI : UIPopup
     private NyangNyangSnapCaptureRecord _currentRecord;
     private IReadOnlyList<NyangNyangSnapCaptureRecord> _records;
     private Sequence _resultSequence;
+    private Sequence _savingSequence;
+    private Tween _catImageTween;
+    private Tween _characterImageTween;
     private NyangNyangSnapUI _snapUI;
     private RewardedAdsButton _rewardedAdsButton;
     private bool _isSaving;
@@ -87,6 +95,7 @@ public class NyangNyangSnapResultUI : UIPopup
         if (_rewardSprite != null) _rewardSprite.Init();
 
         InitPopups();
+        _loadingPanel.SetActive(false);
     }
 
     private void InitPopups()
@@ -144,6 +153,8 @@ public class NyangNyangSnapResultUI : UIPopup
         if (_saveButton != null)
             _saveButton.interactable = false;
 
+        ShowSavingPanel();
+
         try
         {
             IReadOnlyList<NyangNyangSnapCaptureRecord> selectedRecords = _collectionSprite.SelectedRecords;
@@ -194,6 +205,7 @@ public class NyangNyangSnapResultUI : UIPopup
 
                         string photoId = uploadRecords[i].photoId;
                         NyangNyangSnapCaptureRecord record = uploadRecords[i].record;
+                        Timestamp createdAt = Timestamp.GetCurrentTimestamp();
 
                         NyangNyangSnapSavedPhotoData photoData = new()
                         {
@@ -206,10 +218,16 @@ public class NyangNyangSnapResultUI : UIPopup
                             backGroundScore = record.ScoreResult.BackgroundScore,
                             totalScore = record.ScoreResult.TotalScore,
                             starCount = record.ScoreResult.StarCount,
-                            createdAt = Timestamp.GetCurrentTimestamp()
+                            createdAt = createdAt
                         };
 
                         _photoAlbumSO.AddPhoto(photoData);
+                        NyangNyangSnapPhotoManager.Instance.AddPhoto(new NyangNyangSnapRuntimePhotoData(
+                            photoId,
+                            CopySprite(record.CapturedSprite, photoId),
+                            results[i].StoragePath,
+                            record.ScoreResult.StarCount,
+                            createdAt));
                         savedCount++;
                     }
 
@@ -250,7 +268,7 @@ public class NyangNyangSnapResultUI : UIPopup
             }
 
             _resultCollectionPanel.SetActive(false);
-            _rewardPanel.SetActive(true);
+            _rewardPopup.SetActive(true);
 
             DebugTool.Log(
                 "[NyangNyangSnapResultUI] 사진 저장 및 Jewel 보상 지급 완료",
@@ -261,9 +279,76 @@ public class NyangNyangSnapResultUI : UIPopup
         {
             _isSaving = false;
 
+            HideSavingPanel();
+
             if (_saveButton != null)
                 _saveButton.interactable = true;
         }
+    }
+
+    private void ShowSavingPanel()
+    {
+        KillSavingSequence();
+
+        _loadingPanel.SetActive(true);
+
+        _savingText.text = "저장 중.";
+        _catImage.rectTransform.localRotation = Quaternion.Euler(0f, 0f, -_savingImageRotateAngle);
+        _characterImage.rectTransform.localRotation = Quaternion.Euler(0f, 0f, _savingImageRotateAngle);
+
+        _savingSequence = DOTween.Sequence();
+
+        // 저장 텍스트
+        _savingSequence.AppendCallback(() => _savingText.text = "저장 중.");
+        _savingSequence.AppendInterval(_savingTextInterval);
+        _savingSequence.AppendCallback(() => _savingText.text = "저장 중..");
+        _savingSequence.AppendInterval(_savingTextInterval);
+        _savingSequence.AppendCallback(() => _savingText.text = "저장 중...");
+        _savingSequence.AppendInterval(_savingTextInterval);
+        _savingSequence.SetLoops(-1);
+
+        // 고양이 이미지(왼쪽)
+        _catImageTween = _catImage.rectTransform
+                .DORotate(new Vector3(0f, 0f, _savingImageRotateAngle), _savingImageRotateDuration)
+                .SetEase(Ease.InOutSine)
+                .SetLoops(-1, LoopType.Yoyo);
+
+        // 사람 이미지(오른쪽)
+        _characterImageTween = _characterImage.rectTransform
+                .DORotate(new Vector3(0f, 0f, -_savingImageRotateAngle), _savingImageRotateDuration)
+                .SetEase(Ease.InOutSine)
+                .SetLoops(-1, LoopType.Yoyo);
+    }
+
+    private void HideSavingPanel()
+    {
+        KillSavingSequence();
+
+        _loadingPanel.SetActive(false);
+    }
+
+    private Sprite CopySprite(Sprite sourceSprite, string photoId)
+    {
+        Texture2D sourceTexture = sourceSprite.texture;
+
+        Texture2D copiedTexture = new Texture2D(
+            sourceTexture.width,
+            sourceTexture.height,
+            TextureFormat.RGBA32,
+            false
+        );
+
+        copiedTexture.SetPixels(sourceTexture.GetPixels());
+        copiedTexture.Apply();
+
+        Sprite copiedSprite = Sprite.Create(
+            copiedTexture,
+            new Rect(0, 0, copiedTexture.width, copiedTexture.height),
+            new Vector2(0.5f, 0.5f)
+        );
+
+        copiedSprite.name = photoId;
+        return copiedSprite;
     }
 
     private bool EnsurePhotoAlbumReady()
@@ -314,9 +399,9 @@ public class NyangNyangSnapResultUI : UIPopup
 
     private void SetRewardJewelText(int rewardJewelCount)
     {
-        if (_rewardJewelText == null && _rewardPanel != null)
+        if (_rewardJewelText == null && _rewardPopup != null)
         {
-            TMP_Text[] texts = _rewardPanel.GetComponentsInChildren<TMP_Text>(true);
+            TMP_Text[] texts = _rewardPopup.GetComponentsInChildren<TMP_Text>(true);
             _rewardJewelText = Array.Find(texts, text => text.name == "RewardJewelText");
         }
 
@@ -417,7 +502,7 @@ public class NyangNyangSnapResultUI : UIPopup
         KillResultSequence();
 
         _resultCollectionPanel.SetActive(false);
-        _rewardPanel.SetActive(false);
+        _rewardPopup.SetActive(false);
         _selectPhotosButton.gameObject.SetActive(true);
         _isSaving = false;
         _isRewardGranted = false;
@@ -430,11 +515,6 @@ public class NyangNyangSnapResultUI : UIPopup
         if (_resultSprite != null)
             _resultSprite.ResetRuntimeImages();
 
-        if (_totalScoreText != null) _totalScoreText.text = "0";
-        if (_poseScoreText != null) _poseScoreText.text = "0";
-        if (_compositionScoreText != null) _compositionScoreText.text = "0";
-        if (_backGroundScoreText != null) _backGroundScoreText.text = "0";
-        if (_reactionScoreText != null) _reactionScoreText.text = "0";
         if (_poseNameText != null) _poseNameText.text = string.Empty;
     }
 
@@ -459,26 +539,21 @@ public class NyangNyangSnapResultUI : UIPopup
         _resultSequence.AppendInterval(_sequenceInterval);
 
         _resultSequence.Append(_resultSprite.CreatePoseGaugeTween(scoreResult.PoseGaugeValue, _gaugeFillDuration));
-        _resultSequence.Join(CreateIntTextTween(_poseScoreText, 0, scoreResult.PoseScore, _gaugeFillDuration));
 
         _resultSequence.AppendInterval(_sequenceInterval);
 
         _resultSequence.Append(_resultSprite.CreateCompositionGaugeTween(scoreResult.CompositionGaugeValue, _gaugeFillDuration));
-        _resultSequence.Join(CreateIntTextTween(_compositionScoreText, 0, scoreResult.CompositionScore, _gaugeFillDuration));
-
-        _resultSequence.AppendInterval(_sequenceInterval);
-
-        _resultSequence.Append(_resultSprite.CreateBackGroundGaugeTween(scoreResult.BackgroundGaugeValue, _gaugeFillDuration));
-        _resultSequence.Join(CreateIntTextTween(_backGroundScoreText, 0, scoreResult.BackgroundScore, _gaugeFillDuration));
 
         _resultSequence.AppendInterval(_sequenceInterval);
 
         _resultSequence.Append(_resultSprite.CreateReactionGaugeTween(scoreResult.TimingGaugeValue, _gaugeFillDuration));
-        _resultSequence.Join(CreateIntTextTween(_reactionScoreText, 0, scoreResult.TimingScore, _gaugeFillDuration));
 
         _resultSequence.AppendInterval(_sequenceInterval);
 
-        _resultSequence.Append(CreateIntTextTween(_totalScoreText, 0, scoreResult.TotalScore, _scoreCountDuration));
+        _resultSequence.Append(_resultSprite.CreateBackGroundGaugeTween(scoreResult.BackgroundGaugeValue, _gaugeFillDuration));
+
+        _resultSequence.AppendInterval(_sequenceInterval);
+
 
         _resultSequence.OnComplete(() =>
         {
@@ -507,6 +582,14 @@ public class NyangNyangSnapResultUI : UIPopup
 
         _resultSequence.Kill();
         _resultSequence = null;
+    }
+
+    private void KillSavingSequence()
+    {
+        if (_savingSequence == null) return;
+
+        _savingSequence.Kill();
+        _savingSequence = null;
     }
 
     public void SetSnapUI(NyangNyangSnapUI snapUI)

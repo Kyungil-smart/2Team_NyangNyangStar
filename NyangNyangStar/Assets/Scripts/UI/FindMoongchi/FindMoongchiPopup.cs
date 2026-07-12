@@ -11,6 +11,8 @@ namespace UI.FindMoongchi
 {
     public sealed class FindMoongchiPopup : UIPopup
     {
+        private const int ProgressNotReadyErrorCode = 4002;
+
         [Header("Panels")]
         [SerializeField] private FindMoongchiMainPanel _mainPanel;
         [SerializeField] private FindMoongchiGamePanel _gamePanel;
@@ -357,6 +359,15 @@ namespace UI.FindMoongchi
             return true;
         }
 
+        private async Task<bool> EnsureProgressReadyOrOpenErrorAsync(string message)
+        {
+            if (await EnsureProgressReadyAsync())
+                return true;
+
+            OpenError(message, ProgressNotReadyErrorCode);
+            return false;
+        }
+
         private async Task EnsureProgressReadyAndRefreshAsync()
         {
             bool loaded = await EnsureProgressReadyAsync();
@@ -612,6 +623,7 @@ namespace UI.FindMoongchi
             if (_gameLogic.IsStageCleared)
             {
                 DebugTool.Log("[FindMoongchiPopup] 이미 클리어된 스테이지라 도구 사용을 막고 클리어 알림을 복원합니다.", DebugType.FindMoongchi, this);
+                _gamePanel?.NotifyFirstTouchGuideToolUseSucceeded();
                 RestoreStageClearNoticeIfNeeded();
                 return;
             }
@@ -619,18 +631,26 @@ namespace UI.FindMoongchi
             if (_isStageClearWaitingForRestart)
             {
                 DebugTool.Log("[FindMoongchiPopup] 클리어 완료 후 다시하기 대기 중이라 도구 사용을 막습니다.", DebugType.FindMoongchi, this);
+                _gamePanel?.NotifyFirstTouchGuideToolUseSucceeded();
                 OpenStageClearNotice();
                 return;
             }
 
-            if (!_debugInfiniteToolUse)
-                await EnsureProgressReadyAsync();
+            if (!_debugInfiniteToolUse &&
+                !await EnsureProgressReadyOrOpenErrorAsync("진행 데이터를 불러오지 못해 탐색 도구를 사용할 수 없습니다."))
+            {
+                _gamePanel?.NotifyFirstTouchGuideToolUseCanceled();
+                RefreshGamePanel();
+                return;
+            }
 
             int currentSearchChance = GetCurrentSearchChance();
 
             if (!_debugInfiniteToolUse && currentSearchChance <= 0)
             {
                 DebugTool.Warning("[FindMoongchiPopup] 탐색 기회 부족", DebugType.FindMoongchi, this);
+                _gamePanel?.NotifyFirstTouchGuideToolUseCanceled();
+                RefreshGamePanel(false);
                 OpenNotice("탐색 기회가 없습니다.");
                 return;
             }
@@ -642,19 +662,19 @@ namespace UI.FindMoongchi
                 if (boardItemCount <= 0)
                 {
                     DebugTool.Warning($"[FindMoongchiPopup] 보드에 탐색 도구 없음: ToolId={toolItemId}", DebugType.FindMoongchi, this);
+                    _gamePanel?.NotifyFirstTouchGuideToolUseCanceled();
+                    RefreshGamePanel(false);
                     OpenNotice("보유한 탐색 도구가 없습니다.");
                     return;
                 }
 
-                if (IsProgressReady && !_progressController.TryConsumeSearchChance(1))
+                if (!_progressController.TryConsumeSearchChance(1))
                 {
                     DebugTool.Warning("[FindMoongchiPopup] 진행 데이터 탐색 기회 차감 실패", DebugType.FindMoongchi, this);
+                    _gamePanel?.NotifyFirstTouchGuideToolUseCanceled();
+                    RefreshGamePanel(false);
                     OpenNotice("탐색 기회가 없습니다.");
                     return;
-                }
-                else if (!IsProgressReady)
-                {
-                    _searchChance = Mathf.Max(0, _searchChance - 1);
                 }
             }
             else
@@ -678,11 +698,19 @@ namespace UI.FindMoongchi
                             _searchChance += 1;
 
                         DebugTool.Warning($"[FindMoongchiPopup] 탐색 도구 소비 실패: ToolId={toolItemId}", DebugType.FindMoongchi, this);
+                        _gamePanel?.NotifyFirstTouchGuideToolUseCanceled();
                         OpenError("탐색 도구 소비에 실패했습니다.", 1001);
                         RefreshGamePanel();
                         return;
                     }
                 }
+
+                List<int> openedTileSnapshot = !_debugInfiniteToolUse
+                    ? new List<int>(_gameLogic.GetOpenedTileIds())
+                    : null;
+                List<int> foundTargetSnapshot = !_debugInfiniteToolUse
+                    ? new List<int>(_gameLogic.GetFoundTargetIds())
+                    : null;
 
                 FindMoongchiUseToolResult result = _gameLogic.UseTool(toolItemId, tileIndex);
 
@@ -691,7 +719,15 @@ namespace UI.FindMoongchi
                     bool saved = await _progressController.PersistAfterToolUseAsync(_gameLogic, result);
 
                     if (!saved)
+                    {
+                        _progressController.RestoreSearchChance(1);
+                        _gameLogic.RestoreBoardProgress(openedTileSnapshot, foundTargetSnapshot);
+                        SyncFromProgressController();
+                        _gamePanel?.NotifyFirstTouchGuideToolUseCanceled();
                         OpenError("진행 데이터 저장에 실패했습니다.", 1002);
+                        RefreshGamePanel(false);
+                        return;
+                    }
                 }
 
                 if (IsProgressReady)
@@ -707,6 +743,7 @@ namespace UI.FindMoongchi
                 foreach (FindMoongchiTargetRuntimeData foundTarget in result.NewlyFoundTargets)
                     DebugTool.Log($"[FindMoongchiPopup] 목표물 발견: {foundTarget.TargetName}({foundTarget.TargetId})", DebugType.FindMoongchi, this);
 
+                _gamePanel?.NotifyFirstTouchGuideToolUseSucceeded();
                 RefreshGamePanel(true);
 
                 if (result.IsStageCleared)
@@ -742,10 +779,14 @@ namespace UI.FindMoongchi
         {
             DebugTool.Log("[FindMoongchiPopup] 스테이지 클리어 다시하기 확인", DebugType.FindMoongchi, this);
 
-            _isStageClearWaitingForRestart = false;
-
-            if (!_debugInfiniteToolUse && await EnsureProgressReadyAsync())
+            if (!_debugInfiniteToolUse)
             {
+                if (!await EnsureProgressReadyOrOpenErrorAsync("진행 데이터를 불러오지 못해 다음 스테이지로 이동할 수 없습니다."))
+                {
+                    RefreshGamePanel(false);
+                    return;
+                }
+
                 bool saved = await _progressController.AdvanceStageAndPersistAsync(_gameLogic);
 
                 if (!saved)
@@ -754,12 +795,14 @@ namespace UI.FindMoongchi
                     return;
                 }
 
+                _isStageClearWaitingForRestart = false;
                 SyncFromProgressController();
                 DebugTool.Log($"[FindMoongchiPopup] 다시하기 후 진행 데이터 스테이지 로드: StageId={_currentStageId}, Week={_currentWeek}", DebugType.FindMoongchi, this);
                 RefreshGamePanel(false);
                 return;
             }
 
+            _isStageClearWaitingForRestart = false;
             AdvanceTemporaryStageCycle();
         }
 
@@ -798,7 +841,11 @@ namespace UI.FindMoongchi
         {
             DebugTool.Log($"[FindMoongchiPopup] 미션 보상 수령 요청: MissionId={missionId}", DebugType.FindMoongchi, this);
 
-            await EnsureProgressReadyAsync();
+            if (!await EnsureProgressReadyOrOpenErrorAsync("진행 데이터를 불러오지 못해 미션 보상을 수령할 수 없습니다."))
+            {
+                RefreshMissionPanel();
+                return;
+            }
 
             FindMoongchiMissionViewData mission = BuildMissionViewDataById(missionId);
 
@@ -820,28 +867,16 @@ namespace UI.FindMoongchi
                 return;
             }
 
-            if (IsProgressReady)
+            bool claimed = await _progressController.TryClaimMissionAndPersistAsync(missionId);
+
+            if (!claimed)
             {
-                bool claimed = await _progressController.TryClaimMissionAndPersistAsync(missionId);
-
-                if (!claimed)
-                {
-                    OpenError("미션 보상 수령에 실패했습니다.", 2002);
-                    return;
-                }
-
-                SyncFromProgressController();
-                DebugTool.Log($"[FindMoongchiPopup] 미션 보상 수령 완료: MissionId={missionId}, EventCoin={GetCurrentEventCoin()}", DebugType.FindMoongchi, this);
-                OpenNotice("미션 보상을 수령했습니다.");
-                RefreshMissionPanel();
+                OpenError("미션 보상 수령에 실패했습니다.", 2002);
                 return;
             }
 
-            ApplyMissionReward(mission.Reward1);
-            ApplyMissionReward(mission.Reward2);
-            _claimedMissionIds.Add(missionId);
-
-            DebugTool.Log($"[FindMoongchiPopup] 임시 미션 보상 수령 완료: MissionId={missionId}, EventCoin={_eventCoin}", DebugType.FindMoongchi, this);
+            SyncFromProgressController();
+            DebugTool.Log($"[FindMoongchiPopup] 미션 보상 수령 완료: MissionId={missionId}, EventCoin={GetCurrentEventCoin()}", DebugType.FindMoongchi, this);
             OpenNotice("미션 보상을 수령했습니다.");
             RefreshMissionPanel();
         }
@@ -856,7 +891,7 @@ namespace UI.FindMoongchi
 
             if (!await EnsureProgressReadyAsync())
             {
-                OpenError("진행 데이터를 불러오지 못해 구매를 처리할 수 없습니다.", 4002);
+                OpenError("진행 데이터를 불러오지 못해 구매를 처리할 수 없습니다.", ProgressNotReadyErrorCode);
                 RefreshShopPanel();
                 return;
             }
@@ -888,7 +923,7 @@ namespace UI.FindMoongchi
 
             if (!await EnsureProgressReadyAsync() || !IsProgressReady)
             {
-                OpenError("진행 데이터를 불러오지 못해 구매를 처리할 수 없습니다.", 4002);
+                OpenError("진행 데이터를 불러오지 못해 구매를 처리할 수 없습니다.", ProgressNotReadyErrorCode);
                 RefreshShopPanel();
                 return;
             }
@@ -931,7 +966,7 @@ namespace UI.FindMoongchi
                 return;
             }
 
-            OpenError("진행 데이터를 불러오지 못해 구매를 처리할 수 없습니다.", 4002);
+            OpenError("진행 데이터를 불러오지 못해 구매를 처리할 수 없습니다.", ProgressNotReadyErrorCode);
             RefreshShopPanel();
         }
 
@@ -1094,23 +1129,6 @@ namespace UI.FindMoongchi
             int affordableCount = GetCurrentEventCoin() / data.CostAmount;
             int remainingLimit = data.HasLimit ? data.RemainingLimit : int.MaxValue;
             return Mathf.Max(0, Mathf.Min(affordableCount, remainingLimit));
-        }
-
-        private void ApplyMissionReward(MoongchiRewardData reward)
-        {
-            if (reward == null || !reward.IsValid)
-                return;
-
-            switch (reward.RewardType)
-            {
-                case MoongchiCurrencyType.EVENT_COIN:
-                    _eventCoin += reward.RewardAmount;
-                    DebugTool.Log($"[FindMoongchiPopup] 이벤트 재화 보상 반영: +{reward.RewardAmount}, Current={_eventCoin}", DebugType.FindMoongchi, this);
-                    break;
-                case MoongchiCurrencyType.ENERGY:
-                    DebugTool.Log($"[FindMoongchiPopup] 에너지 보상 지급 예정: {reward.RewardAmount}", DebugType.FindMoongchi, this);
-                    break;
-            }
         }
 
         private void OpenModalLayer()

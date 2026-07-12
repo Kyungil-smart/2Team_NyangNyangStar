@@ -3,6 +3,7 @@ using Data.LibrarySystem;
 using Data.ScriptableObjects.MergeBoard;
 using Services.Enums;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using TMPro;
 using UI.FindMoongchi;
@@ -35,6 +36,9 @@ namespace UI.MergeBoard
         [Header("테스트 아이템 생성")]
         [SerializeField] private TMP_InputField _itemIdInputField;
         [SerializeField] private Button _testReceiveButton;
+        [SerializeField] private Button _toyItemGenerateButton;
+        [SerializeField] private Button _foodItemGenerateButton;
+        [SerializeField] private Button _findMoongchiItemGenerateButton;
 
         [Header("Resource Cost")]
         [Min(0)]
@@ -48,9 +52,20 @@ namespace UI.MergeBoard
         [SerializeField] private bool _enableRuntimeDiagnostics = true;
 
         private const int GeneralBoardSlotCount = 63;
+        private const int ToyItemMinId = 10003;
+        private const int ToyItemMaxId = 10013;
+        private const int FoodItemMinId = 10014;
+        private const int FoodItemMaxId = 10028;
+
+        private static readonly int[] FindMoongchiItemIds = { 10004, 10019, 10030 };
+
+        private readonly SemaphoreSlim _addItemSemaphore = new(1, 1);
+        private readonly Dictionary<int, int> _serverItemCountCache = new();
 
         private bool _isAddingItem;
         private bool _isConsumingItem;
+        private bool _hasServerItemCountCache;
+        private Task<bool> _reloadInventoryTask;
 
         protected virtual void Awake()
         {
@@ -100,12 +115,39 @@ namespace UI.MergeBoard
                     RuntimeWarning("테스트 아이템 생성 버튼이 연결되지 않았습니다. 인스펙터의 Test Receive Button 연결을 확인하세요.");
                 }
             }
+
+            BindDebugGenerateButton(_toyItemGenerateButton, ReceiveRandomToyItem, "Toy item generate", logMissing);
+            BindDebugGenerateButton(_foodItemGenerateButton, ReceiveRandomFoodItem, "Food item generate", logMissing);
+            BindDebugGenerateButton(_findMoongchiItemGenerateButton, ReceiveRandomFindMoongchiItem, "FindMoongchi item generate", logMissing);
         }
 
         private void UnbindTestReceiveButton()
         {
             if (_testReceiveButton != null)
                 _testReceiveButton.onClick.RemoveListener(ReceiveRandomTestItem);
+
+            if (_toyItemGenerateButton != null)
+                _toyItemGenerateButton.onClick.RemoveListener(ReceiveRandomToyItem);
+
+            if (_foodItemGenerateButton != null)
+                _foodItemGenerateButton.onClick.RemoveListener(ReceiveRandomFoodItem);
+
+            if (_findMoongchiItemGenerateButton != null)
+                _findMoongchiItemGenerateButton.onClick.RemoveListener(ReceiveRandomFindMoongchiItem);
+        }
+
+        private void BindDebugGenerateButton(Button button, UnityEngine.Events.UnityAction action, string label, bool logMissing)
+        {
+            if (button == null)
+            {
+                if (logMissing)
+                    RuntimeWarning($"{label} button is not connected.");
+
+                return;
+            }
+
+            button.onClick.RemoveListener(action);
+            button.onClick.AddListener(action);
         }
 
         public void RegisterBoardSystem(BoardSystem boardSystem)
@@ -135,9 +177,6 @@ namespace UI.MergeBoard
 
         public async Task<bool> AddItemByIdAsync(int itemID, int count = 1)
         {
-            if (_isAddingItem)
-                return false;
-
             if (itemID <= 0)
             {
                 DebugTool.Warning($"유효하지 않은 아이템 ID입니다. ID: {itemID}", DebugType.Board, this);
@@ -150,21 +189,12 @@ namespace UI.MergeBoard
                 return false;
             }
 
-            _isAddingItem = true;
-
-            try
-            {
-                return await AddItemAsync(itemData, count);
-            }
-            finally
-            {
-                _isAddingItem = false;
-            }
+            return await AddItemQueuedAsync(itemData, count);
         }
 
         public void AddItem(ItemData itemData, int count = 1)
         {
-            _ = AddItemAsync(itemData, count);
+            _ = AddItemQueuedAsync(itemData, count);
         }
 
         public async Task<bool> AddItemAsync(ItemData itemData, int count = 1)
@@ -222,7 +252,10 @@ namespace UI.MergeBoard
                     : await ConsumeCommonItemAsync(itemID, safeCount);
 
                 if (result)
+                {
+                    DecreaseServerItemCountCache(itemID, safeCount);
                     DebugTool.Log($"아이템 소비 완료 / ID:{itemID}, Count:{safeCount}", DebugType.Board, this);
+                }
 
                 return result;
             }
@@ -240,17 +273,98 @@ namespace UI.MergeBoard
             ResolveReferences();
 
             int count = 0;
+            bool hasLoadedRuntimeInventory = false;
 
             if (_boardSystem != null && _boardSystem.IsServerDataLoaded)
+            {
                 count += _boardSystem.GetItemCountById(itemID);
+                hasLoadedRuntimeInventory = true;
+            }
 
             if (_rewardQueue != null && _rewardQueue.IsLoaded)
+            {
                 count += _rewardQueue.GetItemCountById(itemID);
+                hasLoadedRuntimeInventory = true;
+            }
 
             if (_specialItemBoardSystem != null && _specialItemBoardSystem.IsServerDataLoaded)
+            {
                 count += _specialItemBoardSystem.GetItemCountById(itemID);
+                hasLoadedRuntimeInventory = true;
+            }
+
+            if (!hasLoadedRuntimeInventory && _hasServerItemCountCache &&
+                _serverItemCountCache.TryGetValue(itemID, out int cachedCount))
+            {
+                count = cachedCount;
+            }
 
             return count;
+        }
+
+        public async Task EnsureInventoryLoadedAsync()
+        {
+            ResolveReferences();
+
+            if (_boardSystem != null && !_boardSystem.IsServerDataLoaded)
+                await _boardSystem.LoadBoardFromServerAsync();
+
+            if (_rewardQueue != null && !_rewardQueue.IsLoaded)
+                await _rewardQueue.LoadQueueFromServerAsync();
+
+            if (_specialItemBoardSystem != null && !_specialItemBoardSystem.IsServerDataLoaded)
+                await _specialItemBoardSystem.LoadSpecialBoardFromServerAsync();
+
+            await RefreshServerItemCountCacheAsync();
+        }
+
+        // 냥냥스냅 진입 시 머지보드 최신 데이터를 미리 읽습니다.
+        // 같은 로드가 동시에 여러 번 호출되면 기존 Task를 재사용해 중복 Firestore 요청을 막습니다.
+        public Task<bool> ReloadInventoryFromServerAsync()
+        {
+            if (_reloadInventoryTask != null && !_reloadInventoryTask.IsCompleted)
+                return _reloadInventoryTask;
+
+            _reloadInventoryTask = ReloadInventoryFromServerInternalAsync();
+            return _reloadInventoryTask;
+        }
+
+        private async Task<bool> ReloadInventoryFromServerInternalAsync()
+        {
+            ResolveReferences();
+
+            try
+            {
+                if (_boardSystem != null)
+                    await _boardSystem.LoadBoardFromServerAsync();
+
+                if (_rewardQueue != null)
+                    await _rewardQueue.LoadQueueFromServerAsync();
+
+                if (_specialItemBoardSystem != null)
+                    await _specialItemBoardSystem.LoadSpecialBoardFromServerAsync();
+
+                await RefreshServerItemCountCacheAsync();
+
+                DebugTool.Log(
+                    "[MergeBoardItemService] 머지보드 인벤토리 최신 데이터 재로드 완료",
+                    DebugType.Board,
+                    this
+                );
+
+                return true;
+            }
+            catch (System.Exception exception)
+            {
+                DebugTool.Warning($"예외 발생: {exception}", DebugType.Board, this);
+                DebugTool.Warning(
+                    $"[MergeBoardItemService] 머지보드 인벤토리 최신 데이터 재로드 실패: {exception.Message}",
+                    DebugType.Board,
+                    this
+                );
+
+                return false;
+            }
         }
 
         public void ReceiveItemById(int itemID)
@@ -265,12 +379,12 @@ namespace UI.MergeBoard
 
         public async void ReceiveItem(ItemData itemData)
         {
-            await AddItemAsync(itemData, 1);
+            await AddItemQueuedAsync(itemData, 1);
         }
 
         public async void ReceiveItem(ItemData itemData, int count)
         {
-            await AddItemAsync(itemData, count);
+            await AddItemQueuedAsync(itemData, count);
         }
 
         public void ReceiveRandomTestItem()
@@ -278,10 +392,24 @@ namespace UI.MergeBoard
             _ = ReceiveRandomTestItemAsync();
         }
 
+        public void ReceiveRandomToyItem()
+        {
+            _ = ReceiveRandomDebugItemAsync(ToyItemMinId, ToyItemMaxId, "Toy");
+        }
+
+        public void ReceiveRandomFoodItem()
+        {
+            _ = ReceiveRandomDebugItemAsync(FoodItemMinId, FoodItemMaxId, "Food");
+        }
+
+        public void ReceiveRandomFindMoongchiItem()
+        {
+            _ = ReceiveRandomDebugItemAsync(FindMoongchiItemIds, "FindMoongchi");
+        }
+
         public async Task<bool> ReceiveRandomTestItemAsync()
         {
             RuntimeLog("아이템 생성 버튼 클릭됨");
-            DebugTool.Log("아이템 생성 버튼 클릭됨", DebugType.Board, this);
 
             if (!CanUseItemService())
                 return false;
@@ -311,6 +439,40 @@ namespace UI.MergeBoard
             return await GenerateItemByEnergyAsync(itemData);
         }
 
+        private async Task<bool> ReceiveRandomDebugItemAsync(int minItemId, int maxItemId, string categoryName)
+        {
+            RuntimeLog($"{categoryName} item generate button clicked.");
+
+            if (!CanUseItemService())
+                return false;
+
+            if (!TryGetRandomItemDataFromRange(minItemId, maxItemId, out ItemData itemData))
+            {
+                DebugTool.Warning($"{categoryName} category has no valid item data. Range: {minItemId}~{maxItemId}", DebugType.Board, this);
+                RuntimeWarning($"{categoryName} category has no valid item data. Range: {minItemId}~{maxItemId}");
+                return false;
+            }
+
+            return await GenerateItemByEnergyAsync(itemData);
+        }
+
+        private async Task<bool> ReceiveRandomDebugItemAsync(IReadOnlyList<int> itemIds, string categoryName)
+        {
+            RuntimeLog($"{categoryName} item generate button clicked.");
+
+            if (!CanUseItemService())
+                return false;
+
+            if (!TryGetRandomItemDataFromList(itemIds, out ItemData itemData))
+            {
+                DebugTool.Warning($"{categoryName} category has no valid item data.", DebugType.Board, this);
+                RuntimeWarning($"{categoryName} category has no valid item data.");
+                return false;
+            }
+
+            return await GenerateItemByEnergyAsync(itemData);
+        }
+
         public async Task<bool> GenerateItemByEnergyAsync(ItemData itemData, int count = 1)
         {
             if (_isAddingItem)
@@ -331,6 +493,8 @@ namespace UI.MergeBoard
 
             _isAddingItem = true;
 
+            await _addItemSemaphore.WaitAsync();
+
             try
             {
                 RuntimeLog($"아이템 생성 처리 시작 / ID:{itemData.ItemID}, Count:{safeCount}, EnergyCost:{energyCost}, Type:{itemData.ItemType}");
@@ -344,7 +508,19 @@ namespace UI.MergeBoard
                 if (!await TrySpendGenerateEnergyAsync(energyCost))
                     return false;
 
-                bool added = await AddItemAsync(itemData, safeCount);
+                bool added;
+
+                try
+                {
+                    added = await AddItemAsync(itemData, safeCount);
+                }
+                catch (System.Exception exception)
+                {
+                    DebugTool.Warning($"예외 발생: {exception}", DebugType.Board, this);
+                    RuntimeWarning($"아이템 추가 중 예외가 발생해 에너지를 환불합니다. ID:{itemData.ItemID}, Refund:{energyCost}");
+                    await RefundGenerateEnergyAsync(energyCost);
+                    return false;
+                }
 
                 if (!added)
                 {
@@ -353,13 +529,42 @@ namespace UI.MergeBoard
                     return false;
                 }
 
-                await NotifyFindMoongchiEnergySpentAsync(energyCost);
+                try
+                {
+                    await NotifyFindMoongchiEnergySpentAsync(energyCost);
+                }
+                catch (System.Exception exception)
+                {
+                    DebugTool.Warning($"예외 발생: {exception}", DebugType.Board, this);
+                    RuntimeWarning("아이템 생성은 완료됐지만 FindMoongchi 에너지 사용 진행도 갱신에 실패했습니다.");
+                }
+
                 RuntimeLog($"아이템 생성 완료 / ID:{itemData.ItemID}, Count:{safeCount}");
                 return true;
             }
             finally
             {
+                _addItemSemaphore.Release();
                 _isAddingItem = false;
+            }
+        }
+
+        private async Task<bool> AddItemQueuedAsync(ItemData itemData, int count)
+        {
+            await _addItemSemaphore.WaitAsync();
+
+            try
+            {
+                return await AddItemAsync(itemData, count);
+            }
+            catch (System.Exception exception)
+            {
+                DebugTool.Warning($"예외 발생: {exception}", DebugType.Board, this);
+                return false;
+            }
+            finally
+            {
+                _addItemSemaphore.Release();
             }
         }
 
@@ -857,6 +1062,53 @@ namespace UI.MergeBoard
             return false;
         }
 
+        private bool TryGetRandomItemDataFromRange(int minItemId, int maxItemId, out ItemData itemData)
+        {
+            itemData = null;
+
+            if (minItemId > maxItemId)
+                return false;
+
+            List<ItemData> candidates = new();
+
+            for (int itemId = minItemId; itemId <= maxItemId; itemId++)
+                AddValidItemCandidate(candidates, itemId);
+
+            return TryPickRandomCandidate(candidates, out itemData);
+        }
+
+        private bool TryGetRandomItemDataFromList(IReadOnlyList<int> itemIds, out ItemData itemData)
+        {
+            itemData = null;
+
+            if (itemIds == null || itemIds.Count == 0)
+                return false;
+
+            List<ItemData> candidates = new();
+
+            for (int i = 0; i < itemIds.Count; i++)
+                AddValidItemCandidate(candidates, itemIds[i]);
+
+            return TryPickRandomCandidate(candidates, out itemData);
+        }
+
+        private void AddValidItemCandidate(List<ItemData> candidates, int itemId)
+        {
+            if (TryGetItemDataById(itemId, out ItemData itemData) && itemData != null && itemData.HasItem)
+                candidates.Add(itemData);
+        }
+
+        private bool TryPickRandomCandidate(List<ItemData> candidates, out ItemData itemData)
+        {
+            itemData = null;
+
+            if (candidates == null || candidates.Count == 0)
+                return false;
+
+            itemData = candidates[Random.Range(0, candidates.Count)];
+            return true;
+        }
+
         private bool TryGetItemDataById(int itemID, out ItemData itemData)
         {
             itemData = null;
@@ -933,6 +1185,89 @@ namespace UI.MergeBoard
             return count;
         }
 
+
+        // 아이템 캐시를 새로 만들기
+        // 기존 값을 초기화 
+        private async Task RefreshServerItemCountCacheAsync()
+        {
+
+            _serverItemCountCache.Clear();
+            _hasServerItemCountCache = false;
+
+            if (!TryResolveStores())
+                return;
+
+            Dictionary<int, ItemData> boardData = await _boardSlotsStore.LoadBoardAsync();
+            AddBoardItemsToCountCache(boardData);
+
+            List<ItemData> queueItems = await _rewardQueueStore.LoadRewardQueueAsync();
+            AddListItemsToCountCache(queueItems);
+
+            Dictionary<int, SpecialItemSlotData> specialBoard = await _specialStore.LoadSpecialBoardAsync();
+            AddSpecialBoardItemsToCountCache(specialBoard);
+
+            _hasServerItemCountCache = true;
+        }
+
+        private void AddBoardItemsToCountCache(Dictionary<int, ItemData> boardData)
+        {
+            if (boardData == null)
+                return;
+
+            foreach (var pair in boardData)
+                AddItemToCountCache(pair.Value, 1);
+        }
+
+        private void AddListItemsToCountCache(List<ItemData> items)
+        {
+            if (items == null)
+                return;
+
+            for (int i = 0; i < items.Count; i++)
+                AddItemToCountCache(items[i], 1);
+        }
+
+        private void AddSpecialBoardItemsToCountCache(Dictionary<int, SpecialItemSlotData> specialBoard)
+        {
+            if (specialBoard == null)
+                return;
+
+            foreach (var pair in specialBoard)
+            {
+                SpecialItemSlotData slotData = pair.Value;
+
+                if (slotData == null || !slotData.HasItem)
+                    continue;
+
+                AddItemToCountCache(slotData.ItemData, slotData.Count);
+            }
+        }
+
+        private void DecreaseServerItemCountCache(int itemID, int count)
+        {
+            if (!_hasServerItemCountCache || itemID <= 0 || count <= 0)
+                return;
+
+            if (!_serverItemCountCache.TryGetValue(itemID, out int currentCount))
+                return;
+
+            int nextCount = Mathf.Max(0, currentCount - count);
+
+            if (nextCount <= 0)
+                _serverItemCountCache.Remove(itemID);
+            else
+                _serverItemCountCache[itemID] = nextCount;
+        }
+
+        private void AddItemToCountCache(ItemData itemData, int count)
+        {
+            if (itemData == null || !itemData.HasItem || itemData.ItemID <= 0 || count <= 0)
+                return;
+
+            _serverItemCountCache.TryGetValue(itemData.ItemID, out int currentCount);
+            _serverItemCountCache[itemData.ItemID] = currentCount + count;
+        }
+
         private int RemoveItemsFromList(List<ItemData> items, int itemID, int removeCount)
         {
             int remaining = removeCount;
@@ -969,7 +1304,7 @@ namespace UI.MergeBoard
             if (!_enableRuntimeDiagnostics)
                 return;
 
-            Debug.Log($"[MergeBoardItemService] {message}", this);
+            DebugTool.Log($"[MergeBoardItemService] {message}", DebugType.Board, this);
         }
 
         private void RuntimeWarning(string message)
@@ -977,7 +1312,7 @@ namespace UI.MergeBoard
             if (!_enableRuntimeDiagnostics)
                 return;
 
-            Debug.LogWarning($"[MergeBoardItemService] {message}", this);
+            DebugTool.Warning($"[MergeBoardItemService] {message}", DebugType.Board, this);
         }
 
         protected virtual void OnDestroy()

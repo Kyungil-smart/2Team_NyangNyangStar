@@ -9,6 +9,26 @@ namespace UI.NyangQuarium
     {
         [SerializeField] private RectTransform _swimArea;
 
+        [Header("Placement Spawn Area")]
+        [Tooltip("관상어 배치 순간에만 유영 영역 왼쪽에서 제외할 너비입니다.")]
+        [SerializeField] private float _placementLeftInset = 0f;
+
+        [Tooltip("관상어 배치 순간에만 유영 영역 오른쪽에서 제외할 너비입니다.")]
+        [SerializeField] private float _placementRightInset = 0f;
+
+        [Tooltip("관상어 배치 순간에만 유영 영역 위쪽에서 제외할 높이입니다.")]
+        [SerializeField] private float _placementTopInset = 0f;
+
+        [Tooltip("관상어 배치 순간에만 유영 영역 아래쪽에서 제외할 높이입니다.")]
+        [SerializeField] private float _placementBottomInset = 665f;
+
+        [Header("Movement Blocked Areas")]
+        [Tooltip("물고기가 항상 피해야 하는 버튼 또는 UI RectTransform 목록입니다.")]
+        [SerializeField] private RectTransform[] _movementBlockedAreas;
+
+        [Tooltip("물고기 크기 외에 금지 영역에 추가할 여유 거리입니다.")]
+        [SerializeField] private float _blockedAreaPadding = 10f;
+
         [Header("Movement Defaults")]
         [SerializeField] private float _padding = 80f;
         [SerializeField] private float _speed = 60f;
@@ -58,12 +78,28 @@ namespace UI.NyangQuarium
         public NyangquariumFishController ConfirmPlacedFish(int fishId, string spriteKey, float scale = 1f)
         {
             NyangquariumPlacedFishData placedFish = new(fishId, spriteKey, scale);
-            return AddPlacedFish(placedFish);
+            Vector2 spawnPosition = GetRandomPlacementSpawnPosition();
+
+            return AddPlacedFish(
+                placedFish,
+                spawnPosition);
         }
 
         public NyangquariumFishController AddPlacedFish(NyangquariumPlacedFishData placedFish)
         {
-            NyangquariumFishController fish = CreatePlacedFishObject(placedFish);
+            return AddPlacedFish(
+                placedFish,
+                null);
+        }
+
+        private NyangquariumFishController AddPlacedFish(
+            NyangquariumPlacedFishData placedFish,
+            Vector2? spawnPosition)
+        {
+            NyangquariumFishController fish =
+                CreatePlacedFishObject(
+                    placedFish,
+                    spawnPosition);
 
             if (fish == null)
                 return null;
@@ -73,7 +109,9 @@ namespace UI.NyangQuarium
             return fish;
         }
 
-        private NyangquariumFishController CreatePlacedFishObject(NyangquariumPlacedFishData placedFish, bool useSavedPosition = false)
+        private NyangquariumFishController CreatePlacedFishObject(
+            NyangquariumPlacedFishData placedFish,
+            Vector2? spawnPosition = null)
         {
             if (placedFish == null)
                 return null;
@@ -95,7 +133,7 @@ namespace UI.NyangQuarium
             NyangquariumFishController fish = NyangquariumFishController.SpawnMovingFish(
                 swimArea,
                 placedFish.SpriteKey,
-                useSavedPosition ? placedFish.AnchoredPosition : null,
+                spawnPosition,
                 placedFish.Scale,
                 _speed,
                 _padding,
@@ -104,7 +142,93 @@ namespace UI.NyangQuarium
                 _targetReachDistance,
                 placedFish.FishId);
 
+            if (fish != null)
+            {
+                fish.SetMovementBlockedAreas(
+                    _movementBlockedAreas,
+                    _blockedAreaPadding);
+            }
+
             return fish;
+        }
+
+        /// <summary>
+        /// 관상어를 배치하는 순간에만 인벤토리 위쪽 영역에서
+        /// 랜덤 생성 위치를 계산합니다.
+        /// 생성 이후 이동 목표는 FishArea 전체 범위를 그대로 사용합니다.
+        /// </summary>
+        private Vector2 GetRandomPlacementSpawnPosition()
+        {
+            RectTransform swimArea = ResolveSwimArea();
+
+            if (swimArea == null)
+                return Vector2.zero;
+
+            Rect areaRect = swimArea.rect;
+            float horizontalPadding =
+                Mathf.Min(_padding, areaRect.width * 0.45f);
+            float verticalPadding =
+                Mathf.Min(_padding, areaRect.height * 0.45f);
+
+            float minX =
+                areaRect.xMin +
+                Mathf.Max(0f, _placementLeftInset) +
+                horizontalPadding;
+            float maxX =
+                areaRect.xMax -
+                Mathf.Max(0f, _placementRightInset) -
+                horizontalPadding;
+
+            float minY =
+                areaRect.yMin +
+                Mathf.Max(0f, _placementBottomInset) +
+                verticalPadding;
+            float maxY =
+                areaRect.yMax -
+                Mathf.Max(0f, _placementTopInset) -
+                verticalPadding;
+
+            if (minX > maxX)
+            {
+                DebugTool.Warning(
+                    "[냥쿠아리움 배치 물고기 표시] " +
+                    "배치 영역의 Left/Right Inset 합계가 유영 영역보다 큽니다. " +
+                    "가로 범위를 유영 영역 전체로 보정합니다.",
+                    DebugType.UI,
+                    this);
+
+                minX = areaRect.xMin + horizontalPadding;
+                maxX = areaRect.xMax - horizontalPadding;
+            }
+
+            if (minY > maxY)
+            {
+                DebugTool.Warning(
+                    "[냥쿠아리움 배치 물고기 표시] " +
+                    "배치 영역의 Top/Bottom Inset 합계가 유영 영역보다 큽니다. " +
+                    "세로 범위를 유영 영역 전체로 보정합니다.",
+                    DebugType.UI,
+                    this);
+
+                minY = areaRect.yMin + verticalPadding;
+                maxY = areaRect.yMax - verticalPadding;
+            }
+
+            Vector2 spawnPosition = new(
+                UnityEngine.Random.Range(minX, maxX),
+                UnityEngine.Random.Range(minY, maxY));
+
+            DebugTool.Log(
+                "[냥쿠아리움 배치 물고기 표시] " +
+                $"관상어 배치 위치: {spawnPosition}, " +
+                $"Insets(L:{_placementLeftInset}, " +
+                $"R:{_placementRightInset}, " +
+                $"T:{_placementTopInset}, " +
+                $"B:{_placementBottomInset})",
+                DebugType.UI,
+                this);
+
+            return spawnPosition;
         }
 
         public NyangquariumPlacedFishData CreateDataFromFish(NyangquariumFishController fish)

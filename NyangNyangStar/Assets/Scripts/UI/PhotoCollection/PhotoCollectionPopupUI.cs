@@ -1,7 +1,5 @@
 using Core.Managers;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using UI.Base;
 using UnityEngine;
 using UnityEngine.UI;
@@ -21,7 +19,6 @@ public class PhotoCollectionPopupUI : UIPopup
 
     [Header("사진 필터")]
     [Tooltip("필터 패널")][SerializeField] private GameObject _filterPanel;
-    [Tooltip("필터 닫기 버튼")][SerializeField] private Button _filterCloseButton;
 
     [Header("별 필터 버튼(Toggle)")]
     [SerializeField] private Toggle _star1Toggle;
@@ -29,19 +26,21 @@ public class PhotoCollectionPopupUI : UIPopup
     [SerializeField] private Toggle _star3Toggle;
     [SerializeField] private Toggle _star4Toggle;
     [SerializeField] private Toggle _star5Toggle;
-
-    [Header("사진 데이터")]
-    [SerializeField] private NyangNyangSnapPhotoAlbumSO _photoAlbumSO;
+    [SerializeField] private Button _resetFilterButton;
 
     [Header("사진 슬롯")]
-    [SerializeField] private Transform _content;
+    [SerializeField] private RectTransform _content;
     [SerializeField] private CatPhotoSlotUI _catPhotoSlotPrefab;
 
     private readonly Dictionary<string, CatPhotoSlotUI> _photoDic = new();
+    private readonly List<NyangNyangSnapRuntimePhotoData> _sortedPhotos = new();
+    private readonly HashSet<string> _serverPhotoIds = new();
+    private readonly List<string> _removeIds = new();
     private SelectedCatPopupUI _selectedCatPopup;
     private PhotoCollectionPopupSprite _sprite;
     private PhotoDetailPopupUI _detailPopup;
     private Toggle[] _starToggles;
+    private readonly List<int> _selectedStars = new();
 
     public override void Init()
     {
@@ -52,7 +51,7 @@ public class PhotoCollectionPopupUI : UIPopup
         _background = GetButton((int)PhotoCollectionPopupButtons.Background);
         _backButton = GetButton((int)PhotoCollectionPopupButtons.BackButton);
         _filterButton = GetButton((int)PhotoCollectionPopupButtons.FilterButton);
-        _filterCloseButton = GetButton((int)PhotoCollectionPopupButtons.FilterCloseButton);
+        _resetFilterButton = GetButton((int)PhotoCollectionPopupButtons.ResetFilterButton);
 
         _filterPanel = GetObject((int)PhotoCollectionPopupObjects.FilterPanel);
 
@@ -96,13 +95,11 @@ public class PhotoCollectionPopupUI : UIPopup
     {
         if (_content == null) return;
 
-        RectTransform contentRect = _content as RectTransform;
         GridLayoutGroup grid = _content.GetComponent<GridLayoutGroup>();
 
-        if (contentRect == null || grid == null)
-            return;
+        if (grid == null) return;
 
-        float contentWidth = contentRect.rect.width;
+        float contentWidth = _content.rect.width;
 
         float padding = grid.padding.left + grid.padding.right;
         float spacing = grid.spacing.x * (PhotoColumnCount - 1);
@@ -121,47 +118,34 @@ public class PhotoCollectionPopupUI : UIPopup
         _selectedCatPopup = popup;
     }
 
-    private async void RefreshPhotoSlots()
+    private void RefreshPhotoSlots()
     {
-        try
-        {
-            await RefreshPhotoSlotsAsync();
-            DebugTool.Log("사진 목록 새로고침", DebugType.UI, this);
-        }
-        catch (System.Exception e)
-        {
-            DebugTool.Warning($"[PhotoCollectionPopupUI] 사진 목록 새로고침 실패: {e.Message}", DebugType.UI, this);
-        }
-    }
-
-    private async Task RefreshPhotoSlotsAsync()
-    {
-        if (!EnsurePhotoAlbumReady())
-            return;
-
-        // 서버에서 가져오기
-        await _photoAlbumSO.UpdateFromServerAsync(false);
-
         // 정렬
-        List<NyangNyangSnapSavedPhotoData> sortedPhotos = _photoAlbumSO.Photos
-            .OrderByDescending(x => x.starCount)
-            .ThenByDescending(x => x.createdAt)
-            .ToList();
-
-        // 서버에서 가져온 사진 id
-        HashSet<string> serverPhotoIds = new();
-
-        for (int i = 0; i < sortedPhotos.Count; i++)
+        _sortedPhotos.Clear();
+        _sortedPhotos.AddRange(NyangNyangSnapPhotoManager.Instance.RuntimePhotos);
+        _sortedPhotos.Sort((a, b) =>
         {
-            NyangNyangSnapSavedPhotoData photoData = sortedPhotos[i];
+            int starCompare = b.StarCount.CompareTo(a.StarCount);
 
-            if (string.IsNullOrEmpty(photoData.photoId)) continue;
+            if (starCompare != 0)
+                return starCompare;
 
-            serverPhotoIds.Add(photoData.photoId);
+            return b.CreatedAt.CompareTo(a.CreatedAt);
+        });
 
-            if (!_photoDic.TryGetValue(photoData.photoId, out CatPhotoSlotUI slot))
+        _serverPhotoIds.Clear();
+
+        for (int i = 0; i < _sortedPhotos.Count; i++)
+        {
+            NyangNyangSnapRuntimePhotoData photoData = _sortedPhotos[i];
+
+            if (photoData == null) continue;
+
+            _serverPhotoIds.Add(photoData.PhotoId);
+
+            if (!_photoDic.TryGetValue(photoData.PhotoId, out CatPhotoSlotUI slot))
             {
-                slot = CreateSlot(photoData.photoId);
+                slot = CreateSlot(photoData.PhotoId);
             }
 
             if (slot == null) continue;
@@ -171,23 +155,10 @@ public class PhotoCollectionPopupUI : UIPopup
             slot.transform.SetSiblingIndex(i);
         }
 
-        RemoveDeletedSlots(serverPhotoIds);
+        RemoveDeletedSlots(_serverPhotoIds);
         ApplyStarFilter();
-    }
 
-    private bool EnsurePhotoAlbumReady()
-    {
-        if (_photoAlbumSO == null)
-        {
-            DebugTool.Warning("[PhotoCollectionPopupUI] PhotoAlbumSO가 연결되지 않았습니다.", DebugType.UI, this);
-            return false;
-        }
-
-        if (_photoAlbumSO.TryEnsureDatabaseReady())
-            return true;
-
-        DebugTool.Warning("[PhotoCollectionPopupUI] Firestore 준비 전이라 사진 목록 갱신을 건너뜁니다.", DebugType.UI, this);
-        return false;
+        DebugTool.Log("사진 목록 새로고침", DebugType.UI, this);
     }
 
     private CatPhotoSlotUI CreateSlot(string photoId)
@@ -202,15 +173,15 @@ public class PhotoCollectionPopupUI : UIPopup
 
     private void RemoveDeletedSlots(HashSet<string> serverPhotoIds)
     {
-        List<string> removeIds = new();
+        _removeIds.Clear();
 
         foreach (KeyValuePair<string, CatPhotoSlotUI> pair in _photoDic)
         {
             if (!serverPhotoIds.Contains(pair.Key))
-                removeIds.Add(pair.Key);
+                _removeIds.Add(pair.Key);
         }
 
-        foreach (string photoId in removeIds)
+        foreach (string photoId in _removeIds)
         {
             if (_photoDic[photoId] != null)
                 Destroy(_photoDic[photoId].gameObject);
@@ -225,7 +196,7 @@ public class PhotoCollectionPopupUI : UIPopup
         if (_background != null) _background.onClick.AddListener(CloseAllPopups);
         if (_backButton != null) _backButton.onClick.AddListener(ClosePhotoCollectionPopup);
         if (_filterButton != null) _filterButton.onClick.AddListener(ToggleFilterPanel);
-        if (_filterCloseButton != null) _filterCloseButton.onClick.AddListener(ToggleFilterPanel);
+        if (_resetFilterButton != null) _resetFilterButton.onClick.AddListener(ResetFilter);
     }
 
     private void OnDestroy()
@@ -234,7 +205,7 @@ public class PhotoCollectionPopupUI : UIPopup
         RemovePopupButton(_background);
         RemovePopupButton(_backButton);
         RemovePopupButton(_filterButton);
-        RemovePopupButton(_filterCloseButton);
+        RemovePopupButton(_resetFilterButton);
     }
 
     private void RemovePopupButton(Button button)
@@ -257,6 +228,7 @@ public class PhotoCollectionPopupUI : UIPopup
     {
         foreach (Toggle toggle in _starToggles)
         {
+            toggle.isOn = false;
             toggle.onValueChanged.AddListener(isOn =>
             {
                 DebugTool.Log($"{toggle.name} : {isOn}", DebugType.UI, this);
@@ -268,18 +240,33 @@ public class PhotoCollectionPopupUI : UIPopup
 
     private void ApplyStarFilter()
     {
-        List<int> selectedStars = new();
+        if (_starToggles == null) return;
+
+        _selectedStars.Clear();
 
         for (int i = 0; i < _starToggles.Length; i++)
         {
             if (_starToggles[i].isOn)
-                selectedStars.Add(i + 1);
+                _selectedStars.Add(i + 1);
         }
+
+        bool hasFilter = _selectedStars.Count > 0;
 
         foreach (CatPhotoSlotUI slot in _photoDic.Values)
         {
-            slot.gameObject.SetActive(selectedStars.Contains(slot.StarCount));
+            slot.gameObject.SetActive(!hasFilter || _selectedStars.Contains(slot.StarCount));
         }
+    }
+
+    private void ResetFilter()
+    {
+        foreach (Toggle toggle in _starToggles)
+        {
+            toggle.SetIsOnWithoutNotify(false);
+        }
+
+        ApplyStarFilter();
+        GameManager.Audio.PlaySfx("Main_SFX_Touch");
     }
 
     private void ClosePhotoCollectionPopup()
@@ -309,7 +296,7 @@ public enum PhotoCollectionPopupButtons
     Background,
     BackButton,
     FilterButton,
-    FilterCloseButton
+    ResetFilterButton
 }
 
 public enum PhotoCollectionPopupObjects

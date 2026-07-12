@@ -41,6 +41,11 @@ namespace UI.NyangQuarium.Quest
         [SerializeField] private NyangQuariumExpItemSO _expItemSO;
         [SerializeField] private int _expItemHeaderRowCount = 1;
 
+        [Header("냥쿠_수조 레벨 테이블")]
+        [SerializeField] private SheetData _aquariumLevelURL;
+        [SerializeField] private NyangQuariumAquariumLevelSO _aquariumLevelSO;
+        [SerializeField] private int _aquariumLevelHeaderRowCount = 1;
+
         [Header("옵션")]
         [SerializeField] private bool _loadOnStart = true;
 
@@ -54,6 +59,7 @@ namespace UI.NyangQuarium.Quest
         public NyangQuariumGeneratorSO GeneratorSO => _generatorSO;
         public NyangQuariumFishSO FishSO => _fishSO;
         public NyangQuariumExpItemSO ExpItemSO => _expItemSO;
+        public NyangQuariumAquariumLevelSO AquariumLevelSO => _aquariumLevelSO;
 
         // 시트 로드 완료 시 QuestManager 등에서 구독
         public event Action OnLoadCompleted;
@@ -86,7 +92,7 @@ namespace UI.NyangQuarium.Quest
         {
             IsReady = false;
             StopAllCoroutines();
-            _pendingSheetCount = 6;
+            _pendingSheetCount = 7;
 
             DebugTool.Log("[NyangQuariumSheetLoader] 시트 로드 시작", DebugType.Data, this);
 
@@ -128,6 +134,13 @@ namespace UI.NyangQuarium.Quest
                 _expItemSO?.PrintData();
                 OnSheetCompleted("냥쿠_경험치 테이블 로드 완료");
             });
+
+            LoadSheetData(_aquariumLevelURL, _aquariumLevelSO, _aquariumLevelHeaderRowCount, "수조 레벨", () =>
+            {
+                _aquariumLevelSO?.SortData();
+                _aquariumLevelSO?.PrintData();
+                OnSheetCompleted("냥쿠_수조 레벨 테이블 로드 완료");
+            });
         }
 
         public void ClearData()
@@ -142,6 +155,7 @@ namespace UI.NyangQuarium.Quest
             _generatorSO?.ClearData();
             _fishSO?.ClearData();
             _expItemSO?.ClearData();
+            _aquariumLevelSO?.ClearData();
 
             DebugTool.Log("[NyangQuariumSheetLoader] 캐싱된 시트 데이터 제거 완료", DebugType.Data, this);
         }

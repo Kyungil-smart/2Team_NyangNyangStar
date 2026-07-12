@@ -28,7 +28,8 @@ public class NyangNyangSnapToyUISprite : UIBase
     private void SetSprites()
     {
         SetSprite(NyangNyangSnapToyUIImage.ScrollView, "Snap_Panel_ToolList");
-        SetSprite(NyangNyangSnapToyUIImage.CloseButton, "Btn_Close", new Color32(0, 0, 0, 255));
+        SetSprite(NyangNyangSnapToyUIImage.CloseButton, "Btn_Close");
+        SetSprite(NyangNyangSnapToyUIImage.ToyButton, "Snap_Panel_Tool");
 
     }
 
@@ -55,7 +56,8 @@ public class NyangNyangSnapToyUISprite : UIBase
     public enum NyangNyangSnapToyUIImage
     {
         ScrollView,
-        CloseButton
+        CloseButton,
+        ToyButton
     }
 }
 

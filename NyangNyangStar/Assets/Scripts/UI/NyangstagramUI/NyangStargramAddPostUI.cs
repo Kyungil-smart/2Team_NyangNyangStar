@@ -1,7 +1,8 @@
 using Core.Managers;
 using DG.Tweening;
+using Firebase.Firestore;
+using System;
 using System.Collections.Generic;
-using System.Linq;
 using TMPro;
 using UI.Base;
 using UnityEngine;
@@ -25,22 +26,27 @@ public class NyangStargramAddPostUI : UIPopup
 
     [Header("선택 이미지")]
     [SerializeField] private Image _newPostImage;
-
-    [Header("사진 데이터")]
-    [SerializeField] private NyangNyangSnapPhotoAlbumSO _photoAlbumSO;
+    [SerializeField] private Color _newPostColor;
+    [SerializeField] private TMP_Text _noImageText;
 
     [Header("앨범 슬롯")]
-    [SerializeField] private Transform _albumContent;
+    [SerializeField] private RectTransform _albumContent;
     [SerializeField] private NyangStargramAlbumSlotUI _albumSlotPrefab;
 
+    [Header("냥스타그램 게시물 SO")]
+    [SerializeField] private NyangStargramPostSO _postSO;
+
     private readonly Dictionary<string, NyangStargramAlbumSlotUI> _albumSlotDic = new();
+    private readonly List<NyangNyangSnapRuntimePhotoData> _sortedPhotos = new();
+    private readonly HashSet<string> _serverPhotoIds = new();
+    private readonly List<string> _removeIds = new();
     private readonly HashSet<string> _uploadedPhotoIds = new();
 
     private NyangstagramMainUI _mainUI;
     private NyangStargramAlbumSlotUI _selectedSlot;
-    private NyangNyangSnapSavedPhotoData _selectedPhotoData;
-    private Sprite _selectedPhotoSprite;
+    private NyangNyangSnapRuntimePhotoData _selectedPhotoData;
     private bool _hasSelectedPhoto;
+    private bool _isUploading;
 
     private NyangStargramAddPostUISprite _nyangStargramAddPostUISprite;
 
@@ -54,7 +60,8 @@ public class NyangStargramAddPostUI : UIPopup
 
         _albumDropdown = UIBase.FindChild<TMP_Dropdown>(gameObject, "Dropdown", true);
         _newPostImage = UIBase.FindChild<Image>(gameObject, "New Post Image", true);
-        _albumContent = UIBase.FindChild<Transform>(gameObject, "AlbumContent", true);
+        _albumContent = UIBase.FindChild<RectTransform>(gameObject, "AlbumContent", true);
+        _noImageText = UIBase.FindChild<TMP_Text>(gameObject, "NoImageText", true);
 
         RefreshAlbumGridCellSize();
 
@@ -69,12 +76,12 @@ public class NyangStargramAddPostUI : UIPopup
 
     private void RefreshAlbumGridCellSize()
     {
-        RectTransform contentRect = _albumContent as RectTransform;
         GridLayoutGroup grid = _albumContent.GetComponent<GridLayoutGroup>();
 
-        if (contentRect == null || grid == null) return;
+        if (grid == null) return;
 
-        float contentWidth = contentRect.rect.width;
+        float contentWidth = _albumContent.rect.width;
+
         float padding = grid.padding.left + grid.padding.right;
         float spacing = grid.spacing.x * (AlbumColumnCount - 1);
 
@@ -93,95 +100,86 @@ public class NyangStargramAddPostUI : UIPopup
     private void OnEnable()
     {
         _selectedSlot = null;
-        _selectedPhotoSprite = null;
+        _selectedPhotoData = null;
         _hasSelectedPhoto = false;
+        _isUploading = false;
+
+        SyncUploadedPhotoIds();
 
         if (_newPostImage != null)
+        {
             _newPostImage.sprite = null;
+            _newPostImage.color = _newPostColor;
+        }
+
+        if (_noImageText != null)
+            _noImageText.gameObject.SetActive(true);
 
         RefreshAlbumGridCellSize();
         RefreshAlbumSlots();
     }
 
-    private async void RefreshAlbumSlots()
+    private void SyncUploadedPhotoIds()
     {
-        if (!EnsurePhotoAlbumReady())
-            return;
+        _uploadedPhotoIds.Clear();
 
-        try
+        foreach (NyangStargramPostData post in _postSO.Posts)
         {
-            await _photoAlbumSO.UpdateFromServerAsync(false);
+            _uploadedPhotoIds.Add(post.photoId);
         }
-        catch (System.Exception e)
+    }
+
+    private void RefreshAlbumSlots()
+    {
+        // 정렬
+        _sortedPhotos.Clear();
+        _sortedPhotos.AddRange(NyangNyangSnapPhotoManager.Instance.RuntimePhotos);
+        _sortedPhotos.Sort((a, b) => b.CreatedAt.CompareTo(a.CreatedAt));
+
+        _serverPhotoIds.Clear();
+
+        for (int i = 0; i < _sortedPhotos.Count; i++)
         {
-            DebugTool.Warning($"[NyangStargramAddPostUI] 앨범 새로고침 실패: {e.Message}", DebugType.UI, this);
-            return;
-        }
+            NyangNyangSnapRuntimePhotoData photoData = _sortedPhotos[i];
 
-        List<NyangNyangSnapSavedPhotoData> sortedPhotos = _photoAlbumSO.Photos
-            .OrderByDescending(x => x.createdAt)
-            .ToList();
+            _serverPhotoIds.Add(photoData.PhotoId);
 
-        HashSet<string> currentPhotoIds = new();
-
-        for (int i = 0; i < sortedPhotos.Count; i++)
-        {
-            NyangNyangSnapSavedPhotoData photoData = sortedPhotos[i];
-
-            currentPhotoIds.Add(photoData.photoId);
-
-            if (!_albumSlotDic.TryGetValue(photoData.photoId, out NyangStargramAlbumSlotUI slot))
+            if (!_albumSlotDic.TryGetValue(photoData.PhotoId, out NyangStargramAlbumSlotUI slot))
             {
-                slot = CreateAlbumSlot(photoData.photoId);
+                slot = CreateAlbumSlot(photoData.PhotoId);
             }
 
-            bool isUploaded = _uploadedPhotoIds.Contains(photoData.photoId);
+            bool isUploaded = _uploadedPhotoIds.Contains(photoData.PhotoId);
 
+            slot.SetAddPostUI(this);
             slot.SetData(photoData, isUploaded);
             slot.transform.SetSiblingIndex(i);
         }
 
-        RemoveDeletedAlbumSlots(currentPhotoIds);
-    }
-
-    private bool EnsurePhotoAlbumReady()
-    {
-        if (_photoAlbumSO == null)
-        {
-            DebugTool.Warning("[NyangStargramAddPostUI] PhotoAlbumSO가 연결되지 않았습니다.", DebugType.UI, this);
-            return false;
-        }
-
-        if (_photoAlbumSO.TryEnsureDatabaseReady())
-            return true;
-
-        DebugTool.Warning("[NyangStargramAddPostUI] Firestore 준비 전이라 앨범 새로고침을 건너뜁니다.", DebugType.UI, this);
-        return false;
+        RemoveDeletedAlbumSlots(_serverPhotoIds);
     }
 
     private NyangStargramAlbumSlotUI CreateAlbumSlot(string photoId)
     {
         NyangStargramAlbumSlotUI slot = Instantiate(_albumSlotPrefab, _albumContent);
-
         slot.Init();
-        slot.SetAddPostUI(this);
 
         _albumSlotDic.Add(photoId, slot);
 
         return slot;
     }
 
-    private void RemoveDeletedAlbumSlots(HashSet<string> currentPhotoIds)
+    private void RemoveDeletedAlbumSlots(HashSet<string> serverPhotoIds)
     {
-        List<string> removeIds = new();
+        _removeIds.Clear();
 
         foreach (KeyValuePair<string, NyangStargramAlbumSlotUI> pair in _albumSlotDic)
         {
-            if (!currentPhotoIds.Contains(pair.Key))
-                removeIds.Add(pair.Key);
+            if (!serverPhotoIds.Contains(pair.Key))
+                _removeIds.Add(pair.Key);
         }
 
-        foreach (string photoId in removeIds)
+        foreach (string photoId in _removeIds)
         {
             if (_albumSlotDic[photoId] != null)
                 Destroy(_albumSlotDic[photoId].gameObject);
@@ -191,7 +189,7 @@ public class NyangStargramAddPostUI : UIPopup
         }
     }
 
-    public void SelectAlbumImage(NyangStargramAlbumSlotUI slot, NyangNyangSnapSavedPhotoData photoData, Sprite sprite)
+    public void SelectAlbumImage(NyangStargramAlbumSlotUI slot, NyangNyangSnapRuntimePhotoData photoData, Sprite sprite)
     {
         if (_selectedSlot != null)
             _selectedSlot.SetSelected(false);
@@ -200,15 +198,16 @@ public class NyangStargramAddPostUI : UIPopup
         _selectedSlot.SetSelected(true);
 
         _selectedPhotoData = photoData;
-        _selectedPhotoSprite = sprite;
         _hasSelectedPhoto = true;
+
+        _noImageText.gameObject.SetActive(false);
 
         _newPostImage.sprite = sprite;
         _newPostImage.color = Color.white;
 
         GameManager.Audio.PlaySfx("Main_SFX_Touch");
 
-        DebugTool.Log($"선택한 사진: {photoData.photoId}", DebugType.UI, this);
+        DebugTool.Log($"선택한 사진: {photoData.PhotoId}", DebugType.UI, this);
     }
 
     private void BindButtons()
@@ -272,10 +271,11 @@ public class NyangStargramAddPostUI : UIPopup
         button.onClick.AddListener(OnClickUploadButton);
     }
 
-    private void OnClickUploadButton()
+    private async void OnClickUploadButton()
     {
-        if (!_hasSelectedPhoto)
-            return;
+        if (_isUploading) return;
+
+        if (!_hasSelectedPhoto) return;
 
         if (_mainUI == null)
         {
@@ -283,9 +283,35 @@ public class NyangStargramAddPostUI : UIPopup
             return;
         }
 
+        _isUploading = true;
+
+        string photoId = _selectedPhotoData.PhotoId;
+
+        NyangStargramPostData postData = new()
+        {
+            postId = $"NSG_{DateTime.Now:yyMMdd_HH.mm.ss.fff}",
+            photoId = photoId,
+            createdAt = Timestamp.GetCurrentTimestamp()
+        };
+
+        _postSO.AddPost(postData);
+
+        try
+        {
+            await _postSO.UpdateDataAsync();
+        }
+        catch (Exception e)
+        {
+            DebugTool.Warning($"냥스타그램 게시물 저장 실패: {e.Message}", DebugType.Network, this);
+            _postSO.RemovePost(photoId);
+            _isUploading = false;
+
+            return;
+        }
+
         _mainUI.AddPost(_selectedPhotoData);
 
-        _uploadedPhotoIds.Add(_selectedPhotoData.photoId);
+        _uploadedPhotoIds.Add(photoId);
 
         if (_selectedSlot != null)
         {
@@ -293,9 +319,11 @@ public class NyangStargramAddPostUI : UIPopup
             _selectedSlot = null;
         }
 
-        DebugTool.Log($"게시물 업로드: {_selectedPhotoData.photoId}", DebugType.UI, this);
+        DebugTool.Log($"게시물 업로드: {photoId}", DebugType.UI, this);
 
+        _selectedPhotoData = null;
         _hasSelectedPhoto = false;
+        _isUploading = false;
 
         CloseAddPostPopup();
     }
@@ -304,9 +332,9 @@ public class NyangStargramAddPostUI : UIPopup
     {
         if (_panel == null) return;
 
-        //_panel.anchoredPosition = new Vector2(0f, -1000f);
-        //_panel.DOAnchorPos(Vector2.zero, _popupScaleDuration)
-        //    .SetEase(Ease.OutSine);
+        _panel.anchoredPosition = new Vector2(0f, -1000f);
+        _panel.DOAnchorPos(Vector2.zero, _popupScaleDuration)
+            .SetEase(Ease.OutSine);
     }
 
     private void CloseAddPostPopup()

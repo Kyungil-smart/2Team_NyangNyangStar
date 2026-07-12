@@ -41,6 +41,10 @@ public class ScratchEffectPool : MonoBehaviour
     private bool _spritesReady;      // 일반 이펙트 스프라이트 로드 완료 여부
 
     // 터치 영역 안에서 클릭이 발생했을 때 호출 (screenPosition 전달)
+    // 모바일에서는 한 손가락 입력만 공격으로 인정해 다중 터치 연타를 막는다.
+    private int _activeTouchFingerId = -1;
+    private int _lastScratchInputFrame = -1;
+
     public event Action<Vector2> OnScratchClicked;
 
 
@@ -62,15 +66,15 @@ public class ScratchEffectPool : MonoBehaviour
     }
 
 
-    // 멀티터치 
+    // 입력 상태 초기화
     private void OnEnable()
     {
-        Input.multiTouchEnabled = true;
+        ResetTouchInputState();
     }
 
 
     // 터치 영역 내 클릭 시 스크래치 입력 이벤트 발생
-    // 모바일에서는 여러 손가락의 동시 / 연속 터치를 각각 공격으로 처리
+    // 모바일에서는 첫 터치 손가락이 끝날 때까지 다른 손가락 입력을 무시
     private void Update()
     {
         if (Input.touchCount > 0)
@@ -80,24 +84,39 @@ public class ScratchEffectPool : MonoBehaviour
         }
 
         // 에디터 / PC 폴백 : 터치가 없을 때만 마우스 입력 처리
+        ResetTouchInputState();
         HandleMouseInput();
     }
 
 
-    // 손가락별 첫 접촉 마다 스크래치 입력 이벤트 발생
+    // 첫 접촉만 스크래치 입력 이벤트로 전달
     private void HandleTouchInput()
     {
         int touchCount = Input.touchCount;
         for (int i = 0; i < touchCount; i++)
         {
             Touch touch = Input.GetTouch(i);
+            if (_activeTouchFingerId >= 0 && touch.fingerId != _activeTouchFingerId)
+                continue;
+
+            if (touch.phase == TouchPhase.Ended || touch.phase == TouchPhase.Canceled)
+            {
+                if (touch.fingerId == _activeTouchFingerId)
+                    ResetTouchInputState();
+
+                continue;
+            }
+
             if (touch.phase != TouchPhase.Began)
                 continue;
 
             if (!IsInsideTouchArea(touch.position))
                 continue;
 
-            OnScratchClicked?.Invoke(touch.position);
+            if (TryRaiseScratchInput(touch.position))
+                _activeTouchFingerId = touch.fingerId;
+
+            break;
         }
     }
 
@@ -107,7 +126,24 @@ public class ScratchEffectPool : MonoBehaviour
         if (!Input.GetMouseButtonDown(0) || !IsInsideTouchArea(Input.mousePosition))
             return;
 
-        OnScratchClicked?.Invoke(Input.mousePosition);
+        TryRaiseScratchInput(Input.mousePosition);
+    }
+
+
+    private bool TryRaiseScratchInput(Vector2 screenPosition)
+    {
+        if (_lastScratchInputFrame == Time.frameCount)
+            return false;
+
+        _lastScratchInputFrame = Time.frameCount;
+        OnScratchClicked?.Invoke(screenPosition);
+        return true;
+    }
+
+
+    private void ResetTouchInputState()
+    {
+        _activeTouchFingerId = -1;
     }
 
 

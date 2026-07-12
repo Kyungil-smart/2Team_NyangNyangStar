@@ -104,11 +104,18 @@ namespace Core.Managers
             if (_instance == null)
                 return;
 
-            _instance._uiManager?.Clear();
-            _instance._dataManager?.Clear();
-            _instance._audioManager?.Clear();
-            _instance._gameSceneManager?.Clear();
-            _instance._addressableManager?.Clear();
+            GameManager instance = _instance;
+
+            instance._uiManager?.Clear();
+            instance._dataManager?.Clear();
+            instance._audioManager?.Clear();
+            instance._gameSceneManager?.Clear();
+            instance._addressableManager?.Clear();
+
+            if (instance.gameObject != null)
+                Destroy(instance.gameObject);
+
+            _instance = null;
 
             DebugTool.Log("모든 매니저 제거 완료 ", DebugType.Game);
         }

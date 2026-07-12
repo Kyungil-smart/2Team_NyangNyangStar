@@ -63,7 +63,6 @@ public enum NyangStargramAddPostUIImages
     DropdownPanel,
     FolderImage,
     PostImagePanel,
-    엘범,
     NyangstagramCloseButton,
 
 }

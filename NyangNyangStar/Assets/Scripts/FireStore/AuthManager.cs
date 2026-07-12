@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Threading.Tasks;
 using Core.Managers;
 using Data.LibrarySystem;
 using Firebase;
@@ -12,6 +13,9 @@ using Util;
 public class AuthManager : MonoBehaviour
 {
     public static AuthManager Instance { get; private set; }
+
+    [Header("냥냥스냅 사진 로드")]
+    [SerializeField] private NyangNyangSnapPhotoAlbumSO _photoAlbumSO;
 
     private FirebaseAuth auth;
     private bool firebaseReady;
@@ -216,6 +220,21 @@ public class AuthManager : MonoBehaviour
         if (GameManager.Data != null)
             GameManager.Data.OnDataLoadProgressChanged -= HandleDataLoadProgress;
 
+        StartCoroutine(LoadPhotoData(flowVersion));
+    }
+
+    private IEnumerator LoadPhotoData(int flowVersion)
+    {
+        if (!IsValidLoginFlow(flowVersion))
+            yield break;
+
+        ReportLoginProgress(0.95f, "사진 데이터 로드 중");
+
+        yield return LoadPhotosCoroutine();
+
+        if (!IsValidLoginFlow(flowVersion))
+            yield break;
+
         ReportLoginProgress(1f, "로드 완료");
 
         LogInUIController login = FindObjectOfType<LogInUIController>();
@@ -229,9 +248,50 @@ public class AuthManager : MonoBehaviour
         IsLoginFlowRunning = false;
     }
 
+    private IEnumerator LoadPhotosCoroutine()
+    {
+        Task task = LoadPhotosAsync();
+
+        while (!task.IsCompleted)
+            yield return null;
+
+        if (task.Exception != null)
+        {
+            DebugTool.Warning($"사진 로드 실패", DebugType.Network, this);
+        }
+    }
+
+    private async Task LoadPhotosAsync()
+    {
+        NyangNyangSnapPhotoManager.Instance.ClearPhotos();
+
+        await _photoAlbumSO.UpdateFromServerAsync(false);
+
+        foreach (NyangNyangSnapSavedPhotoData photo in _photoAlbumSO.Photos)
+        {
+            if (string.IsNullOrEmpty(photo.storagePath)) continue;
+
+            Sprite sprite = await FirebaseStorageHelper.LoadUserSpriteAsync(photo.storagePath);
+
+            if (sprite == null) continue;
+
+            NyangNyangSnapPhotoManager.Instance.AddPhoto(new NyangNyangSnapRuntimePhotoData(
+                    photo.photoId,
+                    sprite,
+                    photo.storagePath,
+                    photo.starCount,
+                    photo.createdAt));
+        }
+
+        DebugTool.Log(
+            $"사진 로드 완료: {NyangNyangSnapPhotoManager.Instance.RuntimePhotos.Count}장",
+            DebugType.Network,
+            this);
+    }
+
     private void HandleDataLoadProgress(float sheetProgress, string message)
     {
-        float loginProgress = Mathf.Lerp(0.55f, 0.95f, sheetProgress);
+        float loginProgress = Mathf.Lerp(0.55f, 0.85f, sheetProgress);
         ReportLoginProgress(loginProgress, message);
     }
 

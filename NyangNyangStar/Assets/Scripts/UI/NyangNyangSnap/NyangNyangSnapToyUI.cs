@@ -4,6 +4,7 @@ using DG.Tweening;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using TMPro;
 using UI;
 using UI.Base;
@@ -38,8 +39,15 @@ public class NyangNyangSnapToyUI : UIPopup
     [SerializeField] private Transform _content;
 
     [Header("스크롤")]
-    [Tooltip("장난감 목록을 좌우로 움직이는 ScrollRect")]
+    [Tooltip("아이템 목록 ScrollRect. 비어 있으면 Content 부모에서 자동 탐색")]
     [SerializeField] private ScrollRect _scrollRect;
+
+    [Header("빈 목록 안내")]
+    [Tooltip("보유 장난감이 없을 때 표시할 TextMeshPro 텍스트")]
+    [SerializeField] private TMP_Text _emptyMessageText;
+
+    [Tooltip("빈 목록일 때 표시할 문구")]
+    [SerializeField] private string _emptyMessageTextString = "장난감이 없습니다.";
 
     [Header("아이템 배치")]
     [SerializeField] private NyangNyangSnapPlacementController _placementController;
@@ -68,6 +76,7 @@ public class NyangNyangSnapToyUI : UIPopup
 
     private Coroutine _holdCoroutine;
     private Coroutine _loadButtonsCoroutine;
+    private Coroutine _releaseClickBlockCoroutine;
 
     private NyangNyangSnapInventoryItem _pressedItem;
     private Button _pressedButton;
@@ -77,6 +86,7 @@ public class NyangNyangSnapToyUI : UIPopup
     private bool _isPointerPressed;
     private bool _isPlacementDragging;
     private bool _isScrollDragging;
+    private bool _blockClick;
 
 
     private NyangNyangSnapToyUISprite _nyangNyangSnapToyUISprite;
@@ -93,14 +103,12 @@ public class NyangNyangSnapToyUI : UIPopup
         _nyangNyangSnapToyUISprite = GetComponent<NyangNyangSnapToyUISprite>();
         _nyangNyangSnapToyUISprite.Init();
 
-        AutoAssignScrollRect();
         AutoAssignPlacementController();
+        AutoAssignScrollRect();
         InitPopups();
 
         _isInitialized = true;
 
-
-        RequestLoadToyButtons();
     }
 
     private void OnEnable()
@@ -108,9 +116,8 @@ public class NyangNyangSnapToyUI : UIPopup
         if (!_isInitialized)
             return;
 
-        AutoAssignScrollRect();
         AutoAssignPlacementController();
-        RequestLoadToyButtons();
+        AutoAssignScrollRect();
     }
 
     private void OnDisable()
@@ -118,12 +125,12 @@ public class NyangNyangSnapToyUI : UIPopup
         StopLoadButtonsCoroutine();
         CancelHold();
 
-        if (_scrollRect != null)
-            _scrollRect.enabled = true;
+        StopReleaseClickBlockCoroutine();
 
         _isPointerPressed = false;
         _isPlacementDragging = false;
         _isScrollDragging = false;
+        _blockClick = false;
 
         ResetSelectedButton(false);
     }
@@ -133,16 +140,16 @@ public class NyangNyangSnapToyUI : UIPopup
         if (_scrollRect != null)
             return;
 
-        if (_toyButton != null)
-            _scrollRect = _toyButton.GetComponentInParent<ScrollRect>();
-
-        if (_scrollRect == null && _content != null)
+        if (_content != null)
             _scrollRect = _content.GetComponentInParent<ScrollRect>();
+
+        if (_scrollRect == null && _toyButton != null)
+            _scrollRect = _toyButton.GetComponentInParent<ScrollRect>();
 
         if (_scrollRect == null)
         {
             DebugTool.Warning(
-                "[NyangNyangSnapToyUI] 장난감 목록 ScrollRect를 찾지 못했습니다.",
+                "[NyangNyangSnapToyUI] 아이템 목록 ScrollRect를 찾지 못했습니다.",
                 DebugType.UI,
                 this
             );
@@ -189,6 +196,22 @@ public class NyangNyangSnapToyUI : UIPopup
         }
     }
 
+    // 냥냥스냅 메인 UI에서 머지보드 최신 로드가 끝난 뒤 호출합니다.
+    // 비활성 상태에서도 버튼을 미리 만들어 패널이 켜질 때 생성 과정이 보이지 않게 합니다.
+    public bool RefreshFromLoadedInventory()
+    {
+        StopLoadButtonsCoroutine();
+
+        if (!ValidateLoadReferences())
+        {
+            SetEmptyMessageActive(true);
+            return false;
+        }
+
+        LoadToyButtons();
+        return true;
+    }
+
     private void RequestLoadToyButtons()
     {
         StopLoadButtonsCoroutine();
@@ -203,30 +226,44 @@ public class NyangNyangSnapToyUI : UIPopup
     {
         if (!ValidateLoadReferences())
         {
+            SetEmptyMessageActive(true);
             _loadButtonsCoroutine = null;
             yield break;
         }
 
-        const float retryInterval = 0.25f;
-        const float timeout = 5f;
-        float elapsedTime = 0f;
-
         DebugTool.Log(
-            "[NyangNyangSnapToyUI] 모바일 보유 아이템 조회 대기 시작",
+            "[NyangNyangSnapToyUI] 머지보드 최신 데이터 로드 시작",
             DebugType.UI,
             this
         );
 
-        while (isActiveAndEnabled &&
-               !HasOwnedToyItem() &&
-               elapsedTime < timeout)
-        {
-            yield return new WaitForSecondsRealtime(retryInterval);
-            elapsedTime += retryInterval;
-        }
+        Task<bool> reloadTask = MergeBoardItemService.Instance.ReloadInventoryFromServerAsync();
+
+        while (isActiveAndEnabled && !reloadTask.IsCompleted)
+            yield return null;
 
         if (!isActiveAndEnabled)
         {
+            _loadButtonsCoroutine = null;
+            yield break;
+        }
+
+        if (reloadTask.IsFaulted)
+        {
+            Debug.LogException(reloadTask.Exception, this);
+            _loadButtonsCoroutine = null;
+            yield break;
+        }
+
+        if (!reloadTask.Result)
+        {
+            DebugTool.Warning(
+                "[NyangNyangSnapToyUI] 머지보드 최신 데이터 로드에 실패했습니다.",
+                DebugType.UI,
+                this
+            );
+
+            SetEmptyMessageActive(true);
             _loadButtonsCoroutine = null;
             yield break;
         }
@@ -313,11 +350,22 @@ public class NyangNyangSnapToyUI : UIPopup
             displayedItemCount++;
         }
 
+        SetEmptyMessageActive(displayedItemCount <= 0);
+
         DebugTool.Log(
             $"[NyangNyangSnapToyUI] 보유 장난감 표시 완료 / 종류:{displayedItemCount}",
             DebugType.UI,
             this
         );
+    }
+
+    private void SetEmptyMessageActive(bool isActive)
+    {
+        if (_emptyMessageText == null)
+            return;
+
+        _emptyMessageText.text = _emptyMessageTextString;
+        _emptyMessageText.gameObject.SetActive(isActive);
     }
 
     private bool ValidateLoadReferences()
@@ -383,20 +431,56 @@ public class NyangNyangSnapToyUI : UIPopup
         _createdButtons.Add(createdButton);
     }
 
-    private void SetButtonSprite(Button createdButton, NyangNyangSnapInventoryItem item)
+    private Image GetToyItemImage(Button button)
     {
-        Image itemImage = createdButton.GetComponent<Image>();
+        if (button == null)
+            return null;
+
+        Transform imageTransform = button.transform.Find("ToyImage");
+
+        if (imageTransform == null)
+        {
+            DebugTool.Warning(
+                "[NyangNyangSnapToyUI] ToyButton 자식에서 ToyImage를 찾지 못했습니다.",
+                DebugType.UI,
+                this
+            );
+
+            return null;
+        }
+
+        Image itemImage = imageTransform.GetComponent<Image>();
 
         if (itemImage == null)
         {
             DebugTool.Warning(
-                $"[NyangNyangSnapToyUI] 생성된 버튼에 Image가 없습니다. ItemID:{item.ItemID}",
+                "[NyangNyangSnapToyUI] ToyImage에 Image 컴포넌트가 없습니다.",
+                DebugType.UI,
+                this
+            );
+
+            return null;
+        }
+
+        return itemImage;
+    }
+
+    private void SetButtonSprite(Button createdButton, NyangNyangSnapInventoryItem item)
+    {
+        Image itemImage = GetToyItemImage(createdButton);
+
+        if (itemImage == null)
+        {
+            DebugTool.Warning(
+                $"[NyangNyangSnapToyUI] 생성된 버튼의 ToyImage를 찾지 못했습니다. ItemID:{item.ItemID}",
                 DebugType.UI,
                 this
             );
 
             return;
         }
+
+        itemImage.preserveAspect = true;
 
         UISpriteController spriteController = new UISpriteController(itemImage);
 
@@ -458,7 +542,6 @@ public class NyangNyangSnapToyUI : UIPopup
             EventTriggerType.Drag,
             OnToyDrag
         );
-
         AddEventTrigger(
             eventTrigger,
             EventTriggerType.EndDrag,
@@ -501,13 +584,13 @@ public class NyangNyangSnapToyUI : UIPopup
         if (_placementController == null || selectedButton == null)
             return;
 
-        if (_isPlacementDragging || _isScrollDragging)
+        if (_blockClick || _isPlacementDragging || _isScrollDragging)
             return;
 
         if (_selectedButton == selectedButton && _selectedItemID == item.ItemID)
             return;
 
-        Image itemImage = selectedButton.GetComponent<Image>();
+        Image itemImage = GetToyItemImage(selectedButton);
 
         if (itemImage == null || itemImage.sprite == null)
         {
@@ -580,9 +663,12 @@ public class NyangNyangSnapToyUI : UIPopup
     {
         CancelHold();
 
+        StopReleaseClickBlockCoroutine();
+
         _isPointerPressed = true;
         _isPlacementDragging = false;
         _isScrollDragging = false;
+        _blockClick = false;
 
         _pressedItem = item;
         _pressedButton = button;
@@ -593,10 +679,8 @@ public class NyangNyangSnapToyUI : UIPopup
 
     private void OnToyInitializePotentialDrag(PointerEventData eventData)
     {
-        if (_scrollRect == null)
-            return;
-
-        _scrollRect.OnInitializePotentialDrag(eventData);
+        AutoAssignScrollRect();
+        _scrollRect?.OnInitializePotentialDrag(eventData);
     }
 
     private void OnToyBeginDrag(PointerEventData eventData)
@@ -606,35 +690,39 @@ public class NyangNyangSnapToyUI : UIPopup
 
         CancelHoldCoroutineOnly();
 
+        _blockClick = true;
         _isScrollDragging = true;
 
-        if (_scrollRect != null)
-            _scrollRect.OnBeginDrag(eventData);
+        AutoAssignScrollRect();
+        _scrollRect?.OnBeginDrag(eventData);
     }
 
     private void OnToyDrag(PointerEventData eventData)
     {
         _currentPointerEvent = eventData;
 
+        if (_isScrollDragging)
+        {
+            _scrollRect?.OnDrag(eventData);
+            return;
+        }
+
         if (_isPlacementDragging)
         {
             _placementController?.UpdateToyDrag(eventData.position);
             return;
         }
-
-        if (_isScrollDragging && _scrollRect != null)
-            _scrollRect.OnDrag(eventData);
     }
 
     private void OnToyEndDrag(PointerEventData eventData)
     {
-        if (_isPlacementDragging)
+        if (!_isScrollDragging)
             return;
 
-        if (_isScrollDragging && _scrollRect != null)
-            _scrollRect.OnEndDrag(eventData);
-
+        _scrollRect?.OnEndDrag(eventData);
         _isScrollDragging = false;
+
+        StartReleaseClickBlockNextFrame();
     }
 
     private void OnToyPointerUp(PointerEventData eventData)
@@ -648,9 +736,6 @@ public class NyangNyangSnapToyUI : UIPopup
 
             _isPlacementDragging = false;
 
-            if (_scrollRect != null)
-                _scrollRect.enabled = true;
-
             CancelHold();
 
             if (placed)
@@ -663,11 +748,14 @@ public class NyangNyangSnapToyUI : UIPopup
         }
 
         CancelHold();
+
+        if (_blockClick && _releaseClickBlockCoroutine == null)
+            StartReleaseClickBlockNextFrame();
     }
 
     private void OnToyPointerExit(PointerEventData eventData)
     {
-        if (_isPlacementDragging || _isScrollDragging)
+        if (_isPlacementDragging)
             return;
 
         CancelHoldCoroutineOnly();
@@ -679,10 +767,7 @@ public class NyangNyangSnapToyUI : UIPopup
 
         _holdCoroutine = null;
 
-        if (!_isPointerPressed)
-            yield break;
-
-        if (_isScrollDragging)
+        if (!_isPointerPressed || _isScrollDragging || _blockClick)
             yield break;
 
         if (_pressedButton == null || _pressedItem == null)
@@ -703,14 +788,34 @@ public class NyangNyangSnapToyUI : UIPopup
 
         _isPlacementDragging = true;
 
-        if (_scrollRect != null)
-            _scrollRect.enabled = false;
-
         DebugTool.Log(
             $"[NyangNyangSnapToyUI] 길게 눌러 장난감 배치 시작 / ItemID:{_pressedItem.ItemID}",
             DebugType.UI,
             this
         );
+    }
+
+    private void StartReleaseClickBlockNextFrame()
+    {
+        StopReleaseClickBlockCoroutine();
+        _releaseClickBlockCoroutine = StartCoroutine(ReleaseClickBlockNextFrame());
+    }
+
+    private IEnumerator ReleaseClickBlockNextFrame()
+    {
+        yield return null;
+
+        _blockClick = false;
+        _releaseClickBlockCoroutine = null;
+    }
+
+    private void StopReleaseClickBlockCoroutine()
+    {
+        if (_releaseClickBlockCoroutine == null)
+            return;
+
+        StopCoroutine(_releaseClickBlockCoroutine);
+        _releaseClickBlockCoroutine = null;
     }
 
     private void CancelHoldCoroutineOnly()
@@ -760,12 +865,12 @@ public class NyangNyangSnapToyUI : UIPopup
 
         CancelHold();
 
-        if (_scrollRect != null)
-            _scrollRect.enabled = true;
+        StopReleaseClickBlockCoroutine();
 
         _isPointerPressed = false;
         _isPlacementDragging = false;
         _isScrollDragging = false;
+        _blockClick = false;
 
         ResetSelectedButton(true);
 

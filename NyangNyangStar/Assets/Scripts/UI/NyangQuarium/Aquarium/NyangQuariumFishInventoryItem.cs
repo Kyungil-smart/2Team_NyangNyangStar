@@ -1,3 +1,4 @@
+using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -19,11 +20,32 @@ public sealed class NyangQuariumFishInventoryItem : MonoBehaviour
     [SerializeField] private Image _itemImage;
     [SerializeField] private TMP_Text _countText;
 
+    [Header("이름 표시")]
+    [Tooltip("아이템 이름을 표시하는 TextMeshPro Text")]
+    [SerializeField] private TMP_Text _fishText;
+
+    [Tooltip("아이템 타입별 색상을 적용할 이름 배경 Image")]
+    [SerializeField] private Image _fishTextImage;
+
+    [Header("선택 강조")]
+    [Tooltip("선택 상태의 색상을 적용할 슬롯 루트 Image")]
+    [SerializeField] private Image _slotBackgroundImage;
+
+    [SerializeField] private Color _normalSlotColor = Color.white;
+
+    [SerializeField]
+    private Color _selectedSlotColor =
+        new Color(0.70f, 1f, 0.80f, 1f);
+
     [Header("배치 연결")]
     [SerializeField]
     private NyangQuariumFishPlacementController _placementController;
 
     private Button _button;
+    private Action<NyangQuariumFishInventoryItem> _selectedCallback;
+
+    // 선택 시 FishTextImage에 적용할 타입별 배경색입니다.
+    private Color _nameBackgroundColor = Color.white;
 
     public int ItemId => _itemId;
 
@@ -47,6 +69,8 @@ public sealed class NyangQuariumFishInventoryItem : MonoBehaviour
             _button.onClick.RemoveListener(
                 SelectThisItem);
         }
+
+        _selectedCallback = null;
     }
 
     /// <summary>
@@ -56,12 +80,17 @@ public sealed class NyangQuariumFishInventoryItem : MonoBehaviour
         int itemId,
         int count,
         Sprite itemSprite,
+        string displayName,
+        Color nameBackgroundColor,
         NyangQuariumPlacementCategory category,
-        NyangQuariumFishPlacementController placementController)
+        NyangQuariumFishPlacementController placementController,
+        Action<NyangQuariumFishInventoryItem> selectedCallback)
     {
         _itemId = itemId;
         _category = category;
         _placementController = placementController;
+        _selectedCallback = selectedCallback;
+        _nameBackgroundColor = nameBackgroundColor;
 
         ResolveReferences();
 
@@ -75,45 +104,52 @@ public sealed class NyangQuariumFishInventoryItem : MonoBehaviour
         if (_countText != null)
         {
             _countText.text = $"x{count}";
-            _countText.gameObject.SetActive(count > 1);
+            _countText.gameObject.SetActive(count >= 1);
+        }
+
+        if (_fishText != null)
+        {
+            _fishText.text =
+                string.IsNullOrWhiteSpace(displayName)
+                    ? string.Empty
+                    : displayName;
+
+            // FishText 글자색은 인스펙터 설정을 그대로 사용합니다.
+        }
+
+        if (_fishTextImage != null)
+        {
+            _fishTextImage.color = _nameBackgroundColor;
+
+            // 이름 패널은 선택 여부와 관계없이 항상 표시합니다.
+            _fishTextImage.gameObject.SetActive(true);
         }
 
         if (_button != null)
             _button.interactable = itemSprite != null;
 
+        SetSelected(false);
         BindButton();
     }
 
     /// <summary>
-    /// 표시용 빈 슬롯으로 초기화합니다.
-    /// 슬롯 배경은 유지하고 아이템 정보만 숨깁니다.
+    /// 슬롯의 선택 강조 상태를 변경합니다.
+    /// 이름 패널은 항상 표시하고 슬롯 배경색으로만 선택을 구분합니다.
     /// </summary>
-    public void InitializeEmpty()
+    public void SetSelected(bool isSelected)
     {
-        _itemId = 0;
-        _category = NyangQuariumPlacementCategory.Fish;
-        _placementController = null;
-
-        ResolveReferences();
-
-        if (_itemImage != null)
+        if (_slotBackgroundImage != null)
         {
-            _itemImage.sprite = null;
-            _itemImage.enabled = false;
+            _slotBackgroundImage.color =
+                isSelected
+                    ? _selectedSlotColor
+                    : _normalSlotColor;
         }
 
-        if (_countText != null)
+        if (_fishTextImage != null)
         {
-            _countText.text = string.Empty;
-            _countText.gameObject.SetActive(false);
-        }
-
-        if (_button != null)
-        {
-            _button.onClick.RemoveListener(
-                SelectThisItem);
-
-            _button.interactable = false;
+            _fishTextImage.color = _nameBackgroundColor;
+            _fishTextImage.gameObject.SetActive(true);
         }
     }
 
@@ -121,7 +157,8 @@ public sealed class NyangQuariumFishInventoryItem : MonoBehaviour
     {
         if (_placementController == null)
         {
-            DebugTool.Warning($"[NyangQuariumFishInventoryItem] " +
+            DebugTool.Warning(
+                $"[NyangQuariumFishInventoryItem] " +
                 $"{name}에 PlacementController가 연결되지 않았습니다.",
                 DebugType.UI,
                 this);
@@ -132,7 +169,8 @@ public sealed class NyangQuariumFishInventoryItem : MonoBehaviour
         if (_itemImage == null ||
             _itemImage.sprite == null)
         {
-            DebugTool.Warning($"[NyangQuariumFishInventoryItem] " +
+            DebugTool.Warning(
+                $"[NyangQuariumFishInventoryItem] " +
                 $"{name}에 Item Sprite가 없습니다.",
                 DebugType.UI,
                 this);
@@ -140,12 +178,16 @@ public sealed class NyangQuariumFishInventoryItem : MonoBehaviour
             return;
         }
 
+        // 리스트 UI에 현재 슬롯이 선택됐음을 알립니다.
+        _selectedCallback?.Invoke(this);
+
         _placementController.SelectItem(
             _itemId,
             _itemImage.sprite,
             _category);
 
-        DebugTool.Log($"[NyangQuariumFishInventoryItem] " +
+        DebugTool.Log(
+            $"[NyangQuariumFishInventoryItem] " +
             $"아이템 선택 - " +
             $"ItemId:{_itemId}, Category:{_category}",
             DebugType.UI,
@@ -157,11 +199,20 @@ public sealed class NyangQuariumFishInventoryItem : MonoBehaviour
         if (_button == null)
             _button = GetComponent<Button>();
 
+        if (_slotBackgroundImage == null)
+            _slotBackgroundImage = GetComponent<Image>();
+
         if (_itemImage == null)
-            _itemImage = FindItemImage();
+            _itemImage = FindImageByName("FishImage");
+
+        if (_fishTextImage == null)
+            _fishTextImage = FindImageByName("FishTextImage");
 
         if (_countText == null)
-            _countText = FindCountText();
+            _countText = FindTextByName("CountText");
+
+        if (_fishText == null)
+            _fishText = FindTextByName("FishText");
     }
 
     private void BindButton()
@@ -176,7 +227,7 @@ public sealed class NyangQuariumFishInventoryItem : MonoBehaviour
             SelectThisItem);
     }
 
-    private Image FindItemImage()
+    private Image FindImageByName(string targetName)
     {
         Image[] images =
             GetComponentsInChildren<Image>(true);
@@ -184,16 +235,16 @@ public sealed class NyangQuariumFishInventoryItem : MonoBehaviour
         foreach (Image image in images)
         {
             if (image != null &&
-                image.gameObject != gameObject)
+                image.gameObject.name == targetName)
             {
                 return image;
             }
         }
 
-        return GetComponent<Image>();
+        return null;
     }
 
-    private TMP_Text FindCountText()
+    private TMP_Text FindTextByName(string targetName)
     {
         TMP_Text[] texts =
             GetComponentsInChildren<TMP_Text>(true);
@@ -201,14 +252,12 @@ public sealed class NyangQuariumFishInventoryItem : MonoBehaviour
         foreach (TMP_Text text in texts)
         {
             if (text != null &&
-                text.name.Contains("Count"))
+                text.gameObject.name == targetName)
             {
                 return text;
             }
         }
 
-        return texts.Length > 0
-            ? texts[0]
-            : null;
+        return null;
     }
 }

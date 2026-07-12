@@ -1,4 +1,5 @@
 using UI;
+using Util;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -71,6 +72,7 @@ namespace UI.FindMoongchi
                 _controller.ChangeColor(_tintColor);
 
             _loadedKey = _spriteKey;
+            KeyContainer.Sprites.Add(_spriteKey);
             _controller.ChangeSprite(_spriteKey, _nativeSize);
         }
 

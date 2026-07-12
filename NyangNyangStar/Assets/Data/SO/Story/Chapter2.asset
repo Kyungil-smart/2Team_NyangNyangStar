@@ -12,8 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0d61fbaf62be12b43a1c79c6ee1e5f43, type: 3}
   m_Name: Chapter2
   m_EditorClassIdentifier: 
-  storyId: 2
-  title: 
+  storyId: 3
+  title: "\uC544\uCFE0\uC544\uB9AC\uC6C0"
+  backgroundKey: NQ_BG_Aquarium
   cards:
   - ID: S3_001
     char_name: "\uC6B0\uB9AC"
@@ -23,14 +24,16 @@ MonoBehaviour:
       \uC2DC\uC6D0\uD558\uACE0 \uC88B\uB2E4!"
     card_bg: BG_01
     end: 0
+    isOpponent: 0
   - ID: S3_002
     char_name: "\uBB49\uCE58"
     frame: FRM_Cat_01
     char_portrait: "\uBB49\uCE58_portrait"
-    dialogue: "\uC640, \uC544\uCFE0\uC544\uB9AC\uC6C0\uC5D0 \uC624\uB2C8\uAE4C \uC9C4\uC9DC
-      \uC2DC\uC6D0\uD558\uACE0 \uC88B\uB2E4!"
+    dialogue: "(\uC9D1\uC911\uD558\uB294 \uB4EF\uC774 \uAF2C\uB9AC\uB97C \uC0B4\uB791\uAC70\uB9AC\uBA70
+      \uB208\uC744 \uBC18\uC9DD\uC778\uB2E4.)"
     card_bg: BG_01
     end: 0
+    isOpponent: 1
   - ID: S3_003
     char_name: "\uC6B0\uB9AC"
     frame: FRM_Player_01
@@ -39,6 +42,7 @@ MonoBehaviour:
       \uB208\uC744 \uBABB \uB5BC\uB124?"
     card_bg: BG_01
     end: 0
+    isOpponent: 0
   - ID: S3_004
     char_name: "\uC6B0\uB9AC"
     frame: FRM_Player_01
@@ -47,6 +51,7 @@ MonoBehaviour:
       \uC5C4\uCCAD \uC88B\uC544\uD558\uC796\uC544."
     card_bg: BG_01
     end: 0
+    isOpponent: 0
   - ID: S3_005
     char_name: "\uC6B0\uB9AC"
     frame: FRM_Player_01
@@ -55,6 +60,7 @@ MonoBehaviour:
       \uC9C4\uC791 \uBCF4\uC5EC\uC904 \uAC78 \uADF8\uB7AC\uB124."
     card_bg: BG_01
     end: 0
+    isOpponent: 0
   - ID: S3_006
     char_name: "\uC6B0\uB9AC"
     frame: FRM_Player_01
@@ -63,6 +69,7 @@ MonoBehaviour:
       \uB9E4\uC77C \uBCFC \uC218 \uC788\uC9C0 \uC54A\uC744\uAE4C?"
     card_bg: BG_01
     end: 0
+    isOpponent: 0
   - ID: S3_007
     char_name: "\uC6B0\uB9AC"
     frame: FRM_Player_01
@@ -71,6 +78,7 @@ MonoBehaviour:
       '\uC544\uCFE0\uC544\uB9AC\uC6C0'\uC744 \uB9CC\uB4E4\uC5B4 \uC8FC\uC790!"
     card_bg: BG_01
     end: 0
+    isOpponent: 0
   - ID: S3_008
     char_name: "\uC6B0\uB9AC"
     frame: FRM_Player_01
@@ -79,3 +87,4 @@ MonoBehaviour:
       \uC900\uBE44\uBB3C\uC744 \uC138\uD305\uD574\uC57C\uACA0\uC5B4!"
     card_bg: BG_01
     end: 1
+    isOpponent: 0

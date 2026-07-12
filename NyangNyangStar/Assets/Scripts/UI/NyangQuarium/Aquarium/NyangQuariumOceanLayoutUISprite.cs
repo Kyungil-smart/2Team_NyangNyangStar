@@ -28,7 +28,7 @@ public class NyangQuariumOceanLayoutUISprite : UIBase
         SetSprite(NyangQuariumOceanLayoutUIImage.NyangQuariumLayoutPanel, "NQ_BG_SaltWater");
 
         SetSprite(NyangQuariumOceanLayoutUIImage.Window, "NQ_Img_AquaTunnel");
-        SetSprite(NyangQuariumOceanLayoutUIImage.BackButton, "NQ_Btn_Back");
+        SetSprite(NyangQuariumOceanLayoutUIImage.BackButton, "머지보드 홈 버튼");
         SetSprite(NyangQuariumOceanLayoutUIImage.OceanFishButton, "NQ_Btn_Inventory");
         SetSprite(NyangQuariumOceanLayoutUIImage.ChangeButton, "NQ_Btn_FreshWater");
         SetSprite(NyangQuariumOceanLayoutUIImage.Confirm, "NQ_Btn_Confirm");
@@ -52,7 +52,13 @@ public class NyangQuariumOceanLayoutUISprite : UIBase
         SetSprite(NyangQuariumOceanLayoutUIImage.FishTabButton, "Snap_Btn_White");
         SetSprite(NyangQuariumOceanLayoutUIImage.NatureTextButton, "Snap_Btn_White");
         SetSprite(NyangQuariumOceanLayoutUIImage.FilterButton, "FilterButton");
-        
+
+        SetSprite(NyangQuariumOceanLayoutUIImage.FilterTab, "Shape_Rectangle");
+        SetSprite(NyangQuariumOceanLayoutUIImage.NatureFilterTab, "Shape_Rectangle");
+
+
+        SetSprite(NyangQuariumOceanLayoutUIImage.FishTextImage, "Snap_Btn_White");
+
     }
 
 
@@ -92,5 +98,8 @@ public enum NyangQuariumOceanLayoutUIImage
     FishTabButton,
     NatureTextButton,
     FilterButton,
-    OceanWaterFishView
+    OceanWaterFishView,
+    FishTextImage,
+    FilterTab,
+    NatureFilterTab
 }

@@ -417,6 +417,29 @@ namespace UI.NyangQuarium.MergeBoard
             if (generatorData == null)
                 return string.Empty;
 
+            string sizeKey = generatorData.Level switch
+            {
+                1 => "Small",
+                2 => "Medium",
+                3 => "Large",
+                _ => string.Empty
+            };
+
+            if (!string.IsNullOrEmpty(sizeKey))
+            {
+                switch (generatorData.GeneratorType)
+                {
+                    case GeneratorType.Freshwater:
+                        return $"Gen_FreshTank_{sizeKey}";
+                    case GeneratorType.BrackishWater:
+                        return $"Gen_BrackishTank_{sizeKey}";
+                    case GeneratorType.Saltwater:
+                        return $"Gen_SaltTank_{sizeKey}";
+                    case GeneratorType.Decoration:
+                        return $"Gen_EnvBox_{sizeKey}";
+                }
+            }
+
             switch (generatorData.GeneratorName?.Trim())
             {
                 case "작은 담수어 어항":

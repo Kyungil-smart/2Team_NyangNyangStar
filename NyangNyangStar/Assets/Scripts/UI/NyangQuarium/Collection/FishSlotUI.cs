@@ -6,25 +6,25 @@ using UnityEngine.UI;
 
 public class FishSlotUI : UIBase
 {
-    [SerializeField] private Button _fishSlot;
+    [SerializeField] private Button _fishSlotBackground;
     [SerializeField] private GameObject _lockedOverlay;
     [SerializeField] private TMP_Text _fishNameText;
 
     private FishSlotSprite _sprite;
     private NyangQuariumFishData _fishData;
     private NyangQuariumCollectionPopupUI _collectionPopup;
-    private bool _isUnlocked;
 
     public FishType FishType => _fishData.FishType;
     public int FishId => _fishData.FishId;
 
     public override void Init()
     {
+        Bind<Button>(typeof(FishSlotButtons));
         Bind<GameObject>(typeof(FishSlotObjects));
         Bind<TMP_Text>(typeof(FishSlotTexts));
 
-        _fishSlot = GetComponent<Button>();
-        _fishSlot.onClick.AddListener(OpenInfoPopup);
+        _fishSlotBackground = GetButton((int)FishSlotButtons.FishSlotBackground);
+        _fishSlotBackground.onClick.AddListener(OpenInfoPopup);
 
         _lockedOverlay = GetObject((int)FishSlotObjects.LockedOverlay);
 
@@ -49,8 +49,6 @@ public class FishSlotUI : UIBase
 
     public void RefreshUnlockState(bool isUnlocked)
     {
-        _isUnlocked = isUnlocked;
-
         _sprite.SetFishImageColor(isUnlocked ? Color.white : Color.black);
         _lockedOverlay.SetActive(!isUnlocked);
 
@@ -63,14 +61,19 @@ public class FishSlotUI : UIBase
     {
         GameManager.Audio.PlaySfx("Main_SFX_Touch");
 
-        _collectionPopup.OnClickFishSlot(_fishData, _isUnlocked);
+        _collectionPopup.OnClickFishSlot(_fishData);
     }
 
     private void OnDestroy()
     {
-        if (_fishSlot != null)
-            _fishSlot.onClick.RemoveAllListeners();
+        if (_fishSlotBackground != null)
+            _fishSlotBackground.onClick.RemoveAllListeners();
     }
+}
+
+public enum FishSlotButtons
+{
+    FishSlotBackground
 }
 
 public enum FishSlotObjects

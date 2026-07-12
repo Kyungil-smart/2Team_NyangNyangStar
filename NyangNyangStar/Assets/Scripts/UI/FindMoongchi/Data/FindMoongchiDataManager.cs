@@ -60,6 +60,13 @@ namespace UI.FindMoongchi
         private static readonly IReadOnlyList<MoongchiProfileData> EmptyProfiles =
             Array.Empty<MoongchiProfileData>();
 
+        private sealed class ToolUseProgressSnapshot
+        {
+            public List<int> OpenedTileIDs;
+            public List<int> FoundTargetIDs;
+            public List<FindMoongchiMissionProgressData> MissionProgresses;
+        }
+
         public FindMoongchiProgressRuntimeData Progress => _progress;
         public bool IsProgressReady => _isProgressReady && _progress != null;
 
@@ -171,9 +178,11 @@ namespace UI.FindMoongchi
             int loadVersion = ++_progressLoadVersion;
             FindMoongchiProgressRuntimeData loaded = await LoadProgressAsync();
             string currentUserId = GetCurrentProgressUserId();
-            _loadingProgressUserId = string.Empty;
 
-            if (loadVersion != _progressLoadVersion &&
+            if (loadVersion == _progressLoadVersion)
+                _loadingProgressUserId = string.Empty;
+
+            if (loadVersion != _progressLoadVersion ||
                 !string.Equals(loadUserId, currentUserId, StringComparison.Ordinal))
             {
                 DebugTool.Warning(
@@ -195,6 +204,7 @@ namespace UI.FindMoongchi
                 _eventScheduleSO);
 
             EnsureStageCycleReady(loaded);
+            bool searchChanceNormalized = NormalizeSearchChanceLimits(loaded);
 
             _progress = loaded;
             _isProgressReady = true;
@@ -204,7 +214,7 @@ namespace UI.FindMoongchi
 
             OnProgressReady?.Invoke();
 
-            if (!hadValidCycle || resetApplied || energyBonusApplied)
+            if (!hadValidCycle || resetApplied || searchChanceNormalized || energyBonusApplied)
                 await SaveProgressAsync(_progress);
 
             return true;
@@ -215,6 +225,7 @@ namespace UI.FindMoongchi
             _progressLoadVersion++;
             _isProgressReady = false;
             _progress = null;
+            _loadingProgressUserId = string.Empty;
         }
 
         private static string GetCurrentProgressUserId()
@@ -374,9 +385,84 @@ namespace UI.FindMoongchi
             FindMoongchiGameLogic gameLogic,
             FindMoongchiUseToolResult result)
         {
+            ToolUseProgressSnapshot snapshot = CreateToolUseProgressSnapshot();
             TrackToolUseResult(result);
             CaptureBoardFromGame(gameLogic);
-            return await PersistProgressAsync();
+
+            bool saved = await PersistProgressAsync();
+
+            if (!saved)
+                RestoreToolUseProgressSnapshot(snapshot);
+
+            return saved;
+        }
+
+        private ToolUseProgressSnapshot CreateToolUseProgressSnapshot()
+        {
+            if (!IsProgressReady)
+                return null;
+
+            return new ToolUseProgressSnapshot
+            {
+                OpenedTileIDs = CloneIntList(_progress.OpenedTileIDs),
+                FoundTargetIDs = CloneIntList(_progress.FoundTargetIDs),
+                MissionProgresses = CloneMissionProgresses(_progress.MissionProgresses)
+            };
+        }
+
+        private void RestoreToolUseProgressSnapshot(ToolUseProgressSnapshot snapshot)
+        {
+            if (!IsProgressReady || snapshot == null)
+                return;
+
+            _progress.OpenedTileIDs ??= new List<int>();
+            _progress.OpenedTileIDs.Clear();
+            _progress.OpenedTileIDs.AddRange(snapshot.OpenedTileIDs);
+
+            _progress.FoundTargetIDs ??= new List<int>();
+            _progress.FoundTargetIDs.Clear();
+            _progress.FoundTargetIDs.AddRange(snapshot.FoundTargetIDs);
+
+            _progress.MissionProgresses ??= new List<FindMoongchiMissionProgressData>();
+            _progress.MissionProgresses.Clear();
+            _progress.MissionProgresses.AddRange(CloneMissionProgresses(snapshot.MissionProgresses));
+        }
+
+        private static List<FindMoongchiMissionProgressData> CloneMissionProgresses(
+            IReadOnlyList<FindMoongchiMissionProgressData> source)
+        {
+            List<FindMoongchiMissionProgressData> result = new List<FindMoongchiMissionProgressData>();
+
+            if (source == null)
+                return result;
+
+            for (int i = 0; i < source.Count; i++)
+            {
+                FindMoongchiMissionProgressData entry = source[i];
+
+                if (entry == null)
+                    continue;
+
+                result.Add(new FindMoongchiMissionProgressData(
+                    entry.MissionID,
+                    entry.CurrentAmount,
+                    entry.IsRewardClaimed));
+            }
+
+            return result;
+        }
+
+        private static List<int> CloneIntList(IReadOnlyList<int> source)
+        {
+            List<int> result = new List<int>();
+
+            if (source == null)
+                return result;
+
+            for (int i = 0; i < source.Count; i++)
+                result.Add(source[i]);
+
+            return result;
         }
 
         public async Task<bool> TryClaimMissionAndPersistAsync(int missionId)
@@ -553,7 +639,9 @@ namespace UI.FindMoongchi
             if (!IsProgressReady || amount <= 0)
                 return;
 
-            _progress.SearchChance += amount;
+            _progress.SearchChance = Mathf.Min(
+                FindMoongchiConstants.MaxDailySearchChance,
+                _progress.SearchChance + amount);
         }
 
         public int GetCurrentStageIdFromProgress()
@@ -578,21 +666,39 @@ namespace UI.FindMoongchi
             if (!IsProgressReady)
                 return false;
 
+            bool changed = NormalizeSearchChanceLimits(_progress);
             int target = FindMoongchiConstants.EnergySpendTarget;
 
             if (target <= 0)
-                return false;
+                return changed;
 
             _progress.DailyEnergySpendProgress = Mathf.Max(0, _progress.DailyEnergySpendProgress);
 
             if (_progress.DailyEnergySpendProgress < target)
-                return false;
+                return changed;
 
-            int grantCount = _progress.DailyEnergySpendProgress / target;
+            int remainBonusCount =
+                FindMoongchiConstants.MaxDailyBonusSearchChance - _progress.TodayBonusSearchChanceCount;
+
+            if (remainBonusCount <= 0)
+            {
+                _progress.DailyEnergySpendProgress = 0;
+                return true;
+            }
+
+            int grantCount = Mathf.Min(_progress.DailyEnergySpendProgress / target, remainBonusCount);
             int remainProgress = _progress.DailyEnergySpendProgress % target;
 
+            if (grantCount <= 0)
+                return changed;
+
+            if (grantCount >= remainBonusCount)
+                remainProgress = 0;
+
             _progress.DailyEnergySpendProgress = remainProgress;
-            _progress.SearchChance += grantCount;
+            _progress.SearchChance = Mathf.Min(
+                FindMoongchiConstants.MaxDailySearchChance,
+                _progress.SearchChance + grantCount);
             _progress.TodayBonusSearchChanceCount += grantCount;
 
             DebugTool.Log(
@@ -601,6 +707,46 @@ namespace UI.FindMoongchi
                 this);
 
             return true;
+        }
+
+        private static bool NormalizeSearchChanceLimits(FindMoongchiProgressRuntimeData progress)
+        {
+            if (progress == null)
+                return false;
+
+            int originalSearchChance = progress.SearchChance;
+            int originalBonusCount = progress.TodayBonusSearchChanceCount;
+            int originalEnergyProgress = progress.DailyEnergySpendProgress;
+
+            int searchChance = Mathf.Clamp(
+                progress.SearchChance,
+                0,
+                FindMoongchiConstants.MaxDailySearchChance);
+
+            int bonusCount = Mathf.Clamp(
+                progress.TodayBonusSearchChanceCount,
+                0,
+                FindMoongchiConstants.MaxDailyBonusSearchChance);
+
+            int inferredBonusCount = Mathf.Clamp(
+                searchChance - FindMoongchiConstants.DailySearchChance,
+                0,
+                FindMoongchiConstants.MaxDailyBonusSearchChance);
+
+            bonusCount = Mathf.Max(bonusCount, inferredBonusCount);
+
+            int energyProgress = Mathf.Max(0, progress.DailyEnergySpendProgress);
+
+            if (bonusCount >= FindMoongchiConstants.MaxDailyBonusSearchChance)
+                energyProgress = 0;
+
+            progress.SearchChance = searchChance;
+            progress.TodayBonusSearchChanceCount = bonusCount;
+            progress.DailyEnergySpendProgress = energyProgress;
+
+            return originalSearchChance != progress.SearchChance ||
+                   originalBonusCount != progress.TodayBonusSearchChanceCount ||
+                   originalEnergyProgress != progress.DailyEnergySpendProgress;
         }
 
         // 이벤트 화면 진입 시 호출하는 진행 데이터 로드 API
@@ -658,6 +804,8 @@ namespace UI.FindMoongchi
                 DebugTool.Warning("[FindMoongchiDataManager] 저장할 진행 데이터가 null입니다.", DebugType.Data, this);
                 return false;
             }
+
+            NormalizeSearchChanceLimits(progressData);
 
             if (!await WaitForFirestoreReadyAsync())
                 return false;

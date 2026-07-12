@@ -35,6 +35,12 @@ public class NyangQuariumOceanLayoutUI : UIPopup, INyangquariumEntryReceiver
     [Tooltip("전체, 해수, 기수 필터가 들어 있는 패널")]
     [SerializeField] private GameObject _filterTab;
 
+    [Tooltip("자연 요소 필터 목록이 들어 있는 패널")]
+    [SerializeField] private GameObject _natureFilterTab;
+
+    [Tooltip("현재 인벤토리 카테고리를 확인할 목록 UI")]
+    [SerializeField] private NyangQuariumFishInventoryListUI _inventoryListUI;
+
     [Tooltip("비워두면 패널의 RectTransform을 자동으로 사용합니다.")]
     [SerializeField] private RectTransform _inventoryRect;
 
@@ -79,6 +85,9 @@ public class NyangQuariumOceanLayoutUI : UIPopup, INyangquariumEntryReceiver
     private NyangQuariumUIVisibilityToggle _uiVisibilityToggle;
     private NyangQuariumOutsideTouchArea _outsideTouchArea;
 
+
+    [SerializeField] private Button _fishTabButton;
+
     public override void Init()
     {
         if (_isInitialized)
@@ -122,6 +131,13 @@ public class NyangQuariumOceanLayoutUI : UIPopup, INyangquariumEntryReceiver
     {
         if (_inventoryRect == null && _oceanwaterLayoutPanel != null)
             _inventoryRect = _oceanwaterLayoutPanel.GetComponent<RectTransform>();
+
+        if (_inventoryListUI == null && _oceanwaterLayoutPanel != null)
+        {
+            _inventoryListUI =
+                _oceanwaterLayoutPanel.GetComponentInChildren<
+                    NyangQuariumFishInventoryListUI>(true);
+        }
 
         if (_inventoryRect != null)
             _inventoryOpenedPosition = _inventoryRect.anchoredPosition;
@@ -186,6 +202,11 @@ public class NyangQuariumOceanLayoutUI : UIPopup, INyangquariumEntryReceiver
         if (_filterTab != null)
         {
             _filterTab.SetActive(false);
+        }
+
+        if (_natureFilterTab != null)
+        {
+            _natureFilterTab.SetActive(false);
         }
 
         if (_oceanwaterLayoutPanel != null)
@@ -302,16 +323,29 @@ public class NyangQuariumOceanLayoutUI : UIPopup, INyangquariumEntryReceiver
             return;
         }
 
-        _isChangingLayout = true;
-
         GameManager.Audio.PlaySfx("Main_SFX_Touch");
 
-        PrepareLinkedLayout(_freshLayoutUI);
+        if (NyangquariumMainUIManager.Active != null)
+        {
+            bool transitionStarted =
+                NyangquariumMainUIManager.Active.OpenOwnedContentWithTransition(
+                _freshLayoutUI,
+                _entryMode,
+                playClickSfx: false);
 
-        _freshLayoutUI.gameObject.SetActive(true);
-        _freshLayoutUI.PlayOpenAnimation();
+            if (!transitionStarted)
+                return;
 
-        gameObject.SetActive(false);
+            _isChangingLayout = true;
+        }
+        else
+        {
+            _isChangingLayout = true;
+            PrepareLinkedLayout(_freshLayoutUI);
+            _freshLayoutUI.gameObject.SetActive(true);
+            _freshLayoutUI.PlayOpenAnimation();
+            gameObject.SetActive(false);
+        }
 
         DebugTool.Log(
             "[NyangQuariumOceanLayoutUI] 담수 레이아웃 UI로 변경",
@@ -404,18 +438,57 @@ public class NyangQuariumOceanLayoutUI : UIPopup, INyangquariumEntryReceiver
 
     private void OnClickFilterButton()
     {
-        if (_filterTab == null)
+        GameObject currentFilterTab = GetCurrentFilterTab();
+
+        if (currentFilterTab == null)
+        {
+            DebugTool.Warning(
+                "[NyangQuariumOceanLayoutUI] 현재 카테고리의 FilterTab이 연결되지 않았습니다.",
+                DebugType.UI,
+                this);
             return;
+        }
 
         GameManager.Audio.PlaySfx("Main_SFX_Touch");
 
-        bool isOpen = !_filterTab.activeSelf;
-        _filterTab.SetActive(isOpen);
+        if (_filterTab != null && _filterTab != currentFilterTab)
+            _filterTab.SetActive(false);
 
-        DebugTool.Log(
-            $"[NyangQuariumOceanLayoutUI] 필터 탭 {(isOpen ? "열기" : "닫기")}",
-            DebugType.UI,
-            this);
+        if (_natureFilterTab != null &&
+            _natureFilterTab != currentFilterTab)
+        {
+            _natureFilterTab.SetActive(false);
+        }
+
+        currentFilterTab.SetActive(
+            !currentFilterTab.activeSelf);
+    }
+
+    private GameObject GetCurrentFilterTab()
+    {
+        if (_inventoryListUI == null && _oceanwaterLayoutPanel != null)
+        {
+            _inventoryListUI =
+                _oceanwaterLayoutPanel.GetComponentInChildren<
+                    NyangQuariumFishInventoryListUI>(true);
+        }
+
+        if (_inventoryListUI == null)
+            return _filterTab;
+
+        return _inventoryListUI.CurrentCategory ==
+               NyangQuariumPlacementCategory.Nature
+            ? _natureFilterTab
+            : _filterTab;
+    }
+
+    private void CloseFilterTabs()
+    {
+        if (_filterTab != null)
+            _filterTab.SetActive(false);
+
+        if (_natureFilterTab != null)
+            _natureFilterTab.SetActive(false);
     }
 
     private void OnClickCloseButton()
@@ -434,6 +507,11 @@ public class NyangQuariumOceanLayoutUI : UIPopup, INyangquariumEntryReceiver
 
         _isInventoryAnimating = true;
         _oceanwaterLayoutPanel.SetActive(true);
+
+        SelectDefaultFishTabButton();
+
+        CloseFilterTabs();
+
         RefreshFishGridCellSize();
 
         _inventoryRect.DOKill();
@@ -448,6 +526,30 @@ public class NyangQuariumOceanLayoutUI : UIPopup, INyangquariumEntryReceiver
                 _isInventoryAnimating = false;
                 DebugTool.Log("[NyangQuariumOceanLayoutUI] 해수 통합 인벤토리 열기 완료", DebugType.UI, this);
             });
+    }
+
+    /// <summary>
+    /// 해수 배치 패널을 열 때 기본 카테고리 탭을 관상어 버튼 선택 상태로 만듭니다.
+    /// Button 컴포넌트의 Selected Color를 그대로 사용합니다.
+    /// </summary>
+    private void SelectDefaultFishTabButton()
+    {
+        if (_fishTabButton == null)
+        {
+            DebugTool.Warning(
+                "[NyangQuariumOceanLayoutUI] FishTabButton이 연결되지 않아 기본 탭 선택 색상을 적용할 수 없습니다.",
+                DebugType.UI,
+                this);
+
+            return;
+        }
+
+        _fishTabButton.Select();
+
+        DebugTool.Log(
+            "[NyangQuariumOceanLayoutUI] 배치 패널 기본 선택 탭: 관상어",
+            DebugType.UI,
+            this);
     }
 
     /// <summary>
@@ -512,10 +614,7 @@ public class NyangQuariumOceanLayoutUI : UIPopup, INyangquariumEntryReceiver
         _isInventoryOpened = false;
         _isInventoryAnimating = true;
 
-        if (_filterTab != null)
-        {
-            _filterTab.SetActive(false);
-        }
+        CloseFilterTabs();
 
         _inventoryRect.DOKill();
         _inventoryRect
@@ -570,8 +669,7 @@ public class NyangQuariumOceanLayoutUI : UIPopup, INyangquariumEntryReceiver
             _inventoryRect.anchoredPosition = GetInventoryClosedPosition();
         }
 
-        if (_filterTab != null)
-            _filterTab.SetActive(false);
+        CloseFilterTabs();
 
         if (_oceanwaterLayoutPanel != null)
             _oceanwaterLayoutPanel.SetActive(false);

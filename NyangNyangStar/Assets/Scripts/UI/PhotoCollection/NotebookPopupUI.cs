@@ -7,6 +7,8 @@ using Util;
 
 public class NotebookPopupUI : UIPopup
 {
+    private const int CatColumnCount = 3;
+
     [Header("DOTween 설정")]
     [SerializeField] private Transform _panel;
     [SerializeField] private float _popupScale = 0.85f;
@@ -19,6 +21,9 @@ public class NotebookPopupUI : UIPopup
     [Header("고양이 상세보기 버튼")]
     [SerializeField] private Button _catBackground;
 
+    [Header("고양이 슬롯")]
+    [SerializeField] private RectTransform _content;
+
     private NotebookPopupSprite _sprite;
     private SelectedCatPopupUI _selectedCatPopup;
 
@@ -29,6 +34,8 @@ public class NotebookPopupUI : UIPopup
         _closeButton = GetButton((int)NotebookPopupButtons.CloseButton);
         _background = GetButton((int)NotebookPopupButtons.Background);
         _catBackground = GetButton((int)NotebookPopupButtons.CatBackground1);
+
+        RefreshGridCellSize();
 
         BindButtons();
         InitPopup(KeyContainer.Prefabs.SelectedCatPopupUI, _catBackground);
@@ -88,6 +95,28 @@ public class NotebookPopupUI : UIPopup
         _panel.localScale = Vector3.one * _popupScale;
         _panel.DOScale(1f, _popupScaleDuration)
             .SetEase(Ease.OutSine);
+    }
+
+    private void RefreshGridCellSize()
+    {
+        if (_content == null) return;
+
+        GridLayoutGroup grid = _content.GetComponent<GridLayoutGroup>();
+
+        if (grid == null) return;
+
+        float contentWidth = _content.rect.width;
+
+        float padding = grid.padding.left + grid.padding.right;
+        float spacing = grid.spacing.x * (CatColumnCount - 1);
+
+        float cellWidth = (contentWidth - padding - spacing) / CatColumnCount;
+        float cellHeight = cellWidth * 6f / 5f;
+
+        grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+        grid.constraintCount = CatColumnCount;
+
+        grid.cellSize = new Vector2(cellWidth, cellHeight);
     }
 
     private void CloseNotebookPopup()

@@ -24,7 +24,8 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 01f5084cbd2817c42abeb68841e73649, type: 2}
   - {fileID: 11400000, guid: 7684103119f56cb468b94264b4781452, type: 2}
   - {fileID: 11400000, guid: 0fc986c90daa4280a89b9952a7258efb, type: 2}
-  userId: uT1LnEIsTOUhyIi06nEB0PXjd6u2
+  - {fileID: 11400000, guid: 8d64698eafa63f8458db278b9066f553, type: 2}
+  userId: j2nTbqy0yiTF2jKIdv2EruSWkum2
   nickname: New User
   userLevel: 1
   userExp: 0
@@ -33,5 +34,5 @@ MonoBehaviour:
   uploadPost: 0
   followerNumber: 0
   followingNumber: 0
-  lastLogin: 2026.06.29 10:20
+  lastLogin: 2026.07.06 16:49
   lastLogout: 2026.06.29 02:47

@@ -17,6 +17,12 @@ MonoBehaviour:
     m_SerializedData: []
   m_GUID: c1b3fe90664810e46aaa0ef794b03558
   m_SerializeEntries:
+  - m_GUID: 04a5d9d4785f4b346835546984770d79
+    m_Address: FM_Shop_Logo
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 09d37650309db2343b0100575f9d0d89
     m_Address: FM_Target_LipBalm
     m_ReadOnly: 0
@@ -119,12 +125,6 @@ MonoBehaviour:
     m_SerializedLabels:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 8a2d371e13144bf47870fa2acd5b7b11
-    m_Address: FM_Target_Moongchi
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - Sprite
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 8c5d23fb91619ab4ca4162e69ee50bfa
     m_Address: FM_Btn_Help
     m_ReadOnly: 0
@@ -139,6 +139,12 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 8f6ad64cac7b80046b405869dc36cd43
     m_Address: FM_Panel_Mission
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 935fd1bc30d68cf43a6b3ceb45cf241c
+    m_Address: FM_Target_Moongchi
     m_ReadOnly: 0
     m_SerializedLabels:
     - Sprite
@@ -261,6 +267,12 @@ MonoBehaviour:
     m_Address: FindMoongchiPopup
     m_ReadOnly: 0
     m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: fd593c9aff1bb114cb0cffc23db6b5b5
+    m_Address: FM_Icon_Arrow
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
     FlaggedDuringContentUpdateRestriction: 0
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: 567802e293b80b747b23153796443c26, type: 2}

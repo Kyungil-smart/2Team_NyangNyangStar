@@ -26,6 +26,8 @@ namespace UI.NyangQuarium.MergeBoard
         private TMP_Text _countText;
         private bool _initialized;
         private bool _isMoving;
+        private bool _isRestoring;
+        private bool _serverQueueLoaded;
         private System.Action<NyangQuariumBoardItem> _onItemAddedToBoard;
 
         public void Init(NyangQuariumItemBoard board)
@@ -37,6 +39,9 @@ namespace UI.NyangQuarium.MergeBoard
                 BindViews();
                 _initialized = true;
             }
+
+            if (!_serverQueueLoaded)
+                _ = RestoreQueueFromServerAsync();
 
             RefreshView();
         }
@@ -53,6 +58,7 @@ namespace UI.NyangQuarium.MergeBoard
 
             _rewardQueue.Enqueue(new NyangQuariumBoardItem(item.ItemData));
             RefreshView();
+            SaveQueueSnapshot();
         }
 
         public void TryMoveTopItemToBoard()
@@ -62,7 +68,6 @@ namespace UI.NyangQuarium.MergeBoard
 
             if (_board == null)
             {
-                DebugTool.Warning("[NyangQuariumRewardQueue] Board is not ready.", DebugType.UI, this);
                 return;
             }
 
@@ -77,6 +82,7 @@ namespace UI.NyangQuarium.MergeBoard
                 _rewardQueue.Dequeue();
                 _onItemAddedToBoard?.Invoke(item);
                 RefreshView();
+                SaveQueueSnapshot();
             }
             finally
             {
@@ -158,6 +164,64 @@ namespace UI.NyangQuarium.MergeBoard
             _countText.text = count.ToString();
             _countText.transform.parent?.gameObject.SetActive(count > 0);
             _countText.gameObject.SetActive(count > 0);
+        }
+
+        private async Task RestoreQueueFromServerAsync()
+        {
+            if (_isRestoring)
+                return;
+
+            _isRestoring = true;
+
+            try
+            {
+                NyangQuariumFirestoreSO store = await NyangQuariumFirestoreSO.WaitForReadyAsync();
+                if (store == null || !await store.LoadOrCreateFromServerAsync())
+                    return;
+
+                IReadOnlyList<ItemData> savedItems = store.GetMergeQuestRewardQueueItems();
+                _rewardQueue.Clear();
+                _serverQueueLoaded = true;
+
+                if (savedItems != null)
+                {
+                    for (int i = 0; i < savedItems.Count; i++)
+                    {
+                        ItemData itemData = savedItems[i];
+                        if (itemData == null || !itemData.HasItem)
+                            continue;
+
+                        _rewardQueue.Enqueue(new NyangQuariumBoardItem(itemData));
+                    }
+                }
+
+                RefreshView();
+            }
+            finally
+            {
+                _isRestoring = false;
+            }
+        }
+
+        private async void SaveQueueSnapshot()
+        {
+            if (_isRestoring)
+                return;
+
+            NyangQuariumFirestoreSO store = await NyangQuariumFirestoreSO.WaitForReadyAsync();
+            if (store == null)
+                return;
+
+            List<ItemData> items = new();
+            foreach (NyangQuariumBoardItem item in _rewardQueue)
+            {
+                if (item == null || !item.HasItem)
+                    continue;
+
+                items.Add(item.ItemData?.Clone() ?? ItemData.Empty);
+            }
+
+            await store.SaveMergeQuestRewardQueueAsync(items);
         }
     }
 }

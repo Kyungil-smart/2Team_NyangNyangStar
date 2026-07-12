@@ -76,6 +76,12 @@ MonoBehaviour:
     m_SerializedLabels:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2d2d4a423896f5e489cb9e88dd2bf628
+    m_Address: Main_Img_TiredMoongchi
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 2eebcca250b7d9b4a8bacdf8036c11e2
     m_Address: AffinityPopupUI
     m_ReadOnly: 0
@@ -160,6 +166,12 @@ MonoBehaviour:
     m_SerializedLabels:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b3db61c15c0a3c843986bea8bfee2e19
+    m_Address: Main_BG_NoMoongchi
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: b42ae568c53d3064f90b8d98db6a838e
     m_Address: Main_Btn_Collection
     m_ReadOnly: 0
@@ -198,6 +210,12 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d3a7022f4175e1841b7b1a18dc4f45b5
+    m_Address: Main_BG_Moongchi
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: e377c98bf2451334380dba5104958f8e
     m_Address: Main_Icon_Jewel
     m_ReadOnly: 0
@@ -221,6 +239,12 @@ MonoBehaviour:
     m_SerializedLabels:
     - Sprite
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: eb9272ed11d0499468812243f9fe1dd7
+    m_Address: Main_Btn_Event_Scratching
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Sprite
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: ed42ed3b5b294d34aac9ad844a46e94c
     m_Address: RoulettePopupUI
     m_ReadOnly: 0
@@ -228,12 +252,6 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: eda95428e19fdaa4dafc6276cfb7d274
     m_Address: Main_Btn_Event_FindMoongchi
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - Sprite
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: eec7c209208d22642bb85fc10897e4c5
-    m_Address: Main_Btn_Event_Scratching
     m_ReadOnly: 0
     m_SerializedLabels:
     - Sprite

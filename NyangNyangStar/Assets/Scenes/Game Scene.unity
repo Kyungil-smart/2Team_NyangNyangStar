@@ -167,7 +167,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _story: {fileID: 11400000, guid: a805b387d53f7304fac1a6708ca01a54, type: 2}
+  _moongchiIntroStory: {fileID: 11400000, guid: 1ce78601e9aa7774a821f87526e7d57d, type: 2}
   _afterFirstQuestStory: {fileID: 11400000, guid: fe20ea439e7368e4abfad14c08126b76, type: 2}
+  _afterSecondQuestStory: {fileID: 11400000, guid: 227805502345de44394bfc4eb834807f, type: 2}
+  _afterThirdQuestStory: {fileID: 11400000, guid: 4a0a51a6ec94ff144a6e056b5fc8a3ad, type: 2}
 --- !u!1 &1253025884
 GameObject:
   m_ObjectHideFlags: 0

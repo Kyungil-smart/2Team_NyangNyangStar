@@ -55,12 +55,15 @@ public class NyangNyangSnapResultUISprite : UIBase
         // 실제 Addressables Sprite Key가 정해지면 "" 부분에 키를 넣으면 됨.
 
         SetSprite(NyangNyangSnapResultImages.Background, "NYS_Background");
-        // SetSprite(NyangNyangSnapResultImages.PoseGaugeBackImage, "");
-        // SetSprite(NyangNyangSnapResultImages.CompositionGaugeBackImage, "");
-        // SetSprite(NyangNyangSnapResultImages.ReactionGaugeBackImage, "");
-        //SetSprite(NyangNyangSnapResultImages.PoseGaugeFillImage, "");
-        //SetSprite(NyangNyangSnapResultImages.CompositionGaugeFillImage, "");
-        //SetSprite(NyangNyangSnapResultImages.ReactionGaugeFillImage, "");
+        SetSprite(NyangNyangSnapResultImages.PoseGaugeBackImage, "Bar_Progress_Outline");
+        SetSprite(NyangNyangSnapResultImages.CompositionGaugeBackImage, "Bar_Progress_Outline");
+        SetSprite(NyangNyangSnapResultImages.ReactionGaugeBackImage, "Bar_Progress_Outline");
+        SetSprite(NyangNyangSnapResultImages.BackGroundBackImage, "Bar_Progress_Outline");
+
+        SetSprite(NyangNyangSnapResultImages.PoseGaugeFillImage, "Bar_Progress");
+        SetSprite(NyangNyangSnapResultImages.CompositionGaugeFillImage, "Bar_Progress");
+        SetSprite(NyangNyangSnapResultImages.ReactionGaugeFillImage, "Bar_Progress");
+        SetSprite(NyangNyangSnapResultImages.BackGroundGaugeFillImage, "Bar_Progress");
 
         SetSprite(NyangNyangSnapResultImages.SelectPhotosButton, "Snap_Btn_Green");
         // SetSprite(NyangNyangSnapResultImages.RetryButton, "");

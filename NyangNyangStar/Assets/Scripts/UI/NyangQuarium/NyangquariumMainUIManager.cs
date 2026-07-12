@@ -6,6 +6,7 @@ using Data.Loader;
 using DG.Tweening;
 using TMPro;
 using UI.Base;
+using UI.NyangQuarium.Quest;
 using UI.Transition;
 using UnityEngine;
 using UnityEngine.Serialization;
@@ -39,13 +40,16 @@ namespace UI.NyangQuarium
         private const string CollectionButtonSpriteKey = "NQ_Btn_Collection";
         private const string FreshAquariumButtonSpriteKey = "NQ_Btn_FreshWater";
         private const string OceanAquariumButtonSpriteKey = "NQ_Btn_SaltWater";
+        private const string TransitionSpriteKey = "NQ_BG_Transition";
+        private const string TankLevelBubbleSpriteKey = "NQ_Icon_TankLevel";
 
         [Header("메인 버튼")]
         [FormerlySerializedAs("_boardQuestButton")]
         [SerializeField] private Button _boardButton;
         [SerializeField] private Button _collectionButton;
         [SerializeField] private Button _layoutButton;
-        [SerializeField] private Button _backButton;
+        [FormerlySerializedAs("_backButton")]
+        [SerializeField] private Button _homeButton;
 
         [Header("하위 콘텐츠 오브젝트 연결")]
         [Tooltip("기본 메인 버튼 묶음입니다. 비워두면 ContentButtons를 자동으로 찾습니다.")]
@@ -68,6 +72,13 @@ namespace UI.NyangQuarium
         [SerializeField] private Button _oceanAquariumButton;
         [SerializeField] private Button _aquariumSelectBackButton;
 
+        [Header("수조 선택 버튼 잠금")]
+        [SerializeField] private GameObject _oceanLockIcon;
+        [SerializeField] private TMP_Text _oceanLockMessageText;
+        [SerializeField] private int _oceanUnlockLevel = 5;
+        [SerializeField] private string _oceanLockedMessage = "수조 레벨 5 이상에서 해수 수조를 열 수 있습니다.";
+        [SerializeField] private Color _lockedButtonColor = new Color(0.45f, 0.45f, 0.45f, 1f);
+
         [Header("기본 화면 Addressables 스프라이트")]
         [FormerlySerializedAs("_tankImage")]
         [SerializeField] private Image _backgroundImage;
@@ -78,9 +89,20 @@ namespace UI.NyangQuarium
         [SerializeField] private string _boardSpriteKey = "NQ_Btn_Mergeboard";
         [SerializeField] private string _collectionSpriteKey = CollectionButtonSpriteKey;
         [SerializeField] private string _layoutSpriteKey = "NQ_Btn_Tank";
-        [SerializeField] private string _backSpriteKey = "NQ_Btn_Back";
+        [FormerlySerializedAs("_backSpriteKey")]
+        [SerializeField] private string _homeSpriteKey = "머지보드 홈 버튼";
+        [SerializeField] private string _aquariumSelectBackSpriteKey = "Btn_Close";
         [SerializeField] private string _freshAquariumSpriteKey = FreshAquariumButtonSpriteKey;
         [SerializeField] private string _oceanAquariumSpriteKey = OceanAquariumButtonSpriteKey;
+        [SerializeField] private string _lockIconSpriteKey = "NQ_Icon_Lock";
+
+        [Header("수조 레벨 방울")]
+        [SerializeField] private NyangQuariumLevelBubbleUI levelBubbleUI;
+        [SerializeField] private string _tankLevelBubbleSpriteKey = TankLevelBubbleSpriteKey;
+        [Tooltip("거북이 이미지가 Addressable에 추가되면 키를 넣어 연결합니다. 비워두면 숨깁니다.")]
+        [SerializeField] private string _tankLevelTurtleSpriteKey;
+        [SerializeField] private int _tankLevel = 1;
+        [SerializeField, Range(0f, 1f)] private float _tankLevelExpRatio;
 
         [Header("연출")]
         [SerializeField] private CanvasGroup _canvasGroup;
@@ -98,15 +120,39 @@ namespace UI.NyangQuarium
         private UISpriteController _boardSprite;
         private UISpriteController _collectionSprite;
         private UISpriteController _layoutSprite;
-        private UISpriteController _backSprite;
+        private UISpriteController _homeSprite;
         private UISpriteController _freshAquariumSprite;
         private UISpriteController _oceanAquariumSprite;
         private UISpriteController _aquariumSelectBackSprite;
+        private UISpriteController _oceanLockIconSprite;
         private readonly List<GameObject> _ownedContents = new();
         private readonly HashSet<UIPopup> _initializedChildPopups = new();
+        private NyangQuariumFirestoreSO _nyangquariumFirestoreSO;
+        private NyangQuariumAquariumLevelSO _aquariumLevelSO;
+        private bool _isTankLevelBubbleVisible = true;
         private bool _warnedCollectionDetailOnlyContent;
 
         public static NyangquariumMainUIManager Active { get; private set; }
+
+        private void OnEnable()
+        {
+            if (Application.isPlaying)
+                BindAquariumProgressStoreAsync();
+        }
+
+        private void OnDisable()
+        {
+            UnbindAquariumProgressStore();
+        }
+
+        private void OnValidate()
+        {
+            _tankLevel = Mathf.Max(1, _tankLevel);
+            _tankLevelExpRatio = Mathf.Clamp01(_tankLevelExpRatio);
+
+            if (levelBubbleUI != null)
+                levelBubbleUI.SetLevelProgress(_tankLevel, _tankLevelExpRatio);
+        }
 
         public override void Init()
         {
@@ -115,6 +161,8 @@ namespace UI.NyangQuarium
             BindButtons();
             BindAquariumSelectButtons();
             BindAddressableSprites();
+            EnsureTankLevelBubbleUI();
+            BindAquariumProgressStoreAsync();
             ApplyAquariumSelectStyle();
             ShowMainViewImmediately();
             RefreshButtonStates();
@@ -166,12 +214,152 @@ namespace UI.NyangQuarium
             if (_contentRoot != null)
                 _contentRoot.localScale = Vector3.one;
 
+            EnsureTankLevelBubbleUI();
+            BindAquariumProgressStoreAsync();
             ShowMainViewImmediately();
             RefreshButtonStates();
             EnsureFishSpritePreload();
         }
 
         public void OpenStory() => OpenChildContent(_storyContent, NyangquariumEntryMode.Story);
+
+        public bool OpenOwnedContentWithTransition(UIPopup popup, NyangquariumEntryMode entryMode, bool playClickSfx = true)
+            => OpenChildContent(popup != null ? popup.gameObject : null, entryMode, playClickSfx);
+
+        public void SetTankLevelProgress(int level, float expRatio)
+        {
+            ApplyTankLevelProgress(level, expRatio);
+        }
+
+        public void SetTankLevelExperience(int level, int currentExp, int maxExp)
+        {
+            float ratio = maxExp <= 0 ? 0f : (float)Mathf.Clamp(currentExp, 0, maxExp) / maxExp;
+            SetTankLevelProgress(level, ratio);
+        }
+
+        public void SetTankLevelTurtleSpriteKey(string turtleSpriteKey)
+        {
+            _tankLevelTurtleSpriteKey = turtleSpriteKey ?? string.Empty;
+            EnsureTankLevelBubbleUI();
+            levelBubbleUI?.SetTurtleSpriteKey(_tankLevelTurtleSpriteKey);
+        }
+
+        public void NotifyPopupContentClosed(GameObject content)
+        {
+            if (content != null && ReferenceEquals(_activeContent, content))
+                _activeContent = null;
+
+            if (HasVisibleChildContent())
+                return;
+
+            SetTankLevelBubbleVisible(true);
+            RefreshButtonStates();
+        }
+
+        public void RefreshTankLevelFromFirestore()
+        {
+            if (_nyangquariumFirestoreSO == null)
+                TryBindLoadedAquariumProgressStore();
+
+            if (_nyangquariumFirestoreSO == null)
+                return;
+
+            int level = _nyangquariumFirestoreSO.AquariumLevel;
+            int exp = _nyangquariumFirestoreSO.AquariumExp;
+            float expRatio = CalculateTankLevelExpRatio(level, exp);
+            ApplyTankLevelProgress(level, expRatio);
+        }
+
+        private async void BindAquariumProgressStoreAsync()
+        {
+            if (TryBindLoadedAquariumProgressStore())
+                return;
+
+            NyangQuariumFirestoreSO store = await NyangQuariumFirestoreSO.WaitForReadyAsync();
+
+            if (this == null || !isActiveAndEnabled || store == null)
+                return;
+
+            BindAquariumProgressStore(store);
+            RefreshTankLevelFromFirestore();
+        }
+
+        private bool TryBindLoadedAquariumProgressStore()
+        {
+            FireStoreManager manager = FireStoreManager.Instance;
+
+            if (manager == null ||
+                !manager.IsInitialized ||
+                !manager.TryGetStore(out NyangQuariumFirestoreSO store) ||
+                store == null)
+            {
+                return false;
+            }
+
+            BindAquariumProgressStore(store);
+            RefreshTankLevelFromFirestore();
+            return true;
+        }
+
+        private void BindAquariumProgressStore(NyangQuariumFirestoreSO store)
+        {
+            if (_nyangquariumFirestoreSO == store)
+                return;
+
+            UnbindAquariumProgressStore();
+            _nyangquariumFirestoreSO = store;
+            _nyangquariumFirestoreSO.AquariumProgressChanged += OnAquariumProgressChanged;
+        }
+
+        private void UnbindAquariumProgressStore()
+        {
+            if (_nyangquariumFirestoreSO == null)
+                return;
+
+            _nyangquariumFirestoreSO.AquariumProgressChanged -= OnAquariumProgressChanged;
+            _nyangquariumFirestoreSO = null;
+        }
+
+        private void OnAquariumProgressChanged()
+        {
+            RefreshTankLevelFromFirestore();
+        }
+
+        private float CalculateTankLevelExpRatio(int level, int exp)
+        {
+            NyangQuariumAquariumLevelSO levelSO = ResolveAquariumLevelSO();
+
+            if (levelSO == null ||
+                !levelSO.TryGetByLevel(level, out NyangQuariumAquariumLevelData levelData))
+            {
+                return 0f;
+            }
+
+            if (levelData.RequiredExp <= 0)
+                return 1f;
+
+            return Mathf.Clamp01((float)Mathf.Max(0, exp) / levelData.RequiredExp);
+        }
+
+        private NyangQuariumAquariumLevelSO ResolveAquariumLevelSO()
+        {
+            if (_aquariumLevelSO == null)
+                _aquariumLevelSO = NyangQuariumQuestSOLocator.ResolveAquariumLevelSO();
+
+            return _aquariumLevelSO;
+        }
+
+        private void ApplyTankLevelProgress(int level, float expRatio)
+        {
+            _tankLevel = Mathf.Max(1, level);
+            _tankLevelExpRatio = Mathf.Clamp01(expRatio);
+            EnsureTankLevelBubbleUI();
+            levelBubbleUI?.SetLevelProgress(_tankLevel, _tankLevelExpRatio);
+
+            ApplyOceanAquariumLockState();
+
+            DebugTool.Log($"[NyangquariumMainUIManager] 수조 레벨: {_tankLevel}, 경험치 비율: {_tankLevelExpRatio:P1}", DebugType.UI, this);
+        }
 
         public void OpenBoard()
         {
@@ -233,6 +421,7 @@ namespace UI.NyangQuarium
             RunCoveredTransition(() =>
             {
                 HideChildContents();
+                SetTankLevelBubbleVisible(false);
                 SetMainMenuVisible(true);
                 gameObject.SetActive(false);
             });
@@ -248,11 +437,13 @@ namespace UI.NyangQuarium
             NyangquariumEntryContext.Set(entryMode);
 
             HideChildContents();
+            SetTankLevelBubbleVisible(false);
             SetMainMenuVisible(false);
             RegisterOwnedContent(_aquariumSelectRoot);
             InitializeChildContent(_aquariumSelectRoot);
             NotifyEntryMode(_aquariumSelectRoot, entryMode);
             ApplyAquariumSelectStyle();
+            ApplyOceanAquariumLockState();
             ShowChildContentImmediately(_aquariumSelectRoot);
             RefreshButtonStates();
         }
@@ -271,14 +462,26 @@ namespace UI.NyangQuarium
             => OpenChildContent(_freshAquariumContent, _pendingAquariumEntryMode);
 
         public void OpenOceanAquarium()
-            => OpenChildContent(_oceanAquariumContent, _pendingAquariumEntryMode);
+        {
+            if (!IsOceanAquariumUnlocked())
+            {
+                PlayClickSfx();
+                ShowOceanLockedMessage();
 
-        private void OpenChildContent(GameObject content, NyangquariumEntryMode entryMode)
+                return;
+            }
+
+            OpenChildContent(_oceanAquariumContent, _pendingAquariumEntryMode);
+        }
+
+        private bool OpenChildContent(GameObject content, NyangquariumEntryMode entryMode, bool playClickSfx = true)
         {
             if (_isTransitioning || content == null)
-                return;
+                return false;
 
-            PlayClickSfx();
+            if (playClickSfx)
+                PlayClickSfx();
+
             SetButtonsInteractable(false);
             _isTransitioning = true;
             ScreenTransitionManager transition = GetTransition();
@@ -287,6 +490,7 @@ namespace UI.NyangQuarium
             {
                 NyangquariumEntryContext.Set(entryMode);
                 HideChildContents();
+                SetTankLevelBubbleVisible(false);
                 SetMainMenuVisible(false);
                 PrepareOwnedContent(content, entryMode);
 
@@ -300,14 +504,20 @@ namespace UI.NyangQuarium
             {
                 ShowContent();
                 Unlock();
-                return;
+                return true;
             }
 
-            transition.Cover(() =>
+            transition.Cover(TransitionSpriteKey, () =>
             {
                 ShowContent();
-                transition.Reveal(Unlock);
+                transition.Reveal(() =>
+                {
+                    transition.RestoreDefaultCoverSprite();
+                    Unlock();
+                });
             });
+
+            return true;
         }
 
         private void OpenPopupContent(GameObject content, NyangquariumEntryMode entryMode)
@@ -321,6 +531,7 @@ namespace UI.NyangQuarium
             InitializeChildContent(content);
             NotifyEntryMode(content, entryMode);
             content.transform.SetAsLastSibling();
+            SetTankLevelBubbleVisible(false);
             ShowChildContentImmediately(content);
             RefreshButtonStates();
         }
@@ -339,10 +550,14 @@ namespace UI.NyangQuarium
                 return;
             }
 
-            transition.Cover(() =>
+            transition.Cover(TransitionSpriteKey, () =>
             {
                 coveredAction?.Invoke();
-                transition.Reveal(Unlock);
+                transition.Reveal(() =>
+                {
+                    transition.RestoreDefaultCoverSprite();
+                    Unlock();
+                });
             });
         }
 
@@ -374,6 +589,7 @@ namespace UI.NyangQuarium
             gameObject.SetActive(true);
             HideChildContents();
             SetMainMenuVisible(true);
+            SetTankLevelBubbleVisible(true);
         }
 
         private void HideChildContents()
@@ -396,10 +612,39 @@ namespace UI.NyangQuarium
             _activeContent = null;
         }
 
+        private bool HasVisibleChildContent()
+        {
+            if (IsContentVisible(_storyContent) ||
+                IsContentVisible(_boardContent) ||
+                IsContentVisible(_collectionContent) ||
+                IsContentVisible(_aquariumSelectRoot) ||
+                IsContentVisible(_freshAquariumContent) ||
+                IsContentVisible(_oceanAquariumContent))
+            {
+                return true;
+            }
+
+            for (int i = 0; i < _ownedContents.Count; i++)
+            {
+                if (IsContentVisible(_ownedContents[i]))
+                    return true;
+            }
+
+            return false;
+        }
+
         private void SetMainMenuVisible(bool isVisible)
         {
             if (_mainMenuRoot != null)
                 _mainMenuRoot.SetActive(isVisible);
+        }
+
+        private void SetTankLevelBubbleVisible(bool isVisible)
+        {
+            _isTankLevelBubbleVisible = isVisible;
+
+            if (levelBubbleUI != null)
+                levelBubbleUI.gameObject.SetActive(isVisible);
         }
 
         private static void SetContentActive(GameObject content, bool isActive)
@@ -407,6 +652,9 @@ namespace UI.NyangQuarium
             if (content != null)
                 content.SetActive(isActive);
         }
+
+        private static bool IsContentVisible(GameObject content)
+            => content != null && content.activeSelf;
 
         private void InitializeChildContent(GameObject content)
         {
@@ -482,9 +730,9 @@ namespace UI.NyangQuarium
 
             ResolveChildContentReferences();
 
-            if (_backButton == null)
-                _backButton = FindButtonIn(_mainMenuRoot, "BackButton", "CloseButton", "ExitButton")
-                    ?? FindButton("BackButton", "CloseButton", "ExitButton");
+            if (_homeButton == null)
+                _homeButton = FindButtonIn(_mainMenuRoot, "HomeButton", "BackButton", "CloseButton", "ExitButton")
+                    ?? FindButton("HomeButton", "BackButton", "CloseButton", "ExitButton");
 
             ResolveAnimationReferences();
         }
@@ -689,7 +937,7 @@ namespace UI.NyangQuarium
             BindButton(_boardButton, OpenBoard);
             BindButton(_collectionButton, OpenCollection);
             BindButton(_layoutButton, OpenLayout);
-            BindButton(_backButton, CloseMain);
+            BindButton(_homeButton, CloseMain);
         }
 
         private void BindAquariumSelectButtons()
@@ -709,10 +957,16 @@ namespace UI.NyangQuarium
             _boardSprite = BindSprite(_boardButton, _boardSpriteKey, true);
             _collectionSprite = BindSprite(_collectionButton, _collectionSpriteKey);
             _layoutSprite = BindSprite(_layoutButton, _layoutSpriteKey);
-            _backSprite = BindSprite(_backButton, _backSpriteKey);
+            _homeSprite = BindSprite(_homeButton, _homeSpriteKey);
             _freshAquariumSprite = BindSprite(_freshAquariumButton, _freshAquariumSpriteKey);
             _oceanAquariumSprite = BindSprite(_oceanAquariumButton, _oceanAquariumSpriteKey);
-            _aquariumSelectBackSprite = BindSprite(_aquariumSelectBackButton, _backSpriteKey);
+            _aquariumSelectBackSprite = BindSprite(_aquariumSelectBackButton, _aquariumSelectBackSpriteKey, true);
+
+            Image lockIconImage = _oceanLockIcon != null
+                ? _oceanLockIcon.GetComponent<Image>()
+                : null;
+
+            _oceanLockIconSprite = BindSprite(lockIconImage, _lockIconSpriteKey, true);
         }
 
         private void ApplyAquariumSelectStyle()
@@ -750,6 +1004,49 @@ namespace UI.NyangQuarium
 
             StyleAquariumSelectButton(_freshAquariumButton, new Vector2(-155f, 35f), "담수");
             StyleAquariumSelectButton(_oceanAquariumButton, new Vector2(155f, 35f), "해수");
+        }
+
+        private void EnsureTankLevelBubbleUI()
+        {
+            if (levelBubbleUI == null)
+                levelBubbleUI = GetComponentInChildren<NyangQuariumLevelBubbleUI>(true);
+
+            Transform parent = _mainMenuRoot != null ? _mainMenuRoot.transform : transform;
+            bool createdRuntimeBubble = false;
+
+            if (levelBubbleUI == null)
+            {
+                GameObject bubbleObject = new("TankLevelBubble", typeof(RectTransform));
+                bubbleObject.layer = parent.gameObject.layer;
+                bubbleObject.transform.SetParent(parent, false);
+                levelBubbleUI = bubbleObject.AddComponent<NyangQuariumLevelBubbleUI>();
+                createdRuntimeBubble = true;
+            }
+
+            levelBubbleUI.gameObject.SetActive(_isTankLevelBubbleVisible);
+
+            if (createdRuntimeBubble)
+                ConfigureTankLevelBubbleRect(levelBubbleUI.transform as RectTransform);
+
+            levelBubbleUI.transform.SetAsLastSibling();
+            levelBubbleUI.Initialize(
+                _tankLevelBubbleSpriteKey,
+                _tankLevelTurtleSpriteKey,
+                _tankLevel,
+                _tankLevelExpRatio);
+        }
+
+        private static void ConfigureTankLevelBubbleRect(RectTransform rectTransform)
+        {
+            if (rectTransform == null)
+                return;
+
+            rectTransform.anchorMin = new Vector2(1f, 0.5f);
+            rectTransform.anchorMax = new Vector2(1f, 0.5f);
+            rectTransform.pivot = new Vector2(1f, 0.5f);
+            rectTransform.anchoredPosition = new Vector2(-18f, 28f);
+            rectTransform.sizeDelta = new Vector2(118f, 118f);
+            rectTransform.localScale = Vector3.one;
         }
 
         private static void StyleAquariumSelectButton(Button button, Vector2 anchoredPosition, string label)
@@ -814,12 +1111,17 @@ namespace UI.NyangQuarium
             RegisterSpriteKeyIfMissing(_boardSpriteKey);
             RegisterSpriteKeyIfMissing(_collectionSpriteKey);
             RegisterSpriteKeyIfMissing(_layoutSpriteKey);
-            RegisterSpriteKeyIfMissing(_backSpriteKey);
+            RegisterSpriteKeyIfMissing(_homeSpriteKey);
             RegisterSpriteKeyIfMissing(_freshAquariumSpriteKey);
             RegisterSpriteKeyIfMissing(_oceanAquariumSpriteKey);
+            RegisterSpriteKeyIfMissing(_lockIconSpriteKey);
+            RegisterSpriteKeyIfMissing(_tankLevelBubbleSpriteKey);
+            RegisterSpriteKeyIfMissing(_tankLevelTurtleSpriteKey);
             RegisterSpriteKeyIfMissing(CollectionButtonSpriteKey);
             RegisterSpriteKeyIfMissing(FreshAquariumButtonSpriteKey);
             RegisterSpriteKeyIfMissing(OceanAquariumButtonSpriteKey);
+            RegisterSpriteKeyIfMissing(TankLevelBubbleSpriteKey);
+            RegisterSpriteKeyIfMissing(_aquariumSelectBackSpriteKey);
         }
 
         private static void RegisterSpriteKeyIfMissing(string spriteKey)
@@ -923,8 +1225,12 @@ namespace UI.NyangQuarium
             RefreshRouteButton(_collectionButton, _collectionContent);
             RefreshRouteButton(_layoutButton, _aquariumSelectRoot);
             RefreshRouteButton(_freshAquariumButton, _freshAquariumContent);
+
+            // Lv.5 미만이어도 버튼 클릭은 가능해야 안내 문구를 보여줄 수 있음.
             RefreshRouteButton(_oceanAquariumButton, _oceanAquariumContent);
+
             SetInteractable(_aquariumSelectBackButton, !_isTransitioning);
+            ApplyOceanAquariumLockState();
         }
 
         private void SetButtonsInteractable(bool interactable)
@@ -932,7 +1238,7 @@ namespace UI.NyangQuarium
             SetInteractable(_boardButton, interactable);
             SetInteractable(_collectionButton, interactable);
             SetInteractable(_layoutButton, interactable);
-            SetInteractable(_backButton, interactable);
+            SetInteractable(_homeButton, interactable);
             SetInteractable(_freshAquariumButton, interactable);
             SetInteractable(_oceanAquariumButton, interactable);
             SetInteractable(_aquariumSelectBackButton, interactable);
@@ -945,7 +1251,59 @@ namespace UI.NyangQuarium
 
             button.interactable = !_isTransitioning && targetContent != null;
         }
+        private bool IsOceanAquariumUnlocked()
+        {
+            return _tankLevel >= _oceanUnlockLevel;
+        }
 
+        private void ApplyOceanAquariumLockState()
+        {
+            bool isUnlocked = IsOceanAquariumUnlocked();
+
+            if (_oceanLockIcon != null)
+                _oceanLockIcon.SetActive(!isUnlocked);
+
+            if (_oceanLockMessageText != null)
+                _oceanLockMessageText.gameObject.SetActive(false);
+
+            Image oceanButtonImage = _oceanAquariumButton != null
+                ? _oceanAquariumButton.targetGraphic as Image
+                : null;
+
+            if (oceanButtonImage != null)
+            {
+                oceanButtonImage.color = isUnlocked ? Color.white : _lockedButtonColor;
+            }
+        }
+
+        private void ShowOceanLockedMessage()
+        {
+            if (_oceanLockMessageText == null)
+            {
+                DebugTool.Warning(
+                    "[NyangquariumMainUIManager] _oceanLockMessageText가 연결되지 않아 해수 잠금 안내 문구를 표시할 수 없습니다.",
+                    DebugType.UI,
+                    this);
+
+                return;
+            }
+
+            _oceanLockMessageText.text = _oceanLockedMessage;
+            _oceanLockMessageText.gameObject.SetActive(true);
+
+            _oceanLockMessageText.DOKill();
+            _oceanLockMessageText.alpha = 1f;
+
+            _oceanLockMessageText
+                .DOFade(0f, 1.2f)
+                .SetDelay(1.2f)
+                .SetUpdate(true)
+                .OnComplete(() =>
+                {
+                    if (_oceanLockMessageText != null)
+                        _oceanLockMessageText.gameObject.SetActive(false);
+                });
+        }
         private static void SetInteractable(Button button, bool interactable)
         {
             if (button != null)
@@ -979,20 +1337,22 @@ namespace UI.NyangQuarium
             _boardSprite?.Dispose();
             _collectionSprite?.Dispose();
             _layoutSprite?.Dispose();
-            _backSprite?.Dispose();
+            _homeSprite?.Dispose();
             _freshAquariumSprite?.Dispose();
             _oceanAquariumSprite?.Dispose();
             _aquariumSelectBackSprite?.Dispose();
+            _oceanLockIconSprite?.Dispose();
 
             _backgroundSprite = null;
             _titleLogoSprite = null;
             _boardSprite = null;
             _collectionSprite = null;
             _layoutSprite = null;
-            _backSprite = null;
+            _homeSprite = null;
             _freshAquariumSprite = null;
             _oceanAquariumSprite = null;
             _aquariumSelectBackSprite = null;
+            _oceanLockIconSprite = null;
         }
 
         private void OnDestroy()
@@ -1000,6 +1360,7 @@ namespace UI.NyangQuarium
             if (ReferenceEquals(Active, this))
                 Active = null;
 
+            UnbindAquariumProgressStore();
             DisposeSpriteControllers();
             _canvasGroup?.DOKill();
             _contentRoot?.DOKill();

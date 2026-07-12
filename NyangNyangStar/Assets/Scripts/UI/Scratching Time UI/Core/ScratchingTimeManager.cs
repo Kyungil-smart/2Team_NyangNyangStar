@@ -34,6 +34,9 @@ public partial class ScratchingTimeManager : UIBase
     [SerializeField] private StageType _selectedStageType = StageType.None;   // 일일/주간 중 진행 중인 타입
     [SerializeField] private bool _isStarted;                                 // 스테이지 전투 진행 중 여부
 
+    [Header("Battle Input")]
+    [SerializeField, Min(0f)] private float _attackCooldownSeconds = 0.05f;
+
     [Header("Canvas")]
     [SerializeField] private Canvas _canvas;
     [SerializeField] private RectTransform _rectTransform;
@@ -45,6 +48,7 @@ public partial class ScratchingTimeManager : UIBase
     private bool _isWaitingForDataReady;     // LocalDataAccess.OnReady 구독 중 여부
     private Coroutine _scratchingDataLoadCoroutine; // 시트 직접 로드 코루틴
     private int _scratchingProgressLoadVersion;     // 비동기 진행도 로드 경합 방지
+    private float _nextAttackAllowedTime;
 
     private const int ScratchingSheetHeaderRowCount = 1; // 시트 헤더 행 수 (파싱 시 스킵)
 
