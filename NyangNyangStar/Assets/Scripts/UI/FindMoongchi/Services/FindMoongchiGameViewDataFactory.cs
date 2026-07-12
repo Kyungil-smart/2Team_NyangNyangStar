@@ -29,6 +29,7 @@ namespace UI.FindMoongchi
 
             FindMoongchiGameViewData data = new FindMoongchiGameViewData
             {
+                StageId = gameLogic.CurrentStageId,
                 BoardWidth = gameLogic.BoardWidth,
                 BoardHeight = gameLogic.BoardHeight,
                 CurrentWeek = currentWeek,

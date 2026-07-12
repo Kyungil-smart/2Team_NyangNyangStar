@@ -48,7 +48,8 @@ namespace UI.NyangQuarium
         [SerializeField] private Button _boardButton;
         [SerializeField] private Button _collectionButton;
         [SerializeField] private Button _layoutButton;
-        [SerializeField] private Button _backButton;
+        [FormerlySerializedAs("_backButton")]
+        [SerializeField] private Button _homeButton;
 
         [Header("하위 콘텐츠 오브젝트 연결")]
         [Tooltip("기본 메인 버튼 묶음입니다. 비워두면 ContentButtons를 자동으로 찾습니다.")]
@@ -88,7 +89,8 @@ namespace UI.NyangQuarium
         [SerializeField] private string _boardSpriteKey = "NQ_Btn_Mergeboard";
         [SerializeField] private string _collectionSpriteKey = CollectionButtonSpriteKey;
         [SerializeField] private string _layoutSpriteKey = "NQ_Btn_Tank";
-        [SerializeField] private string _backSpriteKey = "NQ_Btn_Back";
+        [FormerlySerializedAs("_backSpriteKey")]
+        [SerializeField] private string _homeSpriteKey = "머지보드 홈 버튼";
         [SerializeField] private string _aquariumSelectBackSpriteKey = "Btn_Close";
         [SerializeField] private string _freshAquariumSpriteKey = FreshAquariumButtonSpriteKey;
         [SerializeField] private string _oceanAquariumSpriteKey = OceanAquariumButtonSpriteKey;
@@ -118,7 +120,7 @@ namespace UI.NyangQuarium
         private UISpriteController _boardSprite;
         private UISpriteController _collectionSprite;
         private UISpriteController _layoutSprite;
-        private UISpriteController _backSprite;
+        private UISpriteController _homeSprite;
         private UISpriteController _freshAquariumSprite;
         private UISpriteController _oceanAquariumSprite;
         private UISpriteController _aquariumSelectBackSprite;
@@ -728,9 +730,9 @@ namespace UI.NyangQuarium
 
             ResolveChildContentReferences();
 
-            if (_backButton == null)
-                _backButton = FindButtonIn(_mainMenuRoot, "BackButton", "CloseButton", "ExitButton")
-                    ?? FindButton("BackButton", "CloseButton", "ExitButton");
+            if (_homeButton == null)
+                _homeButton = FindButtonIn(_mainMenuRoot, "HomeButton", "BackButton", "CloseButton", "ExitButton")
+                    ?? FindButton("HomeButton", "BackButton", "CloseButton", "ExitButton");
 
             ResolveAnimationReferences();
         }
@@ -935,7 +937,7 @@ namespace UI.NyangQuarium
             BindButton(_boardButton, OpenBoard);
             BindButton(_collectionButton, OpenCollection);
             BindButton(_layoutButton, OpenLayout);
-            BindButton(_backButton, CloseMain);
+            BindButton(_homeButton, CloseMain);
         }
 
         private void BindAquariumSelectButtons()
@@ -955,7 +957,7 @@ namespace UI.NyangQuarium
             _boardSprite = BindSprite(_boardButton, _boardSpriteKey, true);
             _collectionSprite = BindSprite(_collectionButton, _collectionSpriteKey);
             _layoutSprite = BindSprite(_layoutButton, _layoutSpriteKey);
-            _backSprite = BindSprite(_backButton, _backSpriteKey);
+            _homeSprite = BindSprite(_homeButton, _homeSpriteKey);
             _freshAquariumSprite = BindSprite(_freshAquariumButton, _freshAquariumSpriteKey);
             _oceanAquariumSprite = BindSprite(_oceanAquariumButton, _oceanAquariumSpriteKey);
             _aquariumSelectBackSprite = BindSprite(_aquariumSelectBackButton, _aquariumSelectBackSpriteKey, true);
@@ -1109,7 +1111,7 @@ namespace UI.NyangQuarium
             RegisterSpriteKeyIfMissing(_boardSpriteKey);
             RegisterSpriteKeyIfMissing(_collectionSpriteKey);
             RegisterSpriteKeyIfMissing(_layoutSpriteKey);
-            RegisterSpriteKeyIfMissing(_backSpriteKey);
+            RegisterSpriteKeyIfMissing(_homeSpriteKey);
             RegisterSpriteKeyIfMissing(_freshAquariumSpriteKey);
             RegisterSpriteKeyIfMissing(_oceanAquariumSpriteKey);
             RegisterSpriteKeyIfMissing(_lockIconSpriteKey);
@@ -1236,7 +1238,7 @@ namespace UI.NyangQuarium
             SetInteractable(_boardButton, interactable);
             SetInteractable(_collectionButton, interactable);
             SetInteractable(_layoutButton, interactable);
-            SetInteractable(_backButton, interactable);
+            SetInteractable(_homeButton, interactable);
             SetInteractable(_freshAquariumButton, interactable);
             SetInteractable(_oceanAquariumButton, interactable);
             SetInteractable(_aquariumSelectBackButton, interactable);
@@ -1335,7 +1337,7 @@ namespace UI.NyangQuarium
             _boardSprite?.Dispose();
             _collectionSprite?.Dispose();
             _layoutSprite?.Dispose();
-            _backSprite?.Dispose();
+            _homeSprite?.Dispose();
             _freshAquariumSprite?.Dispose();
             _oceanAquariumSprite?.Dispose();
             _aquariumSelectBackSprite?.Dispose();
@@ -1346,7 +1348,7 @@ namespace UI.NyangQuarium
             _boardSprite = null;
             _collectionSprite = null;
             _layoutSprite = null;
-            _backSprite = null;
+            _homeSprite = null;
             _freshAquariumSprite = null;
             _oceanAquariumSprite = null;
             _aquariumSelectBackSprite = null;

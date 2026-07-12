@@ -12,19 +12,32 @@ namespace UI.MergeBoard
             if (_targetPanel == null)
                 return;
 
-            _targetPanel.SetActive(!_targetPanel.activeSelf);
+            bool nextActive = !_targetPanel.activeSelf;
+            _targetPanel.SetActive(nextActive);
+
+            if (nextActive)
+                BringTargetToFront();
         }
 
         public void ShowTarget()
         {
-            if (_targetPanel != null)
-                _targetPanel.SetActive(true);
+            if (_targetPanel == null)
+                return;
+
+            _targetPanel.SetActive(true);
+            BringTargetToFront();
         }
 
         public void HideTarget()
         {
             if (_targetPanel != null)
                 _targetPanel.SetActive(false);
+        }
+
+        private void BringTargetToFront()
+        {
+            if (_targetPanel != null)
+                _targetPanel.transform.SetAsLastSibling();
         }
     }
 }

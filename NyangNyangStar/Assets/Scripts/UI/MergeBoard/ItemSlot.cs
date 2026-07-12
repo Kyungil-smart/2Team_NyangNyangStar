@@ -58,7 +58,7 @@ namespace UI.MergeBoard
             _canvasRect = _canvas.transform as RectTransform;
 
             _itemRect = _item.rectTransform;
-            _itemRect.sizeDelta = new Vector2(itemSize, itemSize);
+            SetItemSize(itemSize);
 
             _canvasGroup = _item.GetComponent<CanvasGroup>();
             if (_canvasGroup == null)
@@ -220,6 +220,18 @@ namespace UI.MergeBoard
                 return;
 
             _backGroundImage.color = color;
+        }
+
+        public void SetItemSize(int itemSize)
+        {
+            if (_itemRect == null && _item != null)
+                _itemRect = _item.rectTransform;
+
+            if (_itemRect == null)
+                return;
+
+            int safeItemSize = Mathf.Max(1, itemSize);
+            _itemRect.sizeDelta = new Vector2(safeItemSize, safeItemSize);
         }
     }
 }
