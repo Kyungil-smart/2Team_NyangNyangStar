@@ -28,7 +28,7 @@ public class NyangQuariumOceanLayoutUISprite : UIBase
         SetSprite(NyangQuariumOceanLayoutUIImage.NyangQuariumLayoutPanel, "NQ_BG_SaltWater");
 
         SetSprite(NyangQuariumOceanLayoutUIImage.Window, "NQ_Img_AquaTunnel");
-        SetSprite(NyangQuariumOceanLayoutUIImage.BackButton, "NQ_Btn_Back");
+        SetSprite(NyangQuariumOceanLayoutUIImage.BackButton, "머지보드 홈 버튼");
         SetSprite(NyangQuariumOceanLayoutUIImage.OceanFishButton, "NQ_Btn_Inventory");
         SetSprite(NyangQuariumOceanLayoutUIImage.ChangeButton, "NQ_Btn_FreshWater");
         SetSprite(NyangQuariumOceanLayoutUIImage.Confirm, "NQ_Btn_Confirm");
