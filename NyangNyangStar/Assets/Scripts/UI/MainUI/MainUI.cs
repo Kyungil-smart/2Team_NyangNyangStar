@@ -40,6 +40,7 @@ public class MainUI : UIScene
     
     [Tooltip("뭉치를 찾아라")] [SerializeField] private Button _findMoongchiButton;
     [Tooltip("냥쿠아 리움")] [SerializeField] private Button _nyangquariumButton;
+    [Tooltip("뭉치 (냥쿠아리움 스토리 진행)")] [SerializeField] private Button _moongchiButton;
 
     private MainUISprite _mainUISprite;
     private MergeBoardController _mergeBoardController;
@@ -96,6 +97,7 @@ public class MainUI : UIScene
         _logOutButton = Get<Button>((int)MainUIButtons.LogOutButton);
         _findMoongchiButton = Get<Button>((int)MainUIButtons.FindMoongchiButton);
         _nyangquariumButton = Get<Button>((int)MainUIButtons.NyangquariumButton);
+        _moongchiButton = Get<Button>((int)MainUIButtons.MoongchiButton);
 
         if (_mainUICanvas != null)
         {
@@ -134,6 +136,9 @@ public class MainUI : UIScene
         if (_logOutButton != null)
             _logOutButton.onClick.AddListener(LogOutButton);
 
+        if (_moongchiButton != null)
+            _moongchiButton.onClick.AddListener(OnMoongchiButtonClicked);
+
         LoadMergeBoard();
         LoadScratchingTime();
     }
@@ -155,6 +160,7 @@ public class MainUI : UIScene
         RemovePopupButton(_meowMeowStarButton);
         RemovePopupButton(_findMoongchiButton);
         RemovePopupButton(_nyangquariumButton);
+        RemovePopupButton(_moongchiButton);
 
         if (_mainMergeBoardButton != null)
             _mainMergeBoardButton.onClick.RemoveAllListeners();
@@ -192,7 +198,7 @@ public class MainUI : UIScene
                     return;
                 }
 
-                _mergeBoardController.SetVisible(false);
+                _mergeBoardController.OpenBoard();
             },
             onFailed =>
             {
@@ -219,6 +225,15 @@ public class MainUI : UIScene
     }
 
     public event Action MergeBoardVisibilityChanged;
+
+    // 뭉치 버튼 클릭 알림 (StoryInit이 구독해 스토리-퀘스트 게이트를 실행)
+    public event Action MoongchiButtonClicked;
+
+    private void OnMoongchiButtonClicked()
+    {
+        GameManager.Audio.PlaySfx("Main_SFX_Touch");
+        MoongchiButtonClicked?.Invoke();
+    }
 
     public void OpenMergeBoardFromQuest()
     {
@@ -303,10 +318,7 @@ public class MainUI : UIScene
     {
         bool wasVisible = _isMergeBoardVisible;
         _isMergeBoardVisible = isOpen;
-        if (isOpen)
-            _mergeBoardController.OpenBoard();
-        else
-            _mergeBoardController.SetVisible(false);
+        _mergeBoardController.SetVisible(isOpen);
 
         if (_mainUICanvas != null)
             _mainUICanvas.sortingOrder = isOpen ? 0 : 2;
@@ -536,6 +548,8 @@ public class MainUI : UIScene
     private void StartNyangquariumUnlockWatcher()
     {
         SetNyangquariumUnlocked(IsThirdStoryMapQuestCompleted());
+        RefreshMoongchiButtonSprite();
+        RefreshMoongchiAlert();
 
         if (_nyangquariumUnlockCoroutine != null)
             StopCoroutine(_nyangquariumUnlockCoroutine);
@@ -572,6 +586,35 @@ public class MainUI : UIScene
     private void HandleNyangquariumQuestProgressChanged()
     {
         SetNyangquariumUnlocked(IsThirdStoryMapQuestCompleted());
+        RefreshMoongchiButtonSprite();
+        RefreshMoongchiAlert();
+    }
+
+    // 초입 퀘스트 완주 여부에 따라 뭉치 버튼 일러 교체 (지친 뭉치 ↔ 기본 뭉치)
+    private void RefreshMoongchiButtonSprite()
+    {
+        _mainUISprite?.SetMoongchiCleared(IsThirdStoryMapQuestCompleted());
+    }
+
+    // 뭉치 클릭 대기 구간(첫 진입~1번 퀘스트 수락 전)에만 뭉치 버튼 알림 표시.
+    // 수락되면 알림이 꺼지고 기존 스토리 퀘스트 맵 마커가 이어받는다.
+    private void RefreshMoongchiAlert()
+    {
+        _mainUISprite?.SetMoongchiAlert(IsMoongchiGatePending());
+    }
+
+    private static bool IsMoongchiGatePending()
+    {
+        NyangQuariumQuestManager questManager = NyangQuariumQuestManager.Instance;
+
+        if (questManager == null || !questManager.IsStoryQuestStateRestored)
+            return false;
+
+        if (questManager.HasActiveQuest)
+            return false;
+
+        int[] questIds = NyangQuariumStoryQuestMapUI.GetStoryMapQuestIds();
+        return questIds.Length > 0 && !questManager.IsQuestCompleted(questIds[0]);
     }
 
     private void SetNyangquariumUnlocked(bool unlocked)
@@ -726,5 +769,6 @@ public enum MainUIButtons
     MainMergeBoardButton,
     LogOutButton,
     FindMoongchiButton,
-    NyangquariumButton
+    NyangquariumButton,
+    MoongchiButton
 }
