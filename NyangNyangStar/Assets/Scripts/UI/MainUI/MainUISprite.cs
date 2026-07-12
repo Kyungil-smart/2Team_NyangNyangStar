@@ -3,15 +3,21 @@ using UI;
 using UI.Base;
 using UnityEngine;
 using UnityEngine.UI;
+using Util;
 
 public class MainUISprite : UIBase
 {
     private const string NyangquariumTankSpritePrefix = "NQ_Object_Tank_";
 
+    // 뭉치 버튼 일러 (지친 뭉치 / 기본 뭉치 - 냥쿠아리움 초입 퀘스트 완주 후)
+    public const string MoongchiTiredSpriteKey = "Main_Img_TiredMoongchi";
+    public const string MoongchiClearedSpriteKey = "NQ_Char_Moongchi";
+
     [SerializeField] private Color _workshopMergeBoardColor;
     [SerializeField] private Color _mainMergeBoardColor;
     private UISpriteController[] _spriteController;
     private Image _notebookAlert;
+    private bool _isMoongchiCleared;
 
     public override void Init()
     {
@@ -26,7 +32,18 @@ public class MainUISprite : UIBase
 
         _notebookAlert = GetImage((int)MainUIImages.NotebookAlert);
 
+        RegisterMoongchiSpriteKeys();
         SetSprites();
+    }
+
+    // 뭉치 일러 키가 KeyContainer에 없으면 등록 (LoadSprite의 키 검증 통과용)
+    private static void RegisterMoongchiSpriteKeys()
+    {
+        if (!KeyContainer.Sprites.Contains(MoongchiTiredSpriteKey))
+            KeyContainer.Sprites.Add(MoongchiTiredSpriteKey);
+
+        if (!KeyContainer.Sprites.Contains(MoongchiClearedSpriteKey))
+            KeyContainer.Sprites.Add(MoongchiClearedSpriteKey);
     }
 
     private void SetSprites()
@@ -58,6 +75,7 @@ public class MainUISprite : UIBase
         SetSprite(MainUIImages.FindMoongchiButton, "Main_Btn_Event_FindMoongchi");
         SetSprite(MainUIImages.NotebookAlert, "Main_Alert");
         SetSprite(MainUIImages.NyangquariumButton, "NQ_Object_Tank_01");
+        SetSprite(MainUIImages.MoongchiButton, MoongchiTiredSpriteKey);
     }
 
     private void SetSprite(MainUIImages image, string key)
@@ -79,6 +97,19 @@ public class MainUISprite : UIBase
     public void SetNyangquariumTankLevel(int level)
     {
         SetSprite(MainUIImages.NyangquariumButton, ResolveNyangquariumTankSpriteKey(level));
+    }
+
+    // 냥쿠아리움 초입 퀘스트 완주 여부에 따라 뭉치 버튼 일러 교체
+    public void SetMoongchiCleared(bool cleared)
+    {
+        if (_spriteController == null)
+            return;
+
+        if (_isMoongchiCleared == cleared)
+            return;
+
+        _isMoongchiCleared = cleared;
+        SetSprite(MainUIImages.MoongchiButton, cleared ? MoongchiClearedSpriteKey : MoongchiTiredSpriteKey);
     }
 
     private static string ResolveNyangquariumTankSpriteKey(int level)
@@ -121,6 +152,7 @@ public enum MainUIImages
     ProfileImage,              // 프로필 이미지
     ProfileFrame,              // 프로필 이미지 테두리
     FindMoongchiButton,        // 뭉치를 찾아라 이벤트
-    NotebookAlert,             // 임시보호 수업 알림 
+    NotebookAlert,             // 임시보호 수업 알림
     NyangquariumButton,        // 냥쿠아리움
+    MoongchiButton,            // 뭉치 (냥쿠아리움 스토리 진행 상태)
 }

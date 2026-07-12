@@ -40,6 +40,9 @@ namespace UI.NyangQuarium.Quest
 
         public bool HasActiveQuest => _activeQuestId > 0;
 
+        // Firestore에서 Story 맵 퀘스트 상태 복원이 끝났는지 (StoryInit의 게이트 판단용)
+        public bool IsStoryQuestStateRestored => _storyQuestStateRestored;
+
         private void Awake()
         {
             if (Instance != null && Instance != this)

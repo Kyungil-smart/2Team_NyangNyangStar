@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0d61fbaf62be12b43a1c79c6ee1e5f43, type: 3}
   m_Name: Chapter2
   m_EditorClassIdentifier: 
-  storyId: 2
+  storyId: 3
   title: "\uC544\uCFE0\uC544\uB9AC\uC6C0"
   backgroundKey: NQ_BG_Aquarium
   cards:
