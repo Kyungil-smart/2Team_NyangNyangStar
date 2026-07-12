@@ -17,6 +17,7 @@ public class MainUISprite : UIBase
     [SerializeField] private Color _mainMergeBoardColor;
     private UISpriteController[] _spriteController;
     private Image _notebookAlert;
+    private Image _moongchiAlert;
     private bool _isMoongchiCleared;
 
     public override void Init()
@@ -31,6 +32,7 @@ public class MainUISprite : UIBase
         }
 
         _notebookAlert = GetImage((int)MainUIImages.NotebookAlert);
+        _moongchiAlert = GetImage((int)MainUIImages.MoongchiAlert);
 
         RegisterMoongchiSpriteKeys();
         SetSprites();
@@ -48,7 +50,7 @@ public class MainUISprite : UIBase
 
     private void SetSprites()
     {
-        SetSprite(MainUIImages.Background, "Main_BG");
+        SetSprite(MainUIImages.Background, "Main_BG_NoMoongchi"); // 뭉치 있는 배경 버전은 "Main_BG"
         SetSprite(MainUIImages.ShopButton, "Main_Btn_Shop");
         SetSprite(MainUIImages.ScratchingTimeButton, "Main_Btn_Event_Scratching");
         SetSprite(MainUIImages.DailyCheckInButton, "Main_Btn_Attendance");
@@ -76,6 +78,7 @@ public class MainUISprite : UIBase
         SetSprite(MainUIImages.NotebookAlert, "Main_Alert");
         SetSprite(MainUIImages.NyangquariumButton, "NQ_Object_Tank_01");
         SetSprite(MainUIImages.MoongchiButton, MoongchiTiredSpriteKey);
+        SetSprite(MainUIImages.MoongchiAlert, "Main_Alert");
     }
 
     private void SetSprite(MainUIImages image, string key)
@@ -92,6 +95,13 @@ public class MainUISprite : UIBase
     public void SetNotebookAlert(bool isOn)
     {
         _notebookAlert.gameObject.SetActive(isOn);
+    }
+
+    // 뭉치 클릭 대기 구간(첫 진입~1번 퀘스트 수락 전)에만 뭉치 버튼 알림 표시
+    public void SetMoongchiAlert(bool isOn)
+    {
+        if (_moongchiAlert != null)
+            _moongchiAlert.gameObject.SetActive(isOn);
     }
 
     public void SetNyangquariumTankLevel(int level)
@@ -155,4 +165,5 @@ public enum MainUIImages
     NotebookAlert,             // 임시보호 수업 알림
     NyangquariumButton,        // 냥쿠아리움
     MoongchiButton,            // 뭉치 (냥쿠아리움 스토리 진행 상태)
+    MoongchiAlert,             // 뭉치 버튼 알림 (뭉치 클릭 대기)
 }

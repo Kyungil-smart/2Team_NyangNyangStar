@@ -549,6 +549,7 @@ public class MainUI : UIScene
     {
         SetNyangquariumUnlocked(IsThirdStoryMapQuestCompleted());
         RefreshMoongchiButtonSprite();
+        RefreshMoongchiAlert();
 
         if (_nyangquariumUnlockCoroutine != null)
             StopCoroutine(_nyangquariumUnlockCoroutine);
@@ -586,12 +587,34 @@ public class MainUI : UIScene
     {
         SetNyangquariumUnlocked(IsThirdStoryMapQuestCompleted());
         RefreshMoongchiButtonSprite();
+        RefreshMoongchiAlert();
     }
 
     // 초입 퀘스트 완주 여부에 따라 뭉치 버튼 일러 교체 (지친 뭉치 ↔ 기본 뭉치)
     private void RefreshMoongchiButtonSprite()
     {
         _mainUISprite?.SetMoongchiCleared(IsThirdStoryMapQuestCompleted());
+    }
+
+    // 뭉치 클릭 대기 구간(첫 진입~1번 퀘스트 수락 전)에만 뭉치 버튼 알림 표시.
+    // 수락되면 알림이 꺼지고 기존 스토리 퀘스트 맵 마커가 이어받는다.
+    private void RefreshMoongchiAlert()
+    {
+        _mainUISprite?.SetMoongchiAlert(IsMoongchiGatePending());
+    }
+
+    private static bool IsMoongchiGatePending()
+    {
+        NyangQuariumQuestManager questManager = NyangQuariumQuestManager.Instance;
+
+        if (questManager == null || !questManager.IsStoryQuestStateRestored)
+            return false;
+
+        if (questManager.HasActiveQuest)
+            return false;
+
+        int[] questIds = NyangQuariumStoryQuestMapUI.GetStoryMapQuestIds();
+        return questIds.Length > 0 && !questManager.IsQuestCompleted(questIds[0]);
     }
 
     private void SetNyangquariumUnlocked(bool unlocked)
