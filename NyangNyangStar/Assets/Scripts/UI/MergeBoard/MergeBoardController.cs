@@ -12,6 +12,7 @@ namespace UI.MergeBoard
         [Header("보드 창")]
         [SerializeField] private GameObject _boardRoot;
         [SerializeField] private MergeBoardLoader _mergeBoardLoader;
+        [SerializeField] private BoardSystem _boardSystem;
         [SerializeField] private BoardRewardQueue _boardRewardQueue;
         [SerializeField] private PlayerResourceDisplay _resourceDisplay;
         [SerializeField] private Button _closeButton;
@@ -46,11 +47,13 @@ namespace UI.MergeBoard
                 return;
             }
 
-            _boardRoot.SetActive(true);
+            ApplyBoardRootVisibility(true);
+            RefreshBoardLayout();
             IsOpen = true;
             EnsureResourceDisplay();
 
             await Task.Yield();
+            RefreshBoardLayout();
 
             if (_mergeBoardLoader == null)
                 _mergeBoardLoader = _boardRoot.GetComponentInChildren<MergeBoardLoader>(true);
@@ -85,14 +88,31 @@ namespace UI.MergeBoard
 
             IsOpen = isOpen;
 
-            if (_boardRoot != null)
-                _boardRoot.SetActive(isOpen);
+            ApplyBoardRootVisibility(isOpen);
 
             if (isOpen)
             {
+                RefreshBoardLayout();
                 EnsureResourceDisplay();
                 _boardRewardQueue?.ClearAlert();
             }
+        }
+
+        private void ApplyBoardRootVisibility(bool isOpen)
+        {
+            if (_boardRoot == null)
+                return;
+
+            _boardRoot.transform.localScale = isOpen ? Vector3.one : Vector3.zero;
+            _boardRoot.SetActive(isOpen);
+        }
+
+        private void RefreshBoardLayout()
+        {
+            if (_boardSystem == null && _boardRoot != null)
+                _boardSystem = _boardRoot.GetComponentInChildren<BoardSystem>(true);
+
+            _boardSystem?.RefreshResponsiveLayout();
         }
 
         private void CacheRewardQueue()

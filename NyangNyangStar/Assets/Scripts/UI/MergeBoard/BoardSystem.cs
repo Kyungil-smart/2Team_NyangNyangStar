@@ -6,7 +6,6 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.EventSystems;
-using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 namespace UI.MergeBoard
@@ -48,22 +47,12 @@ namespace UI.MergeBoard
         [SerializeField] private RectTransform _boardRect;
         [SerializeField] private RectTransform _bottomActionRect;
         [SerializeField] private RectTransform _bottomActionAlignmentRect;
-        [SerializeField] private RectTransform _debugToggleRect;
-        [SerializeField] private RectTransform _debugPanelRect;
-        [FormerlySerializedAs("_debugControlAlignmentRect")]
-        [SerializeField] private RectTransform _debugResourceAlignmentRect;
         [SerializeField] private Vector2 _referenceLayoutSize = new(1080f, 2340f);
         [SerializeField] private Vector2 _minimumBoardSize = new(560f, 720f);
         [SerializeField] private Vector2 _maximumBoardSize = new(940f, 1210f);
         [SerializeField] private Vector2 _bottomActionReferenceSize = new(150f, 100f);
         [SerializeField] private Vector2 _bottomActionMinimumSize = new(120f, 78f);
         [SerializeField] private Vector2 _bottomActionMaximumSize = new(150f, 100f);
-        [SerializeField] private Vector2 _debugToggleReferenceSize = new(170f, 64f);
-        [SerializeField] private Vector2 _debugToggleMinimumSize = new(140f, 52f);
-        [SerializeField] private Vector2 _debugToggleMaximumSize = new(170f, 64f);
-        [SerializeField] private Vector2 _debugPanelReferenceSize = new(700f, 220f);
-        [SerializeField] private Vector2 _debugPanelMinimumSize = new(560f, 190f);
-        [SerializeField] private Vector2 _debugPanelMaximumSize = new(700f, 230f);
         [SerializeField] private float _horizontalPadding = 45f;
         [SerializeField] private float _topReservedHeight = 500f;
         [SerializeField] private float _bottomReservedHeight = 240f;
@@ -72,12 +61,6 @@ namespace UI.MergeBoard
         [SerializeField] private float _bottomActionBottomPadding = 70f;
         [SerializeField] private float _bottomActionVerticalOffset = 0f;
         [SerializeField] private float _boardToBottomActionGap = 60f;
-        [SerializeField] private float _debugToggleLeftPadding = 52f;
-        [SerializeField] private float _debugToggleTopPadding = 150f;
-        [SerializeField] private float _debugToggleResourceGap = 20f;
-        [SerializeField] private float _debugToggleVerticalOffset = 0f;
-        [SerializeField] private float _debugPanelResourceGap = 14f;
-        [SerializeField] private float _debugPanelHorizontalPadding = 30f;
         [SerializeField] private float _minimumSlotSize = 72f;
         [SerializeField] private float _maximumSlotSize = 125f;
 
@@ -95,6 +78,11 @@ namespace UI.MergeBoard
 
         public int SlotCount => _width * _height;
         public IReadOnlyDictionary<int, ItemData> SlotItemDict => _slotItemDict;
+
+        public void RefreshResponsiveLayout()
+        {
+            ApplyResponsiveLayout();
+        }
 
         private const string SlotRootObjectName = "@Slot Root";
 
@@ -253,7 +241,6 @@ namespace UI.MergeBoard
                 float boardScale = CalculateResponsiveWidthScale(layoutRect.size);
                 float horizontalPadding = Mathf.Max(0f, _horizontalPadding * boardScale);
                 float topReservedHeight = Mathf.Max(0f, _topReservedHeight * scale);
-                ApplyResponsiveDebugControls(layoutRect, scale);
                 Rect bottomActionBounds = ApplyResponsiveBottomAction(layoutRect, scale);
                 float bottomReservedHeight = CalculateBottomReservedHeight(layoutRect, bottomActionBounds, scale);
 
@@ -295,15 +282,6 @@ namespace UI.MergeBoard
 
             if (_bottomActionAlignmentRect == null && _layoutRoot != null)
                 _bottomActionAlignmentRect = FindChildRectTransform(_layoutRoot, "Selected Item Info");
-
-            if (_debugToggleRect == null && _layoutRoot != null)
-                _debugToggleRect = FindChildRectTransform(_layoutRoot, "Debug Toggle Button");
-
-            if (_debugPanelRect == null && _layoutRoot != null)
-                _debugPanelRect = FindChildRectTransform(_layoutRoot, "Debug Panel");
-
-            if (_debugResourceAlignmentRect == null && _layoutRoot != null)
-                _debugResourceAlignmentRect = FindChildRectTransform(_layoutRoot, "Resources");
         }
 
         private RectTransform FindChildRectTransform(RectTransform root, string childName)
@@ -322,95 +300,6 @@ namespace UI.MergeBoard
             }
 
             return null;
-        }
-
-        private void ApplyResponsiveDebugControls(Rect layoutRect, float scale)
-        {
-            if (_debugToggleRect == null)
-                return;
-
-            Vector2 size = CalculateResponsiveSize(
-                _debugToggleReferenceSize,
-                _debugToggleMinimumSize,
-                _debugToggleMaximumSize,
-                scale);
-
-            if (_debugResourceAlignmentRect == null)
-            {
-                float leftPadding = Mathf.Max(0f, _debugToggleLeftPadding * scale);
-                float topPadding = Mathf.Max(0f, _debugToggleTopPadding * scale);
-
-                _debugToggleRect.anchorMin = new Vector2(0f, 1f);
-                _debugToggleRect.anchorMax = new Vector2(0f, 1f);
-                _debugToggleRect.pivot = new Vector2(0f, 1f);
-                _debugToggleRect.sizeDelta = size;
-                _debugToggleRect.anchoredPosition = new Vector2(leftPadding, -topPadding);
-                ApplyResponsiveDebugPanel(layoutRect, scale, default, false);
-                return;
-            }
-
-            Rect resourceRect = GetLocalRectInLayout(_debugResourceAlignmentRect);
-            float toggleGap = Mathf.Max(0f, _debugToggleResourceGap * scale);
-            float toggleCenterX = resourceRect.xMin - toggleGap - size.x * 0.5f;
-            float toggleCenterY = resourceRect.center.y + _debugToggleVerticalOffset * scale;
-            float toggleMinX = layoutRect.xMin + size.x * 0.5f + toggleGap;
-
-            if (toggleCenterX < toggleMinX)
-                toggleCenterX = toggleMinX;
-
-            _debugToggleRect.anchorMin = new Vector2(0.5f, 0.5f);
-            _debugToggleRect.anchorMax = new Vector2(0.5f, 0.5f);
-            _debugToggleRect.pivot = new Vector2(0.5f, 0.5f);
-            _debugToggleRect.sizeDelta = size;
-            _debugToggleRect.anchoredPosition = new Vector2(toggleCenterX, toggleCenterY);
-
-            ApplyResponsiveDebugPanel(layoutRect, scale, resourceRect, true);
-        }
-
-        private void ApplyResponsiveDebugPanel(Rect layoutRect, float scale, Rect resourceRect, bool hasResourceRect)
-        {
-            if (_debugPanelRect == null)
-                return;
-
-            Vector2 size = CalculateResponsiveSize(
-                _debugPanelReferenceSize,
-                _debugPanelMinimumSize,
-                _debugPanelMaximumSize,
-                scale);
-
-            if (!hasResourceRect)
-            {
-                float leftPadding = Mathf.Max(0f, _debugToggleLeftPadding * scale);
-                float topPadding = Mathf.Max(0f, (_debugToggleTopPadding + _debugToggleReferenceSize.y + _debugPanelResourceGap) * scale);
-
-                _debugPanelRect.anchorMin = new Vector2(0f, 1f);
-                _debugPanelRect.anchorMax = new Vector2(0f, 1f);
-                _debugPanelRect.pivot = new Vector2(0f, 1f);
-                _debugPanelRect.sizeDelta = size;
-                _debugPanelRect.anchoredPosition = new Vector2(leftPadding, -topPadding);
-                return;
-            }
-
-            float horizontalPadding = Mathf.Max(0f, _debugPanelHorizontalPadding * scale);
-            float panelGap = Mathf.Max(0f, _debugPanelResourceGap * scale);
-            float minCenterX = layoutRect.xMin + horizontalPadding + size.x * 0.5f;
-            float maxCenterX = layoutRect.xMax - horizontalPadding - size.x * 0.5f;
-            float panelCenterX = minCenterX <= maxCenterX
-                ? Mathf.Clamp(resourceRect.center.x, minCenterX, maxCenterX)
-                : layoutRect.center.x;
-
-            float desiredTopY = resourceRect.yMin - panelGap;
-            float minTopY = layoutRect.yMin + horizontalPadding + size.y;
-            float maxTopY = layoutRect.yMax - horizontalPadding;
-            float panelTopY = minTopY <= maxTopY
-                ? Mathf.Clamp(desiredTopY, minTopY, maxTopY)
-                : layoutRect.yMax - horizontalPadding;
-
-            _debugPanelRect.anchorMin = new Vector2(0.5f, 0.5f);
-            _debugPanelRect.anchorMax = new Vector2(0.5f, 0.5f);
-            _debugPanelRect.pivot = new Vector2(0.5f, 1f);
-            _debugPanelRect.sizeDelta = size;
-            _debugPanelRect.anchoredPosition = new Vector2(panelCenterX, panelTopY);
         }
 
         private Rect ApplyResponsiveBottomAction(Rect layoutRect, float scale)
