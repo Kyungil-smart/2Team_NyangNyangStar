@@ -746,7 +746,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &910000000000000002
 RectTransform:
   m_ObjectHideFlags: 0
@@ -4529,6 +4529,7 @@ MonoBehaviour:
   _boardRewardQueue: {fileID: 0}
   _resourceDisplay: {fileID: 6108713876329434477}
   _closeButton: {fileID: 3076375560596108193}
+  _buttonSfxKey: Main_SFX_Touch
   _reloadOnOpen: 0
   IsOpen: 0
 --- !u!1 &7195194393629289085
@@ -4609,7 +4610,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &4371353925911106475
 RectTransform:
   m_ObjectHideFlags: 0

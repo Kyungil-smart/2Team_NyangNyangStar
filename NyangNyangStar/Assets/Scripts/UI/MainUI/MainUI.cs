@@ -198,7 +198,8 @@ public class MainUI : UIScene
                     return;
                 }
 
-                _mergeBoardController.OpenBoard();
+                _isMergeBoardVisible = false;
+                _mergeBoardController.SetVisible(false);
             },
             onFailed =>
             {
@@ -318,7 +319,10 @@ public class MainUI : UIScene
     {
         bool wasVisible = _isMergeBoardVisible;
         _isMergeBoardVisible = isOpen;
-        _mergeBoardController.SetVisible(isOpen);
+        if (isOpen)
+            _mergeBoardController.OpenBoard();
+        else
+            _mergeBoardController.SetVisible(false);
 
         if (_mainUICanvas != null)
             _mainUICanvas.sortingOrder = isOpen ? 0 : 2;
