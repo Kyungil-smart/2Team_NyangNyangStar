@@ -27,7 +27,7 @@ public class NyangQuariumFreshLayoutUISprite : UIBase
         // 담수 냥쿠아리움 배경
         SetSprite(NyangQuariumFreshLayoutUIImage.NyangQuariumLayoutPanel, "NQ_BG_FreshWater");
 
-        SetSprite(NyangQuariumFreshLayoutUIImage.BackButton, "NQ_Btn_Back");
+        SetSprite(NyangQuariumFreshLayoutUIImage.BackButton, "머지보드 홈 버튼");
         SetSprite(NyangQuariumFreshLayoutUIImage.FreshWaterFishButton, "NQ_Btn_Inventory");
         SetSprite(NyangQuariumFreshLayoutUIImage.ChangeButton, "NQ_Btn_SaltWater");
         SetSprite(NyangQuariumFreshLayoutUIImage.LockIcon, "NQ_Icon_Lock");
