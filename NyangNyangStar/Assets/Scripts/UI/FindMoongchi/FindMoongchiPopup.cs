@@ -5,6 +5,7 @@ using Core.Managers;
 using Data.ScriptableObjects.MoongchiSO;
 using TMPro;
 using UI.Base;
+using UI.MergeBoard;
 using UnityEngine;
 
 namespace UI.FindMoongchi
@@ -146,6 +147,7 @@ namespace UI.FindMoongchi
             {
                 case FindMoongchiPanelType.Game:
                     RefreshGamePanel();
+                    _ = EnsureMergeBoardInventoryReadyAndRefreshGameAsync();
                     break;
                 case FindMoongchiPanelType.Mission:
                     RefreshMissionPanel();
@@ -1000,6 +1002,27 @@ namespace UI.FindMoongchi
 
             _isStageClearWaitingForRestart = true;
             OpenStageClearNotice();
+        }
+
+        private async Task EnsureMergeBoardInventoryReadyAndRefreshGameAsync()
+        {
+            MergeBoardItemService itemService = MergeBoardItemService.Instance;
+
+            if (itemService == null)
+                return;
+
+            try
+            {
+                await itemService.EnsureInventoryLoadedAsync();
+            }
+            catch (Exception exception)
+            {
+                DebugTool.Warning($"[FindMoongchiPopup] MergeBoard inventory load failed: {exception.Message}", DebugType.FindMoongchi, this);
+                return;
+            }
+
+            if (_currentPanelType == FindMoongchiPanelType.Game)
+                RefreshGamePanel(false);
         }
 
 

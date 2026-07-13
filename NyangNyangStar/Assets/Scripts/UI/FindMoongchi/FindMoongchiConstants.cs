@@ -11,7 +11,7 @@ namespace UI.FindMoongchi
         // 도구 ID 기본값입니다. 실제 사용 ID는 FindMoongchiPopup 인스펙터 배열에서 관리합니다.
         // 순서 고정: 0 = 가로 한 줄, 1 = 세로 한 줄, 2 = 4x4 사각형.
         public const int ToolId01 = 10004;
-        public const int ToolId02 = 10020;
+        public const int ToolId02 = 10030;
         public const int ToolId03 = 10019;
         public const int ToolSlotCount = 3;
 
