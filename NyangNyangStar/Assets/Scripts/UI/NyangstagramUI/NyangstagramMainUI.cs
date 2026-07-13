@@ -496,6 +496,12 @@ public class NyangstagramMainUI : UIPopup
 
         button.onClick.AddListener(() =>
         {
+            if (button == _homeButton)
+            {
+                ShowComingSoonMessage();
+                return;
+            }
+
             SetView(homeActive, profileActive);
             SetMainTab(selectedTab);
         });
