@@ -1,12 +1,15 @@
 # 냥냥스타 - 기업협약프로젝트 최종 버전
 
-**냥냥스타**는 고양이와 교감하며 아이템을 모으고, 사진 촬영, 수조 꾸미기, 이벤트 미니게임, SNS형 콘텐츠를 통해 진행 상황을 저장하는 **Android 전용 모바일 캐주얼 게임 프로젝트**이다.
+**냥냥스타**는 고양이와 교감하며 아이템을 모으고, 사진 촬영, 수조 꾸미기, 이벤트 미니게임, SNS형 콘텐츠를 통해 진행 상황을 저장하는   
+**Android 전용 모바일 캐주얼 게임 프로젝트**이다.
 
-플레이어는 게스트 로그인 후 메인 화면에서 머지보드, 냥냥스냅, 냥쿠아리움, 냥스타그램, 뭉치를 찾아라, 스크래칭 타임, 임시보호 수첩으로 이동할 수 있다. 프로젝트는 Unity UI 기반의 9:16 세로 화면을 기준으로 제작했으며, Firebase Auth, Firestore, Firebase Storage, Addressables, Google Sheets 기반 데이터를 함께 사용한다.
+플레이어는 게스트 로그인 후 메인 화면에서 머지보드, 냥냥스냅, 냥쿠아리움, 냥스타그램, 뭉치를 찾아라, 스크래칭 타임, 임시보호 수첩으로 이동할 수 있다.
+프로젝트는 Unity UI 기반의 9:16 세로 화면을 기준으로 제작했으며,
+Firebase Auth, Firestore, Firebase Storage, Addressables, Google Sheets 기반 데이터를 함께 사용한다.
 
 이 README는 최종 개발 버전의 구현 범위와 실행 방법, 시스템 구조, 주요 검증 포인트를 한 번에 확인할 수 있도록 정리했다.
 
-<!-- 게임 플레이 GIF 추가 위치: Images/Gameplay.gif -->
+![NyangNyangStar](Images/NyangNyangStar.gif)
 
 ---
 
@@ -168,11 +171,15 @@
 
 ### 로그인 및 데이터 로드
 
+![Login](Images/Login.gif)
+
 로그인 화면에서 게스트 로그인을 진행하고, 로그인 이후 플레이어 기본 정보와 콘텐츠 진행 상황을 불러온다.
 
 Firebase 준비 상태, Auth 로그인, Firestore 초기화, 저장 데이터 로드 순서를 분리했으며, 유저가 바뀌거나 로그아웃하는 경우 사진 런타임 데이터와 콘텐츠 진행 데이터를 정리한다.
 
 ### 메인 화면
+
+![MainUI](Images/MainUI.png)
 
 메인 화면은 각 콘텐츠로 진입하는 허브 역할을 한다.
 
@@ -180,11 +187,15 @@ Firebase 준비 상태, Auth 로그인, Firestore 초기화, 저장 데이터 �
 
 ### 공용 자원 시스템
 
+![Resources](Images/Resources.png)
+
 공용 자원 시스템은 에너지, 코인, 보석을 하나의 관리 흐름으로 묶는다.
 
 콘텐츠에서 자원을 소모하거나 지급하면 Firestore와 UI 표시가 함께 갱신되며, 머지보드 아이템 생성, 냥냥스냅 보상, 뭉치를 찾아라 보상, 냥쿠아리움 진행 흐름에 사용된다.
 
 ### 머지보드 시스템
+
+![MergeBoard](Images/MergeBoard.gif)
 
 머지보드는 아이템을 확인하고, 선택하고, 빈 슬롯으로 이동하거나 다른 아이템과 스왑할 수 있는 보드 시스템이다.
 
@@ -192,11 +203,15 @@ Firebase 준비 상태, Auth 로그인, Firestore 초기화, 저장 데이터 �
 
 ### 냥쿠아리움
 
+![Nyangquarium](Images/Nyangquarium.gif)
+
 냥쿠아리움은 수조를 꾸미고 물고기를 배치하며 퀘스트를 진행하는 성장형 콘텐츠이다.
 
 수조 경험치와 레벨, 물고기/자연 요소 배치 정보, 도감 해금 상태, 퀘스트 진행 상태를 Firestore에 저장한다. 물고기 Sprite는 Addressables 키를 기준으로 캐싱하고, 퀘스트 보상과 스토리 UI를 통해 진행 흐름을 연결했다.
 
 ### 스토리 UI
+
+![NyangquariumStory](Images/NyangquariumStory.gif)
 
 스토리 UI는 퀘스트 진행 단계에 따라 대사 카드를 노출하는 팝업형 콘텐츠이다.
 
@@ -210,11 +225,15 @@ Firebase 준비 상태, Auth 로그인, Firestore 초기화, 저장 데이터 �
 
 ### 촬영 채점 및 보상 시스템
 
+![NyangNyangSnapScore](Images/NyangNyangSnapScore.png)
+
 촬영 채점은 피사체 판정, 타이밍, 구도, 포즈, 배경, 오브젝트 요소를 기준으로 점수를 계산하는 구조이다.
 
 최종 점수는 별점으로 환산되며, 별점에 따라 보석 보상을 지급한다. 결과 화면에서는 별점 연출과 보상형 광고 버튼을 함께 제공한다.
 
 ### 사진 저장 및 임시보호 수첩
+
+![](Images/SavPicture.gif.gif)
 
 촬영 결과 사진은 Firebase Storage에 저장하고, 사진 ID, 저장 경로, 별점, 생성 시간 등 메타데이터는 Firestore에 저장한다.
 
@@ -228,11 +247,15 @@ Firebase 준비 상태, Auth 로그인, Firestore 초기화, 저장 데이터 �
 
 ### 뭉치를 찾아라
 
+![FindMoongchi](Images/FindMoongchi.gif)
+
 뭉치를 찾아라는 정해진 이벤트 기간 동안 타일을 탐색해 목표물을 찾는 이벤트 콘텐츠이다.
 
 이벤트 일정, 현재 주차, 탐색 기회, 이벤트 코인, 일일/주간 미션, 이벤트 상점, 도구 사용, 도움말 팝업, 보상 지급, Firestore 진행 저장/로드를 포함한다. 머지보드에서 에너지를 소모하면 관련 미션 진행도와 탐색 기회 보너스도 갱신된다.
 
 ### 스크래칭 타임
+
+![ScratchingTime](Images/ScratchingTime.gif)
 
 스크래칭 타임은 터치 입력을 기반으로 진행되는 미니게임 콘텐츠이다.
 
@@ -387,22 +410,6 @@ flowchart LR
 화면 중앙에는 콘텐츠 진행 영역을 배치하고, 주요 버튼은 화면 외곽에 배치하여 모바일 화면에서 콘텐츠 영역이 가려지지 않도록 구성했다.
 
 최종 버전에서는 메인 화면에서 여러 콘텐츠 팝업, 보드 화면, 수조 화면, 촬영 화면을 오가므로 주요 팝업의 닫기 버튼, 뒤로가기 버튼, 배경 닫기, 중복 입력 방지, Safe Area 보정 처리를 함께 정리했다.
-
----
-
-## 화면 미리보기
-
-| 로그인 화면 | 메인 화면 | 머지보드 |
-| --- | --- | --- |
-| ![로그인 화면](Images/LoginScreen.png) | ![메인 화면](Images/MainScreen.png) | ![머지보드](Images/MergeBoard.png) |
-
-| 아이템 생성 | 냥냥스냅 스테이지 | 촬영 화면 |
-| --- | --- | --- |
-| ![아이템 생성](Images/ItemGenerate.png) | ![냥냥스냅 스테이지](Images/NyangNyangSnapStage.png) | ![촬영 화면](Images/TakePicture.png) |
-
-| 촬영 결과 | 스크래칭 타임 |
-| --- | --- |
-| ![촬영 결과](Images/SnapResult.png) | ![스크래칭 타임](Images/ScratchingTime.png) |
 
 ---
 
