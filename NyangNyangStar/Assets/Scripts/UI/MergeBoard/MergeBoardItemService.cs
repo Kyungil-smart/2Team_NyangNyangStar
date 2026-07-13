@@ -769,6 +769,9 @@ namespace UI.MergeBoard
             if (energyCost <= 0)
                 return;
 
+            if (await TryNotifyFindMoongchiEnergySpentWithFallbackAsync(energyCost))
+                return;
+
             FindMoongchiProgressController progressController = ResolveFindMoongchiProgressController();
 
             if (progressController == null)
@@ -801,6 +804,76 @@ namespace UI.MergeBoard
 
                 if (controller != null && controller.gameObject.scene.IsValid())
                     return controller;
+            }
+
+            return null;
+        }
+
+        private async Task<bool> TryNotifyFindMoongchiEnergySpentWithFallbackAsync(int energyCost)
+        {
+            FindMoongchiProgressController progressController = ResolveFindMoongchiProgressController();
+
+            if (progressController != null && await progressController.NotifyEnergySpentAsync(energyCost))
+            {
+                DebugTool.Log($"[MergeBoardItemService] FindMoongchi energy progress updated through controller. Amount={energyCost}", DebugType.FindMoongchi, this);
+                return true;
+            }
+
+            FindMoongchiDataManager dataManager = ResolveFindMoongchiDataManager(progressController);
+
+            if (dataManager == null)
+            {
+                DebugTool.Warning("[MergeBoardItemService] FindMoongchi progress target missing. Energy spend was not tracked.", DebugType.FindMoongchi, this);
+                return true;
+            }
+
+            if (!dataManager.IsProgressReady && !await dataManager.EnsureProgressLoadedAsync())
+            {
+                DebugTool.Warning("[MergeBoardItemService] FindMoongchi progress could not be loaded. Energy spend was not tracked.", DebugType.FindMoongchi, this);
+                return true;
+            }
+
+            if (!dataManager.TrackEnergySpent(energyCost))
+            {
+                DebugTool.Log($"[MergeBoardItemService] FindMoongchi energy spend caused no progress change. Amount={energyCost}", DebugType.FindMoongchi, this);
+                return true;
+            }
+
+            bool saved = await dataManager.PersistProgressAsync();
+
+            if (!saved)
+            {
+                DebugTool.Warning("[MergeBoardItemService] FindMoongchi energy progress save failed.", DebugType.FindMoongchi, this);
+                return true;
+            }
+
+            DebugTool.Log($"[MergeBoardItemService] FindMoongchi energy progress updated through data manager. Amount={energyCost}", DebugType.FindMoongchi, this);
+            return true;
+        }
+
+        private static FindMoongchiDataManager ResolveFindMoongchiDataManager(FindMoongchiProgressController progressController)
+        {
+            if (progressController != null)
+            {
+                progressController.ResolveDataManager();
+
+                if (progressController.DataManager != null)
+                    return progressController.DataManager;
+            }
+
+            FindMoongchiDataManager activeDataManager = FindFirstObjectByType<FindMoongchiDataManager>();
+
+            if (activeDataManager != null)
+                return activeDataManager;
+
+            FindMoongchiDataManager[] dataManagers = Resources.FindObjectsOfTypeAll<FindMoongchiDataManager>();
+
+            for (int i = 0; i < dataManagers.Length; i++)
+            {
+                FindMoongchiDataManager dataManager = dataManagers[i];
+
+                if (dataManager != null && dataManager.gameObject.scene.IsValid())
+                    return dataManager;
             }
 
             return null;
