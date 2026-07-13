@@ -57,7 +57,12 @@ namespace UI.MergeBoard
         private const int FoodItemMinId = 10014;
         private const int FoodItemMaxId = 10028;
 
-        private static readonly int[] FindMoongchiItemIds = { 10004, 10019, 10030 };
+        private static readonly int[] FindMoongchiItemIds =
+        {
+            FindMoongchiConstants.ToolId01,
+            FindMoongchiConstants.ToolId02,
+            FindMoongchiConstants.ToolId03
+        };
 
         private readonly SemaphoreSlim _addItemSemaphore = new(1, 1);
         private readonly Dictionary<int, int> _serverItemCountCache = new();
