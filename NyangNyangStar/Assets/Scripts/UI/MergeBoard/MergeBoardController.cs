@@ -1,5 +1,6 @@
 using Core.Managers;
 using Data.ScriptableObjects.MergeBoard;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using UI.Common;
 using UnityEngine;
@@ -9,6 +10,8 @@ namespace UI.MergeBoard
 {
     public class MergeBoardController : MonoBehaviour
     {
+        private const string DefaultButtonSfxKey = "Main_SFX_Touch";
+
         [Header("보드 창")]
         [SerializeField] private GameObject _boardRoot;
         [SerializeField] private MergeBoardLoader _mergeBoardLoader;
@@ -16,14 +19,21 @@ namespace UI.MergeBoard
         [SerializeField] private BoardRewardQueue _boardRewardQueue;
         [SerializeField] private PlayerResourceDisplay _resourceDisplay;
         [SerializeField] private Button _closeButton;
+        [SerializeField] private string _buttonSfxKey = DefaultButtonSfxKey;
 
         [Header("옵션")]
         [SerializeField] private bool _reloadOnOpen;
 
         public bool IsOpen;
 
+        private readonly List<Button> _sfxBoundButtons = new();
+
+        private string ButtonSfxKey => string.IsNullOrWhiteSpace(_buttonSfxKey) ? DefaultButtonSfxKey : _buttonSfxKey;
+
         private void OnEnable()
         {
+            BindButtonSfx();
+
             if (_closeButton != null)
                 _closeButton.onClick.AddListener(CloseBoard);
         }
@@ -32,6 +42,8 @@ namespace UI.MergeBoard
         {
             if (_closeButton != null)
                 _closeButton.onClick.RemoveListener(CloseBoard);
+
+            UnbindButtonSfx();
         }
 
         public async void OpenBoard()
@@ -48,6 +60,7 @@ namespace UI.MergeBoard
             }
 
             ApplyBoardRootVisibility(true);
+            BindButtonSfx();
             RefreshBoardLayout();
             IsOpen = true;
             EnsureResourceDisplay();
@@ -121,6 +134,46 @@ namespace UI.MergeBoard
                 return;
 
             _boardRewardQueue = _boardRoot.GetComponentInChildren<BoardRewardQueue>(true);
+        }
+
+        private void BindButtonSfx()
+        {
+            if (_boardRoot == null)
+                return;
+
+            Button[] buttons = _boardRoot.GetComponentsInChildren<Button>(true);
+
+            for (int i = 0; i < buttons.Length; i++)
+            {
+                Button button = buttons[i];
+
+                if (button == null || _sfxBoundButtons.Contains(button))
+                    continue;
+
+                button.onClick.AddListener(PlayButtonSfx);
+                _sfxBoundButtons.Add(button);
+            }
+        }
+
+        private void UnbindButtonSfx()
+        {
+            for (int i = 0; i < _sfxBoundButtons.Count; i++)
+            {
+                Button button = _sfxBoundButtons[i];
+
+                if (button != null)
+                    button.onClick.RemoveListener(PlayButtonSfx);
+            }
+
+            _sfxBoundButtons.Clear();
+        }
+
+        private void PlayButtonSfx()
+        {
+            if (GameManager.Audio == null)
+                return;
+
+            GameManager.Audio.PlaySfx(ButtonSfxKey);
         }
 
         public void ForceReloadOnNextOpen()
