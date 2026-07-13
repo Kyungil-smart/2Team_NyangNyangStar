@@ -152,7 +152,12 @@ namespace UI.FindMoongchi
         // MergeBoardItemService.Instance.AddItemByIdAsync 에서 호출
         public async Task<bool> NotifyEnergySpentAsync(int amount)
         {
-            if (_dataManager == null || !_dataManager.IsProgressReady)
+            ResolveDataManager();
+
+            if (_dataManager == null)
+                return false;
+
+            if (!_dataManager.IsProgressReady && !await _dataManager.EnsureProgressLoadedAsync())
                 return false;
 
             if (!_dataManager.TrackEnergySpent(amount))
